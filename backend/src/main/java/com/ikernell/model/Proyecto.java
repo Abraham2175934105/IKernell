@@ -1,0 +1,133 @@
+package com.ikernell.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "proyecto")
+public class Proyecto {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_proyecto")
+    private Long idProyecto;
+
+    @Column(name = "nombre", nullable = false, length = 150)
+    private String nombre;
+
+    @Column(name = "descripcion", columnDefinition = "TEXT")
+    private String descripcion;
+
+    @Column(name = "fecha_inicio", nullable = false)
+    private LocalDate fechaInicio;
+
+    @Column(name = "fecha_fin_estimada", nullable = false)
+    private LocalDate fechaFinEstimada;
+
+    @Column(name = "estado", nullable = false, length = 20)
+    private String estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_lider", nullable = false)
+    private Trabajador lider;
+
+    @OneToMany(mappedBy = "proyecto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Etapa> etapas = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+        name = "proyecto_desarrollador",
+        joinColumns = @JoinColumn(name = "id_proyecto"),
+        inverseJoinColumns = @JoinColumn(name = "id_desarrollador")
+    )
+    private List<Trabajador> desarrolladores = new ArrayList<>();
+
+    // Constructores
+    public Proyecto() {}
+
+    public Proyecto(Long idProyecto, String nombre, String descripcion, LocalDate fechaInicio, 
+                    LocalDate fechaFinEstimada, String estado, Trabajador lider) {
+        this.idProyecto = idProyecto;
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.fechaInicio = fechaInicio;
+        this.fechaFinEstimada = fechaFinEstimada;
+        this.estado = estado;
+        this.lider = lider;
+    }
+
+    // Getters y Setters
+    public Long getIdProyecto() {
+        return idProyecto;
+    }
+
+    public void setIdProyecto(Long idProyecto) {
+        this.idProyecto = idProyecto;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public LocalDate getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public void setFechaInicio(LocalDate fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public LocalDate getFechaFinEstimada() {
+        return fechaFinEstimada;
+    }
+
+    public void setFechaFinEstimada(LocalDate fechaFinEstimada) {
+        this.fechaFinEstimada = fechaFinEstimada;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public Trabajador getLider() {
+        return lider;
+    }
+
+    public void setLider(Trabajador lider) {
+        this.lider = lider;
+    }
+
+    public List<Etapa> getEtapas() {
+        return etapas;
+    }
+
+    public void setEtapas(List<Etapa> etapas) {
+        this.etapas = etapas;
+    }
+
+    public List<Trabajador> getDesarrolladores() {
+        return desarrolladores;
+    }
+
+    public void setDesarrolladores(List<Trabajador> desarrolladores) {
+        this.desarrolladores = desarrolladores;
+    }
+}

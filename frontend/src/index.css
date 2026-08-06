@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text antialiased;
+  }
+}
+
+@layer components {
+  /* Global Glassmorphism Panel */
+  .glass-panel {
+    @apply bg-surface/70 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)];
+  }
+  
+  /* Metric Cards */
+  .glass-card {
+    @apply bg-surface/80 backdrop-blur-md border border-white/5 rounded-xl p-5 shadow-lg transition-all duration-300 hover:bg-surface hover:border-white/10 hover:shadow-xl hover:-translate-y-1;
+  }
+
+  /* Buttons */
+  .gradient-button {
+    @apply bg-gradient-to-r from-primary to-accent text-white font-semibold py-2.5 px-5 rounded-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(59,130,246,0.3)] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .outline-button {
+    @apply bg-transparent text-text border border-white/20 py-2.5 px-5 rounded-lg font-medium transition-all duration-200 hover:bg-white/5 hover:border-white/40 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .danger-button {
+    @apply bg-danger/10 text-danger border border-danger/30 py-2 px-4 rounded-lg font-medium transition-all duration-200 hover:bg-danger/20 hover:border-danger flex items-center justify-center gap-2;
+  }
+  
+  .input-field {
+    @apply w-full bg-background/50 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors;
+  }
+}
