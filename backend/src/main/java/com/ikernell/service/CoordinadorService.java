@@ -7,6 +7,8 @@ import com.ikernell.model.Trabajador;
 import com.ikernell.repository.ProyectoDesarrolladorRepository;
 import com.ikernell.repository.ProyectoRepository;
 import com.ikernell.repository.TrabajadorRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +18,9 @@ import java.util.List;
 /**
  * Servicio de lógica de negocio para las operaciones del rol COORDINADOR.
  * <p>
- * Principios SOLID aplicados:
- * - SRP (Single Responsibility): Enfocado exclusivamente en la gestión del personal y sus asignaciones iniciales.
- * - DIP (Dependency Inversion): Depende de abstracciones (repositorios e interfaces como PasswordEncoder), 
- *   inyectadas por constructor para garantizar la inmutabilidad de dependencias y facilitar pruebas unitarias.
+ * Optimización de Alto Rendimiento:
+ * - Consultas paginadas (Pageable) para listados masivos de personal, evitando cargar toda la tabla en memoria.
+ * - @Transactional(readOnly = true) en consultas de solo lectura para optimizar el flush de Hibernate.
  * </p>
  */
 @Service
@@ -42,9 +43,7 @@ public class CoordinadorService {
     }
 
     /**
-     * RF-08, RF-09: Registro de personal asegurando encriptación BCrypt para contraseñas.
-     * @param trabajador Entidad con la información del nuevo trabajador.
-     * @return Trabajador registrado con estado activo y contraseña cifrada.
+     * RF-08, RF-09: Registro de personal asegurando encriptación BCrypt.
      */
     public Trabajador registrarTrabajador(Trabajador trabajador) {
         if (trabajador.getPasswordHash() != null) {
@@ -55,7 +54,7 @@ public class CoordinadorService {
     }
 
     /**
-     * RF-10: Búsqueda y listado general del personal.
+     * RF-10: Listado general del personal (sin paginación, para compatibilidad).
      */
     @Transactional(readOnly = true)
     public List<Trabajador> listarTodosTrabajadores() {
@@ -63,8 +62,16 @@ public class CoordinadorService {
     }
 
     /**
+     * RF-10: Listado PAGINADO del personal (alta concurrencia, consultas pesadas).
+     * Permite al controlador recibir parámetros ?page=0&size=20&sort=nombre,asc
+     */
+    @Transactional(readOnly = true)
+    public Page<Trabajador> listarTrabajadoresPaginado(Pageable pageable) {
+        return trabajadorRepository.findAll(pageable);
+    }
+
+    /**
      * Obtiene un trabajador por su identificador único.
-     * @throws ResourceNotFoundException si el trabajador no existe en base de datos.
      */
     @Transactional(readOnly = true)
     public Trabajador obtenerPorId(Long id) {
@@ -74,8 +81,6 @@ public class CoordinadorService {
 
     /**
      * RF-10: Edición del perfil de un trabajador existente.
-     * @param id Identificador del trabajador a editar.
-     * @param datosActualizados Nuevos datos a persistir.
      */
     public Trabajador actualizarTrabajador(Long id, Trabajador datosActualizados) {
         Trabajador existente = obtenerPorId(id);
@@ -100,7 +105,6 @@ public class CoordinadorService {
 
     /**
      * RF-11: Inhabilitación lógica del trabajador sin destruir el historial referencial.
-     * @param id ID del trabajador a inhabilitar.
      */
     public void inhabilitarTrabajador(Long id) {
         Trabajador trabajador = obtenerPorId(id);

@@ -4,9 +4,13 @@ import com.ikernell.model.ProyectoDesarrollador;
 import com.ikernell.model.Trabajador;
 import com.ikernell.service.CoordinadorService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +19,11 @@ import java.util.List;
 
 /**
  * Controlador REST para el rol COORDINADOR.
- * Gestiona el alta, consulta y modificación del personal, y las asignaciones directas.
+ * <p>
+ * Optimización de Alto Rendimiento:
+ * - Endpoint paginado (/trabajadores/paginado) para consultas masivas sin saturar memoria.
+ * - Los endpoints originales se mantienen para compatibilidad retroactiva con el frontend.
+ * </p>
  */
 @RestController
 @RequestMapping("/api/coordinador")
@@ -37,9 +45,17 @@ public class CoordinadorController {
     }
 
     @GetMapping("/trabajadores")
-    @Operation(summary = "Listar todos los trabajadores", description = "Retorna el listado del personal de la empresa (RF-10)")
+    @Operation(summary = "Listar todos los trabajadores", description = "Retorna el listado completo del personal (RF-10)")
     public ResponseEntity<List<Trabajador>> listarTrabajadores() {
         return ResponseEntity.ok(coordinadorService.listarTodosTrabajadores());
+    }
+
+    @GetMapping("/trabajadores/paginado")
+    @Operation(summary = "Listar trabajadores con paginación", description = "Retorna el listado paginado del personal para alta concurrencia (RF-10). Params: ?page=0&size=20&sort=nombre,asc")
+    public ResponseEntity<Page<Trabajador>> listarTrabajadoresPaginado(
+            @Parameter(description = "Parámetros de paginación y ordenamiento")
+            @PageableDefault(size = 20, sort = "nombre") Pageable pageable) {
+        return ResponseEntity.ok(coordinadorService.listarTrabajadoresPaginado(pageable));
     }
 
     @GetMapping("/trabajadores/{id}")
@@ -65,7 +81,7 @@ public class CoordinadorController {
     @PostMapping("/proyectos/{idProyecto}/asignar/{idDesarrollador}")
     @Operation(summary = "Asignación operativa", description = "Vincula a un desarrollador a la planilla general de un proyecto (RF-12)")
     public ResponseEntity<ProyectoDesarrollador> asignarProyectoInicial(
-            @PathVariable Long idProyecto, 
+            @PathVariable Long idProyecto,
             @PathVariable Long idDesarrollador) {
         ProyectoDesarrollador asignacion = coordinadorService.asignarProyectoADesarrollador(idProyecto, idDesarrollador);
         return ResponseEntity.status(HttpStatus.CREATED).body(asignacion);
