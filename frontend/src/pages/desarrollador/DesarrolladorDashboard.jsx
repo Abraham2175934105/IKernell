@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { CheckSquare, Bug, AlertTriangle, Clock, X, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
@@ -34,7 +34,7 @@ export const DesarrolladorDashboard = () => {
     cargarActividades();
   }, []);
 
-  const cargarActividades = async () => {
+  const cargarActividades = useCallback(async () => {
     try {
       setLoading(true);
       // const data = await api.get('/desarrollador/mis-actividades');
@@ -52,9 +52,9 @@ export const DesarrolladorDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleReportarError = async (e) => {
+  const handleReportarError = useCallback(async (e) => {
     e.preventDefault();
     const toastId = toast.loading('Registrando error en sistema...');
     try {
@@ -65,9 +65,9 @@ export const DesarrolladorDashboard = () => {
     } catch (err) {
       toast.error('Error registrando incidencia: ' + err.message, { id: toastId });
     }
-  };
+  }, [errorForm]);
 
-  const handleReportarInterrupcion = async (e) => {
+  const handleReportarInterrupcion = useCallback(async (e) => {
     e.preventDefault();
     const toastId = toast.loading('Registrando contingencia...');
     try {
@@ -78,7 +78,7 @@ export const DesarrolladorDashboard = () => {
     } catch (err) {
       toast.error('Error registrando interrupción: ' + err.message, { id: toastId });
     }
-  };
+  }, [interrupcionForm]);
 
   return (
     <div className="pt-32 pb-20 px-6 max-w-7xl mx-auto">

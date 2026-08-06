@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { ShieldAlert, AlertTriangle, CheckCircle, Clock, Bug, RefreshCw, FileText, Send, Zap, X } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useApi } from '../../hooks/useApi';
@@ -72,20 +72,16 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
     };
   }, [errores, interrupciones]);
 
-  const handleExportEtlBrasil = async () => {
+  const handleExportEtlBrasil = useCallback(async () => {
     if (!proyectoId) return;
     setExporting(true);
     setEtlResult(null);
 
-    // UX Notification
     const toastId = toast.loading('Procesando ETL Batch para alianza en Brasil...');
 
     try {
-      // Si la API no está lista, simulamos retraso para UX visual
       await new Promise(r => setTimeout(r, 1500));
-      // const data = await api.post(`/lider/proyectos/${proyectoId}/etl-export-brasil`);
       
-      // MOCK RESULT
       const mockResult = {
         nombreArchivo: `METRICAS_BRASIL_PROY_${proyectoId}_${new Date().getTime()}.txt`,
         estado: "PROCESADO_EXITOSAMENTE",
@@ -101,7 +97,7 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
     } finally {
       setExporting(false);
     }
-  };
+  }, [proyectoId, riskAnalysis.totalErrores, riskAnalysis.totalInterrupciones]);
 
   return (
     <div className="glass-panel p-6 md:p-8 mb-8 relative overflow-hidden group">
