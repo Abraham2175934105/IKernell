@@ -1,0 +1,64 @@
+# ============================================================
+# .gitignore - IKernell Soluciones Software
+# Restricción de Seguridad (RNF-11): Protección de datos confidenciales
+# ============================================================
+
+# ==========================================
+# REGLA INQUEBRANTABLE: DOCUMENTOS CONFIDENCIALES
+# Esta carpeta contiene información sensible y
+# BAJO NINGUNA CIRCUNSTANCIA debe ser rastreada por Git.
+# ==========================================
+ARCHIVOS SISTEMA/
+
+# ==========================================
+# BACKEND — Spring Boot / Java
+# ==========================================
+backend/target/
+backend/build/
+backend/.gradle/
+backend/bin/
+backend/*.jar
+backend/*.war
+backend/*.class
+
+# Archivos de IDE (IntelliJ / Eclipse / VS Code)
+backend/.idea/
+backend/*.iml
+backend/.classpath
+backend/.project
+backend/.settings/
+backend/.vscode/
+
+# Logs del servidor
+backend/logs/
+backend/*.log
+
+# ==========================================
+# FRONTEND — React / Node.js
+# ==========================================
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.cache/
+frontend/.vscode/
+
+# Variables de entorno (nunca exponer secretos)
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# ==========================================
+# SISTEMA OPERATIVO
+# ==========================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ==========================================
+# MISCELÁNEOS
+# ==========================================
+*.bak
+*.tmp
+*.temp
