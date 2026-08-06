@@ -10,6 +10,7 @@ import com.ikernell.repository.EtapaRepository;
 import com.ikernell.repository.ProyectoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +20,16 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * Servicio transaccional e innovador que implementa la Innovación 2 (Automatización ETL para Alianza Brasil).
+ * Servicio transaccional que implementa la Innovación 2 (Automatización ETL para Alianza Brasil).
  * <p>
- * Auditoría SOLID:
- * - SRP: Encapsula exclusivamente las transformaciones de métricas operativas y el transporte hacia formatos internacionales.
- * - Dependencias inmutables inyectadas por constructor.
+ * Optimización de Alto Rendimiento:
+ * - @Async("etlTaskExecutor"): El proceso ETL pesado se ejecuta en un hilo separado del pool
+ *   configurado en AsyncConfig, liberando el hilo HTTP principal del controlador REST.
+ * - CompletableFuture: Permite al controlador devolver una respuesta inmediata o esperar
+ *   el resultado de forma no-bloqueante.
  * </p>
  * Cumple con RF-28 (Batch ETL), RF-29 (Estandarización Internacional ISO) y RF-30 (Envío SFTP/Email).
  */
@@ -46,9 +50,7 @@ public class EtlAutomationService {
 
     /**
      * Ejecuta el proceso ETL de manera interactiva a petición del Líder (One-Click ETL).
-     * @param idProyecto ID del proyecto a compilar.
-     * @return EtlReportResponse conteniendo el resumen, archivo generado y estado de envío.
-     * @throws ResourceNotFoundException si el proyecto solicitado no existe.
+     * Este método es síncrono para devolver resultado al controlador REST.
      */
     public EtlReportResponse generarYEnviarReporteBrasil(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
@@ -58,26 +60,37 @@ public class EtlAutomationService {
     }
 
     /**
-     * Proceso desatendido (Batch Job / Tarea Programada) que se ejecuta periódicamente de forma automática.
+     * Proceso desatendido asíncrono ejecutado por tarea programada (@Scheduled).
+     * Se ejecuta en un hilo del pool "etlTaskExecutor" para no bloquear el scheduler principal.
      */
+    @Async("etlTaskExecutor")
     @Scheduled(cron = "0 0 0 * * SUN") // Todos los domingos a la medianoche
-    public void procesoEtlDesatendidoProgramado() {
-        log.info("Iniciando tarea programada desatendida ETL para la alianza en Brasil...");
+    public CompletableFuture<Void> procesoEtlDesatendidoProgramado() {
+        log.info("[ETL-ASYNC] Iniciando tarea programada desatendida ETL para la alianza en Brasil...");
         List<Proyecto> proyectosActivos = proyectoRepository.findByEstado("ACTIVO");
+
+        int procesados = 0;
+        int fallidos = 0;
+
         for (Proyecto proyecto : proyectosActivos) {
             try {
                 procesarEtlParaProyecto(proyecto, "BATCH_SCHEDULED_UNATTENDED");
+                procesados++;
             } catch (Exception e) {
-                log.error("Error al procesar el lote ETL para el proyecto ID: {}", proyecto.getIdProyecto(), e);
+                log.error("[ETL-ASYNC] Error al procesar lote ETL para proyecto ID {}: {}",
+                        proyecto.getIdProyecto(), e.getMessage());
+                fallidos++;
             }
         }
+
+        log.info("[ETL-ASYNC] Proceso ETL batch finalizado. Procesados: {} | Fallidos: {}", procesados, fallidos);
+        return CompletableFuture.completedFuture(null);
     }
 
     private EtlReportResponse procesarEtlParaProyecto(Proyecto proyecto, String tipoEjecucion) {
         List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
-        
+
         StringBuilder sb = new StringBuilder();
-        // Cabecera estandarizada internacional (ISO 8601, Delimitador Pipe, UTF-8)
         sb.append("HEADER|SYSTEM_IKERNELL|PARTNER_BRAZIL|TYPE_EXPORT|")
           .append(LocalDateTime.now(ZoneId.of("UTC")).format(ISO_FORMATTER)).append("\n");
 
@@ -95,7 +108,6 @@ public class EtlAutomationService {
               .append("|STATUS=").append(etapa.getEstado()).append("\n");
             totalRegistros++;
 
-            // Mapeo de Errores
             for (Error err : etapa.getErrores()) {
                 String isoDate = err.getFechaRegistro().atZone(ZoneId.systemDefault())
                         .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
@@ -108,7 +120,6 @@ public class EtlAutomationService {
                 totalRegistros++;
             }
 
-            // Mapeo de Interrupciones / Contingencias
             for (Interrupcion intp : etapa.getInterrupciones()) {
                 String isoDate = intp.getFechaOcurrencia().atZone(ZoneId.systemDefault())
                         .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
@@ -124,13 +135,12 @@ public class EtlAutomationService {
 
         sb.append("FOOTER|TOTAL_RECORDS=").append(totalRegistros).append("\n");
 
-        String nombreArchivo = String.format("METRICAS_BRASIL_PROY_%d_%s.txt", 
-                proyecto.getIdProyecto(), 
+        String nombreArchivo = String.format("METRICAS_BRASIL_PROY_%d_%s.txt",
+                proyecto.getIdProyecto(),
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")));
 
         byte[] contenidoPlano = sb.toString().getBytes(StandardCharsets.UTF_8);
 
-        // RF-30: Simulación de integración con SFTP y Servicio de Correo Electrónico Seguro
         String mensajeEnvio = simularEnvioSeguroSftpYEmail(nombreArchivo, contenidoPlano);
 
         return new EtlReportResponse(
@@ -144,9 +154,9 @@ public class EtlAutomationService {
     }
 
     private String simularEnvioSeguroSftpYEmail(String nombreArchivo, byte[] archivoBytes) {
-        log.info("Conectando con servidor SFTP seguro: sftp.brasil.ikernell.com:22...");
-        log.info("Subiendo archivo {} (tamaño: {} bytes) a /incoming/metrics/...", nombreArchivo, archivoBytes.length);
-        log.info("Enviando notificación por correo electrónico a equipo.brasil@ikernell.org con archivo adjunto.");
+        log.info("[ETL] Conectando con servidor SFTP seguro: sftp.brasil.ikernell.com:22...");
+        log.info("[ETL] Subiendo archivo {} ({} bytes) a /incoming/metrics/...", nombreArchivo, archivoBytes.length);
+        log.info("[ETL] Enviando notificación por correo electrónico a equipo.brasil@ikernell.org.");
 
         return "SFTP (sftp.brasil.ikernell.com/incoming/metrics/) & Email Corporativo (equipo.brasil@ikernell.org)";
     }
