@@ -12,11 +12,11 @@ public class Actividad {
     private Long idActividad;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_etapa", nullable = false)
+    @JoinColumn(name = "etapa_id", nullable = false)
     private Etapa etapa;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_desarrollador", nullable = false)
+    @JoinColumn(name = "desarrollador_id", nullable = false)
     private Trabajador desarrollador;
 
     @Column(name = "descripcion", nullable = false, columnDefinition = "TEXT")

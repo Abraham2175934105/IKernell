@@ -14,7 +14,7 @@ public class Etapa {
     private Long idEtapa;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_proyecto", nullable = false)
+    @JoinColumn(name = "proyecto_id", nullable = false)
     private Proyecto proyecto;
 
     @Column(name = "nombre_etapa", nullable = false, length = 100)

@@ -1,54 +1,86 @@
 import React from 'react';
-import { Target, Eye, Award, Globe2 } from 'lucide-react';
+import { Target, Eye, Globe2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export const Strategy = () => {
   return (
-    <section id="estrategia" className="section-padding" style={{ background: 'rgba(15, 23, 42, 0.4)' }}>
-      <div className="container">
+    <section id="estrategia" className="py-20 md:py-28 border-t border-zinc-200 dark:border-zinc-800">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         
-        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-          <h2 style={{ fontSize: '2.4rem', marginBottom: '16px' }}>
-            Lineamientos <span className="gradient-text">Estratégicos Corporativos</span>
+        {/* Section Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="text-center mb-12 md:mb-16"
+        >
+          <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
+            Lineamientos Estratégicos Corporativos
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '650px', margin: '0 auto' }}>
+          <p className="text-zinc-600 dark:text-zinc-400 text-base md:text-lg max-w-2xl mx-auto font-medium">
             Nuestra visión empresarial se sostiene en la excelencia técnica, la transparencia transaccional y las alianzas estratégicas internacionales.
           </p>
-        </div>
+        </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '28px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           
           {/* Misión */}
-          <div className="glass-panel" style={{ padding: '36px' }}>
-            <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-              <Target size={28} color="var(--color-primary)" />
+          <motion.div 
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.35, delay: 0.05, ease: "easeOut" }}
+            className="glass-card flex flex-col justify-between p-6 md:p-8"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-6 text-zinc-900 dark:text-white shadow-sm">
+                <Target size={26} />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-3">Misión</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">
+                Proveer productos de software robustos y seguros que resuelvan desafíos operativos complejos mediante metodologías ágiles, estándares de desarrollo de grado empresarial y algoritmos de mitigación proactiva de riesgos.
+              </p>
             </div>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '14px' }}>Misión</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-              Proveer productos de software robustos y seguros que resuelvan desafíos operativos complejos mediante metodologías ágiles, estándares de desarrollo de grado empresarial y algoritmos de mitigación proactiva de riesgos.
-            </p>
-          </div>
+          </motion.div>
 
           {/* Visión */}
-          <div className="glass-panel" style={{ padding: '36px' }}>
-            <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(6, 182, 212, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-              <Eye size={28} color="var(--color-accent)" />
+          <motion.div 
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
+            className="glass-card flex flex-col justify-between p-6 md:p-8"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-6 text-zinc-900 dark:text-white shadow-sm">
+                <Eye size={26} />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-3">Visión</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">
+                Ser reconocidos internacionalmente como el referente tecnológico líder en ingeniería de software predictiva, expandiendo nuestras alianzas en Latinoamérica y consolidando la integración de procesos automatizados ETL.
+              </p>
             </div>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '14px' }}>Visión</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-              Ser reconocidos internacionalmente como el referente tecnológico líder en ingeniería de software predictiva, expandiendo nuestras alianzas en Latinoamérica y consolidando la integración de procesos automatizados ETL.
-            </p>
-          </div>
+          </motion.div>
 
           {/* Alianza Internacional Brasil */}
-          <div className="glass-panel" style={{ padding: '36px' }}>
-            <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-              <Globe2 size={28} color="var(--color-emerald)" />
+          <motion.div 
+            initial={{ opacity: 0, y: 35, scale: 0.98 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
+            className="glass-card flex flex-col justify-between p-6 md:p-8 border-2 border-zinc-900 dark:border-zinc-300 shadow-xl shadow-zinc-300/30 dark:shadow-none"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center mb-6 shadow-md">
+                <Globe2 size={26} />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-3">Alianza Brasil</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">
+                Convenio de cooperación tecnológica que unifica métricas operativas y formatos internacionales de fechas/monedas mediante transferencia segura de datos automatizados (RF-28 a RF-30).
+              </p>
             </div>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '14px' }}>Alianza Brasil</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-              Convenio de cooperación tecnológica que unifica métricas operativas y formatos internacionales de fechas/monedas mediante transferencia segura de datos automatizados (RF-28 a RF-30).
-            </p>
-          </div>
+          </motion.div>
 
         </div>
 
@@ -56,3 +88,7 @@ export const Strategy = () => {
     </section>
   );
 };
+
+
+
+

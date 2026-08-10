@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Send, CheckCircle2 } from 'lucide-react';
 
 export const ContactForm = () => {
   const [formData, setFormData] = useState({
@@ -23,48 +23,40 @@ export const ContactForm = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulación de envío hacia el backend de la administración de IKernell (RF-04)
     setTimeout(() => {
       setLoading(false);
       setSubmitted(true);
       setFormData({ nombre: '', email: '', asunto: '', mensaje: '' });
-    }, 1200);
+    }, 1000);
   };
 
   return (
-    <div className="glass-panel" style={{ padding: '40px' }}>
-      <h3 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Formulario de Contacto</h3>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '28px', fontSize: '0.95rem' }}>
+    <div className="glass-card p-6 sm:p-8 md:p-10 border border-zinc-200 dark:border-zinc-800 shadow-xl shadow-zinc-200/40 dark:shadow-none">
+      <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-white mb-2">Formulario de Contacto</h3>
+      <p className="text-zinc-600 dark:text-zinc-400 mb-8 text-sm font-medium">
         ¿Tienes alguna duda específica o requerimiento de software? Envíanos tu mensaje directo a la administración de IKernell.
       </p>
 
       {submitted ? (
-        <div style={{ 
-          background: 'rgba(16, 185, 129, 0.1)', 
-          border: '1px solid rgba(16, 185, 129, 0.3)', 
-          padding: '24px', 
-          borderRadius: 'var(--radius-md)',
-          textAlign: 'center' 
-        }}>
-          <CheckCircle2 size={42} color="var(--color-emerald)" style={{ margin: '0 auto 12px auto' }} />
-          <h4 style={{ color: 'var(--color-emerald)', fontSize: '1.2rem', marginBottom: '6px' }}>¡Mensaje Enviado con Éxito!</h4>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+        <div className="bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 p-8 rounded-2xl text-center animate-fade-in">
+          <CheckCircle2 size={48} className="text-zinc-900 dark:text-white mx-auto mb-4" />
+          <h4 className="text-zinc-900 dark:text-white text-xl font-bold mb-2">¡Mensaje Enviado con Éxito!</h4>
+          <p className="text-zinc-600 dark:text-zinc-400 text-sm max-w-md mx-auto mb-6 font-normal">
             Gracias por contactar a IKernell Soluciones Software. Un administrador revisará tu solicitud y se comunicará contigo a la brevedad.
           </p>
           <button 
             onClick={() => setSubmitted(false)}
-            className="outline-button"
-            style={{ marginTop: '20px', padding: '8px 20px', fontSize: '0.85rem' }}
+            className="outline-button mx-auto text-sm py-2.5 px-6 font-bold"
           >
             Enviar otra duda
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-muted)' }}>
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider mb-2">
                 Nombre Completo *
               </label>
               <input
@@ -74,21 +66,12 @@ export const ContactForm = () => {
                 value={formData.nombre}
                 onChange={handleChange}
                 placeholder="Ej. María Rodríguez"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'var(--text-main)',
-                  outline: 'none',
-                  fontSize: '0.95rem'
-                }}
+                className="input-field"
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-muted)' }}>
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider mb-2">
                 Correo Electrónico *
               </label>
               <input
@@ -98,22 +81,13 @@ export const ContactForm = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="maria@empresa.com"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'var(--text-main)',
-                  outline: 'none',
-                  fontSize: '0.95rem'
-                }}
+                className="input-field"
               />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-muted)' }}>
+            <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider mb-2">
               Asunto de la Consulta *
             </label>
             <input
@@ -123,21 +97,12 @@ export const ContactForm = () => {
               value={formData.asunto}
               onChange={handleChange}
               placeholder="Ej. Solicitud de desarrollo a medida / Consultoría"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border-light)',
-                borderRadius: 'var(--radius-sm)',
-                color: 'var(--text-main)',
-                outline: 'none',
-                fontSize: '0.95rem'
-              }}
+              className="input-field"
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-muted)' }}>
+            <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider mb-2">
               Detalle de tu Pregunta o Mensaje *
             </label>
             <textarea
@@ -147,25 +112,14 @@ export const ContactForm = () => {
               value={formData.mensaje}
               onChange={handleChange}
               placeholder="Describe detalladamente tus requerimientos o inquietudes..."
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border-light)',
-                borderRadius: 'var(--radius-sm)',
-                color: 'var(--text-main)',
-                outline: 'none',
-                fontSize: '0.95rem',
-                resize: 'vertical'
-              }}
+              className="input-field resize-y"
             />
           </div>
 
           <button 
             type="submit" 
             disabled={loading}
-            className="gradient-button" 
-            style={{ width: '100%', justifyContent: 'center', marginTop: '10px' }}
+            className="gradient-button w-full text-sm sm:text-base py-3.5 mt-2 font-bold shadow-lg" 
           >
             {loading ? 'Enviando Mensaje...' : <>Enviar a la Administración <Send size={18} /></>}
           </button>
@@ -175,3 +129,6 @@ export const ContactForm = () => {
     </div>
   );
 };
+
+
+

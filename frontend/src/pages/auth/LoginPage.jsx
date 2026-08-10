@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Cpu, Lock, Mail, LogIn, AlertCircle } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Cpu, Lock, Mail, LogIn, AlertCircle, Shield, ArrowLeft, KeyRound } from 'lucide-react';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -15,7 +15,6 @@ export const LoginPage = () => {
     setError('');
 
     try {
-      // Petición al backend Spring Security REST AuthController (RNF-08/09/10)
       const response = await fetch('http://localhost:8080/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -28,11 +27,9 @@ export const LoginPage = () => {
 
       const data = await response.json();
       
-      // Guardar token JWT y perfil en localStorage (Stateless Session RNF-09)
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data));
 
-      // Redirección según rol (RBAC)
       if (data.rol === 'COORDINADOR') navigate('/coordinador');
       else if (data.rol === 'LIDER') navigate('/lider');
       else navigate('/desarrollador');
@@ -44,88 +41,145 @@ export const LoginPage = () => {
     }
   };
 
+  const setDemoCredentials = (rolEmail) => {
+    setEmail(rolEmail);
+    setPassword('abrah1234');
+  };
+
   return (
-    <div style={{ paddingTop: '150px', paddingBottom: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '440px', padding: '40px' }}>
+    <div className="pt-32 pb-20 min-h-[90vh] flex items-center justify-center px-4 sm:px-6">
+      <div className="w-full max-w-lg relative animate-slide-up">
         
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ background: 'linear-gradient(135deg, #3b82f6, #06b6d4)', width: '50px', height: '50px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto', boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)' }}>
-            <Cpu size={28} color="#fff" />
+        {/* Glow ambient accent */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-50 pointer-events-none" />
+
+        {/* Card: Radiant Pure White in Light Mode, Elegant Dark Zinc in Dark Mode */}
+        <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 sm:p-12 shadow-2xl shadow-zinc-300/60 dark:shadow-none transition-all duration-300">
+          
+          {/* Top back link */}
+          <div className="mb-6 flex justify-between items-center">
+            <Link 
+              to="/" 
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
+            >
+              <ArrowLeft size={14} /> Volver al Inicio
+            </Link>
+            <span className="text-[0.65rem] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
+              Seguridad JWT
+            </span>
           </div>
-          <h2 style={{ fontSize: '1.8rem', marginBottom: '6px' }}>Acceso a Trabajadores</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Ingresa tus credenciales corporativas para iniciar sesión JWT (RF-05)</p>
+
+          {/* Logo & Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transition-transform hover:scale-105">
+              <Cpu size={32} />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-2">
+              Acceso al Portal
+            </h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-xs sm:text-sm font-medium">
+              Autenticación corporativa para Coordinadores, Líderes y Desarrolladores
+            </p>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 p-4 rounded-xl text-xs sm:text-sm flex items-center gap-3 mb-6 font-medium border border-red-200 dark:border-red-800/60">
+              <AlertCircle size={18} className="flex-shrink-0 text-red-500" /> {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider mb-2">
+                Correo Electrónico Corporativo
+              </label>
+              <div className="relative">
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ej. lider@ikernell.org"
+                  className="input-field pl-12 py-3"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider mb-2">
+                Contraseña de Seguridad
+              </label>
+              <div className="relative">
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="input-field pl-12 py-3"
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="gradient-button w-full py-3.5 mt-2 font-bold text-sm shadow-lg"
+            >
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white dark:border-zinc-950 border-t-transparent rounded-full animate-spin" />
+                  Validando Token JWT...
+                </span>
+              ) : (
+                <>Ingresar al Sistema <LogIn size={18} /></>
+              )}
+            </button>
+          </form>
+
+          {/* Quick Roles Assistant */}
+          <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 dark:text-zinc-400 mb-3 uppercase tracking-wider">
+              <KeyRound size={14} /> Accesos Rápidos de Prueba:
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setDemoCredentials('carlos.lider@ikernell.org')}
+                className="p-2 text-center rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[0.7rem] font-bold text-zinc-800 dark:text-zinc-200 transition-all border border-zinc-200 dark:border-zinc-700 shadow-sm"
+              >
+                Líder
+              </button>
+              <button
+                type="button"
+                onClick={() => setDemoCredentials('ana.dev@ikernell.org')}
+                className="p-2 text-center rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[0.7rem] font-bold text-zinc-800 dark:text-zinc-200 transition-all border border-zinc-200 dark:border-zinc-700 shadow-sm"
+              >
+                Desarrollador
+              </button>
+              <button
+                type="button"
+                onClick={() => setDemoCredentials('roberto.coord@ikernell.org')}
+                className="p-2 text-center rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[0.7rem] font-bold text-zinc-800 dark:text-zinc-200 transition-all border border-zinc-200 dark:border-zinc-700 shadow-sm"
+              >
+                Coordinador
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 text-center">
+            <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium flex items-center justify-center gap-1.5">
+              <Shield size={12} /> Cifrado unidireccional BCrypt (RNF-10) • Acceso Restringido
+            </p>
+          </div>
+
         </div>
-
-        {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '12px 16px', borderRadius: 'var(--radius-sm)', color: '#fca5a5', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-            <AlertCircle size={18} /> {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-muted)' }}>
-              Correo Electrónico Corporativo
-            </label>
-            <div style={{ position: 'relative' }}>
-              <Mail size={18} color="var(--text-dim)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="desarrollador@ikernell.org"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px 12px 42px',
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'var(--text-main)',
-                  outline: 'none',
-                  fontSize: '0.95rem'
-                }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-muted)' }}>
-              Contraseña
-            </label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} color="var(--text-dim)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px 12px 42px',
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'var(--text-main)',
-                  outline: 'none',
-                  fontSize: '0.95rem'
-                }}
-              />
-            </div>
-          </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="gradient-button"
-            style={{ width: '100%', justifyContent: 'center', marginTop: '10px', padding: '12px' }}
-          >
-            {loading ? 'Validando JWT...' : <>Iniciar Sesión <LogIn size={18} /></>}
-          </button>
-        </form>
-
       </div>
     </div>
   );
 };
+
+
+

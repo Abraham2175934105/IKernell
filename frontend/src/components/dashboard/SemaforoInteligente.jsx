@@ -9,7 +9,6 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
   const [exporting, setExporting] = useState(false);
   const [etlResult, setEtlResult] = useState(null);
 
-  // RF-26: Cálculo Lógico del Nivel de Riesgo
   const riskAnalysis = useMemo(() => {
     const erroresSeveros = errores.filter(e => e.severidad === 'ALTA' || e.severidad === 'CRITICA');
     const cantidadErroresCriticos = erroresSeveros.length;
@@ -18,50 +17,41 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
     const totalHorasPerdidas = Number((totalMinutosPerdidos / 60).toFixed(1));
 
     let nivel = 'VERDE';
-    let colorHex = '#10b981'; // accent / emerald
-    let glowClass = 'shadow-[0_0_30px_rgba(16,185,129,0.3)] border-accent';
-    let bgPulse = 'bg-accent/20';
-    let textClass = 'text-accent';
     let titulo = 'Riesgo Bajo (Proyecto Estable)';
     let recomendacion = 'El proyecto avanza según la planificación esperada. Mantener el ritmo actual de desarrollo.';
+    let badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60';
+    let iconClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300';
 
     if (totalHorasPerdidas > 15 || cantidadErroresCriticos >= 3) {
       nivel = 'ROJO';
-      colorHex = '#ef4444'; // danger
-      glowClass = 'shadow-[0_0_30px_rgba(239,68,68,0.4)] border-danger';
-      bgPulse = 'bg-danger/20';
-      textClass = 'text-danger';
       titulo = 'ALERTA CRÍTICA DE RIESGO';
-      recomendacion = '¡Atención Urgente! Las horas de contingencia o errores críticos superan el umbral tolerable. Acción proactiva recomendada: Reasignar desarrolladores inmediatamente o solicitar extensión del plazo de entrega.';
+      recomendacion = '¡Atención Urgente! Las horas de contingencia o errores críticos superan el umbral tolerable. Acción recomendada: Reasignar desarrolladores inmediatamente o solicitar extensión del plazo de entrega.';
+      badgeClass = 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800/60';
+      iconClass = 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 shadow-lg';
     } else if (totalHorasPerdidas >= 5 || cantidadErroresCriticos >= 1) {
       nivel = 'NARANJA';
-      colorHex = '#f59e0b'; // warning
-      glowClass = 'shadow-[0_0_30px_rgba(245,158,11,0.3)] border-warning';
-      bgPulse = 'bg-warning/20';
-      textClass = 'text-warning';
       titulo = 'Riesgo Moderado (Atención Requerida)';
       recomendacion = 'Se identifican cuellos de botella moderados. Se sugiere realizar un balance preventivo de actividades y monitorear la fase con mayor afectación.';
+      badgeClass = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60';
+      iconClass = 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300';
     }
 
-    // Datos para gráficos
     const severityCount = { BAJA: 0, MEDIA: 0, ALTA: 0, CRITICA: 0 };
     errores.forEach(e => {
-        if (severityCount[e.severidad] !== undefined) severityCount[e.severidad]++;
+      if (severityCount[e.severidad] !== undefined) severityCount[e.severidad]++;
     });
 
     const pieData = [
       { name: 'Crítica', value: severityCount.CRITICA, color: '#ef4444' },
       { name: 'Alta', value: severityCount.ALTA, color: '#f97316' },
-      { name: 'Media', value: severityCount.MEDIA, color: '#f59e0b' },
-      { name: 'Baja', value: severityCount.BAJA, color: '#3b82f6' }
+      { name: 'Media', value: severityCount.MEDIA, color: '#eab308' },
+      { name: 'Baja', value: severityCount.BAJA, color: '#10b981' }
     ].filter(item => item.value > 0);
 
     return {
       nivel,
-      colorHex,
-      glowClass,
-      bgPulse,
-      textClass,
+      badgeClass,
+      iconClass,
       titulo,
       recomendacion,
       totalHorasPerdidas,
@@ -80,7 +70,7 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
     const toastId = toast.loading('Procesando ETL Batch para alianza en Brasil...');
 
     try {
-      await new Promise(r => setTimeout(r, 1500));
+      await new Promise(r => setTimeout(r, 1200));
       
       const mockResult = {
         nombreArchivo: `METRICAS_BRASIL_PROY_${proyectoId}_${new Date().getTime()}.txt`,
@@ -100,20 +90,18 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
   }, [proyectoId, riskAnalysis.totalErrores, riskAnalysis.totalInterrupciones]);
 
   return (
-    <div className="glass-panel p-6 md:p-8 mb-8 relative overflow-hidden group">
-      {/* Background glow effect */}
-      <div className={`absolute top-0 right-0 w-64 h-64 blur-3xl opacity-20 -z-10 rounded-full transition-colors duration-700 ${riskAnalysis.bgPulse}`} />
-
+    <div className="glass-panel p-6 md:p-10 mb-8 border-zinc-200 dark:border-zinc-800">
+      
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-zinc-200 dark:border-zinc-800">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/20 rounded-lg text-primary">
-              <Zap size={24} />
+            <div className="p-2.5 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 rounded-lg shadow-md">
+              <Zap size={22} />
             </div>
-            <h3 className="text-2xl font-bold tracking-tight text-white">Semáforo Inteligente</h3>
+            <h3 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Semáforo Inteligente</h3>
           </div>
-          <p className="text-text-muted mt-1 text-sm">
+          <p className="text-zinc-600 dark:text-zinc-400 mt-1 text-sm font-medium">
             Dashboard Predictivo de Riesgos en tiempo real para {proyectoNombre || 'el proyecto'} (RF-25)
           </p>
         </div>
@@ -121,75 +109,81 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
         <button
           onClick={handleExportEtlBrasil}
           disabled={exporting}
-          className="gradient-button whitespace-nowrap"
+          className="gradient-button whitespace-nowrap text-sm py-2.5 px-5"
         >
           {exporting ? (
-            <RefreshCw size={18} className="animate-spin" />
+            <RefreshCw size={16} className="animate-spin" />
           ) : (
-            <FileText size={18} />
+            <FileText size={16} />
           )}
           <span>{exporting ? 'Procesando ETL...' : 'Exportar Métricas ISO'}</span>
         </button>
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-stretch">
         
         {/* Risk Level Card (Semáforo) */}
-        <div className={`lg:col-span-5 border-2 rounded-2xl p-6 flex flex-col justify-center items-center text-center transition-all duration-500 bg-surface/50 ${riskAnalysis.glowClass}`}>
-          <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-lg`} style={{ backgroundColor: riskAnalysis.colorHex, boxShadow: `0 0 20px ${riskAnalysis.colorHex}` }}>
-            {riskAnalysis.nivel === 'VERDE' && <CheckCircle size={40} className="text-white" />}
-            {riskAnalysis.nivel === 'NARANJA' && <AlertTriangle size={40} className="text-white" />}
-            {riskAnalysis.nivel === 'ROJO' && <ShieldAlert size={40} className="text-white animate-pulse" />}
+        <div className="lg:col-span-5 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 md:p-8 flex flex-col justify-center items-center text-center bg-white dark:bg-zinc-900 shadow-md shadow-zinc-200/40 dark:shadow-none">
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-5 ${riskAnalysis.iconClass}`}>
+            {riskAnalysis.nivel === 'VERDE' && <CheckCircle size={38} />}
+            {riskAnalysis.nivel === 'NARANJA' && <AlertTriangle size={38} />}
+            {riskAnalysis.nivel === 'ROJO' && <ShieldAlert size={38} />}
           </div>
-          <span className={`text-sm font-bold tracking-widest uppercase mb-2 ${riskAnalysis.textClass}`}>
-            NIVEL DE RIESGO: {riskAnalysis.nivel}
+          <span className={`text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full border mb-3 ${riskAnalysis.badgeClass}`}>
+            Nivel: {riskAnalysis.nivel}
           </span>
-          <h4 className="text-xl font-semibold mb-2 text-white">{riskAnalysis.titulo}</h4>
-          <p className="text-sm text-text-muted">Análisis automático basado en {riskAnalysis.totalErrores + riskAnalysis.totalInterrupciones} métricas.</p>
+          <h4 className="text-xl font-bold mb-2 text-zinc-900 dark:text-white">{riskAnalysis.titulo}</h4>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+            Cálculo automatizado sobre {riskAnalysis.totalErrores + riskAnalysis.totalInterrupciones} métricas concurrentes.
+          </p>
         </div>
 
         {/* Metrics Grid */}
-        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
           
-          <div className="glass-card flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-text-muted mb-2 text-sm font-medium">
-              <Clock size={16} className="text-accent" /> Horas Perdidas
+          <div className="glass-card flex flex-col justify-between p-6">
+            <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 mb-2 text-xs font-bold uppercase tracking-wider">
+              <Clock size={16} className="text-zinc-900 dark:text-white" /> Horas Perdidas
             </div>
-            <div className="flex items-end gap-2">
-              <span className={`text-4xl font-extrabold ${riskAnalysis.totalHorasPerdidas > 10 ? 'text-danger' : 'text-white'}`}>
+            <div className="my-2">
+              <span className="text-4xl font-extrabold text-zinc-900 dark:text-white">
                 {riskAnalysis.totalHorasPerdidas}h
               </span>
             </div>
-            <span className="text-xs text-text-dim mt-2">{riskAnalysis.totalInterrupciones} contingencias reportadas</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-3">
+              {riskAnalysis.totalInterrupciones} contingencias reportadas
+            </span>
           </div>
 
-          <div className="glass-card flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-text-muted mb-2 text-sm font-medium">
-              <Bug size={16} className="text-danger" /> Errores Críticos
+          <div className="glass-card flex flex-col justify-between p-6">
+            <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 mb-2 text-xs font-bold uppercase tracking-wider">
+              <Bug size={16} className="text-zinc-900 dark:text-white" /> Errores Críticos
             </div>
-            <div className="flex items-end gap-2">
-              <span className={`text-4xl font-extrabold ${riskAnalysis.cantidadErroresCriticos > 0 ? 'text-danger' : 'text-white'}`}>
+            <div className="my-2">
+              <span className="text-4xl font-extrabold text-zinc-900 dark:text-white">
                 {riskAnalysis.cantidadErroresCriticos}
               </span>
             </div>
-            <span className="text-xs text-text-dim mt-2">de {riskAnalysis.totalErrores} errores totales</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-3">
+              de {riskAnalysis.totalErrores} errores totales
+            </span>
           </div>
 
           {/* Chart Section */}
-          <div className="glass-card sm:col-span-2 h-48 flex items-center">
+          <div className="glass-card sm:col-span-2 p-6 flex flex-col sm:flex-row items-center gap-6">
             {riskAnalysis.pieData.length > 0 ? (
               <>
-                <div className="w-1/2 h-full">
+                <div className="w-full sm:w-1/2 h-36">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={riskAnalysis.pieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={30}
-                        outerRadius={50}
-                        paddingAngle={5}
+                        innerRadius={28}
+                        outerRadius={46}
+                        paddingAngle={4}
                         dataKey="value"
                       >
                         {riskAnalysis.pieData.map((entry, index) => (
@@ -197,25 +191,27 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
                         ))}
                       </Pie>
                       <RechartsTooltip 
-                        contentStyle={{ backgroundColor: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                        itemStyle={{ color: '#fff' }}
+                        contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px', color: '#ffffff' }}
+                        itemStyle={{ color: '#ffffff' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="w-1/2 flex flex-col justify-center gap-2">
-                  <h5 className="text-sm font-semibold text-text-muted mb-1">Distribución de Errores</h5>
+                <div className="w-full sm:w-1/2 flex flex-col justify-center gap-2 text-xs">
+                  <h5 className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider mb-1">Distribución de Severidad</h5>
                   {riskAnalysis.pieData.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-text-main">{item.name}:</span>
-                      <span className="font-bold text-white">{item.value}</span>
+                    <div key={idx} className="flex items-center justify-between py-1 border-b border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="font-medium text-zinc-600 dark:text-zinc-400">{item.name}:</span>
+                      </div>
+                      <span className="font-bold text-zinc-900 dark:text-white">{item.value}</span>
                     </div>
                   ))}
                 </div>
               </>
             ) : (
-              <div className="w-full text-center text-text-muted text-sm">No hay errores registrados en esta fase.</div>
+              <div className="w-full text-center text-zinc-500 dark:text-zinc-400 text-sm py-4 font-medium">No hay errores registrados en esta fase.</div>
             )}
           </div>
 
@@ -223,39 +219,39 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
       </div>
 
       {/* Proactive Recommendation */}
-      <div className={`mt-6 p-4 rounded-xl border border-l-4 flex items-start gap-4 bg-surface/80 shadow-md ${riskAnalysis.nivel === 'ROJO' ? 'border-l-danger border-white/5' : riskAnalysis.nivel === 'NARANJA' ? 'border-l-warning border-white/5' : 'border-l-accent border-white/5'}`}>
-        <div className={`mt-0.5 ${riskAnalysis.textClass}`}>
-          <AlertTriangle size={20} />
+      <div className="mt-8 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-start gap-4 bg-white dark:bg-zinc-900 shadow-md shadow-zinc-200/40 dark:shadow-none">
+        <div className="mt-0.5 text-zinc-900 dark:text-white">
+          <AlertTriangle size={22} />
         </div>
         <div>
-          <strong className={`text-sm block mb-1 ${riskAnalysis.textClass}`}>Recomendación Proactiva (Algoritmo IA)</strong>
-          <p className="text-sm text-text-main leading-relaxed opacity-90">{riskAnalysis.recomendacion}</p>
+          <strong className="text-sm font-bold text-zinc-900 dark:text-white block mb-1">Recomendación Proactiva (Algoritmo IA)</strong>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">{riskAnalysis.recomendacion}</p>
         </div>
       </div>
 
-      {/* ETL Export Result Modal / Panel */}
+      {/* ETL Export Result Panel */}
       {etlResult && (
-        <div className="mt-6 p-5 bg-surface border border-accent/30 rounded-xl relative animate-slide-up">
-          <button onClick={() => setEtlResult(null)} className="absolute top-4 right-4 text-text-muted hover:text-white transition-colors">
+        <div className="mt-6 p-6 bg-zinc-900 dark:bg-zinc-950 text-white border border-zinc-800 rounded-xl relative animate-slide-up shadow-xl">
+          <button onClick={() => setEtlResult(null)} className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors">
             <X size={18} />
           </button>
           
-          <div className="flex items-center gap-2 text-accent font-semibold mb-3">
+          <div className="flex items-center gap-2 font-bold mb-4 text-emerald-400">
             <Send size={18} /> Reporte ETL Generado con Éxito
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
             <div>
-              <span className="text-text-muted block">Archivo:</span>
-              <span className="font-mono text-primary">{etlResult.nombreArchivo}</span>
+              <span className="text-zinc-400 block mb-1">Archivo:</span>
+              <span className="text-white font-bold">{etlResult.nombreArchivo}</span>
             </div>
             <div>
-              <span className="text-text-muted block">Registros Exportados:</span>
-              <span className="text-white font-medium">{etlResult.totalRegistrosExportados}</span>
+              <span className="text-zinc-400 block mb-1">Registros Exportados:</span>
+              <span className="text-white font-bold">{etlResult.totalRegistrosExportados}</span>
             </div>
             <div className="md:col-span-2">
-              <span className="text-text-muted block">Destinos de Envío:</span>
-              <span className="text-white bg-white/10 px-2 py-1 rounded inline-block mt-1">{etlResult.destinoEnvio}</span>
+              <span className="text-zinc-400 block mb-1">Destinos de Envío:</span>
+              <span className="text-zinc-200 bg-zinc-800 px-3 py-1.5 rounded inline-block mt-1">{etlResult.destinoEnvio}</span>
             </div>
           </div>
         </div>
@@ -263,3 +259,5 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
     </div>
   );
 };
+
+

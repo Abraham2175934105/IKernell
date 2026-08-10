@@ -18,11 +18,11 @@ public class ProyectoDesarrollador {
     private Long idAsignacion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_proyecto", nullable = false)
+    @JoinColumn(name = "proyecto_id", nullable = false)
     private Proyecto proyecto;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_desarrollador", nullable = false)
+    @JoinColumn(name = "desarrollador_id", nullable = false)
     private Trabajador desarrollador;
 
     @Column(name = "fecha_asignacion", nullable = false, updatable = false)

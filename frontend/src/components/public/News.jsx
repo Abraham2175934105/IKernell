@@ -1,5 +1,6 @@
 import React from 'react';
-import { Newspaper, Calendar, ArrowUpRight } from 'lucide-react';
+import { Calendar, ArrowUpRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export const News = () => {
   const newsItems = [
@@ -24,40 +25,54 @@ export const News = () => {
   ];
 
   return (
-    <section id="noticias" className="section-padding">
-      <div className="container">
+    <section id="noticias" className="py-20 md:py-28 border-t border-zinc-200 dark:border-zinc-800">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         
-        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-          <h2 style={{ fontSize: '2.4rem', marginBottom: '16px' }}>
-            Noticias & <span className="gradient-text">Actualidad Tecnológica</span>
+        {/* Section Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="text-center mb-12 md:mb-16"
+        >
+          <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
+            Noticias & Actualidad Tecnológica
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '650px', margin: '0 auto' }}>
+          <p className="text-zinc-600 dark:text-zinc-400 text-base md:text-lg max-w-2xl mx-auto font-medium">
             Novedades corporativas, lanzamientos de arquitectura y avances en nuestras alianzas de desarrollo de software.
           </p>
-        </div>
+        </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {newsItems.map((news, idx) => (
-            <article key={idx} className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <motion.article 
+              key={idx} 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.15 }}
+              transition={{ duration: 0.35, delay: idx * 0.08, ease: "easeOut" }}
+              className="glass-card flex flex-col justify-between p-6 md:p-8 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all"
+            >
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: '700', padding: '4px 12px', borderRadius: '9999px' }}>
+                <div className="flex justify-between items-center mb-5">
+                  <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                     {news.tag}
                   </span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Calendar size={14} /> {news.date}
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 font-medium">
+                    <Calendar size={13} className="text-zinc-900 dark:text-white" /> {news.date}
                   </span>
                 </div>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '12px', lineHeight: '1.4' }}>{news.title}</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>{news.summary}</p>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-3 leading-snug">{news.title}</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">{news.summary}</p>
               </div>
 
-              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-                <a href="#contacto" style={{ color: 'var(--color-accent)', fontWeight: '600', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <div className="mt-8 pt-5 border-t border-zinc-100 dark:border-zinc-800">
+                <a href="/#contacto" className="text-zinc-900 dark:text-white font-semibold text-sm inline-flex items-center gap-1.5 hover:underline">
                   Leer más <ArrowUpRight size={16} />
                 </a>
               </div>
-            </article>
+            </motion.article>
           ))}
         </div>
 
@@ -65,3 +80,7 @@ export const News = () => {
     </section>
   );
 };
+
+
+
+

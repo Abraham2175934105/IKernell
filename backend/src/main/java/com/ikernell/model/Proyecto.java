@@ -30,7 +30,7 @@ public class Proyecto {
     private String estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_lider", nullable = false)
+    @JoinColumn(name = "lider_id", nullable = false)
     private Trabajador lider;
 
     @OneToMany(mappedBy = "proyecto", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -39,8 +39,8 @@ public class Proyecto {
     @ManyToMany
     @JoinTable(
         name = "proyecto_desarrollador",
-        joinColumns = @JoinColumn(name = "id_proyecto"),
-        inverseJoinColumns = @JoinColumn(name = "id_desarrollador")
+        joinColumns = @JoinColumn(name = "proyecto_id"),
+        inverseJoinColumns = @JoinColumn(name = "desarrollador_id")
     )
     private List<Trabajador> desarrolladores = new ArrayList<>();
 

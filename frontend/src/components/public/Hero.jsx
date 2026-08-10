@@ -1,91 +1,120 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, ShieldCheck, Zap, Activity } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export const Hero = () => {
   return (
-    <section style={{ paddingTop: '160px', paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
-      
-      {/* Glow Effects Background */}
-      <div style={{
-        position: 'absolute',
-        top: '10%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '600px',
-        height: '400px',
-        background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(6,182,212,0.08) 50%, rgba(0,0,0,0) 80%)',
-        filter: 'blur(60px)',
-        zIndex: 0,
-        pointerEvents: 'none'
-      }} />
-
-      <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+    <section className="pt-36 md:pt-48 pb-20 md:pb-28 relative overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10 text-center">
         
         {/* Badge */}
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 16px',
-          borderRadius: '9999px',
-          background: 'rgba(59, 130, 246, 0.1)',
-          border: '1px solid rgba(59, 130, 246, 0.25)',
-          color: 'var(--color-primary)',
-          fontSize: '0.85rem',
-          fontWeight: '600',
-          marginBottom: '28px'
-        }}>
-          <Sparkles size={16} /> Innovación en Desarrollo de Software & Análisis Predictivo
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -20, scale: 0.9 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs md:text-sm font-semibold mb-8 shadow-sm backdrop-blur-md"
+        >
+          <Sparkles size={16} className="text-blue-600 dark:text-blue-400" /> Innovación en Desarrollo de Software & Análisis Predictivo
+        </motion.div>
 
         {/* Main Title */}
-        <h1 style={{ fontSize: 'clamp(2.4rem, 5vw, 4rem)', lineHeight: '1.15', marginBottom: '24px', maxWidth: '900px', margin: '0 auto 24px auto' }}>
-          Construimos Soluciones Tecnológicas de <span className="gradient-text">Alto Impacto Empresarial</span>
-        </h1>
+        <motion.h1 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-900 dark:text-white tracking-tight leading-[1.1] mb-6 max-w-5xl mx-auto"
+        >
+          Construimos Soluciones Tecnológicas de <span className="underline decoration-zinc-900 dark:decoration-white decoration-4 underline-offset-8">Alto Impacto</span>
+        </motion.h1>
 
         {/* Subtitle */}
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '720px', margin: '0 auto 40px auto', fontWeight: '400' }}>
+        <motion.p 
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+          className="text-zinc-600 dark:text-zinc-400 text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-10 font-medium leading-relaxed"
+        >
           IKernell Soluciones Software combina arquitectura Java Spring Boot, interfaces reactivas en React y analítica predictiva mediante el Semáforo Inteligente de Riesgos.
-        </p>
+        </motion.p>
 
         {/* CTA Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <Link to="/contacto" className="gradient-button" style={{ fontSize: '1rem', padding: '14px 32px' }}>
+        <motion.div 
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-16 md:mb-24"
+        >
+          <Link to="/contacto" className="gradient-button w-full sm:w-auto text-base py-3.5 px-8 font-bold shadow-lg">
             Consultar Servicios <ArrowRight size={18} />
           </Link>
-          <a href="#servicios" className="outline-button" style={{ fontSize: '1rem', padding: '14px 32px' }}>
+          <a href="/#servicios" className="outline-button w-full sm:w-auto text-base py-3.5 px-8 font-bold">
             Ver Portafolio
           </a>
-        </div>
+        </motion.div>
 
         {/* Stat Highlights Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '20px',
-          marginTop: '80px'
-        }}>
-          <div className="glass-panel" style={{ padding: '24px', textAlign: 'left' }}>
-            <Zap size={28} color="var(--color-primary)" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>N-Capas REST</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Desacoplamiento total entre Frontend React y Backend Java (RNF-01).</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left">
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+            className="glass-card flex flex-col justify-between p-6 md:p-8"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-5 text-zinc-900 dark:text-white shadow-sm">
+                <Zap size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">N-Capas REST</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">Desacoplamiento total entre Frontend React y Backend Java (RNF-01).</p>
+            </div>
+          </motion.div>
 
-          <div className="glass-panel" style={{ padding: '24px', textAlign: 'left' }}>
-            <Activity size={28} color="var(--color-accent)" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>Semáforo Predictivo</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Monitoreo en tiempo real de errores e interrupciones (RF-25).</p>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 35, scale: 0.98 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+            className="glass-card flex flex-col justify-between p-6 md:p-8 border-2 border-zinc-900 dark:border-zinc-300 shadow-xl shadow-zinc-300/30 dark:shadow-none"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center mb-5 shadow-md">
+                <Activity size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Semáforo Predictivo</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">Monitoreo en tiempo real de errores e interrupciones (RF-25).</p>
+            </div>
+          </motion.div>
 
-          <div className="glass-panel" style={{ padding: '24px', textAlign: 'left' }}>
-            <ShieldCheck size={28} color="var(--color-emerald)" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>Seguridad BCrypt</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Sesiones JWT stateless y encriptación de grado militar (RNF-09/10).</p>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
+            className="glass-card flex flex-col justify-between p-6 md:p-8"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-5 text-zinc-900 dark:text-white shadow-sm">
+                <ShieldCheck size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Seguridad BCrypt</h3>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">Sesiones JWT stateless y encriptación de grado militar (RNF-09/10).</p>
+            </div>
+          </motion.div>
+
         </div>
 
       </div>
     </section>
   );
 };
+
+
+
+
