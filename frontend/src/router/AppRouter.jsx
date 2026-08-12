@@ -3,9 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
-import { Navbar } from '../components/layout/Navbar';
-import { Footer } from '../components/layout/Footer';
-import { DynamicBackground } from '../components/layout/DynamicBackground';
+import { PublicLayout } from '../components/layout/PublicLayout';
 
 // Lazy Loading de rutas
 const LandingPage = lazy(() => import('../pages/public/LandingPage').then(m => ({ default: m.LandingPage })));
@@ -25,49 +23,42 @@ const PageLoader = () => (
   </div>
 );
 
-
 export const AppRouter = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <div className="min-h-screen flex flex-col relative">
-            <DynamicBackground />
-            <Navbar />
-            <main className="flex-1">
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {/* Módulo Público */}
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/contacto" element={<ContactPage />} />
-                  <Route path="/faqs" element={<FaqPage />} />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Módulo Público (con Navbar & Footer corporativo) */}
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/contacto" element={<ContactPage />} />
+                <Route path="/faqs" element={<FaqPage />} />
+                <Route path="/login" element={<LoginPage />} />
+              </Route>
 
-                  {/* Autenticación Corporativa */}
-                  <Route path="/login" element={<LoginPage />} />
+              {/* Rutas Privadas Protegidas por Rol (RBAC con DashboardLayout) */}
+              <Route element={<ProtectedRoute allowedRoles={['COORDINADOR']} />}>
+                <Route path="/coordinador" element={<CoordinadorDashboard />} />
+              </Route>
 
-                  {/* Rutas Privadas Protegidas por Rol (RBAC) */}
-                  <Route element={<ProtectedRoute allowedRoles={['COORDINADOR']} />}>
-                    <Route path="/coordinador" element={<CoordinadorDashboard />} />
-                  </Route>
+              <Route element={<ProtectedRoute allowedRoles={['COORDINADOR', 'LIDER']} />}>
+                <Route path="/lider" element={<LiderDashboard />} />
+              </Route>
 
-                  <Route element={<ProtectedRoute allowedRoles={['COORDINADOR', 'LIDER']} />}>
-                    <Route path="/lider" element={<LiderDashboard />} />
-                  </Route>
+              <Route element={<ProtectedRoute allowedRoles={['COORDINADOR', 'LIDER', 'DESARROLLADOR']} />}>
+                <Route path="/desarrollador" element={<DesarrolladorDashboard />} />
+              </Route>
 
-                  <Route element={<ProtectedRoute allowedRoles={['COORDINADOR', 'LIDER', 'DESARROLLADOR']} />}>
-                    <Route path="/desarrollador" element={<DesarrolladorDashboard />} />
-                  </Route>
-
-                  {/* Fallback */}
-                  <Route path="*" element={<LandingPage />} />
-                </Routes>
-              </Suspense>
-            </main>
-            <Footer />
-          </div>
+              {/* Fallback */}
+              <Route path="*" element={<LandingPage />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
   );
 };
+
 
