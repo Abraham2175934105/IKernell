@@ -19,6 +19,7 @@ mis documentos/
 *.doc
 *.docx
 *.pdf
+!frontend/public/docs/*.pdf
 *.xls
 *.xlsx
 *.ppt
