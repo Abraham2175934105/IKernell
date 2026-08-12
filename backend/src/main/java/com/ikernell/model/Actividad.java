@@ -4,20 +4,26 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "actividad")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Actividad {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_actividad")
     private Long idActividad;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "actividades", "errores", "interrupciones", "proyecto"})
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "etapa_id", nullable = false)
     private Etapa etapa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "actividades", "errores", "interrupciones", "passwordHash", "proyectosLiderados"})
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "desarrollador_id", nullable = false)
     private Trabajador desarrollador;
+
+
 
     @Column(name = "descripcion", nullable = false, columnDefinition = "TEXT")
     private String descripcion;

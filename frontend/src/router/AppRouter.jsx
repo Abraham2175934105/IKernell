@@ -17,13 +17,14 @@ const LiderDashboard = lazy(() => import('../pages/lider/LiderDashboard').then(m
 const DesarrolladorDashboard = lazy(() => import('../pages/desarrollador/DesarrolladorDashboard').then(m => ({ default: m.DesarrolladorDashboard })));
 
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
+  <div className="flex items-center justify-center min-h-[65vh]">
     <div className="flex flex-col items-center gap-4">
-      <div className="w-12 h-12 border-4 border-black/20 dark:border-white/20 border-t-black dark:border-t-white rounded-full animate-spin" />
-      <span className="text-text-muted text-sm font-medium tracking-wide">Cargando módulo...</span>
+      <div className="w-10 h-10 border-3 border-zinc-200 dark:border-zinc-800 border-t-zinc-900 dark:border-t-white rounded-full animate-spin shadow-sm" />
+      <span className="text-zinc-600 dark:text-zinc-400 text-xs font-semibold uppercase tracking-wider">Cargando módulo...</span>
     </div>
   </div>
 );
+
 
 export const AppRouter = () => {
   return (

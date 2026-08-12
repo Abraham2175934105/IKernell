@@ -93,4 +93,15 @@ public class DesarrolladorService {
                 .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con email: " + emailDesarrollador));
         return actividadRepository.findByDesarrollador(desarrollador);
     }
+
+    /**
+     * Consulta paginada de actividades asignadas al desarrollador.
+     */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Actividad> obtenerMisActividadesPaginado(String emailDesarrollador, org.springframework.data.domain.Pageable pageable) {
+        Trabajador desarrollador = trabajadorRepository.findByEmail(emailDesarrollador)
+                .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con email: " + emailDesarrollador));
+        return actividadRepository.findByDesarrollador(desarrollador, pageable);
+    }
 }
+

@@ -59,6 +59,22 @@ public class LiderController {
         return ResponseEntity.ok(liderService.listarProyectosPorLider(idLider));
     }
 
+    @GetMapping("/lideres/{idLider}/proyectos/paginado")
+    @Operation(summary = "Proyectos por Líder Paginados", description = "Retorna el listado paginado de proyectos asignados al líder (Params: ?page=0&size=10&sort=nombre,asc)")
+    public ResponseEntity<org.springframework.data.domain.Page<Proyecto>> listarProyectosPorLiderPaginado(
+            @PathVariable Long idLider,
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "nombre") org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(liderService.listarProyectosPorLiderPaginado(idLider, pageable));
+    }
+
+    @GetMapping("/proyectos/paginado")
+    @Operation(summary = "Todos los Proyectos Paginados", description = "Retorna el listado general paginado de proyectos (Params: ?page=0&size=10&sort=fechaInicio,desc)")
+    public ResponseEntity<org.springframework.data.domain.Page<Proyecto>> listarTodosProyectosPaginado(
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "fechaInicio") org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(liderService.listarTodosProyectosPaginado(pageable));
+    }
+
+
     @PostMapping("/proyectos/{idProyecto}/etapas")
     @Operation(summary = "Registrar Etapa WBS", description = "Agrega una nueva fase o etapa al Desglose Estructural del Proyecto (RF-15)")
     public ResponseEntity<Etapa> registrarEtapa(@PathVariable Long idProyecto, @Valid @RequestBody Etapa etapa) {

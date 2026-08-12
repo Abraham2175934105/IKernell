@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { ShieldAlert, AlertTriangle, CheckCircle, Clock, Bug, RefreshCw, FileText, Send, Zap, X } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useApi } from '../../hooks/useApi';
 import toast from 'react-hot-toast';
 
-export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], interrupciones = [] }) => {
+const SemaforoInteligenteComponent = ({ proyectoId, proyectoNombre, errores = [], interrupciones = [] }) => {
+
   const api = useApi();
   const [exporting, setExporting] = useState(false);
   const [etlResult, setEtlResult] = useState(null);
@@ -260,4 +261,4 @@ export const SemaforoInteligente = ({ proyectoId, proyectoNombre, errores = [], 
   );
 };
 
-
+export const SemaforoInteligente = memo(SemaforoInteligenteComponent);

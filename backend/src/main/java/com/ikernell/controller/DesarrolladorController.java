@@ -43,6 +43,16 @@ public class DesarrolladorController {
         return ResponseEntity.ok(desarrolladorService.obtenerMisActividades(email));
     }
 
+    @GetMapping("/mis-actividades/paginado")
+    @Operation(summary = "Obtener actividades asignadas paginadas", description = "Devuelve el listado paginado de actividades del desarrollador (Params: ?page=0&size=10&sort=estado,asc)")
+    public ResponseEntity<org.springframework.data.domain.Page<Actividad>> obtenerMisActividadesPaginado(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "estado") org.springframework.data.domain.Pageable pageable) {
+        String email = userDetails.getUsername();
+        return ResponseEntity.ok(desarrolladorService.obtenerMisActividadesPaginado(email, pageable));
+    }
+
+
     @PostMapping("/errores")
     @Operation(summary = "Reportar un Error detectado", description = "Registra un error en una fase WBS específica con grado de severidad (RF-22)")
     @ApiResponses({

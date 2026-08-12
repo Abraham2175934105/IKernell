@@ -6,16 +6,20 @@ import java.util.List;
 
 @Entity
 @Table(name = "etapa")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Etapa {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_etapa")
     private Long idEtapa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "etapas", "desarrolladores"})
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "proyecto_id", nullable = false)
     private Proyecto proyecto;
+
 
     @Column(name = "nombre_etapa", nullable = false, length = 100)
     private String nombreEtapa;
@@ -23,14 +27,18 @@ public class Etapa {
     @Column(name = "estado", nullable = false, length = 20)
     private String estado;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "etapa", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Actividad> actividades = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "etapa", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Error> errores = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "etapa", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Interrupcion> interrupciones = new ArrayList<>();
+
 
     // Constructores
     public Etapa() {}

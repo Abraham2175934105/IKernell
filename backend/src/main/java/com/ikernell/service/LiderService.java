@@ -131,4 +131,23 @@ public class LiderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + idLider));
         return proyectoRepository.findByLider(lider);
     }
+
+    /**
+     * Listado paginado de proyectos por líder para alta concurrencia.
+     */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Proyecto> listarProyectosPorLiderPaginado(Long idLider, org.springframework.data.domain.Pageable pageable) {
+        Trabajador lider = trabajadorRepository.findById(idLider)
+                .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + idLider));
+        return proyectoRepository.findByLider(lider, pageable);
+    }
+
+    /**
+     * Listado paginado general de proyectos.
+     */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Proyecto> listarTodosProyectosPaginado(org.springframework.data.domain.Pageable pageable) {
+        return proyectoRepository.findAll(pageable);
+    }
 }
+

@@ -5,20 +5,26 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "error")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Error {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_error")
     private Long idError;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "actividades", "errores", "interrupciones", "proyecto"})
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "etapa_id", nullable = false)
     private Etapa etapa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "actividades", "errores", "interrupciones", "passwordHash", "proyectosLiderados"})
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "desarrollador_id", nullable = false)
     private Trabajador desarrollador;
+
+
 
     @Column(name = "tipo_error", nullable = false, length = 100)
     private String tipoError;

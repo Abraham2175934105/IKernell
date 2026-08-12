@@ -3,18 +3,26 @@ package com.ikernell.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.task.TaskRejectedException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Manejador global de excepciones para toda la API (Auditoría Senior de Calidad).
@@ -88,6 +96,43 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja JSON malformado o payload no legible.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Cuerpo de la Petición Inválido",
+                "El payload JSON no pudo ser deserializado o presenta un formato inválido.",
+                request.getRequestURI()
+        );
+
+        log.warn("JSON no legible (400) en URI {}", request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Maneja parámetros obligatorios ausentes en QueryParams.
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiErrorResponse> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException ex, HttpServletRequest request) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Parámetro Requerido Ausente",
+                String.format("El parámetro de consulta obligatorio '%s' de tipo '%s' no fue suministrado.",
+                        ex.getParameterName(), ex.getParameterType()),
+                request.getRequestURI()
+        );
+
+        log.warn("Parámetro ausente (400) en URI {}: {}", request.getRequestURI(), ex.getParameterName());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
      * Maneja tipos incorrectos en parámetros o PathVariables.
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -106,6 +151,23 @@ public class GlobalExceptionHandler {
 
         log.warn("Tipo de parámetro inválido (400) en URI {}", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Maneja métodos HTTP no permitidos (ej. POST en endpoint GET).
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiErrorResponse> handleHttpRequestMethodNotSupportedException(
+            HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.METHOD_NOT_ALLOWED.value(),
+                "Método HTTP No Permitido",
+                String.format("El método '%s' no está soportado para este endpoint.", ex.getMethod()),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
     }
 
     /**
@@ -145,6 +207,60 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja saturación de base de datos o pool de conexiones durante pruebas de estrés.
+     */
+    @ExceptionHandler({CannotCreateTransactionException.class, QueryTimeoutException.class})
+    public ResponseEntity<ApiErrorResponse> handleDatabaseStressExceptions(
+            Exception ex, HttpServletRequest request) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                "Servicio Temporalmente Saturado",
+                "El pool de conexiones de base de datos ha alcanzado su límite de concurrencia. Por favor, reintente en unos instantes.",
+                request.getRequestURI()
+        );
+
+        log.error("Saturación de base de datos / Pool HikariCP agotado (503) en URI {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+    }
+
+    /**
+     * Maneja desbordamiento de colas en hilos asíncronos (@Async) bajo estrés extremo.
+     */
+    @ExceptionHandler({TaskRejectedException.class, RejectedExecutionException.class})
+    public ResponseEntity<ApiErrorResponse> handleTaskRejectedException(
+            Exception ex, HttpServletRequest request) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                "Límite de Procesamiento Asíncrono Excedido",
+                "El servidor se encuentra procesando la capacidad máxima de tareas en segundo plano. Intente nuevamente en breve.",
+                request.getRequestURI()
+        );
+
+        log.error("Cola asíncrona desbordada (429) en URI {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+    }
+
+    /**
+     * Maneja errores generales de acceso a datos JPA / SQL.
+     */
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiErrorResponse> handleDataAccessException(
+            DataAccessException ex, HttpServletRequest request) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Error en Capa de Persistencia",
+                "Ocurrió un error al ejecutar la transacción en la base de datos.",
+                request.getRequestURI()
+        );
+
+        log.error("Error JPA / DataAccess (500) en URI {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    /**
      * Captura cualquier otra excepción no manejada para prevenir caídas y filtrado de StackTrace.
      */
     @ExceptionHandler(Exception.class)
@@ -162,3 +278,4 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }
+

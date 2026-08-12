@@ -7,7 +7,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "proyecto")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Proyecto {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,13 +31,17 @@ public class Proyecto {
     @Column(name = "estado", nullable = false, length = 20)
     private String estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "proyectosLiderados", "actividades", "errores", "interrupciones"})
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "lider_id", nullable = false)
     private Trabajador lider;
 
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "proyecto", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Etapa> etapas = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToMany
     @JoinTable(
         name = "proyecto_desarrollador",
@@ -43,6 +49,7 @@ public class Proyecto {
         inverseJoinColumns = @JoinColumn(name = "desarrollador_id")
     )
     private List<Trabajador> desarrolladores = new ArrayList<>();
+
 
     // Constructores
     public Proyecto() {}

@@ -7,7 +7,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "trabajador")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Trabajador {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,6 +47,7 @@ public class Trabajador {
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -52,17 +55,22 @@ public class Trabajador {
     private Boolean estado = true;
 
     // Relaciones inversas (opcionales)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "lider")
     private List<Proyecto> proyectosLiderados = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "desarrollador")
     private List<Actividad> actividades = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "desarrollador")
     private List<Error> errores = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "desarrollador")
     private List<Interrupcion> interrupciones = new ArrayList<>();
+
 
     // Constructores
     public Trabajador() {}
