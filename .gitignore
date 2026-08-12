@@ -4,11 +4,28 @@
 # ============================================================
 
 # ==========================================
-# REGLA INQUEBRANTABLE: DOCUMENTOS CONFIDENCIALES
-# Esta carpeta contiene información sensible y
-# BAJO NINGUNA CIRCUNSTANCIA debe ser rastreada por Git.
+# REGLA INQUEBRANTABLE: DOCUMENTOS CONFIDENCIALES Y PRIVADOS
+# Estas carpetas y archivos contienen información sensible y
+# BAJO NINGUNA CIRCUNSTANCIA deben ser rastreados por Git (RNF-11).
 # ==========================================
 ARCHIVOS SISTEMA/
+ARCHIVOS SISTEMA/**
+Documentos/
+documentos/
+Documents/
+documents/
+Mis Documentos/
+mis documentos/
+*.doc
+*.docx
+*.pdf
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.odt
+*.rtf
+
 
 # ==========================================
 # BACKEND — Spring Boot / Java
