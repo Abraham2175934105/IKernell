@@ -4,22 +4,81 @@ import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { 
   Users, UserPlus, UserX, Search, Shield, CheckCircle2, 
-  Mail, Phone, Clock, FileText, AlertCircle, Sparkles, Filter, X 
+  Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
+  Loader2, RefreshCw, Inbox
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Variantes de animación de alto rendimiento y ultra rápidas (0.25s)
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.02
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.25,
+      ease: [0.25, 0.1, 0.25, 1.0]
+    }
+  }
+};
+
+/* ─── Skeleton Component ─── */
+const SkeletonRow = () => (
+  <tr className="animate-pulse">
+    <td className="p-4"><div className="h-4 w-20 bg-zinc-200 dark:bg-zinc-700 rounded" /></td>
+    <td className="p-4">
+      <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-700 rounded mb-1" />
+      <div className="h-3 w-40 bg-zinc-200 dark:bg-zinc-700 rounded" />
+    </td>
+    <td className="p-4">
+      <div className="h-4 w-28 bg-zinc-200 dark:bg-zinc-700 rounded mb-1" />
+      <div className="h-3 w-36 bg-zinc-200 dark:bg-zinc-700 rounded" />
+    </td>
+    <td className="p-4"><div className="h-5 w-24 bg-zinc-200 dark:bg-zinc-700 rounded-full" /></td>
+    <td className="p-4"><div className="h-5 w-20 bg-zinc-200 dark:bg-zinc-700 rounded-full" /></td>
+    <td className="p-4 text-right"><div className="h-7 w-20 bg-zinc-200 dark:bg-zinc-700 rounded-xl ml-auto" /></td>
+  </tr>
+);
+
+// Estado vacío cuando no hay registros para mostrar
+const EmptyState = ({ icon: Icon, title, description, action }) => (
+  <div className="flex flex-col items-center justify-center py-16 px-6 text-center w-full">
+    <div className="w-20 h-20 rounded-3xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-6">
+      <Icon size={36} className="text-zinc-400 dark:text-zinc-500" />
+    </div>
+    <h3 className="text-lg font-bold text-zinc-700 dark:text-zinc-300 mb-2">{title}</h3>
+    <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md leading-relaxed mb-4">{description}</p>
+    {action && action}
+  </div>
+);
 
 export const CoordinadorDashboard = () => {
   const { user } = useAuth();
   const api = useApi();
 
-  const [activeTab, setActiveTab] = useState('personal'); // 'personal' | 'solicitudes'
+  // Estados locales
+  const [activeTab, setActiveTab] = useState('personal');
   const [trabajadores, setTrabajadores] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [togglingId, setTogglingId] = useState(null);
+  const [togglingSolicitudId, setTogglingSolicitudId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Formulario nuevo trabajador
   const [newTrabajador, setNewTrabajador] = useState({
     identificacion: '',
     nombre: '',
@@ -27,110 +86,155 @@ export const CoordinadorDashboard = () => {
     email: '',
     profesion: 'Ingeniero de Software',
     especialidad: 'Frontend React / UI/UX',
-    rol: 'DESARROLLADOR'
+    rol: 'DESARROLLADOR',
+    passwordHash: 'abrah1234'
   });
+  const [formErrors, setFormErrors] = useState({});
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
-
+  // Peticiones API
   const cargarDatos = useCallback(async () => {
     try {
       setLoading(true);
-      await new Promise(r => setTimeout(r, 600));
-      
-      // Personal inicial
-      setTrabajadores([
-        { idTrabajador: 1, identificacion: '10203040', nombre: 'Carlos', apellido: 'Mendoza', profesion: 'Ingeniero de Software', especialidad: 'Backend Java / Spring Boot', rol: 'LIDER', email: 'carlos.lider@ikernell.org', estado: true },
-        { idTrabajador: 2, identificacion: '50607080', nombre: 'Ana', apellido: 'Gómez', profesion: 'Ingeniera de Sistemas', especialidad: 'Frontend React / UI/UX', rol: 'DESARROLLADOR', email: 'ana.dev@ikernell.org', estado: true },
-        { idTrabajador: 3, identificacion: '90807060', nombre: 'Roberto', apellido: 'Silva', profesion: 'Arquitecto de Datos', especialidad: 'PostgreSQL & ETL', rol: 'COORDINADOR', email: 'roberto.coord@ikernell.org', estado: true },
-        { idTrabajador: 4, identificacion: '11223344', nombre: 'Felipe', apellido: 'Torres', profesion: 'Analista QA', especialidad: 'Pruebas de Estrés & Automatización', rol: 'DESARROLLADOR', email: 'felipe.qa@ikernell.org', estado: false }
+      const [trabajadoresRes, solicitudesRes] = await Promise.all([
+        api.get('/coordinador/trabajadores'),
+        api.get('/coordinador/solicitudes')
       ]);
 
-      // Solicitudes Web de contacto (Atención de consultas públicas)
-      setSolicitudes([
-        { id: 1, nombre: 'Empresa Banco Sur Brasil', email: 'contacto@bancobrasil.com', telefono: '+55 11 98765-4321', asunto: 'Integración de API de Pagos Segura', mensaje: 'Deseamos coordinar la exportación del módulo de métricas ETL y consultoría de arquitectura.', fecha: 'Hace 2 horas', estado: 'PENDIENTE' },
-        { id: 2, nombre: 'Tech Solutions Latam', email: 'director@techlatam.io', telefono: '+57 300 123 4567', asunto: 'Consultoría en Spring Boot 3 & JWT', mensaje: 'Requerimos auditoría de ciberseguridad y stress testing para nuestra infraestructura.', fecha: 'Ayer', estado: 'ATENDIDA' }
-      ]);
+      setTrabajadores(Array.isArray(trabajadoresRes) ? trabajadoresRes : []);
+      setSolicitudes(Array.isArray(solicitudesRes) ? solicitudesRes : []);
     } catch (err) {
-      toast.error('Error al sincronizar datos del Coordinador.');
+      console.error('Error cargando datos del coordinador:', err);
+      toast.error('Error al sincronizar datos desde PostgreSQL.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [api]);
 
-  const handleInhabilitar = (id) => {
-    const confirm = window.confirm('¿Está seguro de inhabilitar a este trabajador? No podrá iniciar sesión pero se conservará su historial de actividades.');
-    if (!confirm) return;
+  // Efectos (Hooks)
+  useEffect(() => {
+    cargarDatos();
+  }, [cargarDatos]);
 
-    setTrabajadores(prev => prev.map(t => t.idTrabajador === id ? { ...t, estado: !t.estado } : t));
-    toast.success('Estado del trabajador actualizado.');
-  };
-
-  const handleCrearTrabajador = (e) => {
-    e.preventDefault();
-    if (!newTrabajador.nombre || !newTrabajador.email || !newTrabajador.identificacion) {
-      toast.error('Por favor complete los campos obligatorios.');
-      return;
+  // Manejadores de eventos (Handlers)
+  const handleInhabilitar = async (id) => {
+    try {
+      setTogglingId(id);
+      const updated = await api.patch(`/coordinador/trabajadores/${id}/estado`);
+      
+      setTrabajadores(prev => prev.map(t => t.idTrabajador === id ? updated : t));
+      const estadoTexto = updated.estado ? 'Habilitado' : 'Inhabilitado';
+      toast.success(`Trabajador marcado como ${estadoTexto} en la base de datos.`);
+    } catch (err) {
+      console.error('Error alternando estado del trabajador:', err);
+      toast.error(err.message || 'Error al actualizar el estado del trabajador.');
+    } finally {
+      setTogglingId(null);
     }
-
-    const nuevo = {
-      ...newTrabajador,
-      idTrabajador: Date.now(),
-      estado: true
-    };
-
-    setTrabajadores([nuevo, ...trabajadores]);
-    toast.success(`Trabajador ${nuevo.nombre} registrado con éxito.`);
-    setShowCreateModal(false);
-    setNewTrabajador({
-      identificacion: '',
-      nombre: '',
-      apellido: '',
-      email: '',
-      profesion: 'Ingeniero de Software',
-      especialidad: 'Frontend React / UI/UX',
-      rol: 'DESARROLLADOR'
-    });
   };
 
-  const handleToggleEstadoSolicitud = (id) => {
-    setSolicitudes(prev => prev.map(s => {
-      if (s.id === id) {
-        const nuevoEstado = s.estado === 'PENDIENTE' ? 'ATENDIDA' : 'PENDIENTE';
-        toast.success(`Solicitud marcada como ${nuevoEstado}.`);
-        return { ...s, estado: nuevoEstado };
-      }
-      return s;
-    }));
+  const validarFormulario = () => {
+    const errors = {};
+    if (!newTrabajador.identificacion.trim()) errors.identificacion = 'La identificación es obligatoria';
+    if (!newTrabajador.nombre.trim()) errors.nombre = 'El nombre es obligatorio';
+    if (!newTrabajador.apellido.trim()) errors.apellido = 'El apellido es obligatorio';
+    if (!newTrabajador.email.trim() || !newTrabajador.email.includes('@')) {
+      errors.email = 'Ingrese un correo electrónico corporativo válido';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCrearTrabajador = async (e) => {
+    e.preventDefault();
+    if (!validarFormulario()) return;
+
+    try {
+      setSubmitting(true);
+      const nuevo = await api.post('/coordinador/trabajadores', {
+        ...newTrabajador,
+        identificacion: newTrabajador.identificacion.trim(),
+        nombre: newTrabajador.nombre.trim(),
+        apellido: newTrabajador.apellido.trim(),
+        email: newTrabajador.email.trim(),
+        profesion: newTrabajador.profesion.trim(),
+        especialidad: newTrabajador.especialidad.trim(),
+        rol: newTrabajador.rol,
+        passwordHash: 'abrah1234'
+      });
+
+      setTrabajadores([nuevo, ...trabajadores]);
+      toast.success(`Trabajador ${nuevo.nombre} ${nuevo.apellido} registrado exitosamente en PostgreSQL.`);
+      setShowCreateModal(false);
+      setNewTrabajador({
+        identificacion: '',
+        nombre: '',
+        apellido: '',
+        email: '',
+        profesion: 'Ingeniero de Software',
+        especialidad: 'Frontend React / UI/UX',
+        rol: 'DESARROLLADOR',
+        passwordHash: 'abrah1234'
+      });
+      setFormErrors({});
+    } catch (err) {
+      console.error('Error creando trabajador:', err);
+      toast.error(err.message || 'Error al registrar el trabajador en el sistema.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleToggleEstadoSolicitud = async (idSolicitud) => {
+    try {
+      setTogglingSolicitudId(idSolicitud);
+      const updated = await api.patch(`/coordinador/solicitudes/${idSolicitud}/atender`);
+      
+      setSolicitudes(prev => prev.map(s => s.idSolicitud === idSolicitud ? updated : s));
+      const estadoTxt = updated.atendido ? 'ATENDIDA' : 'PENDIENTE';
+      toast.success(`Solicitud marcada como ${estadoTxt}.`);
+    } catch (err) {
+      console.error('Error actualizando solicitud:', err);
+      toast.error(err.message || 'Error al actualizar el estado de la solicitud.');
+    } finally {
+      setTogglingSolicitudId(null);
+    }
   };
 
   const filteredTrabajadores = trabajadores.filter(t => 
-    t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.identificacion.includes(searchTerm) ||
-    t.especialidad.toLowerCase().includes(searchTerm.toLowerCase())
+    (t.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (t.apellido || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (t.identificacion || '').includes(searchTerm) ||
+    (t.especialidad || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const activosCount = trabajadores.filter(t => t.estado).length;
-  const solicitudesPendientes = solicitudes.filter(s => s.estado === 'PENDIENTE').length;
+  const solicitudesPendientes = solicitudes.filter(s => !s.atendido).length;
 
   return (
     <DashboardLayout 
       activeTab={activeTab} 
       setActiveTab={setActiveTab}
       customMetrics={{
-        metric1: `Personal Activo: ${activosCount}`,
-        metric2: `Solicitudes Web: ${solicitudesPendientes} Pendientes`
+        metric1: loading ? 'Cargando...' : `Personal Activo: ${activosCount}`,
+        metric2: loading ? '...' : `Solicitudes: ${solicitudesPendientes} Pendientes`
       }}
     >
       
       {/* 1. SECCIÓN: GESTIÓN DE PERSONAL */}
       {activeTab === 'personal' && (
-        <div className="space-y-6 animate-fade-in">
+        <motion.div 
+          key="personal"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-6"
+        >
           
           {/* Header de la Vista */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
+          >
             <div>
               <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
                 Administración y Talento Humano
@@ -139,21 +243,31 @@ export const CoordinadorDashboard = () => {
                 Gestión Centralizada de Personal
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                Alta, edición y control de acceso lógico para Líderes y Desarrolladores (RF-08 a RF-13)
+                Alta, edición y control de acceso lógico para Líderes y Desarrolladores — Persistencia directa en PostgreSQL
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowCreateModal(true)}
-              className="gradient-button text-xs py-3 px-5 font-bold inline-flex items-center gap-2 cursor-pointer shadow-md"
-            >
-              <UserPlus size={16} /> Registrar Trabajador
-            </button>
-          </div>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={cargarDatos}
+                disabled={loading}
+                className="outline-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+              >
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refrescar
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(true)}
+                className="gradient-button text-xs py-2.5 px-5 font-bold inline-flex items-center gap-2 cursor-pointer shadow-md"
+              >
+                <UserPlus size={16} /> Registrar Trabajador
+              </button>
+            </div>
+          </motion.div>
 
           {/* Barra de Búsqueda y Filtro */}
-          <div className="relative">
+          <motion.div variants={itemVariants} className="relative">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
@@ -162,10 +276,13 @@ export const CoordinadorDashboard = () => {
               placeholder="Filtrar por nombre, identificación, especialidad o rol..."
               className="input-field pl-11 py-3 text-sm bg-white dark:bg-zinc-900"
             />
-          </div>
+          </motion.div>
 
           {/* Tabla de Personal */}
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
+          <motion.div 
+            variants={itemVariants}
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm"
+          >
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-[0.65rem] uppercase tracking-wider font-extrabold text-zinc-500 dark:text-zinc-400">
@@ -179,7 +296,37 @@ export const CoordinadorDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60 font-medium">
-                  {filteredTrabajadores.map(t => (
+                  {loading && (
+                    <>
+                      <SkeletonRow />
+                      <SkeletonRow />
+                      <SkeletonRow />
+                      <SkeletonRow />
+                    </>
+                  )}
+
+                  {!loading && filteredTrabajadores.length === 0 && (
+                    <tr>
+                      <td colSpan={6}>
+                        <EmptyState
+                          icon={Inbox}
+                          title="No se encontraron empleados"
+                          description={searchTerm ? "No hay trabajadores que coincidan con los criterios de búsqueda." : "Aún no hay personal registrado en la base de datos."}
+                          action={
+                            <button
+                              type="button"
+                              onClick={() => setShowCreateModal(true)}
+                              className="gradient-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5"
+                            >
+                              <UserPlus size={14} /> Registrar primer empleado
+                            </button>
+                          }
+                        />
+                      </td>
+                    </tr>
+                  )}
+
+                  {!loading && filteredTrabajadores.map(t => (
                     <tr key={t.idTrabajador} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 transition-colors">
                       <td className="p-4 font-mono font-bold text-zinc-800 dark:text-zinc-200">{t.identificacion}</td>
                       <td className="p-4">
@@ -187,8 +334,8 @@ export const CoordinadorDashboard = () => {
                         <div className="text-zinc-500 dark:text-zinc-400 text-[0.7rem]">{t.email}</div>
                       </td>
                       <td className="p-4">
-                        <div className="font-semibold text-zinc-800 dark:text-zinc-200">{t.profesion}</div>
-                        <div className="text-zinc-500 text-[0.7rem]">{t.especialidad}</div>
+                        <div className="font-semibold text-zinc-800 dark:text-zinc-200">{t.profesion || 'No especificada'}</div>
+                        <div className="text-zinc-500 text-[0.7rem]">{t.especialidad || 'General'}</div>
                       </td>
                       <td className="p-4">
                         <span className={`inline-block text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-md border ${
@@ -212,13 +359,17 @@ export const CoordinadorDashboard = () => {
                       <td className="p-4 text-right">
                         <button
                           type="button"
+                          disabled={togglingId === t.idTrabajador}
                           onClick={() => handleInhabilitar(t.idTrabajador)}
-                          className={`text-xs py-1.5 px-3 rounded-xl font-bold border transition-all cursor-pointer ${
+                          className={`text-xs py-1.5 px-3 rounded-xl font-bold border transition-all cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50 ${
                             t.estado
                               ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800'
                               : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
                           }`}
                         >
+                          {togglingId === t.idTrabajador ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : null}
                           {t.estado ? 'Inhabilitar' : 'Reactivar'}
                         </button>
                       </td>
@@ -227,193 +378,256 @@ export const CoordinadorDashboard = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+          </motion.div>
 
-        </div>
+        </motion.div>
       )}
 
       {/* 2. SECCIÓN: SOLICITUDES DE CONTACTO WEB */}
       {activeTab === 'solicitudes' && (
-        <div className="space-y-6 animate-fade-in">
+        <motion.div 
+          key="solicitudes"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-6"
+        >
           
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
-              Atención al Cliente Corporativo
-            </span>
-            <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-              Bandeja de Solicitudes de Contacto Web
-            </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-              Consultas recibidas en tiempo real a través del formulario público (ContactForm.jsx)
-            </p>
-          </div>
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
+          >
+            <div>
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
+                Atención al Cliente Corporativo
+              </span>
+              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                Bandeja de Solicitudes de Contacto Web
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                Consultas recibidas en tiempo real desde el formulario público — Persistencia en PostgreSQL
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {solicitudes.map(sol => (
+            <button
+              type="button"
+              onClick={cargarDatos}
+              disabled={loading}
+              className="outline-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refrescar
+            </button>
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {loading && (
+              <>
+                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-48" />
+                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-48" />
+              </>
+            )}
+
+            {!loading && solicitudes.length === 0 && (
+              <div className="col-span-full">
+                <EmptyState
+                  icon={Inbox}
+                  title="No hay solicitudes de contacto"
+                  description="Cuando los visitantes envíen consultas a través del portal público, aparecerán aquí para su gestión y seguimiento."
+                />
+              </div>
+            )}
+
+            {!loading && solicitudes.map(sol => (
               <div 
-                key={sol.id} 
-                className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between shadow-sm"
+                key={sol.idSolicitud} 
+                className={`bg-white dark:bg-zinc-900 p-6 rounded-3xl border flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 ${
+                  sol.atendido 
+                    ? 'border-zinc-200 dark:border-zinc-800/80 opacity-90' 
+                    : 'border-amber-300 dark:border-amber-700/80 ring-1 ring-amber-100 dark:ring-amber-950/20'
+                }`}
               >
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <span className={`text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full border ${
-                      sol.estado === 'PENDIENTE'
+                      !sol.atendido
                         ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
                         : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
                     }`}>
-                      {sol.estado}
+                      {sol.atendido ? 'ATENDIDA' : 'PENDIENTE'}
                     </span>
                     <span className="text-[0.65rem] text-zinc-400 flex items-center gap-1 font-semibold">
-                      <Clock size={12} /> {sol.fecha}
+                      <Clock size={12} /> {sol.fechaEnvio ? new Date(sol.fechaEnvio).toLocaleString() : 'Reciente'}
                     </span>
                   </div>
 
                   <h3 className="text-base font-extrabold text-zinc-900 dark:text-white mb-1">{sol.asunto}</h3>
-                  <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-3">{sol.nombre}</p>
+                  <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-3">{sol.nombreRemitente}</p>
                   
                   <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
                     "{sol.mensaje}"
                   </div>
 
                   <div className="flex flex-col gap-1 text-[0.7rem] text-zinc-500 font-medium mb-4">
-                    <div className="flex items-center gap-2"><Mail size={12} /> {sol.email}</div>
-                    <div className="flex items-center gap-2"><Phone size={12} /> {sol.telefono}</div>
+                    <div className="flex items-center gap-2"><Mail size={12} /> {sol.emailRemitente}</div>
+                    {sol.telefono && <div className="flex items-center gap-2"><Phone size={12} /> {sol.telefono}</div>}
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => handleToggleEstadoSolicitud(sol.id)}
-                  className="outline-button text-xs py-2 w-full font-bold cursor-pointer"
+                  disabled={togglingSolicitudId === sol.idSolicitud}
+                  onClick={() => handleToggleEstadoSolicitud(sol.idSolicitud)}
+                  className={`text-xs py-2 w-full font-bold cursor-pointer rounded-xl border transition-all inline-flex items-center justify-center gap-2 ${
+                    !sol.atendido
+                      ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 hover:opacity-90'
+                      : 'outline-button'
+                  }`}
                 >
-                  {sol.estado === 'PENDIENTE' ? 'Marcar como Atendida' : 'Reabrir Solicitud'}
+                  {togglingSolicitudId === sol.idSolicitud ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : null}
+                  {!sol.atendido ? 'Marcar como Atendida' : 'Reabrir Solicitud'}
                 </button>
               </div>
             ))}
-          </div>
+          </motion.div>
 
-        </div>
+        </motion.div>
       )}
 
       {/* Modal Registrar Trabajador */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl animate-scale-up">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
-                <UserPlus size={20} /> Registrar Nuevo Trabajador
-              </h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
+      <AnimatePresence>
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <UserPlus size={20} /> Registrar Nuevo Trabajador
+                </h3>
+                <button onClick={() => { setShowCreateModal(false); setFormErrors({}); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
 
-            <form onSubmit={handleCrearTrabajador} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Identificación</label>
-                  <input
-                    type="text"
-                    required
-                    value={newTrabajador.identificacion}
-                    onChange={(e) => setNewTrabajador({ ...newTrabajador, identificacion: e.target.value })}
-                    placeholder="1020304050"
-                    className="input-field py-2"
-                  />
+              <form onSubmit={handleCrearTrabajador} className="space-y-4 text-xs" noValidate>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Identificación *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newTrabajador.identificacion}
+                      onChange={(e) => { setNewTrabajador({ ...newTrabajador, identificacion: e.target.value }); setFormErrors(p => ({ ...p, identificacion: undefined })); }}
+                      placeholder="1020304050"
+                      className={`input-field py-2 ${formErrors.identificacion ? 'border-red-400 dark:border-red-600' : ''}`}
+                    />
+                    {formErrors.identificacion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.identificacion}</p>}
+                  </div>
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Rol en el Sistema *</label>
+                    <select
+                      value={newTrabajador.rol}
+                      onChange={(e) => setNewTrabajador({ ...newTrabajador, rol: e.target.value })}
+                      className="input-field py-2 font-bold uppercase"
+                    >
+                      <option value="DESARROLLADOR">Desarrollador</option>
+                      <option value="LIDER">Líder</option>
+                      <option value="COORDINADOR">Coordinador</option>
+                    </select>
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Nombres *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newTrabajador.nombre}
+                      onChange={(e) => { setNewTrabajador({ ...newTrabajador, nombre: e.target.value }); setFormErrors(p => ({ ...p, nombre: undefined })); }}
+                      placeholder="Ej. Mateo"
+                      className={`input-field py-2 ${formErrors.nombre ? 'border-red-400 dark:border-red-600' : ''}`}
+                    />
+                    {formErrors.nombre && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.nombre}</p>}
+                  </div>
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Apellidos *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newTrabajador.apellido}
+                      onChange={(e) => { setNewTrabajador({ ...newTrabajador, apellido: e.target.value }); setFormErrors(p => ({ ...p, apellido: undefined })); }}
+                      placeholder="Ej. Ríos"
+                      className={`input-field py-2 ${formErrors.apellido ? 'border-red-400 dark:border-red-600' : ''}`}
+                    />
+                    {formErrors.apellido && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.apellido}</p>}
+                  </div>
+                </div>
+
                 <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Rol en el Sistema</label>
-                  <select
-                    value={newTrabajador.rol}
-                    onChange={(e) => setNewTrabajador({ ...newTrabajador, rol: e.target.value })}
-                    className="input-field py-2 font-bold uppercase"
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Correo Electrónico Corporativo *</label>
+                  <input
+                    type="email"
+                    required
+                    value={newTrabajador.email}
+                    onChange={(e) => { setNewTrabajador({ ...newTrabajador, email: e.target.value }); setFormErrors(p => ({ ...p, email: undefined })); }}
+                    placeholder="mateo.dev@ikernell.com"
+                    className={`input-field py-2 ${formErrors.email ? 'border-red-400 dark:border-red-600' : ''}`}
+                  />
+                  {formErrors.email && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.email}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Profesión</label>
+                    <input
+                      type="text"
+                      value={newTrabajador.profesion}
+                      onChange={(e) => setNewTrabajador({ ...newTrabajador, profesion: e.target.value })}
+                      placeholder="Ingeniero de Software"
+                      className="input-field py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Especialidad</label>
+                    <input
+                      type="text"
+                      value={newTrabajador.especialidad}
+                      onChange={(e) => setNewTrabajador({ ...newTrabajador, especialidad: e.target.value })}
+                      placeholder="Backend Java / Spring Boot"
+                      className="input-field py-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => { setShowCreateModal(false); setFormErrors({}); }}
+                    disabled={submitting}
+                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
                   >
-                    <option value="DESARROLLADOR">Desarrollador</option>
-                    <option value="LIDER">Líder</option>
-                    <option value="COORDINADOR">Coordinador</option>
-                  </select>
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {submitting ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : 'Guardar Trabajador'}
+                  </button>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Nombres</label>
-                  <input
-                    type="text"
-                    required
-                    value={newTrabajador.nombre}
-                    onChange={(e) => setNewTrabajador({ ...newTrabajador, nombre: e.target.value })}
-                    placeholder="Ej. Mateo"
-                    className="input-field py-2"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Apellidos</label>
-                  <input
-                    type="text"
-                    required
-                    value={newTrabajador.apellido}
-                    onChange={(e) => setNewTrabajador({ ...newTrabajador, apellido: e.target.value })}
-                    placeholder="Ej. Ríos"
-                    className="input-field py-2"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Correo Electrónico Corporativo</label>
-                <input
-                  type="email"
-                  required
-                  value={newTrabajador.email}
-                  onChange={(e) => setNewTrabajador({ ...newTrabajador, email: e.target.value })}
-                  placeholder="mateo.dev@ikernell.org"
-                  className="input-field py-2"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Profesión</label>
-                  <input
-                    type="text"
-                    value={newTrabajador.profesion}
-                    onChange={(e) => setNewTrabajador({ ...newTrabajador, profesion: e.target.value })}
-                    placeholder="Ingeniero de Software"
-                    className="input-field py-2"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Especialidad</label>
-                  <input
-                    type="text"
-                    value={newTrabajador.especialidad}
-                    onChange={(e) => setNewTrabajador({ ...newTrabajador, especialidad: e.target.value })}
-                    placeholder="Backend Java / Spring Boot"
-                    className="input-field py-2"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="outline-button text-xs py-2 px-4 font-bold cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer"
-                >
-                  Guardar Trabajador
-                </button>
-              </div>
-            </form>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
     </DashboardLayout>
   );

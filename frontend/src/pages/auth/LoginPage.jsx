@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Cpu, Lock, Mail, LogIn, AlertCircle, Shield, ArrowLeft, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Cpu, Lock, Mail, LogIn, AlertCircle, Shield, ArrowLeft, KeyRound, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -36,7 +37,21 @@ export const LoginPage = () => {
       // 2. Actualizar el estado global en AuthContext (RNF-08 a RNF-10)
       login(data);
 
-      // 3. Redirección basada en el rol del usuario autenticado (RBAC)
+      // 3. Alerta de Bienvenida rápida y elegante (Toast)
+      toast.success(`¡Bienvenido de nuevo, ${data.nombre || 'Usuario'}!`, {
+        duration: 3500,
+        icon: '👋',
+        style: {
+          borderRadius: '16px',
+          background: '#18181b',
+          color: '#fff',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          fontWeight: '600',
+          fontSize: '0.85rem'
+        }
+      });
+
+      // 4. Redirección basada en el rol del usuario autenticado (RBAC)
       if (data.rol === 'COORDINADOR') {
         navigate('/coordinador', { replace: true });
       } else if (data.rol === 'LIDER') {
@@ -162,15 +177,18 @@ export const LoginPage = () => {
             <button 
               type="submit" 
               disabled={loading}
-              className="gradient-button w-full py-3.5 mt-2 font-bold text-sm shadow-lg cursor-pointer"
+              className="gradient-button w-full py-3.5 mt-2 font-bold text-sm shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed transition-all duration-200"
             >
               {loading ? (
-                <span className="inline-flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white dark:border-zinc-950 border-t-transparent rounded-full animate-spin" />
-                  Validando Token JWT...
+                <span className="inline-flex items-center gap-2.5">
+                  <Loader2 size={18} className="animate-spin text-white dark:text-zinc-950" />
+                  <span>Validando credenciales...</span>
                 </span>
               ) : (
-                <>Ingresar al Sistema <LogIn size={18} /></>
+                <>
+                  <span>Ingresar al Sistema</span>
+                  <LogIn size={18} />
+                </>
               )}
             </button>
           </form>
