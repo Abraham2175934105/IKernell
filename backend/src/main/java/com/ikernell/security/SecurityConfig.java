@@ -21,25 +21,27 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
+// Configuración central de seguridad perimetral, control de acceso basado en roles (RBAC) y CORS
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    // Inyección de dependencias
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    // Algoritmo de hash BCrypt unidireccional con sal aleatoria para el resguardo seguro de contraseñas
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Encriptación BCrypt según RNF-10
         return new BCryptPasswordEncoder();
     }
 
+    // Proveedor de autenticación que valida el usuario contra la base de datos PostgreSQL
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -48,27 +50,29 @@ public class SecurityConfig {
         return authProvider;
     }
 
+    // Gestor de autenticación para validar credenciales en el endpoint de login
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
+    // Cadena de filtros de seguridad HTTP
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Deshabilitar CSRF al ser una API REST completamente stateless
+            // Deshabilitamos CSRF porque la autenticación es completamente stateless mediante JWT
             .csrf(csrf -> csrf.disable())
             
-            // Habilitar CORS para comunicación sin fricción con el Frontend en React (RNF-02)
+            // Habilitamos CORS para permitir llamadas cruzadas desde el cliente Vite / React
             .cors(Customizer.withDefaults())
             
-            // Configurar gestión de sesiones Sin Estado (Stateless) sin cookies (RNF-09)
+            // Definimos sesiones sin estado para que el backend no almacene cookies ni sesiones en memoria
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
-            // Autorización de Rutas y Privilegios según Rol (RBAC)
+            // Matriz de autorización por rutas y roles de negocio
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Preflight CORS
-                .requestMatchers("/api/auth/**").permitAll() // Login y Autenticación pública
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Peticiones preflight de navegadores
+                .requestMatchers("/api/auth/**").permitAll() // Endpoints públicos (login, formulario de contacto)
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/api/coordinador/**").hasRole("COORDINADOR")
@@ -79,17 +83,18 @@ public class SecurityConfig {
 
         http.authenticationProvider(authenticationProvider());
         
-        // Agregar filtro de validación JWT antes de la autenticación estándar de usuario/contraseña
+        // Registramos el filtro de JWT antes del filtro de autenticación por formulario
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // Configuración de orígenes permitidos, métodos y cabeceras para CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Permitir orígenes locales y de red del cliente React/Vite
+        // Permitimos desarrollo local y accesos desde la red local
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
                 "http://127.0.0.1:*",
@@ -116,4 +121,3 @@ public class SecurityConfig {
         return source;
     }
 }
-

@@ -1,6 +1,7 @@
 package com.ikernell.controller;
 
 import com.ikernell.model.ProyectoDesarrollador;
+import com.ikernell.model.SolicitudContacto;
 import com.ikernell.model.Trabajador;
 import com.ikernell.service.CoordinadorService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,17 +14,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 /**
  * Controlador REST para el rol COORDINADOR.
- * <p>
- * Optimización de Alto Rendimiento:
- * - Endpoint paginado (/trabajadores/paginado) para consultas masivas sin saturar memoria.
- * - Los endpoints originales se mantienen para compatibilidad retroactiva con el frontend.
- * </p>
+ * Administración de talento humano, control de acceso lógico y bandeja de solicitudes web.
  */
 @RestController
 @RequestMapping("/api/coordinador")
@@ -71,6 +70,13 @@ public class CoordinadorController {
         return ResponseEntity.ok(actualizado);
     }
 
+    @PatchMapping("/trabajadores/{id}/estado")
+    @Operation(summary = "Alternar estado del trabajador", description = "Habilita o inhabilita lógicamente la cuenta del trabajador (RF-11)")
+    public ResponseEntity<Trabajador> cambiarEstadoTrabajador(@PathVariable Long id) {
+        Trabajador actualizado = coordinadorService.cambiarEstadoTrabajador(id);
+        return ResponseEntity.ok(actualizado);
+    }
+
     @PatchMapping("/trabajadores/{id}/inhabilitar")
     @Operation(summary = "Inhabilitar trabajador", description = "Realiza un borrado lógico cambiando el estado del trabajador (RF-11)")
     public ResponseEntity<Void> inhabilitarTrabajador(@PathVariable Long id) {
@@ -85,5 +91,22 @@ public class CoordinadorController {
             @PathVariable Long idDesarrollador) {
         ProyectoDesarrollador asignacion = coordinadorService.asignarProyectoADesarrollador(idProyecto, idDesarrollador);
         return ResponseEntity.status(HttpStatus.CREATED).body(asignacion);
+    }
+
+    // Gestión de solicitudes de contacto recibidas desde la landing pública
+    @GetMapping("/solicitudes")
+    @Operation(summary = "Listar solicitudes de contacto web", description = "Devuelve todas las consultas enviadas por el formulario público de la web")
+    public ResponseEntity<List<SolicitudContacto>> listarSolicitudes() {
+        return ResponseEntity.ok(coordinadorService.listarSolicitudes());
+    }
+
+    @PatchMapping("/solicitudes/{id}/atender")
+    @Operation(summary = "Alternar estado de atención de solicitud", description = "Marca una solicitud de contacto como ATENDIDA o PENDIENTE")
+    public ResponseEntity<SolicitudContacto> toggleEstadoSolicitud(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        SolicitudContacto actualizada = coordinadorService.toggleEstadoSolicitud(id, email);
+        return ResponseEntity.ok(actualizada);
     }
 }

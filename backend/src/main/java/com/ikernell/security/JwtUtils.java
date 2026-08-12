@@ -11,21 +11,25 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+// Utilidad criptográfica para generar, firmar y verificar tokens JWT bajo el algoritmo HMAC-SHA256
 @Component
 public class JwtUtils {
 
-    // Clave secreta por defecto (puede sobreescribirse en application.properties con app.jwt.secret)
+    // Clave de firma simétrica configurada en el archivo de propiedades
     @Value("${app.jwt.secret:IKernellSoftwareSecretKeySuperSecureJwtToken2026ForSpringSecurityRBACSystem}")
     private String jwtSecret;
 
-    @Value("${app.jwt.expiration-ms:86400000}") // 24 horas por defecto
+    // Tiempo de expiración del token (24 horas por defecto)
+    @Value("${app.jwt.expiration-ms:86400000}")
     private int jwtExpirationMs;
 
+    // Genera la clave secreta en formato binario para JJWT
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    // Construye un token firmado incorporando el usuario, el rol y la fecha de caducidad
     public String generateToken(Authentication authentication) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
         Date now = new Date();
@@ -45,6 +49,7 @@ public class JwtUtils {
                 .compact();
     }
 
+    // Extrae el correo o nombre de usuario contenido en el cuerpo del token
     public String getUsernameFromJwtToken(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -54,6 +59,7 @@ public class JwtUtils {
                 .getSubject();
     }
 
+    // Valida la firma del token y comprueba que no haya expirado ni sido alterado
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parser()
@@ -62,7 +68,7 @@ public class JwtUtils {
                 .parseSignedClaims(authToken);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            // Token inválido, expirado o malformado
+            // El token expiró, tiene una firma no válida o su estructura está corrupta
             return false;
         }
     }

@@ -4,6 +4,7 @@ import com.ikernell.dto.ErrorDto;
 import com.ikernell.dto.InterrupcionDto;
 import com.ikernell.model.Actividad;
 import com.ikernell.model.Error;
+import com.ikernell.model.Etapa;
 import com.ikernell.model.Interrupcion;
 import com.ikernell.service.DesarrolladorService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controlador REST para las operaciones operacionales cotidianas de los DESARROLLADORES.
@@ -52,6 +54,30 @@ public class DesarrolladorController {
         return ResponseEntity.ok(desarrolladorService.obtenerMisActividadesPaginado(email, pageable));
     }
 
+    @PatchMapping("/actividades/{id}/estado")
+    @Operation(summary = "Cambiar estado de una actividad", description = "Cambia el estado de una actividad asignada al desarrollador (RF-20). Body: { \"estado\": \"EN_PROGRESO\" }")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Estado de la actividad actualizado correctamente"),
+        @ApiResponse(responseCode = "400", description = "Estado inválido proporcionado"),
+        @ApiResponse(responseCode = "403", description = "La actividad no pertenece al desarrollador autenticado"),
+        @ApiResponse(responseCode = "404", description = "Actividad no encontrada")
+    })
+    public ResponseEntity<Actividad> cambiarEstadoActividad(
+            @PathVariable("id") Long idActividad,
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String nuevoEstado = body.get("estado");
+        String email = userDetails.getUsername();
+        Actividad actividadActualizada = desarrolladorService.cambiarEstadoActividad(idActividad, nuevoEstado, email);
+        return ResponseEntity.ok(actividadActualizada);
+    }
+
+    @GetMapping("/etapas")
+    @Operation(summary = "Obtener etapas WBS disponibles", description = "Devuelve todas las etapas del sistema para los selectores de formulario del desarrollador")
+    public ResponseEntity<List<Etapa>> obtenerEtapas() {
+        return ResponseEntity.ok(desarrolladorService.obtenerEtapasDisponibles());
+    }
+
 
     @PostMapping("/errores")
     @Operation(summary = "Reportar un Error detectado", description = "Registra un error en una fase WBS específica con grado de severidad (RF-22)")
@@ -81,5 +107,12 @@ public class DesarrolladorController {
         String email = userDetails.getUsername();
         Interrupcion nuevaInterrupcion = desarrolladorService.registrarInterrupcion(interrupcionDto, email);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaInterrupcion);
+    }
+
+    @GetMapping("/mis-reportes")
+    @Operation(summary = "Obtener historial de reportes del desarrollador", description = "Devuelve los errores e interrupciones reportados por el usuario autenticado (RF-22 a RF-24)")
+    public ResponseEntity<Map<String, Object>> obtenerMisReportes(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        return ResponseEntity.ok(desarrolladorService.obtenerMisReportes(email));
     }
 }

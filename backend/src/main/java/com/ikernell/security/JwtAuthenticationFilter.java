@@ -15,9 +15,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+// Filtro interceptor que se ejecuta una sola vez por cada solicitud HTTP para validar el Bearer Token JWT
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    // Inyección de dependencias
     @Autowired
     private JwtUtils jwtUtils;
 
@@ -29,10 +31,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response, 
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
+            // Extraemos la cadena del token presente en la cabecera Authorization
             String jwt = parseJwt(request);
+            
+            // Si el token existe y su firma criptográfica es válida, autenticamos al usuario
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String username = jwtUtils.getUsernameFromJwtToken(jwt);
 
+                // Cargamos los datos del usuario y sus roles asignados
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication = 
                         new UsernamePasswordAuthenticationToken(
@@ -42,15 +48,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
+                // Registramos la identidad en el contexto de seguridad de Spring durante el ciclo de vida de la petición
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
             logger.error("No se pudo establecer la autenticación del usuario en el contexto de seguridad", e);
         }
 
+        // Continuamos la cadena de filtros de la solicitud
         filterChain.doFilter(request, response);
     }
 
+    // Extrae el valor del token omitiendo el prefijo 'Bearer '
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
 

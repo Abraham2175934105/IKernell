@@ -1,7 +1,9 @@
 package com.ikernell.controller;
 
 import com.ikernell.dto.EtlReportResponse;
+import com.ikernell.dto.SemaforoMetricsDto;
 import com.ikernell.model.*;
+import com.ikernell.model.Error;
 import com.ikernell.service.EtlAutomationService;
 import com.ikernell.service.LiderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,14 +15,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controlador REST para el rol LÍDER DE PROYECTO.
- * Administra proyectos, etapas WBS, asignaciones operativas y ejecuta la automatización ETL para Brasil.
+ * Administra WBS, asignación de actividades, evaluación del Semáforo Inteligente y exportación ETL.
  */
 @RestController
 @RequestMapping("/api/lider")
-@Tag(name = "Módulo Líder", description = "Gestión de WBS de proyectos y exportación automatizada de reportes ETL internacionales")
+@Tag(name = "Módulo Líder", description = "Gestión de WBS de proyectos, Semáforo Predictivo y exportación automatizada ETL")
 @SecurityRequirement(name = "BearerAuth")
 public class LiderController {
 
@@ -30,6 +33,12 @@ public class LiderController {
     public LiderController(LiderService liderService, EtlAutomationService etlAutomationService) {
         this.liderService = liderService;
         this.etlAutomationService = etlAutomationService;
+    }
+
+    @GetMapping("/proyectos")
+    @Operation(summary = "Listar todos los proyectos disponibles", description = "Devuelve el listado completo de proyectos para el panel del líder")
+    public ResponseEntity<List<Proyecto>> listarProyectos() {
+        return ResponseEntity.ok(liderService.listarTodosLosProyectos());
     }
 
     @PostMapping("/proyectos")
@@ -54,26 +63,16 @@ public class LiderController {
     }
 
     @GetMapping("/lideres/{idLider}/proyectos")
-    @Operation(summary = "Proyectos por Líder", description = "Obtiene los proyectos que se encuentran bajo supervisión y responsibility de un líder")
+    @Operation(summary = "Proyectos por Líder", description = "Obtiene los proyectos que se encuentran bajo supervisión de un líder")
     public ResponseEntity<List<Proyecto>> listarProyectosPorLider(@PathVariable Long idLider) {
         return ResponseEntity.ok(liderService.listarProyectosPorLider(idLider));
     }
 
-    @GetMapping("/lideres/{idLider}/proyectos/paginado")
-    @Operation(summary = "Proyectos por Líder Paginados", description = "Retorna el listado paginado de proyectos asignados al líder (Params: ?page=0&size=10&sort=nombre,asc)")
-    public ResponseEntity<org.springframework.data.domain.Page<Proyecto>> listarProyectosPorLiderPaginado(
-            @PathVariable Long idLider,
-            @org.springframework.data.web.PageableDefault(size = 10, sort = "nombre") org.springframework.data.domain.Pageable pageable) {
-        return ResponseEntity.ok(liderService.listarProyectosPorLiderPaginado(idLider, pageable));
+    @GetMapping("/proyectos/{idProyecto}/etapas")
+    @Operation(summary = "Etapas WBS por Proyecto", description = "Devuelve las fases y actividades del desglose WBS de un proyecto")
+    public ResponseEntity<List<Etapa>> obtenerEtapasPorProyecto(@PathVariable Long idProyecto) {
+        return ResponseEntity.ok(liderService.obtenerEtapasPorProyecto(idProyecto));
     }
-
-    @GetMapping("/proyectos/paginado")
-    @Operation(summary = "Todos los Proyectos Paginados", description = "Retorna el listado general paginado de proyectos (Params: ?page=0&size=10&sort=fechaInicio,desc)")
-    public ResponseEntity<org.springframework.data.domain.Page<Proyecto>> listarTodosProyectosPaginado(
-            @org.springframework.data.web.PageableDefault(size = 10, sort = "fechaInicio") org.springframework.data.domain.Pageable pageable) {
-        return ResponseEntity.ok(liderService.listarTodosProyectosPaginado(pageable));
-    }
-
 
     @PostMapping("/proyectos/{idProyecto}/etapas")
     @Operation(summary = "Registrar Etapa WBS", description = "Agrega una nueva fase o etapa al Desglose Estructural del Proyecto (RF-15)")
@@ -89,6 +88,12 @@ public class LiderController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/desarrolladores")
+    @Operation(summary = "Listar desarrolladores disponibles", description = "Devuelve la nómina de desarrolladores activos para asignar a etapas y tareas")
+    public ResponseEntity<List<Trabajador>> listarDesarrolladores() {
+        return ResponseEntity.ok(liderService.listarDesarrolladoresActivos());
+    }
+
     @PostMapping("/proyectos/{idProyecto}/desarrolladores/{idDesarrollador}")
     @Operation(summary = "Asignar Desarrollador a Proyecto", description = "Vincula formalmente a un desarrollador al proyecto del líder (RF-16)")
     public ResponseEntity<ProyectoDesarrollador> asignarDesarrollador(
@@ -98,8 +103,23 @@ public class LiderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(asignacion);
     }
 
+    @PostMapping("/actividades")
+    @Operation(summary = "Crear y Asignar Actividad WBS", description = "Crea una nueva actividad asignada a un desarrollador dentro de una etapa (RF-17)")
+    public ResponseEntity<Actividad> crearYAsignarActividad(@RequestBody Map<String, Object> payload) {
+        Long idEtapa = Long.valueOf(payload.get("idEtapa").toString());
+        Long idDesarrollador = Long.valueOf(payload.get("idDesarrollador").toString());
+        String descripcion = (String) payload.get("descripcion");
+
+        Actividad actividad = new Actividad();
+        actividad.setDescripcion(descripcion);
+        actividad.setEstado("PENDIENTE");
+
+        Actividad nuevaActividad = liderService.asignarActividad(idEtapa, idDesarrollador, actividad);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevaActividad);
+    }
+
     @PostMapping("/etapas/{idEtapa}/desarrolladores/{idDesarrollador}/actividades")
-    @Operation(summary = "Asignar Actividad a Desarrollador", description = "Crea y asigna una tarea específica dentro de una etapa para su desarrollo (RF-17)")
+    @Operation(summary = "Asignar Actividad a Desarrollador (Legacy)", description = "Crea y asigna una tarea específica dentro de una etapa para su desarrollo (RF-17)")
     public ResponseEntity<Actividad> asignarActividad(
             @PathVariable Long idEtapa, 
             @PathVariable Long idDesarrollador, 
@@ -108,17 +128,74 @@ public class LiderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaActividad);
     }
 
-    // =========================================================================
-    // INNOVACIÓN 2: AUTOMATIZACIÓN ETL PARA ALIANZA BRASIL (ONE-CLICK EXPORT)
-    // RF-28, RF-29, RF-30
-    // =========================================================================
+    @PatchMapping("/actividades/{idActividad}/reasignar")
+    @Operation(summary = "Reasignar Actividad a otro Desarrollador", description = "Permite transferir la responsabilidad de una tarea a otro desarrollador registrando la justificación (RF-17)")
+    public ResponseEntity<Actividad> reasignarActividad(
+            @PathVariable Long idActividad, 
+            @RequestBody Map<String, Object> payload) {
+        Long idDesarrollador = Long.valueOf(payload.get("idDesarrollador").toString());
+        String motivo = (String) payload.get("motivo");
+        Actividad actualizada = liderService.reasignarActividad(idActividad, idDesarrollador, motivo);
+        return ResponseEntity.ok(actualizada);
+    }
+
+    // Semáforo inteligente de riesgos y salud del proyecto
+    @GetMapping("/proyectos/{idProyecto}/metricas-semaforo")
+    @Operation(
+        summary = "Métricas en tiempo real para el Semáforo Inteligente", 
+        description = "Calcula el nivel de riesgo del proyecto (Verde, Naranja, Rojo) basado en errores e interrupciones reales persistidos en PostgreSQL"
+    )
+    public ResponseEntity<SemaforoMetricsDto> obtenerMetricasSemaforo(@PathVariable Long idProyecto) {
+        return ResponseEntity.ok(liderService.calcularMetricasSemaforo(idProyecto));
+    }
+
+    @GetMapping("/proyectos/{idProyecto}/errores")
+    @Operation(summary = "Listar incidencias de un proyecto", description = "Devuelve todos los errores reportados en las fases del proyecto")
+    public ResponseEntity<List<Error>> obtenerErroresProyecto(@PathVariable Long idProyecto) {
+        return ResponseEntity.ok(liderService.obtenerErroresPorProyecto(idProyecto));
+    }
+
+    @GetMapping("/proyectos/{idProyecto}/interrupciones")
+    @Operation(summary = "Listar interrupciones de un proyecto", description = "Devuelve todas las contingencias reportadas en el proyecto")
+    public ResponseEntity<List<Interrupcion>> obtenerInterrupcionesProyecto(@PathVariable Long idProyecto) {
+        return ResponseEntity.ok(liderService.obtenerInterrupcionesPorProyecto(idProyecto));
+    }
+
+    // Pipeline de exportación y estandarización ETL para Alianza Brasil
     @PostMapping("/proyectos/{idProyecto}/etl-export-brasil")
     @Operation(
-        summary = "Innovación 2: One-Click Export ETL Brasil", 
+        summary = "One-Click Export ETL Brasil", 
         description = "Ejecuta de forma instantánea el proceso ETL para el proyecto: recopila métricas operativas de contingencias y errores, estandariza según ISO 8601 en formato delimitado y simula envío por SFTP y Email cifrados a Brasil (RF-28, RF-29, RF-30)"
     )
     public ResponseEntity<EtlReportResponse> exportarReporteBrasilOneClick(@PathVariable Long idProyecto) {
         EtlReportResponse response = etlAutomationService.generarYEnviarReporteBrasil(idProyecto);
         return ResponseEntity.ok(response);
+    }
+
+    // Consola de gestión y resolución de incidencias del equipo
+    @GetMapping("/proyectos/{idProyecto}/reportes-consolidados")
+    @Operation(summary = "Reportes consolidados de equipo", description = "Devuelve errores e interrupciones cargados por desarrolladores en el proyecto (RF-22 a RF-24)")
+    public ResponseEntity<Map<String, Object>> obtenerReportesConsolidados(@PathVariable Long idProyecto) {
+        return ResponseEntity.ok(liderService.obtenerReportesConsolidadosProyecto(idProyecto));
+    }
+
+    @PatchMapping("/errores/{idError}/atender")
+    @Operation(summary = "Atender o Resolver Error Técnico", description = "Actualiza el estado de atención del error y agrega observaciones del líder/coordinador")
+    public ResponseEntity<Error> atenderError(
+            @PathVariable Long idError,
+            @RequestBody Map<String, String> payload) {
+        String estadoAtencion = payload.get("estadoAtencion");
+        String resolucionNota = payload.get("resolucionNota");
+        return ResponseEntity.ok(liderService.atenderError(idError, estadoAtencion, resolucionNota));
+    }
+
+    @PatchMapping("/interrupciones/{idInterrupcion}/atender")
+    @Operation(summary = "Atender o Justificar Interrupción", description = "Actualiza el estado de atención de la interrupción y registra acciones correctivas")
+    public ResponseEntity<Interrupcion> atenderInterrupcion(
+            @PathVariable Long idInterrupcion,
+            @RequestBody Map<String, String> payload) {
+        String estadoAtencion = payload.get("estadoAtencion");
+        String resolucionNota = payload.get("resolucionNota");
+        return ResponseEntity.ok(liderService.atenderInterrupcion(idInterrupcion, estadoAtencion, resolucionNota));
     }
 }

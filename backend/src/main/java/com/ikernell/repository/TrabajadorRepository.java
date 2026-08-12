@@ -23,6 +23,8 @@ public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
 
     List<Trabajador> findByRol(Rol rol);
 
+    List<Trabajador> findByRolAndEstado(Rol rol, Boolean estado);
+
     List<Trabajador> findByEstadoTrue();
 
     /** Listado paginado de trabajadores para el módulo Coordinador (alto volumen de personal). */
