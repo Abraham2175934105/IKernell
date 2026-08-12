@@ -56,7 +56,8 @@ IKernell/
 │   ├── src/pages/            # Vistas enrutadas por rol (Coordinador, Lider, Dev, Public)
 │   ├── src/context/          # Proveedores de estado global (AuthContext, ThemeContext)
 │   ├── src/services/         # Clientes de comunicacion HTTP con la API REST
-│   └── package.json          # Dependencias y scripts de ejecucion Node.js
+│   ├── package.json          # Dependencias y scripts de ejecucion Node.js
+│   └── pnpm-lock.yaml        # Archivo estricto de bloqueo de versiones (Lockfile)
 ├── .gitignore                # Politica de exclusion estricta de documentos y secretos
 └── README.md                 # Documentacion tecnica de arquitectura y despliegue
 ```
@@ -143,7 +144,7 @@ Modulo transaccional para la transferencia de metricas de ingenieria hacia socio
 ### Requisitos Previos del Sistema
 - **Java Development Kit (JDK):** Version 17 LTS o superior.
 - **Apache Maven:** Version 3.8 o superior.
-- **Node.js:** Version 18.0 LTS o superior (incluyendo gestor de paquetes `npm`).
+- **Node.js:** Version 18.0 LTS o superior (requiere gestor de paquetes pnpm instalado globalmente).
 - **PostgreSQL:** Version 14 o superior instalado y en ejecucion.
 
 ### 6.1. Configuracion de la Base de Datos
@@ -173,8 +174,8 @@ En una terminal separada, ejecute:
 
 ```bash
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 La interfaz web iniciara en: `http://localhost:5173`
 
