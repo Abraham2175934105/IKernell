@@ -27,13 +27,43 @@ El ecosistema de IKernell esta construido bajo estandares modernos de la industr
 - **Iconografia:** Lucide React.
 - **Optimizacion de Carga:** Division de codigo (*Code Splitting*) basada en rutas mediante `React.lazy()` y `Suspense`.
 
-### Base de Datos y Seguridad de Datos
+### Base de Datos y Ciberseguridad
 - **Motor Relacional:** PostgreSQL 14+ con esquema fuertemente tipado, integridad referencial mediante claves foraneas e indices B-Tree.
 - **Proteccion de Credenciales:** Algoritmo unidireccional de derivacion de claves BCrypt con factor de costo 10 (RNF-10).
+- **Politica de Enmascaramiento de Datos (*Data Masking*):** Todos los identificadores sensibles, claves de acceso y certificados se administran mediante variables de entorno y marcadores de posicion protegidos.
 
 ---
 
-## 2. Arquitectura del Sistema
+## 2. Estructura y Gestion del Repositorio
+
+### Clonacion del Repositorio
+Para obtener una copia local del codigo fuente, ejecute:
+
+```bash
+git clone https://github.com/Abraham2175934105/IKernell.git
+cd IKernell
+```
+
+### Estructura Base de Directorios
+```text
+IKernell/
+├── backend/                  # Proyecto API RESTful en Spring Boot (Java 17)
+│   ├── src/main/java/        # Controladores, Servicios, Modelos JPA, Seguridad y Repositorios
+│   ├── src/main/resources/   # Archivos de configuracion (application.properties)
+│   └── pom.xml               # Dependencias del proyecto Maven
+├── frontend/                 # Aplicacion SPA en React 18 + Vite
+│   ├── src/components/       # Componentes modulares (UI, Dashboard, Public, Auth)
+│   ├── src/pages/            # Vistas enrutadas por rol (Coordinador, Lider, Dev, Public)
+│   ├── src/context/          # Proveedores de estado global (AuthContext, ThemeContext)
+│   ├── src/services/         # Clientes de comunicacion HTTP con la API REST
+│   └── package.json          # Dependencias y scripts de ejecucion Node.js
+├── .gitignore                # Politica de exclusion estricta de documentos y secretos
+└── README.md                 # Documentacion tecnica de arquitectura y despliegue
+```
+
+---
+
+## 3. Arquitectura del Sistema
 
 La solucion adopta un modelo Cliente-Servidor desacoplado en capas (*N-Tier Architecture*) comunicado exclusivamente mediante una API RESTful sobre protocolo HTTP/HTTPS:
 
@@ -56,50 +86,50 @@ La solucion adopta un modelo Cliente-Servidor desacoplado en capas (*N-Tier Arch
                                   v
 +-----------------------------------------------------------------------+
 |                     CAPA DE DATOS (PERSISTENCIA)                      |
-|             Pool de Conexiones HikariCP -> PostgreSQL 15+            |
+|             Pool de Conexiones HikariCP -> PostgreSQL 14+            |
 +-----------------------------------------------------------------------+
 ```
 
 ---
 
-## 3. Funcionalidades por Rol de Usuario
+## 4. Funcionalidades por Rol de Usuario
 
 El sistema implementa un esquema estricto de Control de Acceso Basado en Roles (RBAC), dividiendo la experiencia operativa en cuatro niveles:
 
-### 3.1. Interesado / Usuario Publico
+### 4.1. Interesado / Usuario Publico
 - **Portal Corporativo:** Presentacion institucional de IKernell, objetivos estrategicos y lineamientos tecnicos.
 - **Catalogo de Servicios:** Descripcion detallada de soluciones de arquitectura, consultoria y desarrollo a medida.
 - **Preguntas Frecuentes (FAQs) con Busqueda Predictiva:** Filtrado en tiempo real con normalizacion de caracteres, inmune a mayusculas, minusculas y tildes, con derivacion a contacto si no existen coincidencias.
 - **Formulario de Contacto Corporativo:** Envio de consultas directas hacia el equipo de administracion con instrucciones de llenado formales.
 
-### 3.2. Coordinador
+### 4.2. Coordinador
 - **Gestion Centralizada de Personal:** Registro, edicion y consulta de trabajadores con asignacion de especialidad, profesion y rol.
 - **Inhabilitacion Logica:** Suspension de cuentas de acceso sin vulnerar la integridad referencial ni la trazabilidad de proyectos historicos.
 - **Listados Masivos Paginados:** Consultas optimizadas de personal con soporte para paginacion en servidor.
 
-### 3.3. Lider de Proyectos
+### 4.3. Lider de Proyectos
 - **Administracion de Proyectos:** Registro de nuevos proyectos, establecimiento de plazos estimados y control de estados.
 - **Estructura de Desglose de Trabajo (WBS):** Division modular del proyecto en etapas y fases secuenciales.
 - **Asignacion de Personal:** Vinculacion de desarrolladores a la planilla del proyecto y asignacion granular de actividades por etapa.
 - **Monitoreo Predictivo:** Acceso al Semáforo Inteligente y ejecucion de la exportacion ETL para aliados internacionales.
 
-### 3.4. Desarrollador
+### 4.4. Desarrollador
 - **Tablero Operativo de Actividades:** Consulta de asignaciones individuales con control de estado (Asignada, En Progreso, Finalizada).
 - **Reporte de Errores Tecnicos:** Registro de incidencias tipificadas por etapa con clasificacion por nivel de severidad (Baja, Media, Alta, Critica).
 - **Reporte de Interrupciones y Contingencias:** Notificacion de suspensiones operativas indicando duracion en minutos y justificacion tecnica.
 
 ---
 
-## 4. Modulos de Innovacion y Valor Agregado
+## 5. Modulos de Innovacion y Valor Agregado
 
-### 4.1. Semaforo Inteligente (Dashboard Predictivo)
+### 5.1. Semaforo Inteligente (Dashboard Predictivo)
 Modulo analitico que evalua continuamente la salud operacional de cada proyecto. Mediante un algoritmo deterministicamente calibrado, cruza las horas acumuladas de interrupciones tecnicas con la concentracion de errores criticos y genera un diagnostico categorizado:
 
 - **Riesgo Bajo (Verde):** El proyecto avanza conforme al cronograma establecido.
 - **Riesgo Moderado (Naranja):** Presencia de cuellos de botella moderados; sugiere redistribucion preventiva de actividades.
 - **Alerta Critica de Riesgo (Rojo):** Superacion de los umbrales tolerables de contingencias o incidencias severas; recomienda la reasignacion inmediata de recursos o la solicitud formal de extension de plazos.
 
-### 4.2. Automatizacion ETL para la Alianza en Brasil
+### 5.2. Automatizacion ETL para la Alianza en Brasil
 Modulo transaccional para la transferencia de metricas de ingenieria hacia socios internacionales bajo la norma ISO 8601 UTC:
 
 - **Estandarizacion de Formato:** Generacion de archivos planos estructurados con delimitadores (`|`), encabezados de proyecto, detalle de fases WBS, metricas de errores y contingencias.
@@ -108,27 +138,27 @@ Modulo transaccional para la transferencia de metricas de ingenieria hacia socio
 
 ---
 
-## 5. Guia de Despliegue e Instalacion
+## 6. Guia de Despliegue e Instalacion
 
 ### Requisitos Previos del Sistema
 - **Java Development Kit (JDK):** Version 17 LTS o superior.
 - **Apache Maven:** Version 3.8 o superior.
 - **Node.js:** Version 18.0 LTS o superior (incluyendo gestor de paquetes `npm`).
-- **PostgreSQL:** Version 14 o superior instalado y en ejecucion en el puerto local `5432`.
+- **PostgreSQL:** Version 14 o superior instalado y en ejecucion.
 
-### 5.1. Configuracion de la Base de Datos
-Acceda a su cliente de PostgreSQL y verifique la existencia de la base de datos:
+### 6.1. Configuracion de la Base de Datos
+Acceda a su motor PostgreSQL y cree la base de datos correspondiente:
 
 ```sql
 CREATE DATABASE backend_db;
 ```
 
-Los parametros de conexion por defecto se encuentran en `backend/src/main/resources/application.properties`:
-- **URL:** `jdbc:postgresql://localhost:5432/backend_db`
-- **Usuario:** `abrah`
-- **Contraseña:** `abrah1234`
+Configure las variables de conexion correspondientes en `backend/src/main/resources/application.properties` utilizando las credenciales de su entorno:
+- **URL:** `jdbc:postgresql://<HOST_BASE_DATOS>:<PUERTO>/backend_db`
+- **Usuario:** `<USUARIO_BASE_DATOS>`
+- **Contraseña:** `<CONTRASEÑA_BASE_DATOS>`
 
-### 5.2. Despliegue del Backend (Spring Boot)
+### 6.2. Despliegue del Backend (Spring Boot)
 Abra una terminal en la raiz del proyecto y ejecute:
 
 ```bash
@@ -136,9 +166,9 @@ cd backend
 mvn clean compile
 mvn spring-boot:run
 ```
-El servidor backend estara disponible en: `http://localhost:8080`
+El servidor backend iniciara en el puerto configurado: `http://localhost:8080`
 
-### 5.3. Despliegue del Frontend (React + Vite)
+### 6.3. Despliegue del Frontend (React + Vite)
 En una terminal separada, ejecute:
 
 ```bash
@@ -146,25 +176,25 @@ cd frontend
 npm install
 npm run dev
 ```
-La interfaz web se desplegara en: `http://localhost:5173`
+La interfaz web iniciara en: `http://localhost:5173`
 
 ---
 
-## 6. Credenciales de Prueba (Entorno de Desarrollo)
+## 7. Credenciales de Prueba (Entorno de Desarrollo)
 
-Para fines de evaluacion funcional, el sistema dispone de los siguientes usuarios configurados en el repositorio de datos:
+Para fines de evaluacion en entornos locales o de desarrollo, los perfiles de prueba se estructuran de la siguiente manera:
 
-| Rol de Usuario | Correo Electronico Corporativo | Contraseña de Acceso | Acceso Rapido en Interfaz |
+| Rol de Usuario | Correo Electronico Corporativo | Estado de Contraseña | Acceso Rapido en Interfaz |
 | :--- | :--- | :--- | :--- |
-| **Coordinador** | `roberto.coord@ikernell.org` | `abrah1234` | Boton "Coordinador" en Login |
-| **Lider de Proyecto** | `carlos.lider@ikernell.org` | `abrah1234` | Boton "Líder" en Login |
-| **Desarrollador** | `ana.dev@ikernell.org` | `abrah1234` | Boton "Desarrollador" en Login |
+| **Coordinador** | `roberto.coord@ikernell.org` | `<CLAVE_ACCESO_DESARROLLO>` | Boton "Coordinador" en Login |
+| **Lider de Proyecto** | `carlos.lider@ikernell.org` | `<CLAVE_ACCESO_DESARROLLO>` | Boton "Líder" en Login |
+| **Desarrollador** | `ana.dev@ikernell.org` | `<CLAVE_ACCESO_DESARROLLO>` | Boton "Desarrollador" en Login |
 
-*Nota: Todas las contraseñas almacenadas se encuentran procesadas mediante hash BCrypt y la sesion se mantiene mediante tokens JWT firmados.*
+*Nota de Seguridad: En la base de datos, todas las credenciales se almacenan exclusivamente como hashes unidireccionales generados por BCrypt (`<HASH_BCRYPT>`) y las sesiones se validan mediante tokens JWT.*
 
 ---
 
-## 7. Estandares de Rendimiento, Resiliencia y Seguridad
+## 8. Estandares de Rendimiento, Resiliencia y Seguridad
 
 - **Optimizacion de Conexiones (HikariCP):** Pool dimensionado con hasta 30 conexiones activas y 10 conexiones en reserva (*idle*) con deteccion de fugas configurada a 20 segundos para pruebas de estres y alta concurrencia.
 - **Paginacion Obligatoria:** Endpoints de consulta masiva implementan la interfaz `Pageable` de Spring Data JPA para prevenir fallos por saturacion de memoria (*OutOfMemoryError*).
