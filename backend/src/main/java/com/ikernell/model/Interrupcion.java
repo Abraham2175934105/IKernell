@@ -3,18 +3,18 @@ package com.ikernell.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+// Entidad JPA para el registro de contingencias y tiempos muertos en minutos (alimenta el Semáforo de Riesgo)
 @Entity
 @Table(name = "interrupcion")
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Interrupcion {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_interrupcion")
     private Long idInterrupcion;
 
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "actividades", "errores", "interrupciones", "proyecto"})
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "actividades", "errores", "interrupciones"})
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "etapa_id", nullable = false)
     private Etapa etapa;
@@ -24,19 +24,26 @@ public class Interrupcion {
     @JoinColumn(name = "desarrollador_id", nullable = false)
     private Trabajador desarrollador;
 
-
-
     @Column(name = "tipo_interrupcion", nullable = false, length = 100)
     private String tipoInterrupcion;
 
     @Column(name = "fecha_ocurrencia", nullable = false)
-    private LocalDateTime fechaOcurrencia;
+    private LocalDateTime fechaOcurrencia = LocalDateTime.now();
 
     @Column(name = "duracion_minutos", nullable = false)
     private Integer duracionMinutos;
 
     @Column(name = "comentarios", columnDefinition = "TEXT")
     private String comentarios;
+
+    @Column(name = "estado_atencion", length = 30)
+    private String estadoAtencion = "REGISTRADO";
+
+    @Column(name = "resolucion_nota", columnDefinition = "TEXT")
+    private String resolucionNota;
+
+    @Column(name = "fecha_resolucion")
+    private LocalDateTime fechaResolucion;
 
     // Constructores
     public Interrupcion() {}
@@ -48,9 +55,10 @@ public class Interrupcion {
         this.etapa = etapa;
         this.desarrollador = desarrollador;
         this.tipoInterrupcion = tipoInterrupcion;
-        this.fechaOcurrencia = fechaOcurrencia;
+        this.fechaOcurrencia = fechaOcurrencia != null ? fechaOcurrencia : LocalDateTime.now();
         this.duracionMinutos = duracionMinutos;
         this.comentarios = comentarios;
+        this.estadoAtencion = "REGISTRADO";
     }
 
     // Getters y Setters
@@ -108,5 +116,29 @@ public class Interrupcion {
 
     public void setComentarios(String comentarios) {
         this.comentarios = comentarios;
+    }
+
+    public String getEstadoAtencion() {
+        return estadoAtencion;
+    }
+
+    public void setEstadoAtencion(String estadoAtencion) {
+        this.estadoAtencion = estadoAtencion;
+    }
+
+    public String getResolucionNota() {
+        return resolucionNota;
+    }
+
+    public void setResolucionNota(String resolucionNota) {
+        this.resolucionNota = resolucionNota;
+    }
+
+    public LocalDateTime getFechaResolucion() {
+        return fechaResolucion;
+    }
+
+    public void setFechaResolucion(LocalDateTime fechaResolucion) {
+        this.fechaResolucion = fechaResolucion;
     }
 }

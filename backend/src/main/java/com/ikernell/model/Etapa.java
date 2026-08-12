@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// Entidad JPA que representa una fase del desglose de trabajo WBS vinculado a un proyecto
 @Entity
 @Table(name = "etapa")
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -27,8 +28,8 @@ public class Etapa {
     @Column(name = "estado", nullable = false, length = 20)
     private String estado;
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    @OneToMany(mappedBy = "etapa", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"etapa"})
+    @OneToMany(mappedBy = "etapa", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Actividad> actividades = new ArrayList<>();
 
     @com.fasterxml.jackson.annotation.JsonIgnore

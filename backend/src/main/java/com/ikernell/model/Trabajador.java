@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+// Entidad JPA que representa a los empleados y usuarios del sistema (Coordinadores, Líderes y Desarrolladores)
 @Entity
 @Table(name = "trabajador")
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -25,16 +26,16 @@ public class Trabajador {
     @Column(name = "apellido", nullable = false, length = 100)
     private String apellido;
 
-    @Column(name = "fecha_nacimiento", nullable = false)
+    @Column(name = "fecha_nacimiento")
     private LocalDate fechaNacimiento;
 
-    @Column(name = "direccion", nullable = false, length = 150)
+    @Column(name = "direccion", length = 150)
     private String direccion;
 
-    @Column(name = "profesion", nullable = false, length = 100)
+    @Column(name = "profesion", length = 100)
     private String profesion;
 
-    @Column(name = "especialidad", nullable = false, length = 100)
+    @Column(name = "especialidad", length = 100)
     private String especialidad;
 
     @Column(name = "foto_url", length = 255)

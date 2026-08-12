@@ -2,6 +2,7 @@ package com.ikernell.model;
 
 import jakarta.persistence.*;
 
+// Entidad JPA para actividades y tareas operativas asignadas a los desarrolladores dentro de una etapa WBS
 @Entity
 @Table(name = "actividad")
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -13,7 +14,7 @@ public class Actividad {
     @Column(name = "id_actividad")
     private Long idActividad;
 
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "actividades", "errores", "interrupciones", "proyecto"})
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "actividades", "errores", "interrupciones"})
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "etapa_id", nullable = false)
     private Etapa etapa;

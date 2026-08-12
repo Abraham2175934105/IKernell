@@ -26,6 +26,9 @@ public class ErrorDto {
     @Schema(description = "Grado de severidad del error", example = "ALTA", requiredMode = Schema.RequiredMode.REQUIRED)
     private String severidad;
 
+    @Schema(description = "Descripción detallada del error detectado", example = "El cálculo de nómina arroja valores negativos cuando el trabajador tiene más de 3 deducciones")
+    private String descripcion;
+
     @Schema(description = "Fecha de registro (si no se proporciona se asignará la actual)")
     private LocalDateTime fechaRegistro;
 
@@ -54,6 +57,9 @@ public class ErrorDto {
 
     public String getSeveridad() { return severidad; }
     public void setSeveridad(String severidad) { this.severidad = severidad; }
+
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }

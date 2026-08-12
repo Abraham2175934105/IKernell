@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+// Entidad JPA para proyectos de software, estructurados con fechas de inicio, estimación y líder asignado
 @Entity
 @Table(name = "proyecto")
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
