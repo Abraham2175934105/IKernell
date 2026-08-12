@@ -5,13 +5,17 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 
 export const Navbar = () => {
+  // Estados locales
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleTheme, isDark } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
 
+  // Efectos (Hooks)
+  // Detecta el desplazamiento vertical para aplicar efecto glassmorphism en el header
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 15);
@@ -22,11 +26,13 @@ export const Navbar = () => {
 
   const isLoginPage = location.pathname === '/login';
 
+  // Manejadores de eventos y navegación
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  // Redirige al panel correspondiente según el rol del usuario autenticado
   const getDashboardRoute = () => {
     if (!user) return '/';
     if (user.rol === 'COORDINADOR') return '/coordinador';

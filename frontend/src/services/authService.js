@@ -2,11 +2,9 @@ import axios from 'axios';
 
 const API_AUTH_URL = 'http://localhost:8080/api/auth';
 
-/**
- * Servicio centralizado de autenticación para IKernell.
- * Ejecuta la llamada HTTP al backend y transforma los errores en mensajes descriptivos de UX.
- */
+// Servicio cliente para inicio de sesión y gestión de credenciales públicas
 export const authService = {
+  // Envía las credenciales al endpoint de login y maneja posibles fallos de conexión o autenticación
   login: async (email, password) => {
     try {
       const response = await axios.post(`${API_AUTH_URL}/login`, {
@@ -16,12 +14,12 @@ export const authService = {
         headers: {
           'Content-Type': 'application/json'
         },
-        timeout: 10000
+        timeout: 10000 // Limite de 10 segundos para evitar esperas infinitas ante caídas del servidor
       });
       return response.data;
     } catch (error) {
       if (error.response) {
-        // El servidor respondió con un código de estado de error (400, 401, 403, 500, etc.)
+        // El backend respondió con un código de error controlado
         const backendMessage = error.response.data?.message;
         if (backendMessage) {
           throw new Error(backendMessage);
@@ -34,8 +32,8 @@ export const authService = {
         }
         throw new Error(`Error en el servidor al autenticar (Código HTTP ${error.response.status}).`);
       } else if (error.request) {
-        // La petición se envió pero no se recibió respuesta (Servidor apagado o error de red)
-        throw new Error('Error de conexión con el servidor. Verifique que el Backend (puerto 8080) esté activo.');
+        // Fallo de red o servidor backend apagado
+        throw new Error('No fue posible conectar con el servidor. Verifique que el servicio backend esté activo en el puerto 8080.');
       } else {
         throw new Error(error.message || 'Error inesperado al intentar iniciar sesión.');
       }

@@ -13,6 +13,14 @@ import { BibliotecaDigital } from '../tools/BibliotecaDigital';
 import { TutorialesInduccion } from '../tools/TutorialesInduccion';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Helper para iniciales de Avatar
+const getInitials = (nombre, apellido) => {
+  if (!nombre) return 'IK';
+  const first = nombre.trim().charAt(0);
+  const second = apellido ? apellido.trim().charAt(0) : '';
+  return (first + second).toUpperCase();
+};
+
 export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetrics }) => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -48,20 +56,23 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
       case 'COORDINADOR':
         return {
           label: 'Coordinador General',
+          badgeText: 'COORDINADOR',
           shortLabel: 'Coord',
-          classes: 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+          classes: 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-sm'
         };
       case 'LIDER':
         return {
           label: 'Líder de Proyecto',
+          badgeText: 'LÍDER DE PROYECTO',
           shortLabel: 'Líder',
-          classes: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+          classes: 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700'
         };
       default:
         return {
           label: 'Desarrollador de Software',
+          badgeText: 'DESARROLLADOR',
           shortLabel: 'Dev',
-          classes: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+          classes: 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700'
         };
     }
   };
@@ -79,12 +90,14 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
       return [
         { id: 'wbs', label: 'WBS y Proyectos', icon: Layers, desc: 'Desglose por etapas' },
         { id: 'semaforo', label: 'Semáforo Predictivo', icon: Activity, desc: 'Matriz de riesgo en tiempo real' },
+        { id: 'incidencias', label: 'Gestión de Incidencias', icon: AlertTriangle, desc: 'Bandeja de reportes de equipo' },
         { id: 'etl', label: 'Exportación ETL Brasil', icon: Sparkles, desc: 'Métricas ISO 8601 UTC' }
       ];
     } else {
       return [
         { id: 'actividades', label: 'Mis Actividades', icon: CheckSquare, desc: 'Tablero de trabajo' },
-        { id: 'reportar', label: 'Reportes de Incidencias', icon: Bug, desc: 'Errores e interrupciones' }
+        { id: 'reportar', label: 'Registrar Incidencia', icon: Bug, desc: 'Errores e interrupciones' },
+        { id: 'historial', label: 'Historial de Mis Reportes', icon: FileText, desc: 'Trazabilidad y estado' }
       ];
     }
   };
@@ -100,7 +113,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
   return (
     <div className="min-h-screen flex bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       
-      {/* 1. SIDEBAR IZQUIERDA (Desktop: Slim / Expandible con Hover & Toggle; Mobile: Deslizable) */}
+      {/* Barra lateral navegable (colapsable en escritorio y deslizable en móvil) */}
       <aside 
         onMouseEnter={() => {
           if (isCollapsed) setIsHovered(true);
@@ -116,14 +129,13 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
       >
         
         <div className="overflow-x-hidden overflow-y-auto">
-          {/* Brand Header */}
+          {/* Cabecera con logo corporativo */}
           <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between min-h-[73px]">
             <Link to="/" className="flex items-center gap-3 group truncate">
-              <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center shadow-md transition-transform group-hover:scale-105 flex-shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center shadow-md transition-transform group-hover:scale-105 flex-shrink-0">
                 <Cpu size={22} />
               </div>
               
-              {/* Texto de Marca animado */}
               <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
                 isExpanded ? 'opacity-100 max-w-[160px]' : 'opacity-0 max-w-0'
               }`}>
@@ -136,7 +148,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
               </div>
             </Link>
 
-            {/* Botón Toggle en Desktop (Colapsar / Expandir) */}
+            {/* Toggle para alternar entre vista completa y barra delgada */}
             <button
               type="button"
               onClick={toggleCollapse}
@@ -148,7 +160,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
               {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
             </button>
 
-            {/* Botón Cerrar en Móviles */}
+            {/* Cierre del drawer en dispositivos móviles */}
             <button 
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
@@ -157,24 +169,57 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             </button>
           </div>
 
-          {/* User Mini Profile en Sidebar */}
-          <div className={`my-4 mx-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 flex items-center transition-all duration-300 ${
-            isExpanded ? 'p-3.5 gap-3' : 'p-2 justify-center'
-          }`}>
-            <div className="w-9 h-9 rounded-xl bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 font-extrabold flex items-center justify-center text-xs shadow-inner flex-shrink-0">
-              {user?.nombre ? user.nombre.charAt(0) : <User size={16} />}
-            </div>
+          {/* Tarjeta de perfil con estado en línea */}
+          <div className="my-3.5 mx-3">
+            {isExpanded ? (
+              <motion.div
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.15 }}
+                className="p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 hover:border-zinc-300 dark:hover:border-zinc-600 shadow-sm transition-all duration-200 flex items-center gap-3"
+              >
+                {/* Avatar con punto indicador de sesión activa */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-11 h-11 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-black text-xs flex items-center justify-center shadow-md tracking-tight">
+                    {getInitials(user?.nombre, user?.apellido)}
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white dark:border-zinc-900"></span>
+                  </span>
+                </div>
 
-            <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
-              isExpanded ? 'opacity-100 max-w-[170px]' : 'opacity-0 max-w-0 hidden'
-            }`}>
-              <div className="font-bold text-xs text-zinc-900 dark:text-white truncate">
-                {user?.nombre ? `${user.nombre} ${user.apellido || ''}` : user?.email}
+                {/* Información Jerárquica */}
+                <div className="min-w-0 text-left">
+                  <div className="font-extrabold text-xs text-zinc-900 dark:text-white truncate leading-tight">
+                    {user?.nombre ? `${user.nombre} ${user.apellido || ''}` : user?.email}
+                  </div>
+                  <div className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 truncate font-mono mt-0.5 leading-none">
+                    {user?.email}
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-1">
+                    <span className={`inline-block text-[0.55rem] font-black uppercase px-2 py-0.5 rounded-md border tracking-wider ${roleInfo.classes}`}>
+                      [{roleInfo.badgeText}]
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              /* Mini Avatar Colapsado (w-20) */
+              <div className="flex justify-center p-1">
+                <div 
+                  title={`${user?.nombre} ${user?.apellido || ''} [${roleInfo.badgeText}] - En línea`}
+                  className="relative group"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-black text-xs flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                    {getInitials(user?.nombre, user?.apellido)}
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white dark:border-zinc-900"></span>
+                  </span>
+                </div>
               </div>
-              <span className={`inline-block text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded-md border mt-0.5 ${roleInfo.classes}`}>
-                {roleInfo.shortLabel}
-              </span>
-            </div>
+            )}
           </div>
 
           {/* Secciones de Navegación */}
@@ -412,4 +457,3 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
     </div>
   );
 };
-

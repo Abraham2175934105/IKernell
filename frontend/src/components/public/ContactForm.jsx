@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Send, CheckCircle2, MessageSquare, Phone, Mail, User, Tag } from 'lucide-react';
+import { Send, CheckCircle2, MessageSquare, Phone, Mail, User, Tag, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 export const ContactForm = () => {
   const [formData, setFormData] = useState({
@@ -21,15 +23,28 @@ export const ContactForm = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await axios.post('http://localhost:8080/api/auth/contacto', {
+        nombreRemitente: formData.nombre.trim(),
+        emailRemitente: formData.email.trim(),
+        telefono: formData.telefono.trim(),
+        asunto: formData.asunto.trim(),
+        mensaje: formData.mensaje.trim()
+      });
+
       setSubmitted(true);
       setFormData({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
-    }, 900);
+      toast.success('¡Consulta enviada exitosamente a la administración!');
+    } catch (err) {
+      console.error('Error enviando contacto:', err);
+      toast.error('Error al enviar el mensaje. Por favor intente más tarde.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

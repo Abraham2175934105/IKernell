@@ -4,11 +4,12 @@ import { useMemo } from 'react';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
+// Hook personalizado para realizar llamadas HTTP seguras al backend
 export const useApi = () => {
   const { token, logout } = useAuth();
 
   const api = useMemo(() => {
-    // 1. Instancia global de Axios
+    // Instancia base de Axios configurada hacia el servidor Spring Boot
     const axiosInstance = axios.create({
       baseURL: API_BASE_URL,
       headers: {
@@ -16,7 +17,7 @@ export const useApi = () => {
       }
     });
 
-    // 2. Interceptor de Solicitud (Request): Adjunta el token JWT
+    // Interceptor de salida: inyecta el Bearer Token JWT en el encabezado Authorization
     axiosInstance.interceptors.request.use((config) => {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -26,29 +27,30 @@ export const useApi = () => {
       return Promise.reject(error);
     });
 
-    // 3. Interceptor de Respuesta (Response): Maneja expiración de sesión (401/403)
+    // Interceptor de respuesta: desenvuelve el payload y detecta expiración de credenciales
     axiosInstance.interceptors.response.use(
       (response) => {
-        // Extrae directamente el payload JSON (data) para mantener compatibilidad con los componentes
+        // Retornamos directamente el cuerpo de datos para simplificar su consumo en los componentes
         return response.data;
       },
       (error) => {
+        // Si el token expiró o no tiene permisos (401 o 403), cerramos la sesión automáticamente
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
           logout();
         }
         
-        // Formatear error usando el ApiErrorResponse del backend
-        let errorMessage = 'Error HTTP inesperado en la comunicación con el servidor.';
+        // Extraemos el mensaje descriptivo enviado por el backend o el error general de red
+        let errorMessage = 'Error en la comunicación con el servidor.';
         if (error.response?.data?.message) {
-            errorMessage = error.response.data.message;
+          errorMessage = error.response.data.message;
         } else if (error.message) {
-            errorMessage = error.message;
+          errorMessage = error.message;
         }
         return Promise.reject(new Error(errorMessage));
       }
     );
 
-    // Mapeo de métodos HTTP para mantener la firma del hook original
+    // Exponemos los verbos HTTP estándar manteniendo una API limpia y reutilizable
     return {
       get: (endpoint, config = {}) => axiosInstance.get(endpoint, config),
       post: (endpoint, data, config = {}) => axiosInstance.post(endpoint, data, config),
