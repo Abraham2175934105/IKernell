@@ -1,49 +1,64 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Cpu, Lock, Mail, LogIn, AlertCircle, Shield, ArrowLeft, KeyRound } from 'lucide-react';
+import { Cpu, Lock, Mail, LogIn, AlertCircle, Shield, ArrowLeft, KeyRound, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [activeDemo, setActiveDemo] = useState('');
+  
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
+      setError('Por favor, ingrese su correo electrónico corporativo y contraseña.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
+      // 1. Llamada al endpoint absoluto de autenticación en Spring Boot
+      const data = await authService.login(trimmedEmail, trimmedPassword);
 
-      if (!response.ok) {
-        throw new Error('Credenciales de acceso inválidas o usuario inhabilitado.');
+      // 2. Actualizar el estado global en AuthContext (RNF-08 a RNF-10)
+      login(data);
+
+      // 3. Redirección basada en el rol del usuario autenticado (RBAC)
+      if (data.rol === 'COORDINADOR') {
+        navigate('/coordinador', { replace: true });
+      } else if (data.rol === 'LIDER') {
+        navigate('/lider', { replace: true });
+      } else {
+        navigate('/desarrollador', { replace: true });
       }
 
-      const data = await response.json();
-      
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data));
-
-      if (data.rol === 'COORDINADOR') navigate('/coordinador');
-      else if (data.rol === 'LIDER') navigate('/lider');
-      else navigate('/desarrollador');
-
     } catch (err) {
-      setError(err.message || 'Error de conexión con el servidor.');
+      console.error('[IKernell Auth Error]:', err);
+      // Feedback visual obligatorio en pantalla
+      setError(err.message || 'Error de autenticación. Verifique sus credenciales o la conexión con el servidor.');
     } finally {
       setLoading(false);
     }
   };
 
-  const setDemoCredentials = (rolEmail) => {
+  const setDemoCredentials = (rolEmail, rolName) => {
     setEmail(rolEmail);
     setPassword('abrah1234');
+    setError('');
+    setActiveDemo(rolName);
   };
 
   return (
@@ -65,7 +80,7 @@ export const LoginPage = () => {
               <ArrowLeft size={14} /> Volver al Inicio
             </Link>
             <span className="text-[0.65rem] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
-              Seguridad JWT
+              Seguridad JWT Stateless
             </span>
           </div>
 
@@ -82,11 +97,24 @@ export const LoginPage = () => {
             </p>
           </div>
 
-          {error && (
-            <div className="bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 p-4 rounded-xl text-xs sm:text-sm flex items-center gap-3 mb-6 font-medium border border-red-200 dark:border-red-800/60">
-              <AlertCircle size={18} className="flex-shrink-0 text-red-500" /> {error}
-            </div>
-          )}
+          {/* Feedback Visual de Error Obligatorio */}
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+                className="bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 p-4 rounded-xl text-xs sm:text-sm flex items-start gap-3 mb-6 font-medium border border-red-200 dark:border-red-800 shadow-sm"
+              >
+                <AlertCircle size={20} className="flex-shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
+                <div className="flex-1">
+                  <span className="font-bold block mb-0.5">Error de Autenticación:</span>
+                  <span>{error}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
             <div>
@@ -94,14 +122,18 @@ export const LoginPage = () => {
                 Correo Electrónico Corporativo
               </label>
               <div className="relative">
-                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
                 <input
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ej. lider@ikernell.org"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError('');
+                  }}
+                  placeholder="Ingrese su correo electrónico corporativo"
                   className="input-field pl-12 py-3"
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -111,14 +143,18 @@ export const LoginPage = () => {
                 Contraseña de Seguridad
               </label>
               <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
                 <input
                   type="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError('');
+                  }}
                   placeholder="••••••••••••"
                   className="input-field pl-12 py-3"
+                  autoComplete="current-password"
                 />
               </div>
             </div>
@@ -126,7 +162,7 @@ export const LoginPage = () => {
             <button 
               type="submit" 
               disabled={loading}
-              className="gradient-button w-full py-3.5 mt-2 font-bold text-sm shadow-lg"
+              className="gradient-button w-full py-3.5 mt-2 font-bold text-sm shadow-lg cursor-pointer"
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
@@ -141,28 +177,48 @@ export const LoginPage = () => {
 
           {/* Quick Roles Assistant */}
           <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-            <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 dark:text-zinc-400 mb-3 uppercase tracking-wider">
-              <KeyRound size={14} /> Accesos Rápidos de Prueba:
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <KeyRound size={14} /> Accesos Rápidos de Prueba:
+              </div>
+              {activeDemo && (
+                <span className="inline-flex items-center gap-1 text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                  <CheckCircle2 size={12} /> {activeDemo} cargado
+                </span>
+              )}
             </div>
+
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => setDemoCredentials('carlos.lider@ikernell.org')}
-                className="p-2 text-center rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[0.7rem] font-bold text-zinc-800 dark:text-zinc-200 transition-all border border-zinc-200 dark:border-zinc-700 shadow-sm"
+                onClick={() => setDemoCredentials('carlos.lider@ikernell.org', 'Líder')}
+                className={`p-2.5 text-center rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                  activeDemo === 'Líder'
+                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-md'
+                    : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 shadow-sm'
+                }`}
               >
                 Líder
               </button>
               <button
                 type="button"
-                onClick={() => setDemoCredentials('ana.dev@ikernell.org')}
-                className="p-2 text-center rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[0.7rem] font-bold text-zinc-800 dark:text-zinc-200 transition-all border border-zinc-200 dark:border-zinc-700 shadow-sm"
+                onClick={() => setDemoCredentials('ana.dev@ikernell.org', 'Desarrollador')}
+                className={`p-2.5 text-center rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                  activeDemo === 'Desarrollador'
+                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-md'
+                    : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 shadow-sm'
+                }`}
               >
                 Desarrollador
               </button>
               <button
                 type="button"
-                onClick={() => setDemoCredentials('roberto.coord@ikernell.org')}
-                className="p-2 text-center rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[0.7rem] font-bold text-zinc-800 dark:text-zinc-200 transition-all border border-zinc-200 dark:border-zinc-700 shadow-sm"
+                onClick={() => setDemoCredentials('roberto.coord@ikernell.org', 'Coordinador')}
+                className={`p-2.5 text-center rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                  activeDemo === 'Coordinador'
+                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-md'
+                    : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 shadow-sm'
+                }`}
               >
                 Coordinador
               </button>
@@ -180,6 +236,7 @@ export const LoginPage = () => {
     </div>
   );
 };
+
 
 
 
