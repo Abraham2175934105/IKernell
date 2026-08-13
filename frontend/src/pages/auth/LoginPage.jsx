@@ -84,7 +84,7 @@ export const LoginPage = () => {
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-50 pointer-events-none" />
 
         {/* Card: Radiant Pure White in Light Mode, Elegant Dark Zinc in Dark Mode */}
-        <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 sm:p-12 shadow-2xl shadow-zinc-300/60 dark:shadow-none transition-all duration-300">
+        <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-10 md:p-12 shadow-2xl shadow-zinc-300/60 dark:shadow-none transition-all duration-300">
           
           {/* Top back link */}
           <div className="mb-6 flex justify-between items-center">
@@ -206,7 +206,7 @@ export const LoginPage = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setDemoCredentials('carlos.lider@ikernell.org', 'Líder')}

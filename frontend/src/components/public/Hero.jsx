@@ -65,7 +65,7 @@ export const Hero = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-            className="glass-card flex flex-col justify-between p-6 md:p-8"
+            className="glass-card flex flex-col justify-between p-6 md:p-8 h-full"
           >
             <div>
               <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-5 text-zinc-900 dark:text-white shadow-sm">
@@ -81,7 +81,7 @@ export const Hero = () => {
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-            className="glass-card flex flex-col justify-between p-6 md:p-8 border-2 border-zinc-900 dark:border-zinc-300 shadow-xl shadow-zinc-300/30 dark:shadow-none"
+            className="glass-card flex flex-col justify-between p-6 md:p-8 border-2 border-zinc-900 dark:border-zinc-300 shadow-xl shadow-zinc-300/30 dark:shadow-none h-full"
           >
             <div>
               <div className="w-12 h-12 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center mb-5 shadow-md">
@@ -97,7 +97,7 @@ export const Hero = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
-            className="glass-card flex flex-col justify-between p-6 md:p-8"
+            className="glass-card flex flex-col justify-between p-6 md:p-8 h-full"
           >
             <div>
               <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-5 text-zinc-900 dark:text-white shadow-sm">

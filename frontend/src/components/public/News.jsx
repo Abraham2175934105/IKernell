@@ -52,7 +52,7 @@ export const News = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.15 }}
               transition={{ duration: 0.35, delay: idx * 0.08, ease: "easeOut" }}
-              className="glass-card flex flex-col justify-between p-6 md:p-8 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all"
+              className="glass-card flex flex-col justify-between p-6 md:p-8 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all h-full"
             >
               <div>
                 <div className="flex justify-between items-center mb-5">
