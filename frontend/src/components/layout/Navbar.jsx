@@ -43,7 +43,7 @@ export const Navbar = () => {
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled 
         ? 'bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 shadow-md py-3' 
-        : 'bg-white/80 dark:bg-zinc-950/75 backdrop-blur-md border-b border-zinc-200/50 dark:border-zinc-800/50 shadow-sm py-3.5 sm:py-4'
+        : 'bg-transparent border-transparent shadow-none py-4 sm:py-5'
     }`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex items-center justify-between">
         
@@ -69,20 +69,20 @@ export const Navbar = () => {
             className={`text-sm tracking-tight transition-all duration-200 ${
               location.pathname === '/' 
                 ? 'text-blue-600 dark:text-blue-400 font-extrabold drop-shadow-sm' 
-                : 'text-zinc-900 font-bold hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white'
+                : 'text-zinc-950 font-bold hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none'
             }`}
           >
             Inicio
           </Link>
           <a 
             href="/#servicios" 
-            className="text-sm font-bold tracking-tight text-zinc-900 hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white transition-all duration-200"
+            className="text-sm font-bold tracking-tight text-zinc-950 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none transition-all duration-200"
           >
             Servicios
           </a>
           <a 
             href="/#estrategia" 
-            className="text-sm font-bold tracking-tight text-zinc-900 hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white transition-all duration-200"
+            className="text-sm font-bold tracking-tight text-zinc-950 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none transition-all duration-200"
           >
             Estrategia
           </a>
@@ -91,7 +91,7 @@ export const Navbar = () => {
             className={`text-sm tracking-tight transition-all duration-200 ${
               location.pathname === '/faqs' 
                 ? 'text-blue-600 dark:text-blue-400 font-extrabold drop-shadow-sm' 
-                : 'text-zinc-900 font-bold hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white'
+                : 'text-zinc-950 font-bold hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none'
             }`}
           >
             FAQs & Docs
@@ -101,7 +101,7 @@ export const Navbar = () => {
             className={`text-sm tracking-tight transition-all duration-200 ${
               location.pathname === '/contacto' 
                 ? 'text-blue-600 dark:text-blue-400 font-extrabold drop-shadow-sm' 
-                : 'text-zinc-900 font-bold hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white'
+                : 'text-zinc-950 font-bold hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none'
             }`}
           >
             Contacto
