@@ -108,7 +108,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
 
   const transversalTools = [
     { id: 'chat', label: 'Chat Corporativo', icon: MessageSquare, badge: 'En Vivo' },
-    { id: 'biblioteca', label: 'Biblioteca Digital', icon: BookOpen, badge: '4 Docs' },
+    { id: 'biblioteca', label: 'Biblioteca Digital', icon: BookOpen, badge: '8 Docs' },
     { id: 'tutoriales', label: 'Tutoriales e Inducción', icon: GraduationCap, badge: '3 Guías' }
   ];
 

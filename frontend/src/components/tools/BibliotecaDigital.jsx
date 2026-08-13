@@ -8,7 +8,17 @@ import { useApi } from '../../hooks/useApi';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const CATEGORIES = ['TODOS', 'NORMATIVAS', 'ARQUITECTURA', 'BASE DE DATOS', 'CIBERSEGURIDAD'];
+const CATEGORIES = [
+  'TODOS', 
+  'NORMATIVAS', 
+  'ARQUITECTURA', 
+  'BASE DE DATOS', 
+  'OPERACIONES', 
+  'INTEGRACION', 
+  'DESARROLLO', 
+  'CIBERSEGURIDAD', 
+  'ANALITICA'
+];
 
 export const BibliotecaDigital = () => {
   const api = useApi();
@@ -319,12 +329,22 @@ export const BibliotecaDigital = () => {
                 </p>
               </div>
 
-              {/* Botones Explícitos con Texto Legible e Iconos */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-zinc-200 dark:border-zinc-800 gap-3 text-xs">
-                <span className="font-bold text-zinc-500 dark:text-zinc-400 uppercase text-[0.7rem] flex items-center gap-1.5">
-                  <FileCheck size={14} className="text-emerald-500" />
-                  {doc.formato || 'PDF'}
-                </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-zinc-200 dark:border-zinc-800 gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className={`font-bold uppercase text-[0.65rem] px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${
+                    (doc.formato || '').toUpperCase() === 'PDF' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800' :
+                    (doc.formato || '').toUpperCase() === 'SQL' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' :
+                    (doc.formato || '').toUpperCase() === 'DOCX' ? 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800' :
+                    'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+                  }`}>
+                    {doc.formato === 'SQL' ? <Terminal size={12} /> : <FileCheck size={12} />}
+                    {doc.formato || 'PDF'}
+                  </span>
+
+                  <span className="text-[0.7rem] text-zinc-400 flex items-center gap-1 font-medium">
+                    {doc.fechaSubida ? new Date(doc.fechaSubida).toLocaleDateString() : '2026'}
+                  </span>
+                </div>
 
                 <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   {/* Botón Ver Documento / Previsualizar */}
@@ -339,15 +359,15 @@ export const BibliotecaDigital = () => {
                     <ChevronRight size={12} className="text-zinc-400" />
                   </button>
 
-                  {/* Botón Descargar PDF / TXT */}
+                  {/* Botón Descargar PDF / TXT / SQL / DOCX */}
                   <button
                     type="button"
                     onClick={() => handleDownload(doc)}
                     className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md flex-1 sm:flex-none justify-center"
-                    title={`Descargar archivo ${esPdf ? 'PDF' : 'TXT'} a su computadora`}
+                    title={`Descargar archivo ${doc.formato || 'PDF'} a su computadora`}
                   >
                     <ArrowDownToLine size={14} />
-                    <span>{esPdf ? 'Descargar PDF' : 'Descargar TXT'}</span>
+                    <span>Descargar {doc.formato || 'PDF'}</span>
                   </button>
                 </div>
               </div>

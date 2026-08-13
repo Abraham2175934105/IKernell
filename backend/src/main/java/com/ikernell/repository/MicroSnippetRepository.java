@@ -12,9 +12,11 @@ import java.util.List;
 public interface MicroSnippetRepository extends JpaRepository<MicroSnippet, Long> {
 
     @Query(value = "SELECT id_snippet, titulo, descripcion, tags_busqueda, codigo_solucion, lenguaje, comando_consola, " +
-                   "similarity(tags_busqueda, :termino) as score " +
+                   "GREATEST(similarity(tags_busqueda, :termino), word_similarity(:termino, tags_busqueda)) as score " +
                    "FROM micro_snippet " +
                    "WHERE similarity(tags_busqueda, :termino) > :umbral " +
+                   "   OR word_similarity(:termino, tags_busqueda) > 0.35 " +
+                   "   OR tags_busqueda ILIKE CONCAT('%', :termino, '%') " +
                    "ORDER BY score DESC " +
                    "LIMIT :limite", nativeQuery = true)
     List<Object[]> buscarSugerenciasNativas(@Param("termino") String termino, 
