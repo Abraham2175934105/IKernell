@@ -5,7 +5,7 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { 
   Users, UserPlus, UserX, Search, Shield, CheckCircle2, 
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
-  Loader2, RefreshCw, Inbox
+  Loader2, RefreshCw, Inbox, Pencil, Power, Check, Eye
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,18 +38,23 @@ const itemVariants = {
 /* ─── Skeleton Component ─── */
 const SkeletonRow = () => (
   <tr className="animate-pulse">
-    <td className="p-4"><div className="h-4 w-20 bg-zinc-200 dark:bg-zinc-700 rounded" /></td>
-    <td className="p-4">
-      <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-700 rounded mb-1" />
-      <div className="h-3 w-40 bg-zinc-200 dark:bg-zinc-700 rounded" />
+    <td className="py-4 px-6"><div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-800 rounded-lg" /></td>
+    <td className="py-4 px-6">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-zinc-200 dark:bg-zinc-800 shrink-0" />
+        <div>
+          <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded mb-1.5" />
+          <div className="h-3 w-40 bg-zinc-200 dark:bg-zinc-800 rounded" />
+        </div>
+      </div>
     </td>
-    <td className="p-4">
-      <div className="h-4 w-28 bg-zinc-200 dark:bg-zinc-700 rounded mb-1" />
-      <div className="h-3 w-36 bg-zinc-200 dark:bg-zinc-700 rounded" />
+    <td className="py-4 px-6">
+      <div className="h-4 w-28 bg-zinc-200 dark:bg-zinc-800 rounded mb-1" />
+      <div className="h-3 w-36 bg-zinc-200 dark:bg-zinc-800 rounded" />
     </td>
-    <td className="p-4"><div className="h-5 w-24 bg-zinc-200 dark:bg-zinc-700 rounded-full" /></td>
-    <td className="p-4"><div className="h-5 w-20 bg-zinc-200 dark:bg-zinc-700 rounded-full" /></td>
-    <td className="p-4 text-right"><div className="h-7 w-20 bg-zinc-200 dark:bg-zinc-700 rounded-xl ml-auto" /></td>
+    <td className="py-4 px-6"><div className="h-6 w-24 bg-zinc-200 dark:bg-zinc-800 rounded-full" /></td>
+    <td className="py-4 px-6"><div className="h-6 w-20 bg-zinc-200 dark:bg-zinc-800 rounded-full" /></td>
+    <td className="py-4 px-6 text-right"><div className="h-8 w-16 bg-zinc-200 dark:bg-zinc-800 rounded-xl ml-auto" /></td>
   </tr>
 );
 
@@ -65,6 +70,74 @@ const EmptyState = ({ icon: Icon, title, description, action }) => (
   </div>
 );
 
+// Helper para extraer iniciales del nombre completo
+const getInitials = (nombre = '', apellido = '') => {
+  const n = nombre.trim().charAt(0).toUpperCase();
+  const a = apellido.trim().charAt(0).toUpperCase();
+  return `${n}${a}` || 'TK';
+};
+
+// Componente para Insignia de Rol con colores semánticos
+const RoleBadge = ({ rol }) => {
+  switch (rol) {
+    case 'COORDINADOR':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shadow-sm">
+          <Shield size={12} className="text-purple-600 dark:text-purple-400 shrink-0" />
+          Coordinador
+        </span>
+      );
+    case 'LIDER':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shadow-sm">
+          <Sparkles size={12} className="text-amber-600 dark:text-amber-400 shrink-0" />
+          Líder de Proyecto
+        </span>
+      );
+    case 'DESARROLLADOR':
+    default:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-sm">
+          <Users size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+          Desarrollador
+        </span>
+      );
+  }
+};
+
+// Avatar con colores según el rol
+const UserAvatar = ({ nombre, apellido, rol, fotoUrl }) => {
+  const initials = getInitials(nombre, apellido);
+  
+  const getAvatarStyles = () => {
+    switch (rol) {
+      case 'COORDINADOR':
+        return 'bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border-purple-200 dark:border-purple-800';
+      case 'LIDER':
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+      case 'DESARROLLADOR':
+      default:
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+    }
+  };
+
+  if (fotoUrl) {
+    return (
+      <img 
+        src={fotoUrl} 
+        alt={`${nombre} ${apellido}`} 
+        className="w-9 h-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shadow-sm shrink-0"
+      />
+    );
+  }
+
+  return (
+    <div className={`w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center border shadow-sm shrink-0 ${getAvatarStyles()}`}>
+      {initials}
+    </div>
+  );
+};
+
 export const CoordinadorDashboard = () => {
   const { user } = useAuth();
   const api = useApi();
@@ -78,7 +151,10 @@ export const CoordinadorDashboard = () => {
   const [togglingSolicitudId, setTogglingSolicitudId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingTrabajador, setEditingTrabajador] = useState(null);
 
   const [newTrabajador, setNewTrabajador] = useState({
     identificacion: '',
@@ -133,12 +209,12 @@ export const CoordinadorDashboard = () => {
     }
   };
 
-  const validarFormulario = () => {
+  const validarFormulario = (data) => {
     const errors = {};
-    if (!newTrabajador.identificacion.trim()) errors.identificacion = 'La identificación es obligatoria';
-    if (!newTrabajador.nombre.trim()) errors.nombre = 'El nombre es obligatorio';
-    if (!newTrabajador.apellido.trim()) errors.apellido = 'El apellido es obligatorio';
-    if (!newTrabajador.email.trim() || !newTrabajador.email.includes('@')) {
+    if (!data.identificacion?.trim()) errors.identificacion = 'La identificación es obligatoria';
+    if (!data.nombre?.trim()) errors.nombre = 'El nombre es obligatorio';
+    if (!data.apellido?.trim()) errors.apellido = 'El apellido es obligatorio';
+    if (!data.email?.trim() || !data.email.includes('@')) {
       errors.email = 'Ingrese un correo electrónico corporativo válido';
     }
     setFormErrors(errors);
@@ -147,7 +223,7 @@ export const CoordinadorDashboard = () => {
 
   const handleCrearTrabajador = async (e) => {
     e.preventDefault();
-    if (!validarFormulario()) return;
+    if (!validarFormulario(newTrabajador)) return;
 
     try {
       setSubmitting(true);
@@ -185,6 +261,35 @@ export const CoordinadorDashboard = () => {
     }
   };
 
+  const handleActualizarTrabajador = async (e) => {
+    e.preventDefault();
+    if (!editingTrabajador || !validarFormulario(editingTrabajador)) return;
+
+    try {
+      setSubmitting(true);
+      const actualizado = await api.put(`/coordinador/trabajadores/${editingTrabajador.idTrabajador}`, {
+        ...editingTrabajador,
+        identificacion: editingTrabajador.identificacion.trim(),
+        nombre: editingTrabajador.nombre.trim(),
+        apellido: editingTrabajador.apellido.trim(),
+        email: editingTrabajador.email.trim(),
+        profesion: editingTrabajador.profesion?.trim() || 'Ingeniero de Software',
+        especialidad: editingTrabajador.especialidad?.trim() || 'General',
+        rol: editingTrabajador.rol
+      });
+
+      setTrabajadores(prev => prev.map(t => t.idTrabajador === actualizado.idTrabajador ? actualizado : t));
+      toast.success(`Perfil de ${actualizado.nombre} ${actualizado.apellido} actualizado.`);
+      setEditingTrabajador(null);
+      setFormErrors({});
+    } catch (err) {
+      console.error('Error actualizando trabajador:', err);
+      toast.error(err.message || 'Error al actualizar datos del trabajador.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleToggleEstadoSolicitud = async (idSolicitud) => {
     try {
       setTogglingSolicitudId(idSolicitud);
@@ -205,7 +310,9 @@ export const CoordinadorDashboard = () => {
     (t.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
     (t.apellido || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (t.identificacion || '').includes(searchTerm) ||
-    (t.especialidad || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (t.especialidad || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (t.rol || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (t.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const activosCount = trabajadores.filter(t => t.estado).length;
@@ -220,8 +327,7 @@ export const CoordinadorDashboard = () => {
         metric2: loading ? '...' : `Solicitudes: ${solicitudesPendientes} Pendientes`
       }}
     >
-      
-      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL */}
+      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (REDiseño Stripe / Vercel Enterprise) */}
       {activeTab === 'personal' && (
         <motion.div 
           key="personal"
@@ -274,31 +380,33 @@ export const CoordinadorDashboard = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Filtrar por nombre, identificación, especialidad o rol..."
-              className="input-field pl-11 py-3 text-sm bg-white dark:bg-zinc-900"
+              placeholder="Filtrar por nombre, correo, identificación, especialidad o rol..."
+              className="input-field pl-11 py-3 text-sm bg-white dark:bg-zinc-900 shadow-sm"
             />
           </motion.div>
 
-          {/* Tabla de Personal con Scroll Horizontal Fluido en Móvil */}
+          {/* Tabla de Personal Rediseñada (Estilo Stripe / Vercel) */}
           <motion.div 
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm"
           >
             <div className="overflow-x-auto w-full">
-              <table className="w-full text-left text-xs min-w-[680px]">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-[0.65rem] uppercase tracking-wider font-extrabold text-zinc-500 dark:text-zinc-400">
+              <table className="w-full text-left text-xs min-w-[780px]">
+                {/* 1. Contenedor y Encabezados Modernos */}
+                <thead className="bg-zinc-50/90 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   <tr>
-                    <th className="p-4">Identificación</th>
-                    <th className="p-4">Nombre Completo</th>
-                    <th className="p-4">Profesión / Especialidad</th>
-                    <th className="p-4">Rol Asignado</th>
-                    <th className="p-4">Estado</th>
-                    <th className="p-4 text-right">Acción</th>
+                    <th className="py-4 px-6">Identificación</th>
+                    <th className="py-4 px-6">Trabajador</th>
+                    <th className="py-4 px-6">Profesión / Especialidad</th>
+                    <th className="py-4 px-6">Rol Asignado</th>
+                    <th className="py-4 px-6">Estado</th>
+                    <th className="py-4 px-6 text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60 font-medium">
+                <tbody className="divide-y divide-zinc-200/80 dark:divide-zinc-800/80 font-medium">
                   {loading && (
                     <>
+                      <SkeletonRow />
                       <SkeletonRow />
                       <SkeletonRow />
                       <SkeletonRow />
@@ -327,52 +435,99 @@ export const CoordinadorDashboard = () => {
                     </tr>
                   )}
 
+                  {/* 5. Efectos Hover en Filas */}
                   {!loading && filteredTrabajadores.map(t => (
-                    <tr key={t.idTrabajador} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 transition-colors">
-                      <td className="p-4 font-mono font-bold text-zinc-800 dark:text-zinc-200">{t.identificacion}</td>
-                      <td className="p-4">
-                        <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">{t.nombre} {t.apellido}</div>
-                        <div className="text-zinc-500 dark:text-zinc-400 text-[0.7rem]">{t.email}</div>
+                    <tr 
+                      key={t.idTrabajador} 
+                      className="transition-colors duration-150 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group"
+                    >
+                      {/* Identificación */}
+                      <td className="py-4 px-6 font-mono font-bold text-zinc-700 dark:text-zinc-300">
+                        {t.identificacion}
                       </td>
-                      <td className="p-4">
-                        <div className="font-semibold text-zinc-800 dark:text-zinc-200">{t.profesion || 'No especificada'}</div>
-                        <div className="text-zinc-500 text-[0.7rem]">{t.especialidad || 'General'}</div>
+
+                      {/* 2. Identidad Visual con Avatares */}
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <UserAvatar 
+                            nombre={t.nombre} 
+                            apellido={t.apellido} 
+                            rol={t.rol} 
+                            fotoUrl={t.fotoUrl} 
+                          />
+                          <div className="min-w-0">
+                            <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                              {t.nombre} {t.apellido}
+                            </div>
+                            <div className="text-zinc-500 dark:text-zinc-400 text-xs truncate">
+                              {t.email}
+                            </div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="p-4">
-                        <span className={`inline-block text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-md border ${
-                          t.rol === 'COORDINADOR' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800' :
-                          t.rol === 'LIDER' ? 'bg-zinc-100 text-zinc-800 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700' :
-                          'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
-                        }`}>
-                          {t.rol}
-                        </span>
+
+                      {/* Profesión y Especialidad */}
+                      <td className="py-4 px-6">
+                        <div className="font-semibold text-zinc-800 dark:text-zinc-200">
+                          {t.profesion || 'Ingeniero de Software'}
+                        </div>
+                        <div className="text-zinc-500 dark:text-zinc-400 text-xs">
+                          {t.especialidad || 'General'}
+                        </div>
                       </td>
-                      <td className="p-4">
-                        <span className={`inline-flex items-center gap-1.5 text-[0.7rem] font-bold px-2.5 py-1 rounded-full ${
+
+                      {/* 3. Insignias (Badges) Dinámicas para los Roles */}
+                      <td className="py-4 px-6">
+                        <RoleBadge rol={t.rol} />
+                      </td>
+
+                      {/* Estado */}
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border shadow-sm ${
                           t.estado 
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' 
-                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' 
+                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${t.estado ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
+                          <span className={`w-2 h-2 rounded-full ${t.estado ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`} />
                           {t.estado ? 'Habilitado' : 'Inhabilitado'}
                         </span>
                       </td>
-                      <td className="p-4 text-right">
-                        <button
-                          type="button"
-                          disabled={togglingId === t.idTrabajador}
-                          onClick={() => handleInhabilitar(t.idTrabajador)}
-                          className={`text-xs py-1.5 px-3 rounded-xl font-bold border transition-all cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50 ${
-                            t.estado
-                              ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800'
-                              : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-                          }`}
-                        >
-                          {togglingId === t.idTrabajador ? (
-                            <Loader2 size={12} className="animate-spin" />
-                          ) : null}
-                          {t.estado ? 'Inhabilitar' : 'Reactivar'}
-                        </button>
+
+                      {/* 4. Acciones con Iconografía de Lucide React */}
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Botón Editar con Icono */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingTrabajador({ ...t });
+                              setFormErrors({});
+                            }}
+                            title="Editar información del trabajador"
+                            className="p-2 rounded-xl text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 border border-transparent hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer"
+                          >
+                            <Pencil size={15} />
+                          </button>
+
+                          {/* Botón Inhabilitar / Reactivar con Icono */}
+                          <button
+                            type="button"
+                            disabled={togglingId === t.idTrabajador}
+                            onClick={() => handleInhabilitar(t.idTrabajador)}
+                            title={t.estado ? "Inhabilitar acceso lógico" : "Reactivar acceso lógico"}
+                            className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
+                              t.estado
+                                ? 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 border-transparent hover:border-red-200 dark:hover:border-red-800'
+                                : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-transparent hover:border-emerald-200 dark:hover:border-emerald-800'
+                            }`}
+                          >
+                            {togglingId === t.idTrabajador ? (
+                              <Loader2 size={15} className="animate-spin" />
+                            ) : (
+                              <Power size={15} />
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -523,7 +678,7 @@ export const CoordinadorDashboard = () => {
             >
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
-                  <UserPlus size={20} /> Registrar Nuevo Trabajador
+                  <UserPlus size={20} className="text-blue-600 dark:text-blue-400" /> Registrar Nuevo Trabajador
                 </h3>
                 <button onClick={() => { setShowCreateModal(false); setFormErrors({}); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
                   <X size={20} />
@@ -636,6 +791,130 @@ export const CoordinadorDashboard = () => {
                     className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
                   >
                     {submitting ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : 'Guardar Trabajador'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Editar Trabajador */}
+      <AnimatePresence>
+        {editingTrabajador && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <Pencil size={18} className="text-blue-600 dark:text-blue-400" /> Editar Perfil de Trabajador
+                </h3>
+                <button onClick={() => { setEditingTrabajador(null); setFormErrors({}); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleActualizarTrabajador} className="space-y-4 text-xs" noValidate>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Identificación *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editingTrabajador.identificacion}
+                      onChange={(e) => setEditingTrabajador({ ...editingTrabajador, identificacion: e.target.value })}
+                      className="input-field py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Rol en el Sistema *</label>
+                    <select
+                      value={editingTrabajador.rol}
+                      onChange={(e) => setEditingTrabajador({ ...editingTrabajador, rol: e.target.value })}
+                      className="input-field py-2 font-bold uppercase"
+                    >
+                      <option value="DESARROLLADOR">Desarrollador</option>
+                      <option value="LIDER">Líder</option>
+                      <option value="COORDINADOR">Coordinador</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Nombres *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editingTrabajador.nombre}
+                      onChange={(e) => setEditingTrabajador({ ...editingTrabajador, nombre: e.target.value })}
+                      className="input-field py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Apellidos *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editingTrabajador.apellido}
+                      onChange={(e) => setEditingTrabajador({ ...editingTrabajador, apellido: e.target.value })}
+                      className="input-field py-2"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Correo Electrónico Corporativo *</label>
+                  <input
+                    type="email"
+                    required
+                    value={editingTrabajador.email}
+                    onChange={(e) => setEditingTrabajador({ ...editingTrabajador, email: e.target.value })}
+                    className="input-field py-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Profesión</label>
+                    <input
+                      type="text"
+                      value={editingTrabajador.profesion || ''}
+                      onChange={(e) => setEditingTrabajador({ ...editingTrabajador, profesion: e.target.value })}
+                      className="input-field py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Especialidad</label>
+                    <input
+                      type="text"
+                      value={editingTrabajador.especialidad || ''}
+                      onChange={(e) => setEditingTrabajador({ ...editingTrabajador, especialidad: e.target.value })}
+                      className="input-field py-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => { setEditingTrabajador(null); setFormErrors({}); }}
+                    disabled={submitting}
+                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {submitting ? <><Loader2 size={14} className="animate-spin" /> Actualizando...</> : 'Guardar Cambios'}
                   </button>
                 </div>
               </form>
