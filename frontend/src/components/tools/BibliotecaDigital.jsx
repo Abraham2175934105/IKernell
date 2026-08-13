@@ -483,31 +483,31 @@ export const BibliotecaDigital = () => {
       {/* Modal / Visor Dual de Documentos (Hoja A4 PDF & Terminal de Código) */}
       <AnimatePresence>
         {previewDoc && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden"
+              className="bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl w-full max-w-6xl h-[92vh] flex flex-col overflow-hidden text-white"
             >
               
               {/* Header del Modal */}
-              <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/95 dark:bg-zinc-900/95 flex-shrink-0">
+              <div className="p-4 sm:p-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 flex-shrink-0">
                 <div className="flex items-center gap-3 truncate pr-4">
-                  <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    {activeViewMode === 'terminal' ? <Terminal size={20} /> : <FileText size={20} />}
+                  <div className="w-10 h-10 rounded-2xl bg-zinc-800 text-white flex items-center justify-center flex-shrink-0 shadow-sm border border-zinc-700">
+                    {activeViewMode === 'terminal' ? <Terminal size={20} className="text-emerald-400" /> : <FileText size={20} className="text-blue-400" />}
                   </div>
                   <div className="truncate">
-                    <h4 className="font-extrabold text-zinc-900 dark:text-white text-sm sm:text-base truncate">
+                    <h4 className="font-extrabold text-white text-sm sm:text-base truncate">
                       {previewDoc.titulo}
                     </h4>
-                    <div className="flex items-center gap-2 text-[0.7rem] text-zinc-500 font-medium">
-                      <span className="font-semibold text-zinc-700 dark:text-zinc-300">{previewDoc.categoria}</span>
+                    <div className="flex items-center gap-2 text-[0.7rem] text-zinc-400 font-medium">
+                      <span className="font-semibold text-zinc-300">{previewDoc.categoria}</span>
                       <span>•</span>
                       <span>{previewDoc.version || 'v1.0'}</span>
                       <span>•</span>
-                      <span className="font-bold text-blue-600 dark:text-blue-400">
+                      <span className="font-bold text-blue-400">
                         {previewDoc.formato || 'PDF'} (PostgreSQL Live)
                       </span>
                     </div>
@@ -516,14 +516,14 @@ export const BibliotecaDigital = () => {
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {/* Selector de Modo Dual: Hoja PDF (A4) vs Terminal */}
-                  <div className="flex items-center bg-zinc-200 dark:bg-zinc-800 p-1 rounded-xl text-xs font-bold">
+                  <div className="flex items-center bg-zinc-800 p-1 rounded-xl text-xs font-bold border border-zinc-700">
                     <button
                       type="button"
                       onClick={() => setActiveViewMode('pdf')}
                       className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                         activeViewMode === 'pdf'
-                          ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm font-black'
-                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                          ? 'bg-blue-600 text-white shadow-sm font-black'
+                          : 'text-zinc-400 hover:text-white'
                       }`}
                     >
                       <FileText size={13} />
@@ -534,8 +534,8 @@ export const BibliotecaDigital = () => {
                       onClick={() => setActiveViewMode('terminal')}
                       className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                         activeViewMode === 'terminal'
-                          ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm font-black'
-                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                          ? 'bg-blue-600 text-white shadow-sm font-black'
+                          : 'text-zinc-400 hover:text-white'
                       }`}
                     >
                       <Terminal size={13} />
@@ -547,10 +547,10 @@ export const BibliotecaDigital = () => {
                   <button
                     type="button"
                     onClick={handleCopyContent}
-                    className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    className="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
                     title="Copiar texto de la especificación"
                   >
-                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                     <span className="hidden md:inline">{copied ? 'Copiado' : 'Copiar'}</span>
                   </button>
 
@@ -569,7 +569,7 @@ export const BibliotecaDigital = () => {
                   {/* Botón Cerrar (X) */}
                   <button 
                     onClick={() => setPreviewDoc(null)} 
-                    className="w-9 h-9 rounded-xl text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 flex items-center justify-center transition-colors cursor-pointer ml-1"
+                    className="w-9 h-9 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 flex items-center justify-center transition-colors cursor-pointer ml-1"
                     title="Cerrar ventana emergente"
                   >
                     <X size={20} />
@@ -578,7 +578,7 @@ export const BibliotecaDigital = () => {
               </div>
 
               {/* Cuerpo del Visor Dual */}
-              <div className="flex-1 p-3 sm:p-5 bg-zinc-950/70 overflow-hidden flex flex-col">
+              <div className="flex-1 bg-zinc-950 overflow-hidden flex flex-col">
                 
                 {/* 1. VISTA DOCUMENTO FORMAL (EFECTO HOJA A4 CON REACT-MARKDOWN) */}
                 {activeViewMode === 'pdf' && (
@@ -661,15 +661,15 @@ export const BibliotecaDigital = () => {
               </div>
 
               {/* Footer del Modal */}
-              <div className="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-[0.7rem] text-zinc-500 bg-white dark:bg-zinc-900 flex-shrink-0">
+              <div className="px-6 py-3 border-t border-zinc-800 flex justify-between items-center text-[0.7rem] text-zinc-400 bg-zinc-900 flex-shrink-0">
                 <span className="hidden sm:inline">IKernell Digital Library • Visor Certificado de Especificaciones Técnicas</span>
-                <span className="font-mono font-medium text-zinc-600 dark:text-zinc-400">
+                <span className="font-mono font-medium text-zinc-400">
                   {previewDoc.categoria} • {previewDoc.version || 'v1.0'}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPreviewDoc(null)}
-                  className="outline-button text-xs py-1.5 px-4 font-bold cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-bold cursor-pointer transition-colors"
                 >
                   Cerrar Visor
                 </button>
