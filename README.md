@@ -1,43 +1,46 @@
-# IKernell - Plataforma de Gestion y Control de Proyectos de Software
+# IKernell - Plataforma de Gestión y Control de Proyectos de Software
 
-IKernell es una solucion tecnologica empresarial concebida para la administracion integral, el seguimiento operacional y el control predictivo de proyectos de desarrollo de software. El sistema integra el desglose estructurado del trabajo (WBS), la asignacion granular de actividades por etapas, la clasificacion de errores e interrupciones en tiempo real, un motor predictivo de evaluacion de riesgos y la exportacion automatizada de metricas estandarizadas para aliados internacionales.
+**IKernell** es una solución tecnológica empresarial concebida para la administración integral, el seguimiento operacional y el control predictivo de proyectos de desarrollo de software. El sistema integra el desglose estructurado del trabajo (WBS), la asignación granular de actividades por etapas, la clasificación de errores e interrupciones en tiempo real, un motor predictivo de evaluación de riesgos, biblioteca digital centralizada y la exportación automatizada de métricas estandarizadas para aliados internacionales.
 
 ---
 
-## 1. Stack Tecnologico
+## 1. Stack Tecnológico
 
-El ecosistema de IKernell esta construido bajo estandares modernos de la industria, garantizando modularidad, mantenibilidad y alto rendimiento:
+El ecosistema de IKernell está construido bajo estándares modernos de la industria, garantizando modularidad, mantenibilidad y alto rendimiento:
 
 ### Backend
-- **Lenguaje:** Java 17 LTS.
-- **Framework Principal:** Spring Boot 3.4.2.
-- **Seguridad y Control de Acceso:** Spring Security 6 con autenticacion sin estado (*stateless*) mediante tokens JWT (JSON Web Tokens) firmados con algoritmo HMAC-SHA256.
-- **Persistencia de Datos:** Spring Data JPA sobre Hibernate ORM 6.6.
-- **Pool de Conexiones:** HikariCP optimizado para alta concurrencia con dimensionamiento dinamico y control de fugas de conexion.
-- **Procesamiento Asincrono y Tareas Programadas:** Spring Task Execution (`@Async` y `@Scheduled`) con pool dedicado `etlTaskExecutor`.
-- **Manejo Global de Excepciones:** `@RestControllerAdvice` centralizado para la emision de respuestas semanticas estructuradas (`ApiErrorResponse`).
+* **Lenguaje:** Java 17 LTS.
+* **Framework Principal:** Spring Boot 3.4.2.
+* **Seguridad y Control de Acceso:** Spring Security 6 con autenticación sin estado (*stateless*) mediante tokens JWT (JSON Web Tokens) firmados con algoritmo HMAC-SHA256.
+* **Persistencia de Datos:** Spring Data JPA sobre Hibernate ORM 6.6.
+* **Pool de Conexiones:** HikariCP optimizado para alta concurrencia con dimensionamiento dinámico y control de fugas de conexión.
+* **Procesamiento Asíncrono y Tareas Programadas:** Spring Task Execution (`@Async` y `@Scheduled`) con pool dedicado `etlTaskExecutor`.
+* **Manejo Global de Excepciones:** `@RestControllerAdvice` centralizado para la emisión de respuestas semánticas estructuradas (`ApiErrorResponse`).
 
 ### Frontend
-- **Libreria Principal:** React 18.3.
-- **Herramienta de Construccion:** Vite 5.4.
-- **Motor de Estilos:** Tailwind CSS y Vanilla CSS con sistema de variables personalizadas (paleta monocromatica de alto contraste en escala de grises y blanco puro).
-- **Sistema de Temas:** `ThemeContext` dinámico con persistencia local en cliente (Modo Claro / Modo Oscuro).
-- **Motor de Animaciones:** Framer Motion (revelado progresivo por scroll bidireccional, transiciones suaves y microinteracciones de interfaz).
-- **Visualizacion de Datos:** Recharts para la representacion analitica de incidentes y niveles de severidad.
-- **Iconografia:** Lucide React.
-- **Optimizacion de Carga:** Division de codigo (*Code Splitting*) basada en rutas mediante `React.lazy()` y `Suspense`.
+* **Librería Principal:** React 18.3.
+* **Herramienta de Construcción:** Vite 5.4.
+* **Gestor de Paquetes Estricto:** `pnpm`.
+* **Motor de Estilos:** Tailwind CSS y Vanilla CSS con sistema de variables personalizadas (paleta monocromática de alto contraste en escala de grises y blanco puro con acentos en azul corporativo).
+* **Sistema de Temas:** `ThemeContext` dinámico con persistencia local en cliente (Modo Claro / Modo Oscuro).
+* **Motor de Animaciones:** Framer Motion (revelado progresivo por scroll bidireccional, transiciones suaves y microinteracciones de interfaz).
+* **Visualización de Datos:** Recharts para la representación analítica de incidentes y niveles de severidad.
+* **Iconografía:** Lucide React.
+* **Procesamiento de Documentos:** `react-markdown`, `remark-gfm` y motor de generación client-side `jsPDF`.
+* **Optimización de Carga:** División de código (*Code Splitting*) basada en rutas mediante `React.lazy()` y `Suspense`.
 
 ### Base de Datos y Ciberseguridad
-- **Motor Relacional:** PostgreSQL 14+ con esquema fuertemente tipado, integridad referencial mediante claves foraneas e indices B-Tree.
-- **Proteccion de Credenciales:** Algoritmo unidireccional de derivacion de claves BCrypt con factor de costo 10 (RNF-10).
-- **Politica de Enmascaramiento de Datos (*Data Masking*):** Todos los identificadores sensibles, claves de acceso y certificados se administran mediante variables de entorno y marcadores de posicion protegidos.
+* **Motor Relacional:** PostgreSQL 14+ con esquema fuertemente tipado, integridad referencial mediante claves foráneas e índices B-Tree.
+* **Búsqueda Semántica y Difusa:** Extensión `pg_trgm` con índices **GIN** para coincidencias difusas por trigramas en respuestas menores a 50 ms.
+* **Protección de Credenciales:** Algoritmo unidireccional de derivación de claves BCrypt con factor de costo 10 (RNF-10).
+* **Política de Enmascaramiento de Datos (Data Masking):** Todos los identificadores sensibles, claves de acceso y certificados se administran mediante variables de entorno y marcadores de posición protegidos.
 
 ---
 
-## 2. Estructura y Gestion del Repositorio
+## 2. Estructura y Gestión del Repositorio
 
-### Clonacion del Repositorio
-Para obtener una copia local del codigo fuente, ejecute:
+### Clonación del Repositorio
+Para obtener una copia local del código fuente, ejecute:
 
 ```bash
 git clone https://github.com/Abraham2175934105/IKernell.git
@@ -45,32 +48,33 @@ cd IKernell
 ```
 
 ### Estructura Base de Directorios
+
 ```text
 IKernell/
 ├── backend/                  # Proyecto API RESTful en Spring Boot (Java 17)
 │   ├── src/main/java/        # Controladores, Servicios, Modelos JPA, Seguridad y Repositorios
-│   ├── src/main/resources/   # Archivos de configuracion (application.properties)
+│   ├── src/main/resources/   # Archivos de configuración (application.properties)
 │   └── pom.xml               # Dependencias del proyecto Maven
-├── frontend/                 # Aplicacion SPA en React 18 + Vite
-│   ├── src/components/       # Componentes modulares (UI, Dashboard, Public, Auth)
-│   ├── src/pages/            # Vistas enrutadas por rol (Coordinador, Lider, Dev, Public)
+├── frontend/                 # Aplicación SPA en React 18 + Vite
+│   ├── src/components/       # Componentes modulares (UI, Dashboard, Public, Auth, Biblioteca)
+│   ├── src/pages/            # Vistas enrutadas por rol (Coordinador, Líder, Dev, Public)
 │   ├── src/context/          # Proveedores de estado global (AuthContext, ThemeContext)
-│   ├── src/services/         # Clientes de comunicacion HTTP con la API REST
-│   ├── package.json          # Dependencias y scripts de ejecucion Node.js
+│   ├── src/services/         # Clientes de comunicación HTTP con la API REST
+│   ├── package.json          # Dependencias y scripts de ejecución Node.js
 │   └── pnpm-lock.yaml        # Archivo estricto de bloqueo de versiones (Lockfile)
-├── .gitignore                # Politica de exclusion estricta de documentos y secretos
-└── README.md                 # Documentacion tecnica de arquitectura y despliegue
+├── .gitignore                # Política de exclusión estricta de documentos y secretos
+└── README.md                 # Documentación técnica de arquitectura y despliegue
 ```
 
 ---
 
 ## 3. Arquitectura del Sistema
 
-La solucion adopta un modelo Cliente-Servidor desacoplado en capas (*N-Tier Architecture*) comunicado exclusivamente mediante una API RESTful sobre protocolo HTTP/HTTPS:
+La solución adopta un modelo Cliente-Servidor desacoplado en capas (*N-Tier Architecture*) comunicado exclusivamente mediante una API RESTful sobre protocolo HTTP/HTTPS:
 
 ```text
 +-----------------------------------------------------------------------+
-|                    CAPA DE PRESENTACION (FRONTEND)                    |
+|                    CAPA DE PRESENTACIÓN (FRONTEND)                    |
 |          React 18 SPA + Tailwind CSS + Framer Motion + Vite          |
 +-----------------------------------------------------------------------+
                                   |
@@ -78,9 +82,9 @@ La solucion adopta un modelo Cliente-Servidor desacoplado en capas (*N-Tier Arch
                                   v
 +-----------------------------------------------------------------------+
 |                     CAPA DE SERVICIOS (BACKEND)                       |
-|  Spring Boot REST Controllers -> Services (Logica de Negocio)         |
+|  Spring Boot REST Controllers -> Services (Lógica de Negocio)         |
 |  Spring Security (Filtros JWT + RBAC) -> Manejador Global Errores     |
-|  Procesos Asincronos (@Async) & Tareas Programadas (@Scheduled)       |
+|  Procesos Asíncronos (@Async) & Tareas Programadas (@Scheduled)       |
 +-----------------------------------------------------------------------+
                                   |
                                   | Mapeo Objeto-Relacional (JPA / Hibernate)
@@ -88,6 +92,7 @@ La solucion adopta un modelo Cliente-Servidor desacoplado en capas (*N-Tier Arch
 +-----------------------------------------------------------------------+
 |                     CAPA DE DATOS (PERSISTENCIA)                      |
 |             Pool de Conexiones HikariCP -> PostgreSQL 14+            |
+|             Índices GIN & Módulo pg_trgm (Búsqueda Difusa)            |
 +-----------------------------------------------------------------------+
 ```
 
@@ -95,130 +100,145 @@ La solucion adopta un modelo Cliente-Servidor desacoplado en capas (*N-Tier Arch
 
 ## 4. Funcionalidades por Rol de Usuario
 
-El sistema implementa un esquema estricto de Control de Acceso Basado en Roles (RBAC), dividiendo la experiencia operativa en cuatro niveles:
+El sistema implementa un esquema estricto de Control de Acceso Basado en Roles (RBAC):
 
-### 4.1. Interesado / Usuario Publico
-- **Portal Corporativo:** Presentacion institucional de IKernell, objetivos estrategicos y lineamientos tecnicos.
-- **Catalogo de Servicios:** Descripcion detallada de soluciones de arquitectura, consultoria y desarrollo a medida.
-- **Preguntas Frecuentes (FAQs) con Busqueda Predictiva:** Filtrado en tiempo real con normalizacion de caracteres, inmune a mayusculas, minusculas y tildes, con derivacion a contacto si no existen coincidencias.
-- **Formulario de Contacto Corporativo:** Envio de consultas directas hacia el equipo de administracion con instrucciones de llenado formales.
+### 4.1. Interesado / Usuario Público
+
+* **Portal Corporativo:** Presentación institucional de IKernell, objetivos estratégicos y lineamientos técnicos.
+* **Catálogo de Servicios:** Descripción detallada de soluciones de arquitectura, consultoría y desarrollo a medida.
+* **Preguntas Frecuentes (FAQs) con Búsqueda Predictiva:** Filtrado en tiempo real con normalización de caracteres.
+* **Formulario de Contacto Corporativo:** Envío de consultas directas hacia el equipo de administración.
 
 ### 4.2. Coordinador
-- **Gestion Centralizada de Personal:** Registro, edicion y consulta de trabajadores con asignacion de especialidad, profesion y rol.
-- **Inhabilitacion Logica:** Suspension de cuentas de acceso sin vulnerar la integridad referencial ni la trazabilidad de proyectos historicos.
-- **Listados Masivos Paginados:** Consultas optimizadas de personal con soporte para paginacion en servidor.
 
-### 4.3. Lider de Proyectos
-- **Administracion de Proyectos:** Registro de nuevos proyectos, establecimiento de plazos estimados y control de estados.
-- **Estructura de Desglose de Trabajo (WBS):** Division modular del proyecto en etapas y fases secuenciales.
-- **Asignacion de Personal:** Vinculacion de desarrolladores a la planilla del proyecto y asignacion granular de actividades por etapa.
-- **Monitoreo Predictivo:** Acceso al Semáforo Inteligente y ejecucion de la exportacion ETL para aliados internacionales.
+* **Gestión Centralizada de Personal:** Registro, edición y consulta de trabajadores con asignación de especialidad, profesión y rol.
+* **Inhabilitación Lógica:** Suspensión de cuentas de acceso (*soft-delete*) sin vulnerar la integridad referencial.
+* **Listados Masivos Paginados:** Consultas optimizadas con soporte para paginación en servidor.
+
+### 4.3. Líder de Proyectos
+
+* **Administración de Proyectos:** Registro de nuevos proyectos, plazos estimados y control de estados.
+* **Estructura de Desglose de Trabajo (WBS):** División modular del proyecto en etapas y fases secuenciales.
+* **Asignación de Personal:** Vinculación de desarrolladores y asignación granular de actividades por etapa.
+* **Monitoreo Predictivo:** Acceso al Semáforo Inteligente y ejecución de la exportación ETL para aliados internacionales.
 
 ### 4.4. Desarrollador
-- **Tablero Operativo de Actividades:** Consulta de asignaciones individuales con control de estado (Asignada, En Progreso, Finalizada).
-- **Reporte de Errores Tecnicos:** Registro de incidencias tipificadas por etapa con clasificacion por nivel de severidad (Baja, Media, Alta, Critica).
-- **Reporte de Interrupciones y Contingencias:** Notificacion de suspensiones operativas indicando duracion en minutos y justificacion tecnica.
+
+* **Tablero Operativo de Actividades:** Consulta y actualización de estado de actividades individuales.
+* **Reporte de Errores Técnicos:** Registro de incidencias por etapa con clasificación por nivel de severidad.
+* **Reporte de Interrupciones:** Notificación de tiempos muertos con justificación técnica.
+* **Centro de Gestión del Conocimiento:** Búsqueda e inyección rápida de fragmentos de código (*Snippets*).
 
 ---
 
-## 5. Modulos de Innovacion y Valor Agregado
+## 5. Módulos de Innovación y Valor Agregado
 
-### 5.1. Semaforo Inteligente (Dashboard Predictivo)
-Modulo analitico que evalua continuamente la salud operacional de cada proyecto. Mediante un algoritmo deterministicamente calibrado, cruza las horas acumuladas de interrupciones tecnicas con la concentracion de errores criticos y genera un diagnostico categorizado:
+### 5.1. Semáforo Inteligente (Dashboard Predictivo)
 
-- **Riesgo Bajo (Verde):** El proyecto avanza conforme al cronograma establecido.
-- **Riesgo Moderado (Naranja):** Presencia de cuellos de botella moderados; sugiere redistribucion preventiva de actividades.
-- **Alerta Critica de Riesgo (Rojo):** Superacion de los umbrales tolerables de contingencias o incidencias severas; recomienda la reasignacion inmediata de recursos o la solicitud formal de extension de plazos.
+Módulo analítico que evalúa continuamente la salud operacional cruzando horas acumuladas de interrupciones con errores críticos:
 
-### 5.2. Automatizacion ETL para la Alianza en Brasil
-Modulo transaccional para la transferencia de metricas de ingenieria hacia socios internacionales bajo la norma ISO 8601 UTC:
+* **Riesgo Bajo (Verde):** El proyecto avanza conforme al cronograma.
+* **Riesgo Moderado (Naranja):** Cuellos de botella moderados; sugiere redistribución preventiva.
+* **Alerta Crítica de Riesgo (Rojo):** Superación de umbrales tolerables; requiere reasignación inmediata o extensión de plazos.
 
-- **Estandarizacion de Formato:** Generacion de archivos planos estructurados con delimitadores (`|`), encabezados de proyecto, detalle de fases WBS, metricas de errores y contingencias.
-- **Modalidad Interactiva (One-Click Export):** Generacion y envio inmediato desde la consola del Lider.
-- **Modalidad Desatendida Programada:** Proceso batch ejecutado automaticamente en segundo plano mediante hilos no-bloqueantes (`@Async` y `@Scheduled`).
+### 5.2. Automatización ETL para la Alianza en Brasil
+
+Módulo transaccional para la transferencia de métricas bajo la norma ISO 8601 UTC en archivos planos delimitados por pipe (`|`). Soporta ejecución **One-Click** interactiva y ejecución **batch desatendida** programada (`@Scheduled`).
+
+### 5.3. Gestión del Conocimiento: Biblioteca Digital & Motor `Snippet.inject`
+
+Centralización de la documentación arquitectónica e investigación técnica:
+
+* **Visor Dual Interactive:** Modo Hoja A4 institucional y Modo Terminal de código fuente con renderizado dinámico (`react-markdown` y `Tailwind Typography`).
+* **Motor `Snippet.inject`:** Búsqueda difusa de fragmentos de código y soluciones homologadas mediante algoritmos de trigramas (`pg_trgm` e índices GIN en PostgreSQL) con tiempos de respuesta inferiores a **50 ms** (con control *Debounce* de 200ms en React).
+* **Exportación Client-Side:** Generación inmediata de reportes PDF maquetados utilizando `jsPDF`.
 
 ---
 
-## 6. Guia de Despliegue e Instalacion
+## 6. Guía de Despliegue e Instalación
 
 ### Requisitos Previos del Sistema
-- **Java Development Kit (JDK):** Version 17 LTS o superior.
-- **Apache Maven:** Version 3.8 o superior.
-- **Node.js:** Version 18.0 LTS o superior (requiere gestor de paquetes pnpm instalado globalmente).
-- **PostgreSQL:** Version 14 o superior instalado y en ejecucion.
 
-### 6.1. Configuracion de la Base de Datos
-Acceda a su motor PostgreSQL y cree la base de datos correspondiente:
+* **Java Development Kit (JDK):** Versión 17 LTS o superior.
+* **Apache Maven:** Versión 3.8 o superior.
+* **Node.js:** Versión 18.0 LTS o superior (requiere gestor de paquetes **`pnpm`** instalado globalmente).
+* **PostgreSQL:** Versión 14 o superior con extensión `pg_trgm` activada.
+
+### 6.1. Configuración de la Base de Datos
+
+Cree la base de datos e instale la extensión de búsqueda difusa:
 
 ```sql
 CREATE DATABASE backend_db;
+\c backend_db;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 ```
 
-Configure las variables de conexion correspondientes en `backend/src/main/resources/application.properties` utilizando las credenciales de su entorno:
-- **URL:** `jdbc:postgresql://<HOST_BASE_DATOS>:<PUERTO>/backend_db`
-- **Usuario:** `<USUARIO_BASE_DATOS>`
-- **Contraseña:** `<CONTRASEÑA_BASE_DATOS>`
+Configure las variables en `backend/src/main/resources/application.properties`:
+
+```properties
+spring.datasource.url=jdbc:postgresql://<HOST>:<PUERTO>/backend_db
+spring.datasource.username=<USUARIO>
+spring.datasource.password=<CONTRASEÑA>
+```
 
 ### 6.2. Despliegue del Backend (Spring Boot)
-Abra una terminal en la raiz del proyecto y ejecute:
 
 ```bash
 cd backend
 mvn clean compile
 mvn spring-boot:run
 ```
-El servidor backend iniciara en el puerto configurado: `http://localhost:8080`
 
-### 6.3. Despliegue del Frontend (React + Vite)
-En una terminal separada, ejecute:
+*Servidor API:* `http://localhost:8080`
+
+### 6.3. Despliegue del Frontend (React + Vite + pnpm)
 
 ```bash
 cd frontend
 pnpm install
 pnpm run dev
 ```
-La interfaz web iniciara en: `http://localhost:5173`
+
+*Interfaz Web:* `http://localhost:5173`
 
 ---
 
 ## 7. Credenciales de Prueba (Entorno de Desarrollo)
 
-Para fines de evaluacion en entornos locales o de desarrollo, los perfiles de prueba se estructuran de la siguiente manera:
+| Rol de Usuario | Correo Electrónico Corporativo | Estado de Contraseña | Acceso Rápido en Interfaz |
+| --- | --- | --- | --- |
+| **Coordinador** | `roberto.coord@ikernell.org` | `<CLAVE_ACCESO_DESARROLLO>` | Botón "Coordinador" en Login |
+| **Líder de Proyecto** | `carlos.lider@ikernell.org` | `<CLAVE_ACCESO_DESARROLLO>` | Botón "Líder" en Login |
+| **Desarrollador** | `ana.dev@ikernell.org` | `<CLAVE_ACCESO_DESARROLLO>` | Botón "Desarrollador" en Login |
 
-| Rol de Usuario | Correo Electronico Corporativo | Estado de Contraseña | Acceso Rapido en Interfaz |
-| :--- | :--- | :--- | :--- |
-| **Coordinador** | `roberto.coord@ikernell.org` | `<CLAVE_ACCESO_DESARROLLO>` | Boton "Coordinador" en Login |
-| **Lider de Proyecto** | `carlos.lider@ikernell.org` | `<CLAVE_ACCESO_DESARROLLO>` | Boton "Líder" en Login |
-| **Desarrollador** | `ana.dev@ikernell.org` | `<CLAVE_ACCESO_DESARROLLO>` | Boton "Desarrollador" en Login |
-
-*Nota de Seguridad: En la base de datos, todas las credenciales se almacenan exclusivamente como hashes unidireccionales generados por BCrypt (`<HASH_BCRYPT>`) y las sesiones se validan mediante tokens JWT.*
+*Nota de Seguridad: Las credenciales en base de datos están encriptadas mediante BCrypt y autenticadas con JWT.*
 
 ---
 
-## 8. Estandares de Rendimiento, Resiliencia y Seguridad
+## 8. Estándares de Rendimiento, Resiliencia y Seguridad
 
-- **Optimizacion de Conexiones (HikariCP):** Pool dimensionado con hasta 30 conexiones activas y 10 conexiones en reserva (*idle*) con deteccion de fugas configurada a 20 segundos para pruebas de estres y alta concurrencia.
-- **Paginacion Obligatoria:** Endpoints de consulta masiva implementan la interfaz `Pageable` de Spring Data JPA para prevenir fallos por saturacion de memoria (*OutOfMemoryError*).
-- **Manejo Resiliente ante Carga:** El interceptor global de excepciones transforma saturaciones de base de datos y desbordamientos de hilos asincronos en codigos HTTP controlados (503 Service Unavailable y 429 Too Many Requests).
-- **Politica de Seguridad Documental (RNF-11):** El archivo `.gitignore` previene estrictamente el rastreo y subida involuntaria de documentacion confidencial (`ARCHIVOS SISTEMA/`, archivos ofimaticos y variables `.env`).
+* **Optimización de Conexiones (HikariCP):** Pool dimensionado para alta concurrencia con detección de fugas en 20 segundos.
+* **Paginación Obligatoria:** Endpoints con `Pageable` para mitigar errores de memoria.
+* **Resiliencia HTTP:** Interceptor global `@RestControllerAdvice` que emite estados `503` y `429` ante contingencias.
+* **Política de Seguridad Documental (RNF-11):** Configuración estricta en `.gitignore` para ignorar carpetas confidenciales (`/Documents/`, `.env`, carpetas de compilación).
 
 ---
 
-## 9. ✨ Últimas Innovaciones UI/UX
+## 9. Últimas Innovaciones UI/UX
 
 ### 9.1. Refactorización Global de Temas & Contraste Dinámico
-- **Arquitectura de Color Dual**: Implementación estandarizada de tokens dinámicos con Tailwind CSS (`text-zinc-900 dark:text-zinc-100`, `bg-white dark:bg-zinc-900`), eliminando cualquier conflicto de contraste o ilegibilidad al alternar entre modo Claro y modo Oscuro.
-- **Identidad Visual Corporativa**: Inyección estratégica del Azul Corporativo (`blue-600` / `blue-500`) como acento de alta jerarquía en botones de acción principal, pestañas de navegación activas, barras de avance WBS y brillos perimetrales (`hover:shadow-[0_0_15px_rgba(59,130,246,0.12)]`).
-- **Simetría y Maquetación de Grillas**: Ajuste responsivo integral en los Dashboards de Coordinador, Líder y Desarrollador bajo una cuadrícula `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6` con tarjetas `h-full`, eliminando espacios vacíos desproporcionados.
 
-### 9.2. Motor de Transición Planetaria Día/Noche (*Earth Day/Night Dynamic Switch*)
-- **Imagen Base Unificada (Zero Layout Shift)**: Uso de un único activo satelital de alta resolución en el componente `Hero.jsx`, garantizando que la posición, escala y ángulo del planeta se mantengan 100% idénticos sin saltos visuales.
-- **Inyección de Luz Solar con CSS (`mix-blend-mode`)**:
-  - Transformación del espacio negro en atmósfera diurna azul cielo mediante capas con `mix-blend-color-dodge` (`bg-sky-400/65`).
-  - Simulación de luminosidad y resplandor solar envolvente mediante gradientes con `mix-blend-screen` y `mix-blend-overlay`.
-- **Transición Cinematográfica**: Animación de opacidad fluida de 700ms (`transition-opacity duration-700 ease-in-out`) que simula el amanecer y anochecer sobre la superficie terrestre con costo de rendimiento nulo (0 re-renderizados de red).
+* **Arquitectura de Color Dual:** Tokens dinámicos de Tailwind CSS (`text-zinc-900 dark:text-zinc-100`, `bg-white dark:bg-zinc-900`).
+* **Identidad Visual Corporativa:** Acento Azul Corporativo (`blue-600` / `blue-500`) en elementos interactivos clave.
+* **Simetría y Maquetación:** Grilla responsiva unificada `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`.
+
+### 9.2. Motor de Transición Planetaria Día/Noche (*Earth Switch*)
+
+* **Zero Layout Shift:** Activo satelital de alta resolución único en `Hero.jsx`.
+* **Inyección de Luz CSS:** Mezcla de capas dinámicas mediante `mix-blend-color-dodge` (`bg-sky-400/65`).
+* **Transición Cinematográfica:** Opacidad fluida de 700ms sin impacto en el rendimiento de red.
 
 ---
 
-IKernell Soluciones Software. Documentacion de Arquitectura y Despliegue.
-
+*IKernell Soluciones Software • Documentación de Arquitectura y Despliegue.*
