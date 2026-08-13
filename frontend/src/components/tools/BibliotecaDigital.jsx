@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   BookOpen, FileText, Download, Eye, Search, Sparkles, CheckCircle2, 
   Shield, Layers, RefreshCw, Loader2, X, ChevronRight, Filter, FileCode,
-  ArrowDownToLine, Maximize2, FileCheck, Terminal
+  ArrowDownToLine, Maximize2, FileCheck, Terminal, Copy, Check
 } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import toast from 'react-hot-toast';
@@ -31,6 +31,7 @@ export const BibliotecaDigital = () => {
   // Modal de Previsualización
   const [previewDoc, setPreviewDoc] = useState(null);
   const [activeViewMode, setActiveViewMode] = useState('pdf'); // 'pdf' | 'txt'
+  const [copied, setCopied] = useState(false);
 
   // Búsqueda Predictiva en Vivo
   const [suggestions, setSuggestions] = useState([]);
@@ -117,8 +118,18 @@ export const BibliotecaDigital = () => {
   // Abre el visor emergente y define si se muestra en modo PDF o texto
   const abrirModalPrevisualizacion = (doc) => {
     setPreviewDoc(doc);
-    const esPdf = (doc.formato || '').toUpperCase().includes('PDF') || (doc.archivoUrl || '').endsWith('.pdf');
-    setActiveViewMode(esPdf ? 'pdf' : 'txt');
+    setCopied(false);
+    // Mostrar directamente el contenido técnico extenso
+    setActiveViewMode('txt');
+  };
+
+  const handleCopyContent = () => {
+    const textToCopy = previewDoc?.contenidoTexto || previewDoc?.descripcion || '';
+    if (!textToCopy) return;
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    toast.success('Documentación técnica copiada al portapapeles');
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // Inicia la descarga del archivo técnico
@@ -141,7 +152,7 @@ export const BibliotecaDigital = () => {
     // Fallback con contenido plano
     const element = document.createElement("a");
     const mime = esPdf ? 'application/pdf' : 'text/plain;charset=utf-8';
-    const ext = esPdf ? 'pdf' : 'txt';
+    const ext = esPdf ? 'pdf' : (doc.formato?.toLowerCase() || 'txt');
     const file = new Blob([doc.contenidoTexto || doc.descripcion || "Documento IKernell"], { type: mime });
     element.href = URL.createObjectURL(file);
     element.download = `${doc.titulo.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${doc.version || 'v1.0'}.${ext}`;
@@ -482,20 +493,37 @@ export const BibliotecaDigital = () => {
                   </div>
                 )}
 
-                {/* 2. VISTA CONSOLA / TEXTO PLANO (TXT) */}
+                {/* 2. VISTA TEXTO / ESPECIFICACIÓN TÉCNICA (MARKDOWN & CODE) */}
                 {activeViewMode === 'txt' && (
-                  <div className="w-full h-full flex flex-col justify-between">
-                    <div className="p-3 bg-zinc-900 text-zinc-400 border border-zinc-800 rounded-t-2xl text-[0.7rem] font-mono flex items-center justify-between">
+                  <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-inner">
+                    <div className="p-3 bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-800 text-xs font-mono flex items-center justify-between flex-shrink-0">
                       <div className="flex items-center gap-2">
-                        <Terminal size={14} className="text-emerald-400" />
-                        <span>Terminal de Lectura • {previewDoc.titulo}</span>
+                        <Terminal size={15} className="text-blue-600 dark:text-blue-400" />
+                        <span className="font-bold text-zinc-900 dark:text-white truncate max-w-xs sm:max-w-md">
+                          Especificación Técnica • {previewDoc.titulo}
+                        </span>
                       </div>
-                      <span>UTF-8 Document Buffer</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 hidden md:inline">
+                          {(previewDoc.contenidoTexto || '').length.toLocaleString()} Caracteres • UTF-8 Markdown
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCopyContent}
+                          className="px-2.5 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white text-zinc-700 dark:text-zinc-300 transition-colors text-[0.75rem] font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
+                          title="Copiar texto de la especificación"
+                        >
+                          {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                          <span>{copied ? 'Copiado' : 'Copiar'}</span>
+                        </button>
+                      </div>
                     </div>
 
-                    <pre className="flex-1 bg-zinc-950 text-emerald-400 p-5 rounded-b-2xl text-xs font-mono overflow-y-auto whitespace-pre-wrap leading-relaxed border-x border-b border-zinc-800 shadow-inner">
-                      {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido de texto registrado.'}
-                    </pre>
+                    <div className="flex-1 p-5 sm:p-7 overflow-y-auto bg-zinc-50/70 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 font-sans text-sm leading-relaxed selection:bg-blue-500 selection:text-white">
+                      <pre className="whitespace-pre-wrap font-mono text-xs sm:text-[0.82rem] leading-relaxed text-zinc-800 dark:text-zinc-200 font-normal">
+                        {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido de texto registrado.'}
+                      </pre>
+                    </div>
                   </div>
                 )}
 

@@ -424,14 +424,798 @@ SELECT setval('solicitud_contacto_id_solicitud_seq', (SELECT MAX(id_solicitud) F
 DELETE FROM documento_biblioteca;
 INSERT INTO documento_biblioteca (id_documento, titulo, categoria, archivo_url, fecha_subida, subido_por_id, descripcion, version, formato, contenido_texto)
 VALUES 
-  (1, 'Catálogo de Requerimientos Funcionales y No Funcionales v2.0', 'NORMATIVAS', 'https://docs.ikernell.org/catalogo-requerimientos-v2.pdf', NOW() - INTERVAL '3 days', 5, 'Matriz completa de 36 Requerimientos Funcionales (RF-01 a RF-36) y 15 No Funcionales con trazabilidad WBS, RBAC e integraciones internacionales.', 'v2.0', 'PDF', 'ESPECIFICACIÓN DE REQUERIMIENTOS DE SOFTWARE (SRS) - IKERNELL v2.0\n\n1. MÓDULO PÚBLICO (RF-01 a RF-07)\n2. MÓDULO COORDINADOR (RF-08 a RF-13)\n3. MÓDULO LÍDER DE PROYECTO (RF-14 a RF-20)\n4. MÓDULO DESARROLLADOR (RF-21 a RF-27)\n5. ALIANZA INTERNACIONAL BRASIL (RF-28 a RF-31)\n6. INNOVACIONES TRANSVERSALES (RF-32 a RF-36)\n\nDocumento aprobado por el comité de ingeniería de software.'),
-  (2, 'Especificación de Arquitectura de N-Capas y Microservicios Cloud', 'ARQUITECTURA', 'https://docs.ikernell.org/arquitectura-ncapas-v2.pdf', NOW() - INTERVAL '5 days', 5, 'Estándares de desacoplamiento entre Backend Java 17 (Spring Boot 3 REST), Frontend React 18 (Vite SPA) y capa de persistencia PostgreSQL.', 'v2.1', 'PDF', 'ARQUITECTURA DEL SISTEMA IKERNELL\n\n- Capa de Presentación: React 18, Tailwind CSS, Framer Motion, Axios Interceptors\n- Capa de Aplicación: Spring Boot 3.4.2, Spring Security 6, JWT Stateless, Spring Batch\n- Capa de Persistencia: PostgreSQL 16+ con soporte pg_trgm para búsqueda difusa\n- Pool HikariCP con 30 conexiones máximas y latencias sub-100ms.'),
-  (3, 'Modelo Relacional PostgreSQL, Índices GIN y Diccionario DDL', 'BASE DE DATOS', 'https://docs.ikernell.org/modelo-relacional-ddl.sql', NOW() - INTERVAL '8 days', 5, 'Esquema relacional integral de 16 tablas con integridad referencial ON DELETE CASCADE/SET NULL, índices GIN pg_trgm y CTEs de analítica.', 'v3.0', 'SQL', '-- SCHEMA DDL IKERNELL POSTGRESQL\nCREATE EXTENSION IF NOT EXISTS "pg_trgm";\n\nCREATE TABLE trabajador (\n  id_trabajador BIGSERIAL PRIMARY KEY,\n  identificacion VARCHAR(30) UNIQUE NOT NULL,\n  nombre VARCHAR(50) NOT NULL,\n  apellido VARCHAR(50) NOT NULL,\n  email VARCHAR(100) UNIQUE NOT NULL,\n  rol VARCHAR(20) NOT NULL,\n  estado BOOLEAN DEFAULT TRUE\n);\n\n-- Índices optimizados para búsquedas trigram\nCREATE INDEX idx_micro_snippet_trgm ON micro_snippet USING gin (tags_busqueda gin_trgm_ops);'),
-  (4, 'Playbook de Resolución de Incidencias & Snippets Técnicos', 'OPERACIONES', 'https://docs.ikernell.org/playbook-incidencias.pdf', NOW() - INTERVAL '9 days', 5, 'Guía de contingencias operativas, resolución de deadlocks transaccionales con REQUIRES_NEW y catálogo de snippets de rápida inyección.', 'v1.5', 'PDF', 'PLAYBOOK DE RESOLUCIÓN DE INCIDENCIAS (SRE & QA)\n\n1. Errores de Concurrencia en PostgreSQL (Deadlocks):\n   - Usar @Transactional(propagation = Propagation.REQUIRES_NEW)\n2. Optimización de Búsqueda Trigram:\n   - Consultar función word_similarity() con límite 5\n3. Errores 401/403 en Frontend:\n   - Interceptor Axios con token refresh automático en localStorage.'),
-  (5, 'Manual de Integración y Formato Plano ISO 8601 UTC Brasil', 'INTEGRACION', 'https://docs.ikernell.org/manual-integracion-brasil.pdf', NOW() - INTERVAL '11 days', 5, 'Protocolo de delimitación de registros por piping (|), cálculo de sumatorias de control SHA-256 y transferencia SFTP asíncrona (RF-28 a RF-31).', 'v1.2', 'PDF', 'ESPECIFICACIÓN TÉCNICA - ALIANZA BRASIL (ETL)\n\n- Formato de Archivo: UTF-8 sin BOM\n- Delimitador: Pipe (|)\n- Formato de Marcas Temporales: ISO 8601 UTC (YYYY-MM-DDTHH:mm:ssZ)\n- Bloques Batch: 100 registros por chunk en memoria\n- Validación de Integridad: Hash SHA-256 en header del lote.'),
-  (6, 'Guía de Estándares de Código y Despliegue con pnpm', 'DESARROLLO', 'https://docs.ikernell.org/guia-desarrollo-pnpm.docx', NOW() - INTERVAL '14 days', 5, 'Convenciones de código Clean Architecture, TypeScript/ES6, Tailwind CSS con modo oscuro/claro y políticas de dependencias estrictas con pnpm.', 'v2.0', 'DOCX', 'GUÍA DE ESTÁNDARES FRONTEND & BACKEND\n\n1. Gestor de Paquetes: ESTRICTAMENTE pnpm (npm está prohibido por aislamiento de node_modules symlinked).\n2. Estilos: Tailwind CSS con clases semánticas dark: y variables HSL.\n3. Manejo de Estado: Context API modular y custom hooks (useApi, useDebounce).\n4. Despliegue: Compilación con Vite en producción.'),
-  (7, 'Manual de Ciberseguridad, RBAC y Políticas OWASP 2026', 'CIBERSEGURIDAD', 'https://docs.ikernell.org/seguridad-rbac-owasp.pdf', NOW() - INTERVAL '16 days', 5, 'Hardening de seguridad contra inyecciones SQL, tokens JWT con firma HMAC-SHA256, BCrypt cost factor 10 y protección CSRF/CORS estricta.', 'v1.8', 'PDF', 'POLÍTICAS DE SEGURIDAD INFORMÁTICA IKERNELL\n\n- Autenticación: JWT Bearer Tokens con expiración de 24 horas\n- Hashing de Contraseñas: BCrypt con 10 rondas de salt\n- Roles: RBAC estricto (COORDINADOR, LIDER, DESARROLLADOR)\n- OWASP Top 10 Compliance: Prepared Statements obligatorios en todas las queries.'),
-  (8, 'Matriz de Capacidad, Carga Cognitiva y Predictor de Burnout', 'ANALITICA', 'https://docs.ikernell.org/predictor-burnout-algoritmo.pdf', NOW() - INTERVAL '19 days', 5, 'Documentación matemática del algoritmo capacity.pulse (RF-35) con 7 CTEs deslizantes en PostgreSQL para la prevención de fatiga en desarrolladores.', 'v1.1', 'PDF', 'ALGORITMO CAPACITY.PULSE - CÁLCULO DE BURNOUT\n\n- Ventana Temporal: 21 días dividida en 3 semanas (S1, S2, S3)\n- Ponderación de Errores: Crítico (12 pts), Alto (8 pts), Medio (4 pts), Leve (1 pt)\n- Ponderación de Interrupciones: 1.5 pts por hora de contingencia\n- Factor de Aceleración: Incremento delta S3 vs S1 > 35% dispara ALERTA ROJA.');
+  (1, 'Catálogo de Requerimientos Funcionales y No Funcionales v2.0', 'NORMATIVAS', 'https://docs.ikernell.org/catalogo-requerimientos-v2.pdf', NOW() - INTERVAL '3 days', 5, 'Matriz completa de 36 Requerimientos Funcionales (RF-01 a RF-36) y 15 No Funcionales con trazabilidad WBS, RBAC e integraciones internacionales.', 'v2.0', 'PDF', ''),
+  (2, 'Especificación de Arquitectura de N-Capas y Microservicios Cloud', 'ARQUITECTURA', 'https://docs.ikernell.org/arquitectura-ncapas-v2.pdf', NOW() - INTERVAL '5 days', 5, 'Estándares de desacoplamiento entre Backend Java 17 (Spring Boot 3 REST), Frontend React 18 (Vite SPA) y capa de persistencia PostgreSQL.', 'v2.1', 'PDF', ''),
+  (3, 'Modelo Relacional PostgreSQL, Índices GIN y Diccionario DDL', 'BASE DE DATOS', 'https://docs.ikernell.org/modelo-relacional-ddl.sql', NOW() - INTERVAL '8 days', 5, 'Esquema relacional integral de 16 tablas con integridad referencial ON DELETE CASCADE/SET NULL, índices GIN pg_trgm y CTEs de analítica.', 'v3.0', 'SQL', ''),
+  (4, 'Playbook de Resolución de Incidencias & Snippets Técnicos', 'OPERACIONES', 'https://docs.ikernell.org/playbook-incidencias.pdf', NOW() - INTERVAL '9 days', 5, 'Guía de contingencias operativas, resolución de deadlocks transaccionales con REQUIRES_NEW y catálogo de snippets de rápida inyección.', 'v1.5', 'PDF', ''),
+  (5, 'Manual de Integración y Formato Plano ISO 8601 UTC Brasil', 'INTEGRACION', 'https://docs.ikernell.org/manual-integracion-brasil.pdf', NOW() - INTERVAL '11 days', 5, 'Protocolo de delimitación de registros por piping (|), cálculo de sumatorias de control SHA-256 y transferencia SFTP asíncrona (RF-28 a RF-31).', 'v1.2', 'PDF', ''),
+  (6, 'Guía de Estándares de Código y Despliegue con pnpm', 'DESARROLLO', 'https://docs.ikernell.org/guia-desarrollo-pnpm.docx', NOW() - INTERVAL '14 days', 5, 'Convenciones de código Clean Architecture, TypeScript/ES6, Tailwind CSS con modo oscuro/claro y políticas de dependencias estrictas con pnpm.', 'v2.0', 'DOCX', ''),
+  (7, 'Manual de Ciberseguridad, RBAC y Políticas OWASP 2026', 'CIBERSEGURIDAD', 'https://docs.ikernell.org/seguridad-rbac-owasp.pdf', NOW() - INTERVAL '16 days', 5, 'Hardening de seguridad contra inyecciones SQL, tokens JWT con firma HMAC-SHA256, BCrypt cost factor 10 y protección CSRF/CORS estricta.', 'v1.8', 'PDF', ''),
+  (8, 'Matriz de Capacidad, Carga Cognitiva y Predictor de Burnout', 'ANALITICA', 'https://docs.ikernell.org/predictor-burnout-algoritmo.pdf', NOW() - INTERVAL '19 days', 5, 'Documentación matemática del algoritmo capacity.pulse (RF-35) con 7 CTEs deslizantes en PostgreSQL para la prevención de fatiga en desarrolladores.', 'v1.1', 'PDF', '');
+
+UPDATE documento_biblioteca SET contenido_texto = $DOC$# CATÁLOGO DE REQUERIMIENTOS FUNCIONALES Y NO FUNCIONALES (SRS v2.0)
+**Proyecto:** IKernell Soluciones Software  
+**Normativa de Calidad:** IEEE 830 / ISO-IEC 25010  
+**Versión:** 2.0 | **Estado:** Aprobado para Producción  
+
+---
+
+## 1. INTRODUCCIÓN Y ALCANCE
+El sistema IKernell es una plataforma integral de gestión de proyectos de software, asignación granular de actividades WBS (Work Breakdown Structure), monitoreo de salud técnica de los equipos mediante analítica predictiva de estrés (*capacity.pulse*) e interoperabilidad internacional de datos bajo estándar ISO 8601.
+
+---
+
+## 2. REQUERIMIENTOS FUNCIONALES (RF-01 al RF-36)
+
+### 2.1. Módulo Público y Acceso (RF-01 a RF-07)
+| Código | Nombre del Requerimiento | Descripción Técnica | Actor |
+| :--- | :--- | :--- | :--- |
+| **RF-01** | Landing Page Corporativa | Visualización de propuesta de valor, stack tecnológico y clientes. | Visitante |
+| **RF-02** | Hero Dinámico Día/Noche | Efecto de iluminación solar sobre globo terráqueo mediante `mix-blend-mode`. | Visitante |
+| **RF-03** | Catálogo de Servicios | Despliegue de servicios de consultoría, arquitectura cloud y ciberseguridad. | Visitante |
+| **RF-04** | Formulario de Contacto | Captura y persistencia de solicitudes empresariales con validaciones RFC 5322. | Visitante |
+| **RF-05** | Preguntas Frecuentes (FAQ) | Acordeón interactivo con respuestas a dudas técnicas y operacionales. | Visitante |
+| **RF-06** | Autenticación JWT | Inicio de sesión seguro con emisión de Bearer Token HMAC-SHA256 (24h). | Todos |
+| **RF-07** | Control de Sesión y RBAC | Redirección contextual al dashboard según el rol retornado en el token. | Usuario |
+
+### 2.2. Módulo Coordinador (RF-08 a RF-13)
+| Código | Nombre del Requerimiento | Descripción Técnica | Actor |
+| :--- | :--- | :--- | :--- |
+| **RF-08** | Registro de Personal | Creación de trabajadores con rol, profesión, especialidad y credenciales. | Coordinador |
+| **RF-09** | Encriptación de Claves | Hashing unidireccional obligatorio con algoritmo BCrypt (cost factor 10). | Sistema |
+| **RF-10** | Gestión de Personal | Listado paginado y filtrado en tiempo real con estilo empresarial. | Coordinador |
+| **RF-11** | Inhabilitación Lógica | Soft-delete booleano (`estado = false`) sin destrucción de integridad referencial. | Coordinador |
+| **RF-12** | Bandeja de Solicitudes | Monitor y cambio de estado (*Atendida/Pendiente*) para leads entrantes. | Coordinador |
+| **RF-13** | Supervisión General | Acceso a métricas globales de proyectos, capacidad y disponibilidad del equipo. | Coordinador |
+
+### 2.3. Módulo Líder de Proyecto (RF-14 a RF-20)
+| Código | Nombre del Requerimiento | Descripción Técnica | Actor |
+| :--- | :--- | :--- | :--- |
+| **RF-14** | Creación de Proyectos | Registro de proyecto con cliente, fechas de inicio/fin y presupuesto. | Líder |
+| **RF-15** | Asignación de Equipo | Vinculación N:M de desarrolladores a proyectos con validación de capacidad. | Líder |
+| **RF-16** | Desglose WBS por Etapas | Configuración de fases del ciclo de vida (Arquitectura, Backend, Frontend, QA). | Líder |
+| **RF-17** | Gestión de Actividades | Creación y delegación de tareas granulares con horas estimadas y fechas límite. | Líder |
+| **RF-18** | Rebalanceo de Cargas | Modificación de asignaciones de actividades para mitigar alertas de sobrecarga. | Líder |
+| **RF-19** | Semáforo de Riesgo | Cálculo dinámico de severidades de errores e impacto de contingencias por proyecto. | Líder |
+| **RF-20** | Cierre de Proyectos | Liquidación y generación de balance final de horas reales vs estimadas. | Líder |
+
+### 2.4. Módulo Desarrollador (RF-21 a RF-27)
+| Código | Nombre del Requerimiento | Descripción Técnica | Actor |
+| :--- | :--- | :--- | :--- |
+| **RF-21** | Tablero de Trabajo WBS | Visualización de actividades asignadas con indicador de avance porcentual. | Desarrollador |
+| **RF-22** | Actualización de Progreso | Registro de horas invertidas y cambio de estado (*Pendiente, En Progreso, Completada*). | Desarrollador |
+| **RF-23** | Reporte de Errores Técnicos | Registro de incidencias con severidad (*BAJA, MEDIA, ALTA, CRÍTICA*) y stacktrace. | Desarrollador |
+| **RF-24** | Registro de Interrupciones | Trazabilidad de contingencias operativas (reuniones, caídas de red, soporte externo). | Desarrollador |
+| **RF-25** | Historial de Reportes | Consulta de auditoría de incidencias reportadas con filtros temporales. | Desarrollador |
+| **RF-26** | Inyector de Snippets | Búsqueda difusa automática de soluciones técnicas ante registro de errores. | Desarrollador |
+| **RF-27** | Perfil y Métricas Propias | Vista individual de rendimiento, tareas activas y horas de contingencia. | Desarrollador |
+
+### 2.5. Alianza Internacional Brasil & ETL (RF-28 a RF-31)
+| Código | Nombre del Requerimiento | Descripción Técnica | Actor |
+| :--- | :--- | :--- | :--- |
+| **RF-28** | Exportación Batch ETL | Pipeline de extracción y transformación masiva de registros operacionales. | Sistema |
+| **RF-29** | Formato Plano ISO 8601 | Generación de archivo delimitado por pipe (`|`) con marcas temporales UTC. | Sistema |
+| **RF-30** | Sello de Integridad SHA-256 | Firma criptográfica del archivo generado para detección de alteraciones. | Sistema |
+| **RF-31** | Transferencia SFTP | Transmisión asíncrona hacia el nodo bancario en São Paulo con reintentos. | Sistema |
+
+### 2.6. Innovaciones Transversales (RF-32 a RF-36)
+| Código | Nombre del Requerimiento | Descripción Técnica | Actor |
+| :--- | :--- | :--- | :--- |
+| **RF-32** | Chat Corporativo en Vivo | Mensajería instantánea interna entre miembros del equipo del proyecto. | Todos |
+| **RF-33** | Biblioteca Digital | Repositorio central de documentación con visor PDF y descarga de código. | Todos |
+| **RF-34** | Tutoriales e Inducción | Módulo de aprendizaje multimedia y guías de buenas prácticas. | Todos |
+| **RF-35** | Predictor de Burnout | Algoritmo *capacity.pulse* con 7 CTEs en PostgreSQL sobre ventanas de 21 días. | Líder / Coord |
+| **RF-36** | Snippet.inject | Búsqueda difusa con extensión `pg_trgm` e índices GIN de trigramas. | Desarrollador |
+
+---
+
+## 3. REQUERIMIENTOS NO FUNCIONALES (RNF-01 al RNF-15)
+
+1. **RNF-01 (Rendimiento):** El backend debe procesar más de 6,000 peticiones por segundo en endpoints pesados con latencia p95 sub-150ms.
+2. **RNF-02 (Concurrencia):** Pool de conexiones HikariCP dimensionado para soportar 500 conexiones concurrentes sostenidas.
+3. **RNF-03 (Seguridad JWT):** Autenticación Stateless con secreto de 256 bits y renovación sin persistencia de sesión en servidor.
+4. **RNF-04 (Criptografía):** Almacenamiento de contraseñas bajo esquema BCrypt con factor de costo 10.
+5. **RNF-05 (Gestor de Paquetes):** Uso exclusivo y obligatorio de `pnpm` para la gestión determinista de dependencias frontend.
+6. **RNF-06 (Diseño Adaptativo):** Interfaz 100% responsiva (Mobile, Tablet, Desktop) con soporte nativo de tema Claro/Oscuro.
+7. **RNF-07 (Accesibilidad):** Cumplimiento de contraste WCAG AA en textos y elementos interactivos en ambos temas.
+8. **RNF-08 (Persistencia):** PostgreSQL 16+ con integridad referencial, transacciones ACID y extensiones trigram.
+9. **RNF-09 (Manejo de Errores):** Respuestas de excepción estandarizadas bajo el protocolo RFC 7807 (*ProblemDetail*).
+10. **RNF-10 (Tolerancia a Fallos):** Aislamiento de transacciones con `Propagation.REQUIRES_NEW` en registro de incidentes críticos.
+11. **RNF-11 (Optimización de Assets):** Bundle frontend compilado con Vite bajo compresión gzip/brotli.
+12. **RNF-12 (Trazabilidad):** Registro de marcas temporales en formato ISO 8601 UTC en todas las tablas de auditoría.
+13. **RNF-13 (Búsqueda Predictiva):** Tiempo de respuesta menor a 50ms en sugerencias de autocompletado con debounce de 200ms.
+14. **RNF-14 (Modularidad):** Código estructurado en N-Capas con desacoplamiento entre Controladores, Servicios y Repositorios.
+15. **RNF-15 (Documentación API):** OpenAPI / Swagger 3.0 interactivo expuesto en `/swagger-ui.html` para todos los endpoints.
+$DOC$ WHERE id_documento = 1;
+
+UPDATE documento_biblioteca SET contenido_texto = $DOC$# ESPECIFICACIÓN DE ARQUITECTURA DE N-CAPAS Y MICROSERVICIOS CLOUD
+**Proyecto:** IKernell Platform  
+**Arquitectura:** N-Capas Desacopladas (SPA + REST API + RDBMS)  
+**Versión:** 2.1 | **Estado:** Aprobado  
+
+---
+
+## 1. VISIÓN GENERAL DE LA ARQUITECTURA
+IKernell implementa un modelo de **Arquitectura en N-Capas Desacoplada** de alto rendimiento, donde el Frontend (React 18 SPA) opera de forma completamente independiente del Backend (Spring Boot 3.4.2 REST API), comunicándose a través de un canal HTTPS seguro mediante tokens JWT Stateless. La persistencia reside en una base de datos relacional PostgreSQL 16 optimizada para analítica en tiempo real.
+
+```text
++-------------------------------------------------------------------------+
+|                  CAPA DE PRESENTACIÓN (CLIENT SIDE)                    |
+|  React 18 + Vite + Tailwind CSS + Framer Motion + Axios Interceptors   |
++------------------------------------+------------------------------------+
+                                     | JSON / HTTPS (JWT Bearer Token)
+                                     v
++-------------------------------------------------------------------------+
+|                    CAPA DE SEGURIDAD Y CONTROLADORES                    |
+|  Spring Security 6 Filter Chain -> JwtAuthenticationFilter -> REST Mappings |
++------------------------------------+------------------------------------+
+                                     | Inyección de Dependencias
+                                     v
++-------------------------------------------------------------------------+
+|                     CAPA DE SERVICIOS Y NEGOCIO                         |
+|  @Service -> @Transactional (REQUIRES_NEW / readOnly) -> Reglas RF-01/36|
++------------------------------------+------------------------------------+
+                                     | Spring Data JPA / Hibernate 6
+                                     v
++-------------------------------------------------------------------------+
+|                     CAPA DE PERSISTENCIA Y DATOS                        |
+|  HikariCP (30 max conns) -> PostgreSQL 16 (pg_trgm + Window CTEs)       |
++-------------------------------------------------------------------------+
+```
+
+---
+
+## 2. COMPONENTES Y DESCRIPCIÓN DE CAPAS
+
+### 2.1. Capa de Presentación (Frontend SPA)
+- **Framework:** React 18.3 con Functional Components y Hooks modernos (`useState`, `useEffect`, `useCallback`, `useMemo`).
+- **Build Tool:** Vite 5.4 con compilación optimizada en Chunks asíncronos y soporte HMR ultrarrápido.
+- **Estilos y Diseño:** Tailwind CSS 3.4 estructurado con paleta corporativa Zinc/Azul y conmutación dinámica de tema Claro/Oscuro mediante selector de clases CSS `.dark`.
+- **Animaciones:** Framer Motion 13 configurado con curvas de bezier de baja latencia (`duration: 0.25s`) para transiciones fluidas sin penalizar el INP (*Interaction to Next Paint*).
+- **Comunicación HTTP:** Axios 1.7 encapsulado en el custom hook `useApi`, con interceptores para inyección automática de cabeceras `Authorization: Bearer <TOKEN>` y captura de respuestas 401 para redirección a login.
+
+### 2.2. Capa de Seguridad y Autenticación (Spring Security 6)
+- **Filtro de Seguridad (`SecurityFilterChain`):**
+  - Deshabilitación de CSRF (debido a la naturaleza Stateless de la API).
+  - Configuración CORS granular permitiendo orígenes locales (`http://localhost:5173`) y producción.
+  - Endpoints públicos permitidos: `/api/auth/**`, `/api/public/**`, `/swagger-ui/**`, `/v3/api-docs/**`.
+  - Endpoints protegidos: `/api/coordinador/**` (`ROLE_COORDINADOR`), `/api/lider/**` (`ROLE_LIDER`), `/api/desarrollador/**` (`ROLE_DESARROLLADOR`), `/api/analitica/**`, `/api/biblioteca/**`, `/api/snippets/**`.
+- **Filtro JWT (`JwtAuthenticationFilter`):** Intercepta cada solicitud entrante, extrae el token del header `Authorization`, valida la firma HMAC-SHA256, comprueba la fecha de expiración y establece el `UsernamePasswordAuthenticationToken` en el `SecurityContextHolder`.
+
+### 2.3. Capa de Controladores REST (Controllers)
+- **Anotaciones:** `@RestController`, `@RequestMapping("/api/...")`, `@CrossOrigin`.
+- **Validación de Entrada:** `@Valid` con Bean Validation (JSR-380) para validar restricciones `@NotBlank`, `@Size`, `@Email`, `@Min`.
+- **Respuestas Uniformes:** `ResponseEntity<T>` con códigos HTTP semánticos (`200 OK`, `201 CREATED`, `204 NO_CONTENT`, `400 BAD_REQUEST`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `500 INTERNAL_SERVER_ERROR`).
+- **Manejo Centralizado de Excepciones:** `@RestControllerAdvice` con `GlobalExceptionHandler` que transforma errores en instancias estándar de `ProblemDetail` (RFC 7807).
+
+### 2.4. Capa de Servicios de Negocio (Services)
+- **Anotaciones:** `@Service`, `@Transactional`.
+- **Manejo Transaccional Estratégico:**
+  - `@Transactional(readOnly = true)` en consultas y listados para optimizar el rendimiento en Hibernate evitando el dirty-checking.
+  - `@Transactional(propagation = Propagation.REQUIRES_NEW)` en el registro de errores críticos e interrupciones para garantizar su persistencia incluso si la transacción principal del usuario realiza un rollback.
+
+### 2.5. Capa de Persistencia y Pool HikariCP
+- **HikariCP Configuration:**
+  ```properties
+  spring.datasource.hikari.pool-name=IKernellHikariPool
+  spring.datasource.hikari.maximum-pool-size=30
+  spring.datasource.hikari.minimum-idle=10
+  spring.datasource.hikari.connection-timeout=30000
+  spring.datasource.hikari.idle-timeout=600000
+  spring.datasource.hikari.max-lifetime=1800000
+  spring.datasource.hikari.leak-detection-threshold=20000
+  ```
+- **Optimización de Consultas Nativas:** Para operaciones complejas de alto rendimiento (búsqueda difusa de snippets y predictor de burnout), se utilizan consultas nativas con soporte de trigramas (`pg_trgm`) y funciones de ventana, delegando el cómputo matemático directamente al motor C de PostgreSQL.
+$DOC$ WHERE id_documento = 2;
+
+UPDATE documento_biblioteca SET contenido_texto = $DOC$# MODELO RELACIONAL POSTGRESQL, ÍNDICES GIN Y DICCIONARIO DDL
+**Proyecto:** IKernell Database Core  
+**Motor:** PostgreSQL 16.x / 18.x  
+**Versión:** 3.0 | **Esquema:** `public` (backend_db)  
+
+---
+
+## 1. DIAGRAMA ENTIDAD-RELACIÓN Y DESCRIPCIÓN GENERAL
+La base de datos de IKernell contiene 16 tablas diseñadas bajo la **Tercera Forma Normal (3FN)**, garantizando cero redundancia de datos, integridad referencial mediante llaves foráneas estrictas y optimizaciones avanzadas con índices de texto invertido GIN (*Generalized Inverted Index*).
+
+```text
+               +---------------+
+               |  TRABAJADOR   |
+               +-------+-------+
+                       | 1:N
+       +---------------+---------------+
+       |                               |
+       v                               v
++--------------+               +---------------+
+|   PROYECTO   |               | PROY_DESARR   |
++------+-------+               +---------------+
+       | 1:N
+       v
++--------------+
+|    ETAPA     |
++------+-------+
+       | 1:N
+       v
++--------------+
+|  ACTIVIDAD   |
++------+-------+
+       | 1:N
+       +-----------------------+
+       |                       |
+       v                       v
++--------------+       +---------------+
+|    ERROR     |       | INTERRUPCION  |
++--------------+       +---------------+
+```
+
+---
+
+## 2. ESPECIFICACIÓN DDL COMPLETA DE TABLAS CORE
+
+### 2.1. Extensión de Trigramas para Búsqueda Difusa
+```sql
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+```
+
+### 2.2. Tabla: `trabajador` (Usuarios y Roles RBAC)
+```sql
+CREATE TABLE trabajador (
+    id_trabajador BIGSERIAL PRIMARY KEY,
+    identificacion VARCHAR(30) UNIQUE NOT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    apellido VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    profesion VARCHAR(100) DEFAULT 'Ingeniero de Software',
+    especialidad VARCHAR(150) DEFAULT 'General',
+    foto_url VARCHAR(500),
+    rol VARCHAR(20) NOT NULL CHECK (rol IN ('COORDINADOR', 'LIDER', 'DESARROLLADOR')),
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_nacimiento DATE,
+    direccion VARCHAR(255)
+);
+
+CREATE INDEX idx_trabajador_email ON trabajador(email);
+CREATE INDEX idx_trabajador_rol ON trabajador(rol);
+```
+
+### 2.3. Tabla: `proyecto` (Proyectos de Software)
+```sql
+CREATE TABLE proyecto (
+    id_proyecto BIGSERIAL PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion TEXT,
+    cliente VARCHAR(100) NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin_estimada DATE NOT NULL,
+    fecha_fin_real DATE,
+    presupuesto NUMERIC(12,2) DEFAULT 0.00,
+    estado VARCHAR(30) NOT NULL DEFAULT 'EN_PLANIFICACION',
+    lider_id BIGINT NOT NULL REFERENCES trabajador(id_trabajador) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_proyecto_lider ON proyecto(lider_id);
+```
+
+### 2.4. Tabla: `proyecto_desarrollador` (Asignaciones N:M)
+```sql
+CREATE TABLE proyecto_desarrollador (
+    id_asignacion BIGSERIAL PRIMARY KEY,
+    proyecto_id BIGINT NOT NULL REFERENCES proyecto(id_proyecto) ON DELETE CASCADE,
+    desarrollador_id BIGINT NOT NULL REFERENCES trabajador(id_trabajador) ON DELETE CASCADE,
+    fecha_asignacion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    rol_en_proyecto VARCHAR(50) DEFAULT 'Desarrollador Full Stack',
+    horas_asignadas INT DEFAULT 40,
+    CONSTRAINT uq_proyecto_desarrollador UNIQUE (proyecto_id, desarrollador_id)
+);
+```
+
+### 2.5. Tabla: `etapa` (Fases WBS)
+```sql
+CREATE TABLE etapa (
+    id_etapa BIGSERIAL PRIMARY KEY,
+    proyecto_id BIGINT NOT NULL REFERENCES proyecto(id_proyecto) ON DELETE CASCADE,
+    nombre VARCHAR(100) NOT NULL,
+    orden INT NOT NULL DEFAULT 1,
+    fecha_inicio DATE,
+    fecha_fin DATE,
+    estado VARCHAR(30) DEFAULT 'PENDIENTE'
+);
+```
+
+### 2.6. Tabla: `actividad` (Tareas Granulares WBS)
+```sql
+CREATE TABLE actividad (
+    id_actividad BIGSERIAL PRIMARY KEY,
+    etapa_id BIGINT NOT NULL REFERENCES etapa(id_etapa) ON DELETE CASCADE,
+    desarrollador_id BIGINT REFERENCES trabajador(id_trabajador) ON DELETE SET NULL,
+    titulo VARCHAR(150) NOT NULL,
+    descripcion TEXT,
+    horas_estimadas NUMERIC(6,2) NOT NULL DEFAULT 8.0,
+    horas_reales NUMERIC(6,2) DEFAULT 0.0,
+    porcentaje_avance INT NOT NULL DEFAULT 0 CHECK (porcentaje_avance BETWEEN 0 AND 100),
+    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
+    fecha_limite DATE,
+    fecha_completada TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_actividad_desarrollador ON actividad(desarrollador_id);
+CREATE INDEX idx_actividad_etapa ON actividad(etapa_id);
+```
+
+### 2.7. Tabla: `error` (Incidencias Técnicas)
+```sql
+CREATE TABLE error (
+    id_error BIGSERIAL PRIMARY KEY,
+    actividad_id BIGINT NOT NULL REFERENCES actividad(id_actividad) ON DELETE CASCADE,
+    desarrollador_id BIGINT NOT NULL REFERENCES trabajador(id_trabajador) ON DELETE CASCADE,
+    titulo VARCHAR(150) NOT NULL,
+    descripcion TEXT NOT NULL,
+    severidad VARCHAR(20) NOT NULL CHECK (severidad IN ('BAJA', 'MEDIA', 'ALTA', 'CRITICA')),
+    horas_invertidas_solucion NUMERIC(6,2) DEFAULT 1.0,
+    resuelto BOOLEAN NOT NULL DEFAULT FALSE,
+    solucion TEXT,
+    fecha_reporte TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_error_desarrollador_fecha ON error(desarrollador_id, fecha_reporte DESC);
+```
+
+### 2.8. Tabla: `interrupcion` (Bloqueos y Contingencias)
+```sql
+CREATE TABLE interrupcion (
+    id_interrupcion BIGSERIAL PRIMARY KEY,
+    actividad_id BIGINT NOT NULL REFERENCES actividad(id_actividad) ON DELETE CASCADE,
+    desarrollador_id BIGINT NOT NULL REFERENCES trabajador(id_trabajador) ON DELETE CASCADE,
+    motivo VARCHAR(150) NOT NULL,
+    descripcion TEXT,
+    horas_perdidas NUMERIC(6,2) NOT NULL DEFAULT 1.0,
+    fecha_interrupcion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_interrupcion_desarrollador_fecha ON interrupcion(desarrollador_id, fecha_interrupcion DESC);
+```
+
+### 2.9. Tabla: `micro_snippet` (Soluciones Técnicas Reutilizables)
+```sql
+CREATE TABLE micro_snippet (
+    id_snippet BIGSERIAL PRIMARY KEY,
+    titulo VARCHAR(150) NOT NULL,
+    descripcion TEXT NOT NULL,
+    tags_busqueda TEXT NOT NULL,
+    codigo_solucion TEXT NOT NULL,
+    lenguaje VARCHAR(50) NOT NULL,
+    comando_consola BOOLEAN DEFAULT FALSE,
+    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_micro_snippet_trgm ON micro_snippet USING gin (tags_busqueda gin_trgm_ops);
+```
+
+### 2.10. Tabla: `documento_biblioteca` (Repositorio Digital RF-33)
+```sql
+CREATE TABLE documento_biblioteca (
+    id_documento BIGSERIAL PRIMARY KEY,
+    titulo VARCHAR(200) NOT NULL,
+    categoria VARCHAR(50) NOT NULL,
+    archivo_url VARCHAR(500),
+    fecha_subida TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    subido_por_id BIGINT REFERENCES trabajador(id_trabajador) ON DELETE SET NULL,
+    descripcion TEXT,
+    version VARCHAR(20) DEFAULT 'v1.0',
+    formato VARCHAR(20) DEFAULT 'PDF',
+    contenido_texto TEXT
+);
+
+CREATE INDEX idx_documento_categoria ON documento_biblioteca(categoria);
+CREATE INDEX idx_documento_fecha ON documento_biblioteca(fecha_subida DESC);
+```
+$DOC$ WHERE id_documento = 3;
+
+UPDATE documento_biblioteca SET contenido_texto = $DOC$# PLAYBOOK DE RESOLUCIÓN DE INCIDENCIAS & SNIPPETS TÉCNICOS
+**Proyecto:** IKernell SRE & DevOps  
+**Clasificación:** Guía Operacional de Contingencia  
+**Versión:** 1.5 | **Estado:** Vigente  
+
+---
+
+## 1. MATRIZ DE INCIDENCIAS CRÍTICAS Y RESOLUCIÓN RÁPIDA
+
+### 1.1. Incidencia 1: Transacciones Anidadas y Deadlocks en PostgreSQL
+- **Síntoma:** Al reportar un error técnico o registrar una interrupción durante una operación WBS en fallo, la base de datos lanza `org.postgresql.util.PSQLException: ERROR: deadlock detected` o hace rollback completo de la auditoría.
+- **Causa Raíz:** La transacción del servicio principal comparte el mismo contexto transaccional con la entidad de log/error. Al fallar el hilo principal, se revierte el registro de la incidencia.
+- **Solución Arquitectónica:** Aislar el guardado del error en una transacción autónoma e independiente con `@Transactional(propagation = Propagation.REQUIRES_NEW)`.
+- **Código de Solución:**
+  ```java
+  @Service
+  public class ErrorReporteService {
+      @Autowired
+      private ErrorRepository errorRepository;
+
+      @Transactional(propagation = Propagation.REQUIRES_NEW)
+      public Error registrarIncidenciaIndependiente(Error nuevoError) {
+          return errorRepository.save(nuevoError);
+      }
+  }
+  ```
+
+### 1.2. Incidencia 2: Errores 403 Forbidden y CORS en Peticiones Axios
+- **Síntoma:** El navegador bloquea las llamadas REST desde `http://localhost:5173` hacia `http://localhost:8080` con el mensaje `Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource`.
+- **Causa Raíz:** Falta de configuración de `CorsConfigurationSource` en Spring Security o rechazo de solicitudes preflight `OPTIONS`.
+- **Solución de Código:**
+  ```java
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+      http
+          .cors(cors -> cors.configurationSource(request -> {
+              CorsConfiguration config = new CorsConfiguration();
+              config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+              config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+              config.setAllowedHeaders(List.of("*"));
+              config.setAllowCredentials(true);
+              return config;
+          }))
+          .csrf(AbstractHttpConfigurer::disable)
+          .authorizeHttpRequests(auth -> auth
+              .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+              .anyRequest().authenticated()
+          );
+      return http.build();
+  }
+  ```
+
+### 1.3. Incidencia 3: Fuga y Saturación de Conexiones en HikariCP
+- **Síntoma:** Latencias superiores a 5,000ms y excepciones `Connection is not available, request timed out after 30000ms`.
+- **Diagnóstico en PostgreSQL:**
+  ```sql
+  SELECT pid, age(clock_timestamp(), query_start), usename, state, query 
+  FROM pg_stat_activity 
+  WHERE state != 'idle' AND datname = 'backend_db';
+  ```
+- **Solución:**
+  1. Habilitar el leak detection en `application.properties`: `spring.datasource.hikari.leak-detection-threshold=20000`.
+  2. Asegurar que todas las transacciones de lectura cierren conexiones rápidamente configurando `spring.jpa.open-in-view=false`.
+  3. Incrementar el pool a 30 conexiones y verificar que ningún stream Java mantenga abierta una conexión a la BD.
+
+### 1.4. Incidencia 4: Búsqueda Difusa Inexacta con pg_trgm
+- **Síntoma:** Al buscar palabras simples como 'react' en tags largos, la función `similarity()` devuelve valores inferiores a `0.10` y no retorna resultados.
+- **Causa:** `similarity()` calcula trigramas sobre la longitud completa de ambas cadenas.
+- **Solución:** Usar `GREATEST(similarity(tags, :termino), word_similarity(:termino, tags))` en la query nativa:
+  ```sql
+  SELECT id_snippet, titulo, codigo_solucion,
+         GREATEST(similarity(tags_busqueda, :termino), word_similarity(:termino, tags_busqueda)) as score
+  FROM micro_snippet
+  WHERE similarity(tags_busqueda, :termino) > 0.12
+     OR word_similarity(:termino, tags_busqueda) > 0.35
+     OR tags_busqueda ILIKE CONCAT('%', :termino, '%')
+  ORDER BY score DESC LIMIT 5;
+  ```
+
+---
+
+## 2. GUÍA DE COMANDOS DE DIAGNÓSTICO EN PRODUCCIÓN
+
+- **Verificar Puertos en Escucha:** `ss -tulpn | grep -E '8080|5173|5432'`
+- **Monitorear Logs de Spring Boot:** `tail -f backend.log | grep -E 'ERROR|WARN|Hikari'`
+- **Revisar Carga y Memoria del Sistema:** `free -m && htop`
+- **Ejecutar Prueba de Estrés con Autocannon:** `pnpx autocannon -c 100 -d 15 http://localhost:8080/api/snippets/sugerencias?termino=react`
+$DOC$ WHERE id_documento = 4;
+
+UPDATE documento_biblioteca SET contenido_texto = $DOC$# MANUAL DE INTEGRACIÓN Y FORMATO PLANO ISO 8601 UTC BRASIL (RF-28 a RF-31)
+**Proyecto:** Alianza Internacional IKernell - Sector Financiero Brasil  
+**Estándar:** ISO 8601 UTC / Delimitado por Tuberías (Pipe-Delimited)  
+**Versión:** 1.2 | **Estado:** Activo en Producción  
+
+---
+
+## 1. OBJETIVO DEL PROTOCOLO DE INTERCAMBIO
+Garantizar la exportación periódica, masiva, atómica y segura de registros de actividades operacionales, incidencias técnicas y métricas de desempeño desde el nodo central de IKernell hacia la plataforma de compensación financiera en São Paulo, Brasil.
+
+---
+
+## 2. ESPECIFICACIÓN DEL FORMATO PLANO
+
+### 2.1. Reglas Estrictas de Estructura de Archivo
+1. **Codificación:** UTF-8 estricto sin marca de orden de bytes (BOM).
+2. **Fin de Línea:** Salto de línea estándar Unix (`\n` / LF).
+3. **Delimitador de Campos:** Carácter Pipe (`|`), ASCII 124.
+4. **Formato de Marcas Temporales:** ISO 8601 en Horario Universal Coordinado (UTC) exacto: `YYYY-MM-DDTHH:mm:ssZ` (ejemplo: `2026-08-13T13:45:00Z`).
+5. **Formato Numérico:** Punto decimal (`.`), sin separadores de miles (ejemplo: `1250.50`).
+
+### 2.2. Estructura del Header del Lote (Fila 1)
+```text
+BATCH_HEADER|LOTE_ID|CANTIDAD_REGISTROS|TIMESTAMP_GENERACION_UTC|SUMATORIA_CONTROL_SHA256
+```
+
+### 2.3. Estructura de Registros de Detalle (Filas 2 a N)
+```text
+DETALLE|ID_ACTIVIDAD|ID_DESARROLLADOR|NOMBRE_PROYECTO|HORAS_ESTIMADAS|HORAS_REALES|TOTAL_ERRORES|TOTAL_INTERRUPCIONES|ESTADO|FECHA_REGISTRO_UTC
+```
+
+### 2.4. Estructura del Footer del Lote (Última Fila)
+```text
+BATCH_FOOTER|LOTE_ID|TOTAL_HORAS_ACUMULADAS|HASH_VERIFICACION_FINAL
+```
+
+---
+
+## 3. EJEMPLO REAL DE LOTE DELIMITADO EXPORTADO
+```text
+BATCH_HEADER|LT-2026-BR-089|3|2026-08-13T12:00:00Z|8f4b23c9e1d5a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2
+DETALLE|101|6|Facturación Cloud & ETL Brasil|40.00|46.50|5|3|COMPLETADA|2026-08-10T15:30:00Z
+DETALLE|102|9|Core Bancario & Microservicios Cloud|35.00|38.20|3|2|EN_PROGRESO|2026-08-11T18:45:00Z
+DETALLE|103|11|App Móvil Fintech & Billetera Digital|20.00|19.50|0|1|COMPLETADA|2026-08-12T09:15:00Z
+BATCH_FOOTER|LT-2026-BR-089|104.20|VALIDATED_OK
+```
+
+---
+
+## 4. PIPELINE DE EJECUCIÓN CON SPRING BATCH (JOB ETL)
+
+```java
+@Configuration
+public class AlianzaBrasilEtlConfig {
+
+    @Bean
+    public Step exportarLoteIso8601Step(JobRepository jobRepository, 
+                                        PlatformTransactionManager transactionManager,
+                                        ItemReader<ActividadBrasilDto> reader,
+                                        ItemProcessor<ActividadBrasilDto, String> processor,
+                                        FlatFileItemWriter<String> writer) {
+        return new StepBuilder("exportarLoteIso8601Step", jobRepository)
+                .<ActividadBrasilDto, String>chunk(100, transactionManager)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .build();
+    }
+}
+```
+
+---
+
+## 5. PROTOCOLO DE SEGURIDAD Y TRANSFERENCIA SFTP
+1. **Canal Seguro:** Transferencia sobre protocolo SFTP (SSH File Transfer Protocol) puerto 2222 con clave pública RSA 4096 bits.
+2. **Verificación de Integridad:** El receptor recalcula el hash SHA-256 del contenido del archivo y lo compara contra el hash declarado en el `BATCH_HEADER`. Si difieren en un solo bit, el lote completo es rechazado y se notifica al Coordinador.
+$DOC$ WHERE id_documento = 5;
+
+UPDATE documento_biblioteca SET contenido_texto = $DOC$# GUÍA DE ESTÁNDARES DE CÓDIGO Y DESPLIEGUE CON PNPM
+**Proyecto:** IKernell Development Standards  
+**Herramientas:** pnpm, React 18, Tailwind CSS, Spring Boot 3  
+**Versión:** 2.0 | **Estado:** Obligatorio  
+
+---
+
+## 1. REGLA INQUEBRANTABLE: GESTIÓN DE PAQUETES CON PNPM
+
+> 🛑 **PROHIBICIÓN ESTRICTA DE NPM Y YARN**  
+> En el ecosistema de IKernell está terminantemente prohibido ejecutar `npm install`, `npm run` o `yarn`. Toda gestión de dependencias y scripts debe ejecutarse exclusivamente con **`pnpm`** (o `pnpx`).
+
+### 1.1. Justificación Técnica
+- **Aislamiento de Dependencias no Declaradas (Phantom Dependencies):** `pnpm` utiliza un árbol de dependencias basado en enlaces simbólicos (*hard links / symlinks*), impidiendo que el código importe paquetes no declarados en `package.json`.
+- **Ahorro Masivo de Disco:** Los paquetes se almacenan en un *Global Content-Addressable Store* central, reutilizando binarios en múltiples proyectos.
+- **Rendimiento de Instalación:** Hasta 3 veces más rápido que npm en la resolución e instalación de dependencias en frío.
+
+### 1.2. Comandos Homologados
+| Tarea | Comando Válido (pnpm) | Comando Prohibido |
+| :--- | :--- | :--- |
+| Instalar dependencias | `pnpm install` | ~~`npm install`~~ |
+| Añadir librería | `pnpm add <paquete>` | ~~`npm i <paquete>`~~ |
+| Añadir devDependency | `pnpm add -D <paquete>` | ~~`npm i -D <paquete>`~~ |
+| Iniciar servidor de desarrollo | `pnpm dev` o `pnpm run dev` | ~~`npm run dev`~~ |
+| Compilar para producción | `pnpm build` | ~~`npm run build`~~ |
+| Ejecutar herramientas CLI | `pnpx <herramienta>` | ~~`npx <herramienta>`~~ |
+
+---
+
+## 2. ESTÁNDARES DE CODIFICACIÓN FRONTEND (REACT 18 + TAILWIND)
+
+### 2.1. Estructura de Directorios
+```text
+frontend/src/
+├── assets/          # Imágenes vectoriales, favicons y logos
+├── components/      # Componentes UI reutilizables
+│   ├── auth/        # Guards y rutas protegidas RBAC
+│   ├── dashboard/   # Widgets analíticos (PredictorBurnout, Semaforo)
+│   ├── layout/      # Navbar, Header, Sidebar, DashboardLayout
+│   ├── public/      # Secciones de la Landing Page (Hero, Servicios, FAQ)
+│   └── tools/       # Herramientas transversales (Biblioteca, Chat, Tutoriales)
+├── context/         # AuthContext y ThemeContext globales
+├── hooks/           # Custom hooks (useApi, useDebounce, useTheme)
+├── pages/           # Vistas de ruta (Landing, Login, Coordinador, Líder, Dev)
+└── services/        # Clientes de API y peticiones Axios
+```
+
+### 2.2. Paleta de Colores Corporativa y Psicología del Color
+- **Acento Primario (Azul Corporativo):** Simboliza seguridad, calma y alta tecnología.
+  - Botones principales: `bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white`
+  - Bordes interactivos: `hover:border-blue-400 dark:hover:border-blue-500`
+  - Sombras con brillo: `hover:shadow-[0_0_15px_rgba(59,130,246,0.5)]`
+- **Superficies Neutras (Zinc Palette):**
+  - Fondo Claro: `bg-zinc-50` / Fondo Oscuro: `dark:bg-zinc-950`
+  - Tarjetas Claras: `bg-white border-zinc-200` / Tarjetas Oscuras: `dark:bg-zinc-900 dark:border-zinc-800`
+  - Textos Dinámicos (Sin Hardcoding):
+  - Títulos principales: `text-zinc-900 dark:text-zinc-100`
+  - Textos secundarios: `text-zinc-500 dark:text-zinc-400`
+  - Textos terciarios / fechas: `text-zinc-400 dark:text-zinc-500`
+$DOC$ WHERE id_documento = 6;
+
+UPDATE documento_biblioteca SET contenido_texto = $DOC$# MANUAL DE CIBERSEGURIDAD, RBAC Y POLÍTICAS OWASP 2026
+**Proyecto:** IKernell Security Governance  
+**Estándar:** OWASP Top 10 (2026) / NIST SP 800-63B  
+**Versión:** 1.8 | **Estado:** Aprobado para Producción  
+
+---
+
+## 1. CONTROL DE ACCESO BASADO EN ROLES (RBAC MATRIX)
+
+IKernell implementa un modelo de autorización estricto de menor privilegio (*Principle of Least Privilege*) mediante roles protegidos por anotaciones `@PreAuthorize` y filtros de Spring Security:
+
+| Módulo / Operación | COORDINADOR | LÍDER DE PROYECTO | DESARROLLADOR | VISITANTE |
+| :--- | :---: | :---: | :---: | :---: |
+| **Landing Page & FAQ** | ✔ Permitido | ✔ Permitido | ✔ Permitido | ✔ Permitido |
+| **Envío de Solicitud Web** | ✔ Permitido | ✔ Permitido | ✔ Permitido | ✔ Permitido |
+| **Gestión de Personal (Alta/Baja)** | ✔ Exclusivo | ❌ Bloqueado | ❌ Bloqueado | ❌ Bloqueado |
+| **Bandeja de Solicitudes Leads** | ✔ Exclusivo | ❌ Bloqueado | ❌ Bloqueado | ❌ Bloqueado |
+| **Creación de Proyectos** | ❌ Bloqueado | ✔ Exclusivo | ❌ Bloqueado | ❌ Bloqueado |
+| **Desglose WBS & Asignaciones** | ❌ Bloqueado | ✔ Exclusivo | ❌ Bloqueado | ❌ Bloqueado |
+| **Semáforo Inteligente & Riesgos**| ✔ Lectura | ✔ Total | ❌ Bloqueado | ❌ Bloqueado |
+| **Predictor de Burnout (Analítica)**| ✔ Total | ✔ Total | ❌ Bloqueado | ❌ Bloqueado |
+| **Tablero WBS & Progreso Tareas** | ❌ Bloqueado | ✔ Supervisión | ✔ Asignadas | ❌ Bloqueado |
+| **Reportar Errores / Bloqueos** | ❌ Bloqueado | ❌ Bloqueado | ✔ Exclusivo | ❌ Bloqueado |
+| **Buscador Snippet.inject** | ✔ Lectura | ✔ Lectura | ✔ Total | ❌ Bloqueado |
+| **Biblioteca Digital & Descargas**| ✔ Total | ✔ Total | ✔ Total | ❌ Bloqueado |
+
+---
+
+## 2. ARQUITECTURA DE AUTENTICACIÓN JWT STATELESS
+
+```text
+[Cliente React] --(1) POST /api/auth/login (email, password)--> [Spring Boot Auth]
+[Cliente React] <--(2) 200 OK + JWT Token (HMAC-SHA256, 24h)--- [Spring Boot Auth]
+[Cliente React] --(3) GET /api/coordinador/* + [Bearer Token]--> [JwtAuthFilter]
+[Cliente React] <--(4) Valida Firma & Claims -> Ejecuta Controller-- [SecurityContext]
+```
+
+### 2.1. Estructura del Token JWT
+- **Header:** `{"alg": "HS256", "typ": "JWT"}`
+- **Payload Claims:**
+  - `sub`: Correo corporativo del usuario (`carlos.lider@ikernell.org`)
+  - `role`: Rol unificado con prefijo Spring (`ROLE_LIDER`, `ROLE_COORDINADOR`, `ROLE_DESARROLLADOR`)
+  - `iat`: Timestamp de emisión en UTC
+  - `exp`: Timestamp de expiración (24 horas = 86,400,000 ms)
+- **Firma Criptográfica:** Firmado con clave secreta de 256 bits (`jwt.secret`).
+
+---
+
+## 3. PROTECCIÓN CONTRA OWASP TOP 10 (HARDENING)
+
+1. **A01 - Broken Access Control:** Blindaje en backend mediante `@SecurityRequirement(name = "BearerAuth")` y validación de pertenencia de recursos por usuario autenticado (`@AuthenticationPrincipal UserDetails`).
+2. **A02 - Cryptographic Failures:** Todas las contraseñas se almacenan cifradas con `BCryptPasswordEncoder(10)`. Ninguna contraseña en texto plano es registrada en logs o devuelta en respuestas DTO.
+3. **A03 - Injection (SQL / HQL):** Prohibición absoluta de concatenación de strings en sentencias SQL. Todas las consultas utilizan parámetros nombrados (`@Param("variable")`) o Criteria API con Prepared Statements en el driver PostgreSQL.
+4. **A05 - Security Misconfiguration:** Deshabilitación de listado de directorios estáticos, configuración de headers de seguridad HTTP (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Strict-Transport-Security`).
+5. **A07 - Identification and Authentication Failures:** Prevención de fuerza bruta con validación estricta y bloqueo de endpoints administrativos.
+$DOC$ WHERE id_documento = 7;
+
+UPDATE documento_biblioteca SET contenido_texto = $DOC$# MATRIZ DE CAPACIDAD, CARGA COGNITIVA Y PREDICTOR DE BURNOUT (RF-35)
+**Proyecto:** Algoritmo capacity.pulse  
+**Motor:** PostgreSQL Native Window Functions & 7 Sliding CTEs  
+**Versión:** 1.1 | **Estado:** Aprobado en Producción  
+
+---
+
+## 1. FUNDAMENTO CIENTÍFICO Y MATEMÁTICO DEL ALGORITMO
+El componente **`capacity.pulse`** (RF-35) evalúa la salud técnica y cognitiva de los desarrolladores en tiempo real mediante el análisis temporal de tres variables operativas registradas en la base de datos:
+1. **Frecuencia y Severidad de Errores Técnicos:** Ponderación del impacto cognitivo y frustración técnica.
+2. **Horas Acumuladas de Interrupción:** Pérdida de foco y cambio de contexto (*context-switching penalty*).
+3. **Volumen de Actividades WBS Simultáneas:** Sobrecarga de paralelismo y fechas límite inminentes.
+
+---
+
+## 2. MODELO TEMPORAL DE VENTANAS DESLIZANTES (21 DÍAS)
+
+El algoritmo divide el histórico reciente de 21 días en tres sub-ventanas temporales continuas de 7 días:
+
+```text
+|<------------------------- VENTANA HISTÓRICA (21 DÍAS) ------------------------->|
+|                                                                                |
+| [ SEMANA 1 (S1) ]        | [ SEMANA 2 (S2) ]        | [ SEMANA 3 (S3) ]        |
+| Días 15 a 21 atrás       | Días 8 a 14 atrás        | Últimos 7 días (HOY)     |
+| (Línea Base Histórica)   | (Tendencia Intermedia)   | (Presión Reciente)       |
+```
+
+### 2.1. Tabla de Ponderación de Pesos
+| Variable Operativa | Categoría / Magnitud | Peso Ponderado (Wi) |
+| :--- | :--- | :---: |
+| **Error Técnico** | Severidad `CRITICA` | **12.0 puntos** |
+| **Error Técnico** | Severidad `ALTA` | **8.0 puntos** |
+| **Error Técnico** | Severidad `MEDIA` | **4.0 puntos** |
+| **Error Técnico** | Severidad `BAJA` | **1.0 punto** |
+| **Interrupción** | Por cada 1.0 hora perdida | **1.5 puntos** |
+| **Actividad Activa** | Tarea en progreso simultánea | **3.0 puntos** |
+
+---
+
+## 3. FÓRMULA DE CÁLCULO DE SCORE DE ESTRÉS POR VENTANA
+
+Para cada sub-ventana Sk (k en {1, 2, 3}), el puntaje de sobrecarga se calcula como:
+
+$$\text{Score}(S_k) = \min\left(100.0, \; \sum_{i} (E_{i,k} \cdot W_{E_i}) + (H_{int,k} \cdot 1.5) + (N_{act} \cdot 3.0)\right)$$
+
+Donde:
+- `E_{i,k}`: Cantidad de errores de severidad i reportados en la ventana k.
+- `H_{int,k}`: Horas totales de interrupción en la ventana k.
+- `N_{act}`: Número de actividades WBS actualmente activas asignadas al desarrollador.
+
+### 3.1. Índice de Aceleración y Detección de Desgaste
+El factor de aceleración Delta compara la ventana crítica reciente (S3) contra la línea base (S1):
+
+$$\Delta_{\text{estrés}} = \text{Score}(S_3) - \text{Score}(S_1)$$
+
+### 3.2. Clasificación de Alertas del Semáforo
+- 🟢 **`ESTABLE` (Score Promedio < 40.0 y Delta <= 15%):** Carga operativa equilibrada dentro de los parámetros de rendimiento óptimo. Capacidad disponible para nuevas asignaciones.
+- 🟡 **`TENDENCIA_DE_ESTRES_ACELERADA` (40.0 <= Score < 75.0 o Delta > 20%):** Incremento sostenido de fricción técnica y contingencias. Sugerencia de revisión por el Líder de Proyecto.
+- 🔴 **`RIESGO_BURNOUT_INMINENTE` (Score >= 75.0 o Delta > 35%):** **Alerta Crítica**. Fatiga acumulada severa. El sistema sugiere rebalanceo automático de actividades WBS e inhabilita temporalmente la asignación de nuevas tareas de alta complejidad.
+
+---
+
+## 4. CONSULTA SQL NATIVA CON 7 CTES EN POSTGRESQL
+
+```sql
+WITH params AS (
+    SELECT CURRENT_DATE AS hoy
+),
+semanas AS (
+    SELECT 
+        hoy - INTERVAL '21 days' AS s1_inicio, hoy - INTERVAL '14 days' AS s1_fin,
+        hoy - INTERVAL '14 days' AS s2_inicio, hoy - INTERVAL '7 days' AS s2_fin,
+        hoy - INTERVAL '7 days'  AS s3_inicio, hoy                      AS s3_fin
+    FROM params
+),
+desarrolladores AS (
+    SELECT id_trabajador, nombre, apellido, email, especialidad 
+    FROM trabajador 
+    WHERE rol = 'DESARROLLADOR' AND estado = TRUE
+),
+errores_calc AS (
+    SELECT e.desarrollador_id,
+        COALESCE(SUM(CASE WHEN e.fecha_reporte >= s.s1_inicio AND e.fecha_reporte < s.s1_fin 
+            THEN (CASE e.severidad WHEN 'CRITICA' THEN 12 WHEN 'ALTA' THEN 8 WHEN 'MEDIA' THEN 4 ELSE 1 END) ELSE 0 END), 0) AS err_s1,
+        COALESCE(SUM(CASE WHEN e.fecha_reporte >= s.s2_inicio AND e.fecha_reporte < s.s2_fin 
+            THEN (CASE e.severidad WHEN 'CRITICA' THEN 12 WHEN 'ALTA' THEN 8 WHEN 'MEDIA' THEN 4 ELSE 1 END) ELSE 0 END), 0) AS err_s2,
+        COALESCE(SUM(CASE WHEN e.fecha_reporte >= s.s3_inicio AND e.fecha_reporte <= s.s3_fin 
+            THEN (CASE e.severidad WHEN 'CRITICA' THEN 12 WHEN 'ALTA' THEN 8 WHEN 'MEDIA' THEN 4 ELSE 1 END) ELSE 0 END), 0) AS err_s3
+    FROM error e CROSS JOIN semanas s GROUP BY e.desarrollador_id
+),
+interrupciones_calc AS (
+    SELECT i.desarrollador_id,
+        COALESCE(SUM(CASE WHEN i.fecha_interrupcion >= s.s1_inicio AND i.fecha_interrupcion < s.s1_fin THEN i.horas_perdidas * 1.5 ELSE 0 END), 0) AS int_s1,
+        COALESCE(SUM(CASE WHEN i.fecha_interrupcion >= s.s2_inicio AND i.fecha_interrupcion < s.s2_fin THEN i.horas_perdidas * 1.5 ELSE 0 END), 0) AS int_s2,
+        COALESCE(SUM(CASE WHEN i.fecha_interrupcion >= s.s3_inicio AND i.fecha_interrupcion <= s.s3_fin THEN i.horas_perdidas * 1.5 ELSE 0 END), 0) AS int_s3
+    FROM interrupcion i CROSS JOIN semanas s GROUP BY i.desarrollador_id
+),
+actividades_activas AS (
+    SELECT a.desarrollador_id, COUNT(*) AS tareas_activas 
+    FROM actividad a 
+    WHERE a.estado != 'COMPLETADA' AND a.desarrollador_id IS NOT NULL 
+    GROUP BY a.desarrollador_id
+)
+SELECT 
+    d.id_trabajador AS idTrabajador,
+    CONCAT(d.nombre, ' ', d.apellido) AS nombreCompleto,
+    d.email AS email,
+    d.especialidad AS especialidad,
+    COALESCE(act.tareas_activas, 0) AS tareasActivas,
+    LEAST(100.0, COALESCE(ec.err_s1, 0) + COALESCE(ic.int_s1, 0) + COALESCE(act.tareas_activas, 0) * 3.0) AS scoreSemana1,
+    LEAST(100.0, COALESCE(ec.err_s2, 0) + COALESCE(ic.int_s2, 0) + COALESCE(act.tareas_activas, 0) * 3.0) AS scoreSemana2,
+    LEAST(100.0, COALESCE(ec.err_s3, 0) + COALESCE(ic.int_s3, 0) + COALESCE(act.tareas_activas, 0) * 3.0) AS scoreSemana3
+FROM desarrolladores d
+LEFT JOIN errores_calc ec ON d.id_trabajador = ec.desarrollador_id
+LEFT JOIN interrupciones_calc ic ON d.id_trabajador = ic.desarrollador_id
+LEFT JOIN actividades_activas act ON d.id_trabajador = act.desarrollador_id
+ORDER BY scoreSemana3 DESC;
+```
+$DOC$ WHERE id_documento = 8;
 
 SELECT setval('documento_biblioteca_id_documento_seq', (SELECT MAX(id_documento) FROM documento_biblioteca));
 
