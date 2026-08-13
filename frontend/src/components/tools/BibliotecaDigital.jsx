@@ -28,9 +28,8 @@ export const BibliotecaDigital = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('TODOS');
   
-  // Modal de Previsualización
+  // Modal de Previsualización Universal de Texto Técnico
   const [previewDoc, setPreviewDoc] = useState(null);
-  const [activeViewMode, setActiveViewMode] = useState('pdf'); // 'pdf' | 'txt'
   const [copied, setCopied] = useState(false);
 
   // Búsqueda Predictiva en Vivo
@@ -115,51 +114,36 @@ export const BibliotecaDigital = () => {
     }
   };
 
-  // Abre el visor emergente y define si se muestra en modo PDF o texto
+  // Abre el visor emergente universal de texto técnico
   const abrirModalPrevisualizacion = (doc) => {
     setPreviewDoc(doc);
     setCopied(false);
-    // Mostrar directamente el contenido técnico extenso
-    setActiveViewMode('txt');
   };
 
+  // Copia el contenido técnico completo al portapapeles
   const handleCopyContent = () => {
     const textToCopy = previewDoc?.contenidoTexto || previewDoc?.descripcion || '';
     if (!textToCopy) return;
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
-    toast.success('Documentación técnica copiada al portapapeles');
+    toast.success('Especificación técnica copiada al portapapeles');
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Inicia la descarga del archivo técnico
+  // Genera la descarga del archivo en formato Markdown (.md) o SQL (.sql) al vuelo vía Blob
   const handleDownload = (doc) => {
     if (!doc) return;
-    const esPdf = (doc.formato || '').toUpperCase().includes('PDF');
-
-    // Si tiene ruta de archivo real, descargar directamente
-    if (doc.archivoUrl && doc.archivoUrl.startsWith('/docs/')) {
-      const link = document.createElement('a');
-      link.href = doc.archivoUrl;
-      link.download = doc.archivoUrl.split('/').pop() || `${doc.titulo}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success(`Descargando: ${doc.titulo} (PDF)`);
-      return;
-    }
-
-    // Fallback con contenido plano
-    const element = document.createElement("a");
-    const mime = esPdf ? 'application/pdf' : 'text/plain;charset=utf-8';
-    const ext = esPdf ? 'pdf' : (doc.formato?.toLowerCase() || 'txt');
-    const file = new Blob([doc.contenidoTexto || doc.descripcion || "Documento IKernell"], { type: mime });
-    element.href = URL.createObjectURL(file);
-    element.download = `${doc.titulo.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${doc.version || 'v1.0'}.${ext}`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    toast.success(`Descargando archivo: ${doc.titulo}`);
+    const textContent = doc.contenidoTexto || doc.descripcion || "Documento IKernell";
+    const extension = (doc.formato || '').toUpperCase() === 'SQL' ? 'sql' : 'md';
+    const blob = new Blob([textContent], { type: 'text/markdown;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${doc.titulo.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${doc.version || 'v1.0'}.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+    toast.success(`Descargando especificación: ${doc.titulo} (.${extension})`);
   };
 
   return (
@@ -186,7 +170,7 @@ export const BibliotecaDigital = () => {
               </span>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-              Repositorio centralizado con visor PDF integrado y descarga de especificaciones técnicas (PostgreSQL Live)
+              Repositorio centralizado de especificaciones técnicas con visor universal y descarga de documentación (PostgreSQL Live)
             </p>
           </div>
         </div>
@@ -314,83 +298,79 @@ export const BibliotecaDigital = () => {
           </div>
         )}
 
-        {!loading && documents.map(doc => {
-          const esPdf = (doc.formato || '').toUpperCase().includes('PDF') || (doc.archivoUrl || '').endsWith('.pdf');
-          
-          return (
-            <div 
-              key={doc.idDocumento}
-              className="p-6 rounded-3xl bg-zinc-50/70 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between hover:border-zinc-400 dark:hover:border-zinc-600 transition-all shadow-sm hover:shadow-md space-y-4 h-full"
-            >
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-[0.65rem] font-black px-2.5 py-1 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700">
-                    DOC-0{doc.idDocumento} • {doc.version || 'v1.0'}
-                  </span>
-                  <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-500">
-                    {doc.categoria}
-                  </span>
-                </div>
-
-                <h4 className="font-extrabold text-zinc-900 dark:text-white text-base leading-snug mb-2">
-                  {doc.titulo}
-                </h4>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  {doc.descripcion}
-                </p>
+        {!loading && documents.map(doc => (
+          <div 
+            key={doc.idDocumento}
+            className="p-6 rounded-3xl bg-zinc-50/70 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between hover:border-zinc-400 dark:hover:border-zinc-600 transition-all shadow-sm hover:shadow-md space-y-4 h-full"
+          >
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-[0.65rem] font-black px-2.5 py-1 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700">
+                  DOC-0{doc.idDocumento} • {doc.version || 'v1.0'}
+                </span>
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-500">
+                  {doc.categoria}
+                </span>
               </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-zinc-200 dark:border-zinc-800 gap-3 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className={`font-bold uppercase text-[0.65rem] px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${
-                    (doc.formato || '').toUpperCase() === 'PDF' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800' :
-                    (doc.formato || '').toUpperCase() === 'SQL' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' :
-                    (doc.formato || '').toUpperCase() === 'DOCX' ? 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800' :
-                    'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
-                  }`}>
-                    {doc.formato === 'SQL' ? <Terminal size={12} /> : <FileCheck size={12} />}
-                    {doc.formato || 'PDF'}
-                  </span>
+              <h4 className="font-extrabold text-zinc-900 dark:text-white text-base leading-snug mb-2">
+                {doc.titulo}
+              </h4>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                {doc.descripcion}
+              </p>
+            </div>
 
-                  <span className="text-[0.7rem] text-zinc-400 flex items-center gap-1 font-medium">
-                    {doc.fechaSubida ? new Date(doc.fechaSubida).toLocaleDateString() : '2026'}
-                  </span>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-zinc-200 dark:border-zinc-800 gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className={`font-bold uppercase text-[0.65rem] px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${
+                  (doc.formato || '').toUpperCase() === 'PDF' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800' :
+                  (doc.formato || '').toUpperCase() === 'SQL' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' :
+                  (doc.formato || '').toUpperCase() === 'DOCX' ? 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800' :
+                  'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+                }`}>
+                  {doc.formato === 'SQL' ? <Terminal size={12} /> : <FileCheck size={12} />}
+                  {doc.formato || 'PDF'}
+                </span>
 
-                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                  {/* Botón Ver Documento / Previsualizar */}
-                  <button
-                    type="button"
-                    onClick={() => abrirModalPrevisualizacion(doc)}
-                    className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex-1 sm:flex-none justify-center"
-                    title="Abrir visor integrado en modal"
-                  >
-                    <Eye size={14} />
-                    <span>Ver Documento</span>
-                    <ChevronRight size={12} className="text-zinc-400" />
-                  </button>
+                <span className="text-[0.7rem] text-zinc-400 flex items-center gap-1 font-medium">
+                  {doc.fechaSubida ? new Date(doc.fechaSubida).toLocaleDateString() : '2026'}
+                </span>
+              </div>
 
-                  {/* Botón Descargar PDF / TXT / SQL / DOCX */}
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(doc)}
-                    className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md flex-1 sm:flex-none justify-center"
-                    title={`Descargar archivo ${doc.formato || 'PDF'} a su computadora`}
-                  >
-                    <ArrowDownToLine size={14} />
-                    <span>Descargar {doc.formato || 'PDF'}</span>
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                {/* Botón Ver Documento */}
+                <button
+                  type="button"
+                  onClick={() => abrirModalPrevisualizacion(doc)}
+                  className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex-1 sm:flex-none justify-center"
+                  title="Abrir visor de documentación técnica"
+                >
+                  <Eye size={14} />
+                  <span>Ver Documento</span>
+                  <ChevronRight size={12} className="text-zinc-400" />
+                </button>
+
+                {/* Botón Descargar Especificación */}
+                <button
+                  type="button"
+                  onClick={() => handleDownload(doc)}
+                  className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md flex-1 sm:flex-none justify-center"
+                  title="Descargar especificación a su computadora"
+                >
+                  <ArrowDownToLine size={14} />
+                  <span>Descargar</span>
+                </button>
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
-      {/* Modal / Visor Integrado de PDF y TXT (100% Responsivo) */}
+      {/* Modal / Visor Universal de Documentación Técnica */}
       <AnimatePresence>
         {previewDoc && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
             <motion.div 
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -400,7 +380,7 @@ export const BibliotecaDigital = () => {
             >
               
               {/* Header del Modal */}
-              <div className="p-4 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/80 dark:bg-zinc-900/80 flex-shrink-0">
+              <div className="p-4 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/90 dark:bg-zinc-900/90 flex-shrink-0">
                 <div className="flex items-center gap-3 truncate pr-4">
                   <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center flex-shrink-0 shadow-sm">
                     <FileText size={20} />
@@ -410,51 +390,38 @@ export const BibliotecaDigital = () => {
                       {previewDoc.titulo}
                     </h4>
                     <div className="flex items-center gap-2 text-[0.7rem] text-zinc-500 font-medium">
-                      <span>{previewDoc.categoria}</span>
+                      <span className="font-semibold text-zinc-700 dark:text-zinc-300">{previewDoc.categoria}</span>
                       <span>•</span>
                       <span>{previewDoc.version || 'v1.0'}</span>
                       <span>•</span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">{previewDoc.formato || 'PDF'}</span>
+                      <span className="font-bold text-blue-600 dark:text-blue-400">
+                        {previewDoc.formato || 'PDF'} • {(previewDoc.contenidoTexto || '').length.toLocaleString()} Caracteres
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* Selector de Modo de Visualización */}
-                  <div className="hidden sm:flex items-center bg-zinc-200 dark:bg-zinc-800 p-1 rounded-xl text-xs font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setActiveViewMode('pdf')}
-                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                        activeViewMode === 'pdf'
-                          ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm'
-                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Visor PDF
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveViewMode('txt')}
-                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                        activeViewMode === 'txt'
-                          ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm'
-                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Texto / Consola
-                    </button>
-                  </div>
+                  {/* Botón Copiar Especificación */}
+                  <button
+                    type="button"
+                    onClick={handleCopyContent}
+                    className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    title="Copiar texto de la especificación técnica"
+                  >
+                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    <span className="hidden sm:inline">{copied ? 'Copiado' : 'Copiar'}</span>
+                  </button>
 
                   {/* Botón Descargar desde el Modal */}
                   <button
                     type="button"
                     onClick={() => handleDownload(previewDoc)}
                     className="gradient-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    title="Descargar archivo a su computadora"
+                    title="Descargar especificación completa"
                   >
                     <ArrowDownToLine size={14} />
-                    <span className="hidden md:inline">Descargar</span>
+                    <span className="hidden sm:inline">Descargar</span>
                   </button>
 
                   {/* Botón Cerrar (X) */}
@@ -468,71 +435,40 @@ export const BibliotecaDigital = () => {
                 </div>
               </div>
 
-              {/* Cuerpo del Visor */}
-              <div className="flex-1 p-3 sm:p-5 bg-zinc-100/50 dark:bg-zinc-950/50 overflow-hidden flex flex-col">
-                
-                {/* 1. VISTA PDF INCRUSTADA (<object> / <iframe>) */}
-                {activeViewMode === 'pdf' && (
-                  <div className="w-full h-full rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-inner flex flex-col justify-between">
-                    <object
-                      data={previewDoc.archivoUrl || '/docs/normativa-brasil-iso8601.pdf'}
-                      type="application/pdf"
-                      width="100%"
-                      height="100%"
-                      className="w-full h-full rounded-2xl"
-                    >
-                      {/* Fallback si el navegador no incrusta el PDF */}
-                      <iframe
-                        src={previewDoc.archivoUrl || '/docs/normativa-brasil-iso8601.pdf'}
-                        width="100%"
-                        height="100%"
-                        className="w-full h-full border-0 rounded-2xl"
-                        title={previewDoc.titulo}
-                      />
-                    </object>
-                  </div>
-                )}
-
-                {/* 2. VISTA TEXTO / ESPECIFICACIÓN TÉCNICA (MARKDOWN & CODE) */}
-                {activeViewMode === 'txt' && (
-                  <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-inner">
-                    <div className="p-3 bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-800 text-xs font-mono flex items-center justify-between flex-shrink-0">
-                      <div className="flex items-center gap-2">
-                        <Terminal size={15} className="text-blue-600 dark:text-blue-400" />
-                        <span className="font-bold text-zinc-900 dark:text-white truncate max-w-xs sm:max-w-md">
-                          Especificación Técnica • {previewDoc.titulo}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 hidden md:inline">
-                          {(previewDoc.contenidoTexto || '').length.toLocaleString()} Caracteres • UTF-8 Markdown
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleCopyContent}
-                          className="px-2.5 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white text-zinc-700 dark:text-zinc-300 transition-colors text-[0.75rem] font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
-                          title="Copiar texto de la especificación"
-                        >
-                          {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                          <span>{copied ? 'Copiado' : 'Copiar'}</span>
-                        </button>
-                      </div>
+              {/* Cuerpo del Visor: Renderizado Universal de Texto Técnico */}
+              <div className="flex-1 p-3 sm:p-5 bg-zinc-100/60 dark:bg-zinc-950/60 overflow-hidden flex flex-col">
+                <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-inner">
+                  
+                  {/* Barra Superior del Buffer */}
+                  <div className="p-3 bg-zinc-100/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-800 text-xs font-mono flex items-center justify-between flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <Terminal size={15} className="text-blue-600 dark:text-blue-400" />
+                      <span className="font-bold text-zinc-900 dark:text-white truncate max-w-xs sm:max-w-md">
+                        Buffer de Lectura • {previewDoc.titulo}
+                      </span>
                     </div>
-
-                    <div className="flex-1 p-5 sm:p-7 overflow-y-auto bg-zinc-50/70 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 font-sans text-sm leading-relaxed selection:bg-blue-500 selection:text-white">
-                      <pre className="whitespace-pre-wrap font-mono text-xs sm:text-[0.82rem] leading-relaxed text-zinc-800 dark:text-zinc-200 font-normal">
-                        {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido de texto registrado.'}
-                      </pre>
+                    <div className="flex items-center gap-2 text-[0.7rem] text-zinc-500 dark:text-zinc-400">
+                      <span className="hidden sm:inline">UTF-8 Encoded</span>
+                      <span>•</span>
+                      <span className="font-mono">Doc ID #{previewDoc.idDocumento}</span>
                     </div>
                   </div>
-                )}
 
+                  {/* Contenedor del Texto Técnico con Scroll Suave y Alto Contraste */}
+                  <div className="flex-1 p-5 sm:p-8 overflow-y-auto bg-zinc-50/60 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 selection:bg-blue-500 selection:text-white">
+                    <pre className="whitespace-pre-wrap font-mono text-xs sm:text-[0.84rem] leading-relaxed text-zinc-800 dark:text-zinc-200 font-normal">
+                      {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido de texto registrado en base de datos.'}
+                    </pre>
+                  </div>
+                </div>
               </div>
 
               {/* Footer del Modal */}
               <div className="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-[0.7rem] text-zinc-500 bg-white dark:bg-zinc-900 flex-shrink-0">
-                <span className="hidden sm:inline">IKernell Digital Library • Visor Seguro de Documentos</span>
-                <span className="font-mono">Doc ID: #{previewDoc.idDocumento}</span>
+                <span className="hidden sm:inline">IKernell Digital Library • Visor Universal de Especificaciones Técnicas</span>
+                <span className="font-mono font-medium text-zinc-600 dark:text-zinc-400">
+                  {previewDoc.categoria} • {previewDoc.version || 'v1.0'}
+                </span>
                 <button
                   type="button"
                   onClick={() => setPreviewDoc(null)}
