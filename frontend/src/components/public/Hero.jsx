@@ -32,16 +32,15 @@ export const Hero = () => {
       {/* ── Background Layers: Dual Adaptive (Light Mode Local Image / Dark Mode Night Earth) ── */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-zinc-950">
         
-        {/* 1. MODO CLARO (LIGHT MODE): Imagen Local de Alta Resolución */}
+        {/* 1. MODO CLARO (LIGHT MODE): Imagen Local Nítida y de Alta Resolución */}
         <div 
           className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out opacity-100 dark:opacity-0"
           style={{
             backgroundImage: `url(${heroLightImg}), url('/assets/hero-light.jpg')`
           }}
         >
-          {/* Overlay de contraste y luminosidad para garantizar legibilidad impecable en modo claro */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/50 to-zinc-50/95 backdrop-blur-[1px]" />
-          <div className="absolute inset-0 bg-gradient-to-tr from-sky-100/40 via-transparent to-blue-50/30 mix-blend-multiply" />
+          {/* Viñeta sutil para enmarcar la escena sin tapar la nitidez ni los colores de la imagen */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-zinc-50/60" />
         </div>
 
         {/* 2. MODO OSCURO (DARK MODE): Fondo Espacial Nocturno */}
@@ -61,7 +60,7 @@ export const Hero = () => {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-blue-500/10 dark:bg-blue-500/15 rounded-full blur-[120px] pointer-events-none z-0" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-600/8 dark:bg-blue-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
 
-      {/* Contenido Principal con Contraste Dinámico Completo */}
+      {/* Contenido Principal con Contraste y Sombreado de Texto */}
       <motion.div 
         variants={containerVariants}
         initial="hidden"
@@ -70,19 +69,19 @@ export const Hero = () => {
         className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10 text-center pt-28 pb-16 md:pt-0 md:pb-0"
       >
         
-        {/* Badge Corporativo */}
+        {/* Badge Corporativo con fondo de alto contraste */}
         <motion.div 
           variants={itemVariants}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-md border border-zinc-200/80 dark:border-white/15 text-zinc-900 dark:text-zinc-100 text-xs md:text-sm font-semibold mb-8 shadow-sm dark:shadow-lg dark:shadow-blue-500/5 transition-colors duration-300"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md border border-zinc-200 dark:border-white/15 text-zinc-900 dark:text-zinc-100 text-xs md:text-sm font-semibold mb-8 shadow-md dark:shadow-lg dark:shadow-blue-500/5 transition-colors duration-300"
         >
           <Sparkles size={16} className="text-blue-600 dark:text-blue-400" /> 
           Innovación en Desarrollo de Software & Análisis Predictivo
         </motion.div>
 
-        {/* Título Principal */}
+        {/* Título Principal con sombra tipográfica ligera para legibilidad sin opacar la imagen */}
         <motion.h1 
           variants={itemVariants}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-900 dark:text-white tracking-tight leading-[1.08] mb-6 max-w-5xl mx-auto transition-colors duration-300"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-950 dark:text-white tracking-tight leading-[1.08] mb-6 max-w-5xl mx-auto drop-shadow-[0_2px_12px_rgba(255,255,255,0.85)] dark:drop-shadow-none transition-colors duration-300"
         >
           Construimos Soluciones Tecnológicas de{' '}
           <span className="relative inline-block">
@@ -93,10 +92,10 @@ export const Hero = () => {
           </span>
         </motion.h1>
 
-        {/* Subtítulo */}
+        {/* Subtítulo con sombra de realce */}
         <motion.p 
           variants={itemVariants}
-          className="text-zinc-700 dark:text-zinc-300 text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-12 font-medium leading-relaxed transition-colors duration-300"
+          className="text-zinc-900 dark:text-zinc-300 text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-12 font-semibold dark:font-medium leading-relaxed drop-shadow-[0_1px_8px_rgba(255,255,255,0.9)] dark:drop-shadow-none transition-colors duration-300"
         >
           IKernell Soluciones Software combina arquitectura Java Spring Boot, interfaces reactivas en React y analítica predictiva mediante el Semáforo Inteligente de Riesgos.
         </motion.p>
@@ -108,14 +107,14 @@ export const Hero = () => {
         >
           <Link 
             to="/contacto" 
-            className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2 text-base py-3.5 px-8 font-bold rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/25 hover:bg-blue-500 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200"
+            className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2 text-base py-3.5 px-8 font-bold rounded-xl bg-blue-600 text-white shadow-xl shadow-blue-600/35 hover:bg-blue-500 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all duration-200"
           >
             Consultar Servicios 
             <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
           <a 
             href="/#servicios" 
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-base py-3.5 px-8 font-bold rounded-xl bg-white/80 dark:bg-white/10 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-300 dark:border-white/20 hover:bg-white dark:hover:bg-white/15 hover:border-zinc-400 dark:hover:border-white/30 shadow-sm transition-all duration-200"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-base py-3.5 px-8 font-bold rounded-xl bg-white/90 dark:bg-white/10 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-300 dark:border-white/20 hover:bg-white dark:hover:bg-white/15 hover:border-zinc-400 dark:hover:border-white/30 shadow-md transition-all duration-200"
           >
             Ver Portafolio
           </a>
@@ -128,7 +127,7 @@ export const Hero = () => {
           <motion.div 
             whileHover={{ y: -5 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="group relative bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-zinc-200/90 dark:border-white/10 rounded-2xl p-6 md:p-8 hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-md shadow-zinc-200/40 dark:shadow-none hover:shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300"
+            className="group relative bg-white/90 dark:bg-white/5 backdrop-blur-xl border border-zinc-200/90 dark:border-white/10 rounded-2xl p-6 md:p-8 hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-lg shadow-zinc-900/5 dark:shadow-none hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-all duration-300"
           >
             <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center mb-5 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors">
               <Zap size={24} />
@@ -141,7 +140,7 @@ export const Hero = () => {
           <motion.div 
             whileHover={{ y: -5 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="group relative bg-blue-50/80 dark:bg-blue-600/10 backdrop-blur-xl border-2 border-blue-500/40 dark:border-blue-500/30 rounded-2xl p-6 md:p-8 shadow-lg shadow-blue-500/10 hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300"
+            className="group relative bg-white/95 dark:bg-blue-600/10 backdrop-blur-xl border-2 border-blue-500/50 dark:border-blue-500/30 rounded-2xl p-6 md:p-8 shadow-xl shadow-blue-500/10 hover:shadow-[0_0_40px_rgba(59,130,246,0.25)] transition-all duration-300"
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/15 rounded-full blur-2xl pointer-events-none" />
             <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mb-5 text-white shadow-md shadow-blue-600/30">
@@ -155,7 +154,7 @@ export const Hero = () => {
           <motion.div 
             whileHover={{ y: -5 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="group relative bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-zinc-200/90 dark:border-white/10 rounded-2xl p-6 md:p-8 hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-md shadow-zinc-200/40 dark:shadow-none hover:shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300"
+            className="group relative bg-white/90 dark:bg-white/5 backdrop-blur-xl border border-zinc-200/90 dark:border-white/10 rounded-2xl p-6 md:p-8 hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-lg shadow-zinc-900/5 dark:shadow-none hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-all duration-300"
           >
             <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center mb-5 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors">
               <ShieldCheck size={24} />
