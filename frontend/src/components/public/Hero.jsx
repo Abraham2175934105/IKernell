@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, ShieldCheck, Zap, Activity, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+import heroLightImg from '../../assets/hero-light.jpg';
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -27,39 +29,29 @@ export const Hero = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       
-      {/* ── Background Layers: Single Base Image + CSS Solar Light Injection ── */}
+      {/* ── Background Layers: Dual Adaptive (Light Mode Local Image / Dark Mode Night Earth) ── */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-zinc-950">
         
-        {/* 1. Única Imagen Base de Alta Resolución (Mismo ángulo, escala y posición milimétrica sin saltos) */}
+        {/* 1. MODO CLARO (LIGHT MODE): Imagen Local de Alta Resolución */}
         <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out opacity-100 dark:opacity-0"
+          style={{
+            backgroundImage: `url(${heroLightImg}), url('/assets/hero-light.jpg')`
+          }}
+        >
+          {/* Overlay de contraste y luminosidad para garantizar legibilidad impecable en modo claro */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/50 to-zinc-50/95 backdrop-blur-[1px]" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-sky-100/40 via-transparent to-blue-50/30 mix-blend-multiply" />
+        </div>
+
+        {/* 2. MODO OSCURO (DARK MODE): Fondo Espacial Nocturno */}
+        <div 
+          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out opacity-0 dark:opacity-100"
           style={{
             backgroundImage: `url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')`
           }}
-        />
-
-        {/* 2. Inyección de Luz Solar con CSS (Modo Claro - Día):
-            - Transforma el espacio negro en cielo diurno con mix-blend-color-dodge
-            - Simula rayos solares con gradientes mix-blend-screen
-            - Proporciona contraste suave para mantener tipografía nítida */}
-        <div className="absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out opacity-100 dark:opacity-0">
-          
-          {/* Tinte atmosférico azul cielo sobre la oscuridad del espacio */}
-          <div className="absolute inset-0 bg-sky-400/65 mix-blend-color-dodge" />
-          
-          {/* Resplandor solar envolvente diurno */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-white/95 via-sky-100/55 to-transparent mix-blend-screen" />
-          
-          {/* Foco de luz solar cenital */}
-          <div className="absolute top-0 right-1/4 w-[700px] h-[700px] bg-amber-100/50 rounded-full blur-[120px] mix-blend-overlay" />
-          
-          {/* Capa de contraste equilibrado para legibilidad del contenido */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/55 to-zinc-50" />
-        </div>
-
-        {/* 3. Filtro Cinematográfico Nocturno (Modo Oscuro - Noche):
-            - Gradiente oscuro que realza las luces de ciudades y el brillo estelar */}
-        <div className="absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out opacity-0 dark:opacity-100">
+        >
+          {/* Filtro Cinematográfico Nocturno con gradientes de profundidad */}
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/65 to-zinc-950/95" />
         </div>
 
