@@ -2,17 +2,40 @@ import React from 'react';
 import { Target, Eye, Globe2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 25 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.45, ease: "easeOut" }
+  }
+};
+
 export const Strategy = () => {
   return (
     <section id="estrategia" className="py-20 md:py-28 border-t border-zinc-200 dark:border-zinc-800">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl"
+      >
         
         {/* Section Header */}
         <motion.div 
-          initial={{ opacity: 0, y: 25 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.1 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
+          variants={itemVariants}
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
@@ -27,10 +50,7 @@ export const Strategy = () => {
           
           {/* Misión */}
           <motion.div 
-            initial={{ opacity: 0, y: 35 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.35, delay: 0.05, ease: "easeOut" }}
+            variants={itemVariants}
             className="glass-card flex flex-col justify-between p-6 md:p-8 h-full"
           >
             <div>
@@ -46,10 +66,7 @@ export const Strategy = () => {
 
           {/* Visión */}
           <motion.div 
-            initial={{ opacity: 0, y: 35 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
+            variants={itemVariants}
             className="glass-card flex flex-col justify-between p-6 md:p-8 h-full"
           >
             <div>
@@ -65,10 +82,7 @@ export const Strategy = () => {
 
           {/* Alianza Internacional Brasil */}
           <motion.div 
-            initial={{ opacity: 0, y: 35, scale: 0.98 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
+            variants={itemVariants}
             className="glass-card flex flex-col justify-between p-6 md:p-8 border-2 border-zinc-900 dark:border-zinc-300 shadow-xl shadow-zinc-300/30 dark:shadow-none h-full"
           >
             <div>
@@ -84,7 +98,7 @@ export const Strategy = () => {
 
         </div>
 
-      </div>
+      </motion.div>
     </section>
   );
 };

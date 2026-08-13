@@ -2,6 +2,26 @@ import React from 'react';
 import { Code2, Database, ShieldAlert, Cpu, Layers, Workflow } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 25 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.45, ease: "easeOut" }
+  }
+};
+
 export const Services = () => {
   const servicesList = [
     {
@@ -38,14 +58,17 @@ export const Services = () => {
 
   return (
     <section id="servicios" className="py-20 md:py-28 border-t border-zinc-200 dark:border-zinc-800">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl"
+      >
         
         {/* Section Header */}
         <motion.div 
-          initial={{ opacity: 0, y: 25 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.1 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
+          variants={itemVariants}
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
@@ -61,10 +84,7 @@ export const Services = () => {
           {servicesList.map((srv, idx) => (
             <motion.div 
               key={idx} 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.35, delay: (idx % 3) * 0.08, ease: "easeOut" }}
+              variants={itemVariants}
               className="glass-card flex flex-col justify-between p-6 md:p-8 group hover:border-zinc-400 dark:hover:border-zinc-600 transition-all h-full"
             >
               <div>
@@ -78,7 +98,7 @@ export const Services = () => {
           ))}
         </div>
 
-      </div>
+      </motion.div>
     </section>
   );
 };
