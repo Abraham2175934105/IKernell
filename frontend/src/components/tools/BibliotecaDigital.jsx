@@ -5,6 +5,8 @@ import {
   ArrowDownToLine, Maximize2, FileCheck, Terminal, Copy, Check, Printer
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useApi } from '../../hooks/useApi';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -578,52 +580,46 @@ export const BibliotecaDigital = () => {
               {/* Cuerpo del Visor Dual */}
               <div className="flex-1 p-3 sm:p-5 bg-zinc-950/70 overflow-hidden flex flex-col">
                 
-                {/* 1. VISTA DOCUMENTO FORMAL (EFECTO HOJA A4) */}
+                {/* 1. VISTA DOCUMENTO FORMAL (EFECTO HOJA A4 CON REACT-MARKDOWN) */}
                 {activeViewMode === 'pdf' && (
-                  <div className="w-full h-full bg-zinc-900/90 p-4 sm:p-8 overflow-y-auto rounded-2xl border border-zinc-800 shadow-inner flex justify-center">
-                    <div className="w-full max-w-4xl bg-white text-zinc-900 shadow-2xl ring-1 ring-black/10 rounded-sm p-8 sm:p-14 min-h-[950px] flex flex-col justify-between my-2">
+                  <div className="w-full h-full bg-zinc-900 p-4 sm:p-8 overflow-y-auto rounded-2xl border border-zinc-800 shadow-inner flex justify-center">
+                    <div className="w-full max-w-4xl mx-auto bg-white text-black shadow-2xl min-h-[1056px] p-10 sm:p-16 my-8 rounded-sm ring-1 ring-black/10 flex flex-col justify-between">
                       
-                      {/* Cabecera Formal de la Hoja A4 */}
+                      {/* Cabecera Formal de la Hoja A4 con Membrete Oficial */}
                       <div>
-                        <div className="border-b-2 border-zinc-900 pb-4 mb-6 flex justify-between items-start">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b-2 border-blue-900 pb-4 mb-8 gap-3">
                           <div>
-                            <div className="text-[0.68rem] font-black tracking-widest text-zinc-500 uppercase">
-                              IKERNELL SOLUCIONES SOFTWARE S.A.S. • INGENIERÍA & ARQUITECTURA
+                            <div className="text-xl sm:text-2xl font-black tracking-wider text-blue-900 uppercase">
+                              IKERNELL S.A.S.
                             </div>
-                            <h2 className="text-xl sm:text-2xl font-black text-zinc-950 mt-1 tracking-tight">
-                              {previewDoc.titulo}
-                            </h2>
-                            <div className="text-xs text-zinc-600 font-medium mt-1">
-                              Categoría Oficial: <span className="font-bold text-zinc-900">{previewDoc.categoria}</span> • Formato: <span className="font-bold text-blue-700">{previewDoc.formato || 'PDF'}</span>
+                            <div className="text-[0.68rem] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">
+                              DEPARTAMENTO DE INGENIERÍA & ARQUITECTURA CLOUD
                             </div>
                           </div>
 
-                          <div className="text-right flex flex-col items-end">
-                            <span className="text-[0.65rem] font-black px-2.5 py-1 rounded bg-zinc-100 text-zinc-900 border border-zinc-300 font-mono">
-                              REF: DOC-0{previewDoc.idDocumento}
-                            </span>
-                            <span className="text-[0.65rem] text-zinc-500 font-bold mt-1">
-                              Versión {previewDoc.version || 'v1.0'}
-                            </span>
-                            <span className="text-[0.65rem] text-zinc-400 font-medium">
-                              {previewDoc.fechaSubida ? new Date(previewDoc.fechaSubida).toLocaleDateString() : 'Agosto 2026'}
-                            </span>
+                          <div className="text-left sm:text-right">
+                            <div className="text-xs font-mono font-black text-blue-950 bg-blue-50 px-3 py-1.5 rounded border border-blue-200 inline-block shadow-sm">
+                              REF: DOC-0{previewDoc.idDocumento} | VERSIÓN: {previewDoc.version || 'v1.0'}
+                            </div>
+                            <div className="text-[0.68rem] text-zinc-500 mt-1 font-medium">
+                              Categoría: <span className="font-bold text-zinc-800">{previewDoc.categoria}</span> • Formato: <span className="font-bold text-blue-700">{previewDoc.formato || 'PDF'}</span>
+                            </div>
                           </div>
                         </div>
 
-                        {/* Cuerpo de la Hoja A4 */}
-                        <div className="prose max-w-none">
-                          <pre className="whitespace-pre-wrap font-sans text-xs sm:text-[0.88rem] leading-relaxed text-zinc-800 font-normal selection:bg-blue-100 selection:text-blue-900">
+                        {/* Renderizado de Markdown Estructurado con Tailwind Typography */}
+                        <div className="prose prose-zinc max-w-none prose-headings:text-blue-900 prose-headings:font-black prose-h1:text-2xl prose-h1:border-b prose-h1:border-zinc-200 prose-h1:pb-2 prose-h2:text-xl prose-h2:text-blue-950 prose-h3:text-lg prose-a:text-blue-600 prose-table:border-collapse prose-th:bg-zinc-100 prose-th:p-3 prose-th:border prose-th:border-zinc-300 prose-td:p-3 prose-td:border prose-td:border-zinc-300 prose-pre:bg-zinc-900 prose-pre:text-emerald-400 prose-pre:rounded-xl prose-pre:p-4 prose-code:text-blue-900 prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none leading-relaxed text-[0.92rem]">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido registrado.'}
-                          </pre>
+                          </ReactMarkdown>
                         </div>
                       </div>
 
                       {/* Pie de Página Formal de la Hoja A4 */}
-                      <div className="border-t border-zinc-300 pt-4 mt-10 flex justify-between items-center text-[0.7rem] text-zinc-500">
+                      <div className="border-t border-zinc-300 pt-6 mt-14 flex flex-col sm:flex-row justify-between items-center text-[0.7rem] text-zinc-500 gap-2">
                         <div className="flex items-center gap-2">
-                          <Shield size={14} className="text-zinc-600" />
-                          <span>Documento Oficial Certificado • Cumplimiento Normativa ISO/IEC 25010</span>
+                          <Shield size={14} className="text-blue-900 flex-shrink-0" />
+                          <span>Documento Oficial Certificado • Cumplimiento Normativa IEEE 830 / ISO-IEC 25010</span>
                         </div>
                         <span className="font-mono text-zinc-400">IKernell Enterprise Core Platform</span>
                       </div>
