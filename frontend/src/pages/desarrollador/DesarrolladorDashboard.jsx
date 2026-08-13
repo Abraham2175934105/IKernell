@@ -422,10 +422,10 @@ export const DesarrolladorDashboard = () => {
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
             <div>
-              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
                 Operaciones del Desarrollador (RF-19 a RF-21)
               </span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Tablero Personal de Actividades
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -469,21 +469,21 @@ export const DesarrolladorDashboard = () => {
             <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2.5">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                     <Layers size={14} />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-zinc-900 dark:text-white block">
+                    <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 block">
                       Avance General de Asignaciones WBS
                     </span>
-                    <span className="text-[0.65rem] text-zinc-500 font-medium">
+                    <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium">
                       {actividadesFinalizadas} de {actividades.length} actividades concluidas
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-auto">
-                  <span className="text-xs font-extrabold text-zinc-900 dark:text-white font-mono">
+                  <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">
                     {actividades.length > 0 ? Math.round((actividadesFinalizadas / actividades.length) * 100) : 0}%
                   </span>
                   <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Completado</span>
@@ -496,14 +496,14 @@ export const DesarrolladorDashboard = () => {
                   initial={{ width: 0 }}
                   animate={{ width: `${actividades.length > 0 ? (actividadesFinalizadas / actividades.length) * 100 : 0}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
-                  className="h-full bg-zinc-900 dark:bg-white"
+                  className="h-full bg-blue-600"
                   title="Tareas Finalizadas"
                 />
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${actividades.length > 0 ? (actividadesEnProgreso / actividades.length) * 100 : 0}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
-                  className="h-full bg-zinc-400 dark:bg-zinc-600"
+                  className="h-full bg-blue-400 dark:bg-blue-500"
                   title="Tareas En Progreso"
                 />
               </div>
@@ -527,10 +527,10 @@ export const DesarrolladorDashboard = () => {
                       {actividades.length > 0 ? Math.round((actividadesPendientes / actividades.length) * 100) : 0}%
                     </span>
                   </div>
-                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                     {actividadesPendientes}
                   </div>
-                  <span className="text-[0.65rem] text-zinc-500 font-medium">Asignaciones en espera</span>
+                  <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium">Asignaciones en espera</span>
                 </div>
 
                 <div className="w-11 h-11 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
@@ -542,7 +542,7 @@ export const DesarrolladorDashboard = () => {
               <motion.div 
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
-                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 shadow-sm transition-colors flex items-center justify-between group h-full"
+                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800/60 hover:border-blue-400 dark:hover:border-blue-600 shadow-sm transition-colors flex items-center justify-between group h-full"
               >
                 <div>
                   <div className="flex items-center gap-1.5 mb-1">
@@ -553,10 +553,10 @@ export const DesarrolladorDashboard = () => {
                       {actividades.length > 0 ? Math.round((actividadesEnProgreso / actividades.length) * 100) : 0}%
                     </span>
                   </div>
-                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                     {actividadesEnProgreso}
                   </div>
-                  <span className="text-[0.65rem] text-zinc-500 font-medium">Trabajo activo en curso</span>
+                  <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium">Trabajo activo en curso</span>
                 </div>
 
                 <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
@@ -568,7 +568,7 @@ export const DesarrolladorDashboard = () => {
               <motion.div 
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
-                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-emerald-300 dark:hover:border-emerald-700 shadow-sm transition-colors flex items-center justify-between group h-full"
+                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800/60 hover:border-emerald-400 dark:hover:border-emerald-600 shadow-sm transition-colors flex items-center justify-between group h-full"
               >
                 <div>
                   <div className="flex items-center gap-1.5 mb-1">
@@ -579,10 +579,10 @@ export const DesarrolladorDashboard = () => {
                       {actividades.length > 0 ? Math.round((actividadesFinalizadas / actividades.length) * 100) : 0}%
                     </span>
                   </div>
-                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                     {actividadesFinalizadas}
                   </div>
-                  <span className="text-[0.65rem] text-zinc-500 font-medium">Verificadas y cerradas</span>
+                  <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium">Verificadas y cerradas</span>
                 </div>
 
                 <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
@@ -766,10 +766,10 @@ export const DesarrolladorDashboard = () => {
             </p>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             {/* Tarjeta Reportar Error */}
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200">
+            <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 h-full">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-white mb-4">
                   <Bug size={24} />
@@ -790,7 +790,7 @@ export const DesarrolladorDashboard = () => {
             </div>
 
             {/* Tarjeta Reportar Contingencia */}
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200">
+            <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 h-full">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-white mb-4">
                   <AlertTriangle size={24} />
@@ -808,6 +808,51 @@ export const DesarrolladorDashboard = () => {
               >
                 <Plus size={16} /> Abrir Formulario de Contingencias
               </button>
+            </div>
+
+            {/* Panel Informativo — Métricas Rápidas y Accesos (llena el espacio vacío) */}
+            <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-blue-200/60 dark:border-blue-800/40 shadow-sm flex flex-col justify-between h-full hover:border-blue-400/60 dark:hover:border-blue-600/50 transition-all duration-200">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
+                  <Activity size={24} />
+                </div>
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">Estado de tu Capacidad</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+                  Resumen operativo de tu productividad y contribución al motor predictivo del proyecto.
+                </p>
+
+                {/* Mini-métricas con acento azul */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-700/50">
+                    <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Tareas Activas</span>
+                    <span className="text-sm font-extrabold text-zinc-900 dark:text-white font-mono">
+                      {actividades.filter(a => a.estado === 'EN_PROGRESO').length}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-700/50">
+                    <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Errores Reportados</span>
+                    <span className="text-sm font-extrabold text-zinc-900 dark:text-white font-mono">
+                      {historialErrores.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-700/50">
+                    <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Interrupciones</span>
+                    <span className="text-sm font-extrabold text-zinc-900 dark:text-white font-mono">
+                      {historialInterrupciones.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => { if (setActiveTab) setActiveTab('historial'); }}
+                  className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 uppercase tracking-wider transition-colors cursor-pointer py-2"
+                >
+                  <FileText size={14} /> Ver Historial Completo <ArrowRight size={13} />
+                </button>
+              </div>
             </div>
 
           </motion.div>

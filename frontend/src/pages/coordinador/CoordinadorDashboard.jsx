@@ -237,10 +237,10 @@ export const CoordinadorDashboard = () => {
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
             <div>
-              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
                 Administración y Talento Humano
               </span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Gestión Centralizada de Personal
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -331,7 +331,7 @@ export const CoordinadorDashboard = () => {
                     <tr key={t.idTrabajador} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 transition-colors">
                       <td className="p-4 font-mono font-bold text-zinc-800 dark:text-zinc-200">{t.identificacion}</td>
                       <td className="p-4">
-                        <div className="font-bold text-zinc-900 dark:text-white text-sm">{t.nombre} {t.apellido}</div>
+                        <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">{t.nombre} {t.apellido}</div>
                         <div className="text-zinc-500 dark:text-zinc-400 text-[0.7rem]">{t.email}</div>
                       </td>
                       <td className="p-4">
@@ -340,7 +340,7 @@ export const CoordinadorDashboard = () => {
                       </td>
                       <td className="p-4">
                         <span className={`inline-block text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-md border ${
-                          t.rol === 'COORDINADOR' ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-950 dark:border-white' :
+                          t.rol === 'COORDINADOR' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800' :
                           t.rol === 'LIDER' ? 'bg-zinc-100 text-zinc-800 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700' :
                           'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
                         }`}>
@@ -399,10 +399,10 @@ export const CoordinadorDashboard = () => {
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
             <div>
-              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
                 Atención al Cliente Corporativo
               </span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Bandeja de Solicitudes de Contacto Web
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -420,9 +420,10 @@ export const CoordinadorDashboard = () => {
             </button>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {loading && (
               <>
+                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-48" />
                 <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-48" />
                 <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-48" />
               </>
@@ -441,17 +442,17 @@ export const CoordinadorDashboard = () => {
             {!loading && solicitudes.map(sol => (
               <div 
                 key={sol.idSolicitud} 
-                className={`bg-white dark:bg-zinc-900 p-6 rounded-3xl border flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 ${
+                className={`bg-white dark:bg-zinc-900 p-6 rounded-3xl border flex flex-col justify-between shadow-sm hover:shadow-[0_0_15px_rgba(59,130,246,0.12)] hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-200 h-full ${
                   sol.atendido 
                     ? 'border-zinc-200 dark:border-zinc-800/80 opacity-90' 
-                    : 'border-amber-300 dark:border-amber-700/80 ring-1 ring-amber-100 dark:ring-amber-950/20'
+                    : 'border-blue-300 dark:border-blue-700/80 ring-1 ring-blue-100 dark:ring-blue-950/30'
                 }`}
               >
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <span className={`text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full border ${
                       !sol.atendido
-                        ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
                         : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
                     }`}>
                       {sol.atendido ? 'ATENDIDA' : 'PENDIENTE'}
@@ -461,14 +462,14 @@ export const CoordinadorDashboard = () => {
                     </span>
                   </div>
 
-                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-white mb-1">{sol.asunto}</h3>
+                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 mb-1">{sol.asunto}</h3>
                   <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-3">{sol.nombreRemitente}</p>
                   
                   <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
                     "{sol.mensaje}"
                   </div>
 
-                  <div className="flex flex-col gap-1 text-[0.7rem] text-zinc-500 font-medium mb-4">
+                  <div className="flex flex-col gap-1 text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium mb-4">
                     <div className="flex items-center gap-2"><Mail size={12} /> {sol.emailRemitente}</div>
                     {sol.telefono && <div className="flex items-center gap-2"><Phone size={12} /> {sol.telefono}</div>}
                   </div>
@@ -480,7 +481,7 @@ export const CoordinadorDashboard = () => {
                   onClick={() => handleToggleEstadoSolicitud(sol.idSolicitud)}
                   className={`text-xs py-2 w-full font-bold cursor-pointer rounded-xl border transition-all inline-flex items-center justify-center gap-2 ${
                     !sol.atendido
-                      ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 hover:opacity-90'
+                      ? 'gradient-button'
                       : 'outline-button'
                   }`}
                 >

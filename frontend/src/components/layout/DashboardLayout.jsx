@@ -58,21 +58,21 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
           label: 'Coordinador General',
           badgeText: 'COORDINADOR',
           shortLabel: 'Coord',
-          classes: 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-sm'
+          classes: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 shadow-sm'
         };
       case 'LIDER':
         return {
           label: 'Líder de Proyecto',
           badgeText: 'LÍDER DE PROYECTO',
           shortLabel: 'Líder',
-          classes: 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700'
+          classes: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 shadow-sm'
         };
       default:
         return {
           label: 'Desarrollador de Software',
           badgeText: 'DESARROLLADOR',
           shortLabel: 'Dev',
-          classes: 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700'
+          classes: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 shadow-sm'
         };
     }
   };
@@ -113,7 +113,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
   ];
 
   return (
-    <div className="min-h-screen flex bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen flex bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
       
       {/* Barra lateral navegable (Mobile Drawer / Tablet Slim / Desktop Collapsible) */}
       <aside 
@@ -134,17 +134,17 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
           {/* Cabecera con logo corporativo */}
           <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between min-h-[73px]">
             <Link to="/" className="flex items-center gap-3 group truncate">
-              <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center shadow-md transition-transform group-hover:scale-105 flex-shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/30 transition-transform group-hover:scale-105 flex-shrink-0">
                 <Cpu size={22} />
               </div>
               
               <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
                 sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block opacity-100 max-w-[160px]' : 'hidden opacity-0 max-w-0')
               }`}>
-                <span className="text-base font-extrabold tracking-tight text-zinc-900 dark:text-white block">
+                <span className="text-base font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 block">
                   IKernell
                 </span>
-                <span className="text-[0.6rem] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block -mt-1">
+                <span className="text-[0.6rem] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest block -mt-1">
                   Portal Corporativo
                 </span>
               </div>
@@ -179,11 +179,11 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
               <motion.div
                 whileHover={{ y: -1 }}
                 transition={{ duration: 0.15 }}
-                className="p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 hover:border-zinc-300 dark:hover:border-zinc-600 shadow-sm transition-all duration-200 flex items-center gap-3"
+                className="p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 hover:border-blue-400 dark:hover:border-blue-500/50 shadow-sm transition-all duration-200 flex items-center gap-3"
               >
                 {/* Avatar con punto indicador de sesión activa */}
                 <div className="relative flex-shrink-0">
-                  <div className="w-11 h-11 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-black text-xs flex items-center justify-center shadow-md tracking-tight">
+                  <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 tracking-tight">
                     {getInitials(user?.nombre, user?.apellido)}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
@@ -194,7 +194,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
 
                 {/* Información Jerárquica */}
                 <div className="min-w-0 text-left">
-                  <div className="font-extrabold text-xs text-zinc-900 dark:text-white truncate leading-tight">
+                  <div className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate leading-tight">
                     {user?.nombre ? `${user.nombre} ${user.apellido || ''}` : user?.email}
                   </div>
                   <div className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 truncate font-mono mt-0.5 leading-none">
@@ -216,7 +216,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                   title={`${user?.nombre} ${user?.apellido || ''} [${roleInfo.badgeText}] - En línea`}
                   className="relative group cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-black text-xs flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 group-hover:scale-105 transition-transform">
                     {getInitials(user?.nombre, user?.apellido)}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
@@ -258,8 +258,8 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                           : (isExpanded ? 'justify-center lg:justify-start lg:gap-3 p-2.5 lg:px-3.5 lg:py-2.5' : 'justify-center p-2.5')
                       } ${
                         isActive
-                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-800/40'
                       }`}
                     >
                       <Icon size={18} className="flex-shrink-0" />
@@ -301,8 +301,8 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                           : (isExpanded ? 'justify-center lg:justify-between p-2.5 lg:px-3.5 lg:py-2.5' : 'justify-center p-2.5')
                       } ${
                         isActive
-                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400'
                       }`}
                     >
                       <span className="flex items-center gap-3 truncate">
@@ -318,7 +318,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                         sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
                       } ${
                         isActive 
-                          ? 'bg-zinc-700 text-white dark:bg-zinc-200 dark:text-zinc-900' 
+                          ? 'bg-white/20 text-white' 
                           : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
                       }`}>
                         {tool.badge}
@@ -354,7 +354,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
           <div className={`text-center transition-opacity duration-300 ${
             sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
           }`}>
-            <span className="text-[0.6rem] text-zinc-400 font-medium">IKernell v2.4 • JWT Stateless</span>
+            <span className="text-[0.6rem] text-zinc-400 dark:text-zinc-500 font-medium">IKernell v2.4 • JWT Stateless</span>
           </div>
         </div>
 
@@ -373,8 +373,8 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         isCollapsed ? 'lg:pl-20' : 'lg:pl-72'
       }`}>
         
-        {/* TOPBAR (HEADER PRIVADO) */}
-        <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between shadow-sm min-h-[68px] sm:min-h-[73px]">
+        {/* TOPBAR (HEADER PRIVADO) - Alineación simétrica perfecta */}
+        <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 px-6 py-4 flex items-center justify-between shadow-sm min-h-[72px]">
           
           {/* Lado Izquierdo: Botón Menú Móvil & Título */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -387,10 +387,10 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             </button>
 
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-base lg:text-lg font-extrabold text-zinc-900 dark:text-white tracking-tight flex items-center gap-2 truncate">
-                {currentTool === 'chat' && <>Chat Corporativo <MessageSquare size={16} className="text-zinc-500 flex-shrink-0" /></>}
-                {currentTool === 'biblioteca' && <>Biblioteca Digital <BookOpen size={16} className="text-zinc-500 flex-shrink-0" /></>}
-                {currentTool === 'tutoriales' && <>Tutoriales e Inducción <GraduationCap size={16} className="text-zinc-500 flex-shrink-0" /></>}
+              <h1 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2 truncate">
+                {currentTool === 'chat' && <>Chat Corporativo <MessageSquare size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0" /></>}
+                {currentTool === 'biblioteca' && <>Biblioteca Digital <BookOpen size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0" /></>}
+                {currentTool === 'tutoriales' && <>Tutoriales e Inducción <GraduationCap size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0" /></>}
                 {!currentTool && (
                   <span className="truncate">
                     Panel de {roleInfo.label}
@@ -404,16 +404,16 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
           </div>
 
           {/* Lado Derecho: Métricas Rápidas, Toggle Tema, Usuario & Logout */}
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             
-            {/* Indicadores / Métricas Rápidas */}
-            <div className="hidden lg:flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs">
-              <span className="flex items-center gap-1.5 font-bold text-zinc-700 dark:text-zinc-300">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            {/* Indicadores / Métricas Rápidas en Azul Corporativo */}
+            <div className="hidden lg:flex items-center gap-2 bg-blue-50 dark:bg-blue-950/40 px-3.5 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800/50 text-xs">
+              <span className="flex items-center gap-1.5 font-bold text-blue-700 dark:text-blue-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 {customMetrics?.metric1 || 'Sistema Online'}
               </span>
-              <span className="text-zinc-300 dark:text-zinc-600">|</span>
-              <span className="font-semibold text-zinc-600 dark:text-zinc-400">
+              <span className="text-blue-200 dark:text-blue-800">|</span>
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
                 {customMetrics?.metric2 || 'Conexión Segura (JWT)'}
               </span>
             </div>
@@ -422,17 +422,17 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             <button
               onClick={toggleTheme}
               title={isDark ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-amber-400 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+              className="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-amber-400 flex items-center justify-center transition-all cursor-pointer shadow-sm hover:border-blue-400 dark:hover:border-blue-600"
               aria-label="Toggle theme"
             >
-              {isDark ? <Sun size={17} /> : <Moon size={17} className="text-zinc-700" />}
+              {isDark ? <Sun size={17} /> : <Moon size={17} className="text-zinc-700 dark:text-zinc-300" />}
             </button>
 
             {/* Botón Salir Rápido */}
             <button
               onClick={handleLogout}
               title="Cerrar Sesión"
-              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer shadow-sm"
+              className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer shadow-sm"
             >
               <LogOut size={14} /> Salir
             </button>

@@ -79,14 +79,14 @@ export const EtlBrasil = ({ proyecto, onExportSuccess }) => {
       <div className="bg-white dark:bg-zinc-900 p-6 sm:p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+            <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400">
               Innovación 2 • Alianza Estratégica Brasil (RF-28 a RF-30)
             </span>
-            <span className="text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+            <span className="text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
               ISO 8601 UTC
             </span>
           </div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+          <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
             Automatización y Transferencia ETL de Métricas
           </h2>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1 max-w-2xl">
@@ -113,16 +113,16 @@ export const EtlBrasil = ({ proyecto, onExportSuccess }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Tarjeta de Especificación y Parámetros del Lote */}
-        <div className="lg:col-span-5 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-5 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between space-y-4 hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
           <div>
-            <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-extrabold text-sm mb-3">
-              <Server size={16} /> Parámetros del Servidor y Destino
+            <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-extrabold text-sm mb-3">
+              <Server size={16} className="text-blue-600 dark:text-blue-400" /> Parámetros del Servidor y Destino
             </div>
             
             <div className="space-y-2.5 text-xs">
               <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 flex justify-between items-center">
-                <span className="text-zinc-500 font-semibold">Proyecto Seleccionado:</span>
-                <span className="font-bold text-zinc-900 dark:text-white truncate max-w-[180px]">
+                <span className="text-zinc-500 dark:text-zinc-400 font-semibold">Proyecto Seleccionado:</span>
+                <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[180px]">
                   {proyecto?.nombre || 'Ninguno'} (ID: {proyecto?.idProyecto ?? 'N/A'})
                 </span>
               </div>

@@ -117,7 +117,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
             </div>
             <div>
               <h3 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Semáforo Inteligente</h3>
-              <span className="text-[0.65rem] font-bold uppercase tracking-widest text-zinc-400">Algoritmo Predictivo RF-25 • PostgreSQL Live</span>
+              <span className="text-[0.65rem] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Algoritmo Predictivo RF-25 • PostgreSQL Live</span>
             </div>
           </div>
           <p className="text-zinc-600 dark:text-zinc-400 mt-2 text-xs font-medium">
@@ -153,7 +153,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-stretch">
         
         {/* Risk Level Card (Semáforo) */}
-        <div className="lg:col-span-5 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 md:p-8 flex flex-col justify-center items-center text-center bg-white dark:bg-zinc-900 shadow-sm">
+        <div className="lg:col-span-5 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 md:p-8 flex flex-col justify-center items-center text-center bg-white dark:bg-zinc-900 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
           <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-5 ${metrics?.iconClass || 'bg-emerald-100 text-emerald-700'}`}>
             {currentLevel === 'VERDE' && <CheckCircle size={38} />}
             {currentLevel === 'NARANJA' && <AlertTriangle size={38} />}
@@ -162,7 +162,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
           <span className={`text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full border mb-3 ${metrics?.badgeClass || 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
             Nivel: {currentLevel}
           </span>
-          <h4 className="text-xl font-extrabold mb-2 text-zinc-900 dark:text-white">{metrics?.titulo || 'Proyecto Estable'}</h4>
+          <h4 className="text-xl font-extrabold mb-2 text-zinc-900 dark:text-zinc-100">{metrics?.titulo || 'Proyecto Estable'}</h4>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium max-w-xs">
             Cálculo automatizado sobre {totalErrores + totalInterrupciones} métricas persistidas en base de datos.
           </p>
@@ -171,12 +171,12 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
         {/* Metrics Grid */}
         <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
           
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col justify-between p-6 shadow-sm">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
             <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 mb-2 text-xs font-bold uppercase tracking-wider">
-              <Clock size={16} className="text-zinc-900 dark:text-white" /> Horas de Contingencia
+              <Clock size={16} className="text-blue-600 dark:text-blue-400" /> Horas de Contingencia
             </div>
             <div className="my-2">
-              <span className="text-4xl font-black text-zinc-900 dark:text-white">
+              <span className="text-4xl font-black text-zinc-900 dark:text-zinc-100">
                 {totalHoras}h
               </span>
             </div>
@@ -185,12 +185,12 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
             </span>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col justify-between p-6 shadow-sm">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:border-red-400 dark:hover:border-red-500/40 transition-all duration-200">
             <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 mb-2 text-xs font-bold uppercase tracking-wider">
-              <Bug size={16} className="text-zinc-900 dark:text-white" /> Errores Críticos / Altos
+              <Bug size={16} className="text-red-600 dark:text-red-400" /> Errores Críticos / Altos
             </div>
             <div className="my-2">
-              <span className="text-4xl font-black text-zinc-900 dark:text-white">
+              <span className="text-4xl font-black text-zinc-900 dark:text-zinc-100">
                 {erroresCriticos}
               </span>
             </div>
@@ -200,7 +200,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
           </div>
 
           {/* Chart Section */}
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl sm:col-span-2 p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl sm:col-span-2 p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
             {pieData.length > 0 ? (
               <>
                 <div className="w-full sm:w-1/2 h-36">

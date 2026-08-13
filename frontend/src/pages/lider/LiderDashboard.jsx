@@ -382,16 +382,16 @@ export const LiderDashboard = () => {
         className="mb-6 bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm"
       >
         <div>
-          <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
+          <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
             Gestión y Control de Proyectos WBS
           </span>
-          <h2 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+          <h2 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
             {proyectoSeleccionado?.nombre || (loadingProyectos ? 'Cargando proyectos...' : 'Panel del Líder')}
           </h2>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-zinc-500">Proyecto Activo:</span>
+          <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Proyecto Activo:</span>
           {loadingProyectos ? (
             <div className="input-field py-2 text-xs flex items-center gap-2 text-zinc-400">
               <Loader2 size={12} className="animate-spin" /> Sincronizando...
@@ -443,38 +443,38 @@ export const LiderDashboard = () => {
               </>
             ) : (
               <>
-                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
                   <div>
                     <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Estado del Proyecto</span>
                     <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
                       {proyectoSeleccionado?.estado || 'ACTIVO'}
                     </div>
                   </div>
-                  <span className="text-[0.7rem] text-zinc-500 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                     Fin Estimado: {proyectoSeleccionado?.fechaFinEstimada || '2027-02-06'}
                   </span>
                 </div>
 
-                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
                   <div>
                     <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Total Errores Evaluados</span>
-                    <div className="text-xl font-black text-zinc-900 dark:text-white mt-1">
+                    <div className="text-xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
                       {errores?.length || 0} Incidencias
                     </div>
                   </div>
-                  <span className="text-[0.7rem] text-zinc-500 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                     Persistidas en PostgreSQL
                   </span>
                 </div>
 
-                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between sm:col-span-2 lg:col-span-1">
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between sm:col-span-2 lg:col-span-1 hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
                   <div>
                     <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Horas de Interrupción</span>
                     <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
                       {totalHorasContingencia} Horas
                     </div>
                   </div>
-                  <span className="text-[0.7rem] text-zinc-500 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                     En {interrupciones?.length || 0} eventos reportados
                   </span>
                 </div>
@@ -660,10 +660,10 @@ export const LiderDashboard = () => {
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
             <div>
-              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
                 Supervisión y Control de Calidad (RF-22 a RF-24)
               </span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Consola Centralizada de Incidencias de Equipo
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -685,28 +685,28 @@ export const LiderDashboard = () => {
 
           {/* Tarjetas Resumen */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
               <span className="text-[0.65rem] font-bold text-zinc-400 uppercase block mb-1">Total Reportes</span>
-              <div className="text-2xl font-black text-zinc-900 dark:text-white">
+              <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
                 {(errores?.length || 0) + (interrupciones?.length || 0)}
               </div>
             </div>
 
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-red-400 dark:hover:border-red-500/40 transition-all duration-200">
               <span className="text-[0.65rem] font-bold text-red-500 uppercase block mb-1">Errores Técnicos</span>
               <div className="text-2xl font-black text-red-600 dark:text-red-400">
                 {errores?.length || 0}
               </div>
             </div>
 
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-amber-400 dark:hover:border-amber-500/40 transition-all duration-200">
               <span className="text-[0.65rem] font-bold text-amber-500 uppercase block mb-1">Contingencias (Horas)</span>
               <div className="text-2xl font-black text-amber-600 dark:text-amber-400">
                 {totalHorasContingencia}h
               </div>
             </div>
 
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-emerald-400 dark:hover:border-emerald-500/40 transition-all duration-200">
               <span className="text-[0.65rem] font-bold text-emerald-500 uppercase block mb-1">Solucionados</span>
               <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                 {[...(errores || []), ...(interrupciones || [])].filter(i => i.estadoAtencion === 'SOLUCIONADO').length}
@@ -722,8 +722,8 @@ export const LiderDashboard = () => {
                 onClick={() => setFiltroTipoInc('TODOS')}
                 className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer ${
                   filtroTipoInc === 'TODOS'
-                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                 }`}
               >
                 Todos ({(errores?.length || 0) + (interrupciones?.length || 0)})
@@ -732,8 +732,8 @@ export const LiderDashboard = () => {
                 onClick={() => setFiltroTipoInc('ERRORES')}
                 className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${
                   filtroTipoInc === 'ERRORES'
-                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                 }`}
               >
                 <Bug size={12} /> Errores ({errores?.length || 0})
@@ -742,8 +742,8 @@ export const LiderDashboard = () => {
                 onClick={() => setFiltroTipoInc('INTERRUPCIONES')}
                 className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${
                   filtroTipoInc === 'INTERRUPCIONES'
-                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                 }`}
               >
                 <AlertTriangle size={12} /> Interrupciones ({interrupciones?.length || 0})

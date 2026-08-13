@@ -14,11 +14,10 @@ export const Navbar = () => {
   const { toggleTheme, isDark } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
 
-  // Efectos (Hooks)
-  // Detecta el desplazamiento vertical para aplicar efecto glassmorphism en el header
+  // Detecta el desplazamiento vertical para aplicar fondo glassmorphic sólido
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 15);
+      setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -44,20 +43,20 @@ export const Navbar = () => {
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled 
         ? 'bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 shadow-sm py-3.5' 
-        : 'bg-transparent py-5'
+        : 'bg-transparent py-4 sm:py-5'
     }`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex items-center justify-between">
         
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-3 z-50 group">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md transition-transform group-hover:scale-105">
+          <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/30 transition-transform group-hover:scale-105">
             <Cpu size={22} />
           </div>
           <div>
-            <span className="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
+            <span className="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-white transition-colors duration-300">
               IKernell
             </span>
-            <span className="block text-[0.65rem] text-zinc-500 dark:text-zinc-400 -mt-1 font-bold uppercase tracking-widest">
+            <span className="block text-[0.65rem] text-blue-600 dark:text-blue-400 -mt-1 font-bold uppercase tracking-widest transition-colors duration-300">
               Soluciones Software
             </span>
           </div>
@@ -69,21 +68,21 @@ export const Navbar = () => {
             to="/" 
             className={`text-sm font-semibold transition-colors ${
               location.pathname === '/' 
-                ? 'text-zinc-900 dark:text-white font-bold' 
-                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                ? 'text-blue-600 dark:text-blue-400 font-bold' 
+                : 'text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white'
             }`}
           >
             Inicio
           </Link>
           <a 
             href="/#servicios" 
-            className="text-sm font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
+            className="text-sm font-semibold text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white transition-colors"
           >
             Servicios
           </a>
           <a 
             href="/#estrategia" 
-            className="text-sm font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
+            className="text-sm font-semibold text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white transition-colors"
           >
             Estrategia
           </a>
@@ -91,8 +90,8 @@ export const Navbar = () => {
             to="/faqs" 
             className={`text-sm font-semibold transition-colors ${
               location.pathname === '/faqs' 
-                ? 'text-zinc-900 dark:text-white font-bold' 
-                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                ? 'text-blue-600 dark:text-blue-400 font-bold' 
+                : 'text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white'
             }`}
           >
             FAQs & Docs
@@ -101,8 +100,8 @@ export const Navbar = () => {
             to="/contacto" 
             className={`text-sm font-semibold transition-colors ${
               location.pathname === '/contacto' 
-                ? 'text-zinc-900 dark:text-white font-bold' 
-                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                ? 'text-blue-600 dark:text-blue-400 font-bold' 
+                : 'text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white'
             }`}
           >
             Contacto
@@ -115,20 +114,20 @@ export const Navbar = () => {
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
-            title={isDark ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
-            className="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-amber-400 flex items-center justify-center transition-all shadow-sm"
+            title={isDark ? "Cambiar a Modo Claro (Día)" : "Cambiar a Modo Oscuro (Noche)"}
+            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-amber-400 shadow-sm backdrop-blur-md cursor-pointer hover:border-blue-400 dark:hover:border-blue-500"
             aria-label="Toggle theme"
           >
-            {isDark ? <Sun size={18} /> : <Moon size={18} className="text-zinc-700" />}
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
           {isAuthenticated ? (
             <div className="flex items-center gap-2.5">
               <Link 
                 to={getDashboardRoute()} 
-                className="outline-button text-xs font-bold py-2 px-4"
+                className="text-xs font-bold py-2.5 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 backdrop-blur-md flex items-center gap-2 transition-all shadow-sm"
               >
-                <User size={14} /> Panel ({user?.rol || 'Sesión'})
+                <User size={14} className="text-blue-600 dark:text-blue-400" /> Panel ({user?.rol || 'Sesión'})
               </Link>
               <button 
                 onClick={handleLogout} 
@@ -141,7 +140,10 @@ export const Navbar = () => {
           ) : (
             <>
               {!isLoginPage && (
-                <Link to="/login" className="gradient-button text-xs sm:text-sm py-2.5 px-5 font-bold">
+                <Link 
+                  to="/login" 
+                  className="inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-bold py-2.5 px-5 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/25 hover:bg-blue-500 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200"
+                >
                   <LogIn size={16} /> Acceso Portal
                 </Link>
               )}
@@ -153,14 +155,14 @@ export const Navbar = () => {
         <div className="flex items-center gap-2 md:hidden">
           <button
             onClick={toggleTheme}
-            className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-amber-400 flex items-center justify-center"
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all bg-white/80 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-amber-400 shadow-sm backdrop-blur-md"
             aria-label="Toggle theme"
           >
-            {isDark ? <Sun size={16} /> : <Moon size={16} className="text-zinc-700" />}
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
           <button 
-            className="text-zinc-900 dark:text-white p-2 z-50 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="p-2 z-50 rounded-xl transition-colors text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Menu"
           >
@@ -176,7 +178,7 @@ export const Navbar = () => {
                 to="/" 
                 onClick={() => setMobileOpen(false)} 
                 className={`py-2 border-b border-zinc-100 dark:border-zinc-800 ${
-                  location.pathname === '/' ? 'text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400'
+                  location.pathname === '/' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-zinc-700 dark:text-zinc-300'
                 }`}
               >
                 Inicio
@@ -184,14 +186,14 @@ export const Navbar = () => {
               <a 
                 href="/#servicios" 
                 onClick={() => setMobileOpen(false)} 
-                className="py-2 border-b border-zinc-100 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                className="py-2 border-b border-zinc-100 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300"
               >
                 Servicios
               </a>
               <a 
                 href="/#estrategia" 
                 onClick={() => setMobileOpen(false)} 
-                className="py-2 border-b border-zinc-100 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                className="py-2 border-b border-zinc-100 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300"
               >
                 Estrategia
               </a>
@@ -199,7 +201,7 @@ export const Navbar = () => {
                 to="/faqs" 
                 onClick={() => setMobileOpen(false)} 
                 className={`py-2 border-b border-zinc-100 dark:border-zinc-800 ${
-                  location.pathname === '/faqs' ? 'text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400'
+                  location.pathname === '/faqs' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-zinc-700 dark:text-zinc-300'
                 }`}
               >
                 FAQs & Documentación
@@ -208,7 +210,7 @@ export const Navbar = () => {
                 to="/contacto" 
                 onClick={() => setMobileOpen(false)} 
                 className={`py-2 border-b border-zinc-100 dark:border-zinc-800 ${
-                  location.pathname === '/contacto' ? 'text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400'
+                  location.pathname === '/contacto' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-zinc-700 dark:text-zinc-300'
                 }`}
               >
                 Centro de Contacto
@@ -238,7 +240,7 @@ export const Navbar = () => {
                     <Link 
                       to="/login" 
                       onClick={() => setMobileOpen(false)} 
-                      className="gradient-button w-full py-3 font-bold"
+                      className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-600/25 hover:bg-blue-500 transition-all"
                     >
                       <LogIn size={18} /> Acceso Portal
                     </Link>
@@ -260,5 +262,3 @@ export const Navbar = () => {
     </header>
   );
 };
-
-
