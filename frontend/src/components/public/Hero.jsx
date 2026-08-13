@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowRight, ShieldCheck, Zap, Activity } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, Zap, Activity, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const containerVariants = {
@@ -8,109 +8,190 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.12,
       delayChildren: 0.05
     }
   }
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 25 },
+  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.45, ease: "easeOut" }
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
   }
 };
 
 export const Hero = () => {
   return (
-    <section className="pt-36 md:pt-48 pb-20 md:pb-28 relative overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      
+      {/* ── Background Layers: Single Base Image + CSS Solar Light Injection ── */}
+      <div className="absolute inset-0 z-0 overflow-hidden bg-zinc-950">
+        
+        {/* 1. Única Imagen Base de Alta Resolución (Mismo ángulo, escala y posición milimétrica sin saltos) */}
+        <div 
+          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')`
+          }}
+        />
+
+        {/* 2. Inyección de Luz Solar con CSS (Modo Claro - Día):
+            - Transforma el espacio negro en cielo diurno con mix-blend-color-dodge
+            - Simula rayos solares con gradientes mix-blend-screen
+            - Proporciona contraste suave para mantener tipografía nítida */}
+        <div className="absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out opacity-100 dark:opacity-0">
+          
+          {/* Tinte atmosférico azul cielo sobre la oscuridad del espacio */}
+          <div className="absolute inset-0 bg-sky-400/65 mix-blend-color-dodge" />
+          
+          {/* Resplandor solar envolvente diurno */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/95 via-sky-100/55 to-transparent mix-blend-screen" />
+          
+          {/* Foco de luz solar cenital */}
+          <div className="absolute top-0 right-1/4 w-[700px] h-[700px] bg-amber-100/50 rounded-full blur-[120px] mix-blend-overlay" />
+          
+          {/* Capa de contraste equilibrado para legibilidad del contenido */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/55 to-zinc-50" />
+        </div>
+
+        {/* 3. Filtro Cinematográfico Nocturno (Modo Oscuro - Noche):
+            - Gradiente oscuro que realza las luces de ciudades y el brillo estelar */}
+        <div className="absolute inset-0 pointer-events-none transition-opacity duration-700 ease-in-out opacity-0 dark:opacity-100">
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/65 to-zinc-950/95" />
+        </div>
+
+      </div>
+
+      {/* Brillos ambientales sutiles en Azul Corporativo */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-blue-500/10 dark:bg-blue-500/15 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-600/8 dark:bg-blue-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
+
+      {/* Contenido Principal con Contraste Dinámico Completo */}
       <motion.div 
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.1 }}
-        className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10 text-center"
+        className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10 text-center pt-28 pb-16 md:pt-0 md:pb-0"
       >
         
-        {/* Badge */}
+        {/* Badge Corporativo */}
         <motion.div 
           variants={itemVariants}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs md:text-sm font-semibold mb-8 shadow-sm backdrop-blur-md"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-md border border-zinc-200/80 dark:border-white/15 text-zinc-900 dark:text-zinc-100 text-xs md:text-sm font-semibold mb-8 shadow-sm dark:shadow-lg dark:shadow-blue-500/5 transition-colors duration-300"
         >
-          <Sparkles size={16} className="text-blue-600 dark:text-blue-400" /> Innovación en Desarrollo de Software & Análisis Predictivo
+          <Sparkles size={16} className="text-blue-600 dark:text-blue-400" /> 
+          Innovación en Desarrollo de Software & Análisis Predictivo
         </motion.div>
 
-        {/* Main Title */}
+        {/* Título Principal */}
         <motion.h1 
           variants={itemVariants}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-900 dark:text-white tracking-tight leading-[1.1] mb-6 max-w-5xl mx-auto"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-900 dark:text-white tracking-tight leading-[1.08] mb-6 max-w-5xl mx-auto transition-colors duration-300"
         >
-          Construimos Soluciones Tecnológicas de <span className="underline decoration-zinc-900 dark:decoration-white decoration-4 underline-offset-8">Alto Impacto</span>
+          Construimos Soluciones Tecnológicas de{' '}
+          <span className="relative inline-block">
+            <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-500 dark:from-blue-400 dark:to-blue-600">
+              Alto Impacto
+            </span>
+            <span className="absolute bottom-1 left-0 w-full h-3 bg-blue-500/20 rounded-sm -z-0" />
+          </span>
         </motion.h1>
 
-        {/* Subtitle */}
+        {/* Subtítulo */}
         <motion.p 
           variants={itemVariants}
-          className="text-zinc-600 dark:text-zinc-400 text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-10 font-medium leading-relaxed"
+          className="text-zinc-700 dark:text-zinc-300 text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-12 font-medium leading-relaxed transition-colors duration-300"
         >
           IKernell Soluciones Software combina arquitectura Java Spring Boot, interfaces reactivas en React y analítica predictiva mediante el Semáforo Inteligente de Riesgos.
         </motion.p>
 
-        {/* CTA Buttons */}
+        {/* Botones de Acción (CTAs) */}
         <motion.div 
           variants={itemVariants}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-16 md:mb-24"
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto mb-20 md:mb-24"
         >
-          <Link to="/contacto" className="gradient-button w-full sm:w-auto text-base py-3.5 px-8 font-bold shadow-lg">
-            Consultar Servicios <ArrowRight size={18} />
+          <Link 
+            to="/contacto" 
+            className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2 text-base py-3.5 px-8 font-bold rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/25 hover:bg-blue-500 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200"
+          >
+            Consultar Servicios 
+            <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
-          <a href="/#servicios" className="outline-button w-full sm:w-auto text-base py-3.5 px-8 font-bold">
+          <a 
+            href="/#servicios" 
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-base py-3.5 px-8 font-bold rounded-xl bg-white/80 dark:bg-white/10 backdrop-blur-md text-zinc-900 dark:text-white border border-zinc-300 dark:border-white/20 hover:bg-white dark:hover:bg-white/15 hover:border-zinc-400 dark:hover:border-white/30 shadow-sm transition-all duration-200"
+          >
             Ver Portafolio
           </a>
         </motion.div>
 
-        {/* Stat Highlights Grid */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left">
+        {/* Grid de Aspectos Clave con Glassmorphism Adaptativo */}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 text-left">
           
-          <div className="glass-card flex flex-col justify-between p-6 md:p-8 h-full">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-5 text-zinc-900 dark:text-white shadow-sm">
-                <Zap size={24} />
-              </div>
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">N-Capas REST</h3>
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">Desacoplamiento total entre Frontend React y Backend Java (RNF-01).</p>
+          {/* Tarjeta 1 */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="group relative bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-zinc-200/90 dark:border-white/10 rounded-2xl p-6 md:p-8 hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-md shadow-zinc-200/40 dark:shadow-none hover:shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300"
+          >
+            <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center mb-5 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors">
+              <Zap size={24} />
             </div>
-          </div>
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">N-Capas REST</h3>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">Desacoplamiento total entre Frontend React y Backend Java (RNF-01).</p>
+          </motion.div>
 
-          <div className="glass-card flex flex-col justify-between p-6 md:p-8 border-2 border-zinc-900 dark:border-zinc-300 shadow-xl shadow-zinc-300/30 dark:shadow-none h-full">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center mb-5 shadow-md">
-                <Activity size={24} />
-              </div>
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Semáforo Predictivo</h3>
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">Monitoreo en tiempo real de errores e interrupciones (RF-25).</p>
+          {/* Tarjeta 2 (Destacada) */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="group relative bg-blue-50/80 dark:bg-blue-600/10 backdrop-blur-xl border-2 border-blue-500/40 dark:border-blue-500/30 rounded-2xl p-6 md:p-8 shadow-lg shadow-blue-500/10 hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all duration-300"
+          >
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/15 rounded-full blur-2xl pointer-events-none" />
+            <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mb-5 text-white shadow-md shadow-blue-600/30">
+              <Activity size={24} />
             </div>
-          </div>
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Semáforo Predictivo</h3>
+            <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed font-normal">Monitoreo en tiempo real de errores e interrupciones (RF-25).</p>
+          </motion.div>
 
-          <div className="glass-card flex flex-col justify-between p-6 md:p-8 h-full">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-5 text-zinc-900 dark:text-white shadow-sm">
-                <ShieldCheck size={24} />
-              </div>
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Seguridad BCrypt</h3>
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">Sesiones JWT stateless y encriptación de grado militar (RNF-09/10).</p>
+          {/* Tarjeta 3 */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="group relative bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-zinc-200/90 dark:border-white/10 rounded-2xl p-6 md:p-8 hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-md shadow-zinc-200/40 dark:shadow-none hover:shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300"
+          >
+            <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center mb-5 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors">
+              <ShieldCheck size={24} />
             </div>
-          </div>
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Seguridad BCrypt</h3>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal">Sesiones JWT stateless y encriptación de grado militar (RNF-09/10).</p>
+          </motion.div>
 
         </motion.div>
 
       </motion.div>
+
+      {/* Indicador animado de desplazamiento (Scroll) */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 0.8 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+      >
+        <motion.div 
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+          className="flex flex-col items-center gap-2 text-zinc-500 dark:text-zinc-400"
+        >
+          <span className="text-xs font-semibold tracking-wider uppercase">Scroll</span>
+          <ChevronDown size={18} />
+        </motion.div>
+      </motion.div>
     </section>
   );
 };
-
-
-
-
