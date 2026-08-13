@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   BookOpen, FileText, Download, Eye, Search, Sparkles, CheckCircle2, 
   Shield, Layers, RefreshCw, Loader2, X, ChevronRight, Filter, FileCode,
-  ArrowDownToLine, Maximize2, FileCheck, Terminal, Copy, Check
+  ArrowDownToLine, Maximize2, FileCheck, Terminal, Copy, Check, Printer
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import { useApi } from '../../hooks/useApi';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,9 +29,11 @@ export const BibliotecaDigital = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('TODOS');
   
-  // Modal de Previsualización Universal de Texto Técnico
+  // Modal de Previsualización Dual (PDF Hoja A4 / Terminal Código)
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [activeViewMode, setActiveViewMode] = useState('pdf'); // 'pdf' | 'terminal'
   const [copied, setCopied] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   // Búsqueda Predictiva en Vivo
   const [suggestions, setSuggestions] = useState([]);
@@ -114,10 +117,12 @@ export const BibliotecaDigital = () => {
     }
   };
 
-  // Abre el visor emergente universal de texto técnico
+  // Abre el visor emergente determinando el modo según el formato
   const abrirModalPrevisualizacion = (doc) => {
     setPreviewDoc(doc);
     setCopied(false);
+    const esCodigo = (doc.formato || '').toUpperCase() === 'SQL' || (doc.formato || '').toUpperCase() === 'TXT';
+    setActiveViewMode(esCodigo ? 'terminal' : 'pdf');
   };
 
   // Copia el contenido técnico completo al portapapeles
@@ -130,20 +135,125 @@ export const BibliotecaDigital = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Genera la descarga del archivo en formato Markdown (.md) o SQL (.sql) al vuelo vía Blob
-  const handleDownload = (doc) => {
+  // Genera y descarga un archivo PDF real estructurado al vuelo con jsPDF (o archivo .sql si es código)
+  const handleDownload = async (doc) => {
     if (!doc) return;
-    const textContent = doc.contenidoTexto || doc.descripcion || "Documento IKernell";
-    const extension = (doc.formato || '').toUpperCase() === 'SQL' ? 'sql' : 'md';
-    const blob = new Blob([textContent], { type: 'text/markdown;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${doc.titulo.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${doc.version || 'v1.0'}.${extension}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
-    toast.success(`Descargando especificación: ${doc.titulo} (.${extension})`);
+    const esSql = (doc.formato || '').toUpperCase() === 'SQL';
+
+    if (esSql) {
+      // Descarga de archivo de script SQL nativo
+      const blob = new Blob([doc.contenidoTexto || doc.descripcion || ''], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${doc.titulo.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${doc.version || 'v1.0'}.sql`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+      toast.success(`Descargando script SQL: ${doc.titulo}`);
+      return;
+    }
+
+    // Generación de PDF profesional con jsPDF
+    try {
+      setGeneratingPdf(true);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 18;
+      const maxWidth = pageWidth - (margin * 2);
+      let y = 25;
+
+      const drawHeader = (currentPage) => {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        pdf.setTextColor(70, 70, 70);
+        pdf.text('IKERNELL SOLUCIONES SOFTWARE — SISTEMA DE INGENIERÍA (RF-33)', margin, 12);
+        
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7);
+        pdf.setTextColor(120, 120, 120);
+        pdf.text(`DOC-0${doc.idDocumento} • ${doc.categoria} • ${doc.version || 'v1.0'}`, pageWidth - margin, 12, { align: 'right' });
+        
+        pdf.setDrawColor(210, 210, 210);
+        pdf.setLineWidth(0.3);
+        pdf.line(margin, 14, pageWidth - margin, 14);
+      };
+
+      const drawFooter = (currentPage) => {
+        pdf.setDrawColor(210, 210, 210);
+        pdf.setLineWidth(0.3);
+        pdf.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7);
+        pdf.setTextColor(120, 120, 120);
+        pdf.text('Documentación Oficial IKernell • Repositorio Digital Certificado ISO/IEC 25010', margin, pageHeight - 9);
+        pdf.text(`Página ${currentPage}`, pageWidth - margin, pageHeight - 9, { align: 'right' });
+      };
+
+      let pageNumber = 1;
+      drawHeader(pageNumber);
+
+      const rawText = doc.contenidoTexto || doc.descripcion || 'Sin contenido registrado.';
+      const lines = rawText.split('\n');
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.startsWith('# ')) {
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(13);
+          pdf.setTextColor(15, 23, 42);
+          y += 3;
+        } else if (line.startsWith('## ')) {
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(10.5);
+          pdf.setTextColor(30, 41, 59);
+          y += 2.5;
+        } else if (line.startsWith('### ')) {
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(9);
+          pdf.setTextColor(51, 65, 85);
+          y += 1.5;
+        } else {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8);
+          pdf.setTextColor(40, 40, 40);
+        }
+
+        const cleanLine = line.replace(/^#{1,4}\s+/, '').replace(/\*\*/g, '');
+        const wrappedLines = pdf.splitTextToSize(cleanLine || ' ', maxWidth);
+
+        for (const wrapped of wrappedLines) {
+          if (y + 5 > pageHeight - 18) {
+            drawFooter(pageNumber);
+            pdf.addPage();
+            pageNumber++;
+            drawHeader(pageNumber);
+            y = 22;
+          }
+          pdf.text(wrapped, margin, y);
+          y += 4.2;
+        }
+      }
+
+      drawFooter(pageNumber);
+
+      const fileName = `${doc.titulo.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${doc.version || 'v1.0'}.pdf`;
+      pdf.save(fileName);
+      toast.success(`PDF generado y descargado: ${fileName}`);
+    } catch (error) {
+      console.error('Error generando PDF con jsPDF:', error);
+      toast.error('Error al generar el archivo PDF.');
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
 
   return (
@@ -170,7 +280,7 @@ export const BibliotecaDigital = () => {
               </span>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-              Repositorio centralizado de especificaciones técnicas con visor universal y descarga de documentación (PostgreSQL Live)
+              Repositorio centralizado con visor dual (Hoja A4 PDF & Terminal de Código) y descargas en tiempo real
             </p>
           </div>
         </div>
@@ -344,22 +454,23 @@ export const BibliotecaDigital = () => {
                   type="button"
                   onClick={() => abrirModalPrevisualizacion(doc)}
                   className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex-1 sm:flex-none justify-center"
-                  title="Abrir visor de documentación técnica"
+                  title="Abrir visor de documentación"
                 >
                   <Eye size={14} />
                   <span>Ver Documento</span>
                   <ChevronRight size={12} className="text-zinc-400" />
                 </button>
 
-                {/* Botón Descargar Especificación */}
+                {/* Botón Descargar PDF / SQL */}
                 <button
                   type="button"
                   onClick={() => handleDownload(doc)}
-                  className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md flex-1 sm:flex-none justify-center"
-                  title="Descargar especificación a su computadora"
+                  disabled={generatingPdf}
+                  className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md flex-1 sm:flex-none justify-center disabled:opacity-50"
+                  title={`Descargar ${doc.formato || 'PDF'} a su dispositivo`}
                 >
                   <ArrowDownToLine size={14} />
-                  <span>Descargar</span>
+                  <span>Descargar {doc.formato || 'PDF'}</span>
                 </button>
               </div>
             </div>
@@ -367,23 +478,23 @@ export const BibliotecaDigital = () => {
         ))}
       </div>
 
-      {/* Modal / Visor Universal de Documentación Técnica */}
+      {/* Modal / Visor Dual de Documentos (Hoja A4 PDF & Terminal de Código) */}
       <AnimatePresence>
         {previewDoc && (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
             <motion.div 
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-6xl h-[88vh] flex flex-col overflow-hidden"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden"
             >
               
               {/* Header del Modal */}
-              <div className="p-4 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/90 dark:bg-zinc-900/90 flex-shrink-0">
+              <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/95 dark:bg-zinc-900/95 flex-shrink-0">
                 <div className="flex items-center gap-3 truncate pr-4">
                   <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <FileText size={20} />
+                    {activeViewMode === 'terminal' ? <Terminal size={20} /> : <FileText size={20} />}
                   </div>
                   <div className="truncate">
                     <h4 className="font-extrabold text-zinc-900 dark:text-white text-sm sm:text-base truncate">
@@ -395,33 +506,62 @@ export const BibliotecaDigital = () => {
                       <span>{previewDoc.version || 'v1.0'}</span>
                       <span>•</span>
                       <span className="font-bold text-blue-600 dark:text-blue-400">
-                        {previewDoc.formato || 'PDF'} • {(previewDoc.contenidoTexto || '').length.toLocaleString()} Caracteres
+                        {previewDoc.formato || 'PDF'} (PostgreSQL Live)
                       </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Selector de Modo Dual: Hoja PDF (A4) vs Terminal */}
+                  <div className="flex items-center bg-zinc-200 dark:bg-zinc-800 p-1 rounded-xl text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setActiveViewMode('pdf')}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                        activeViewMode === 'pdf'
+                          ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm font-black'
+                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <FileText size={13} />
+                      <span className="hidden sm:inline">Visor Hoja A4</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveViewMode('terminal')}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                        activeViewMode === 'terminal'
+                          ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm font-black'
+                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Terminal size={13} />
+                      <span className="hidden sm:inline">Modo Código</span>
+                    </button>
+                  </div>
+
                   {/* Botón Copiar Especificación */}
                   <button
                     type="button"
                     onClick={handleCopyContent}
                     className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    title="Copiar texto de la especificación técnica"
+                    title="Copiar texto de la especificación"
                   >
                     {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                    <span className="hidden sm:inline">{copied ? 'Copiado' : 'Copiar'}</span>
+                    <span className="hidden md:inline">{copied ? 'Copiado' : 'Copiar'}</span>
                   </button>
 
-                  {/* Botón Descargar desde el Modal */}
+                  {/* Botón Descargar PDF Real con jsPDF */}
                   <button
                     type="button"
                     onClick={() => handleDownload(previewDoc)}
-                    className="gradient-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    title="Descargar especificación completa"
+                    disabled={generatingPdf}
+                    className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                    title="Descargar archivo PDF generado"
                   >
-                    <ArrowDownToLine size={14} />
-                    <span className="hidden sm:inline">Descargar</span>
+                    {generatingPdf ? <Loader2 size={14} className="animate-spin" /> : <ArrowDownToLine size={14} />}
+                    <span className="hidden sm:inline">Descargar {previewDoc.formato || 'PDF'}</span>
                   </button>
 
                   {/* Botón Cerrar (X) */}
@@ -435,37 +575,98 @@ export const BibliotecaDigital = () => {
                 </div>
               </div>
 
-              {/* Cuerpo del Visor: Renderizado Universal de Texto Técnico */}
-              <div className="flex-1 p-3 sm:p-5 bg-zinc-100/60 dark:bg-zinc-950/60 overflow-hidden flex flex-col">
-                <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-inner">
-                  
-                  {/* Barra Superior del Buffer */}
-                  <div className="p-3 bg-zinc-100/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-800 text-xs font-mono flex items-center justify-between flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                      <Terminal size={15} className="text-blue-600 dark:text-blue-400" />
-                      <span className="font-bold text-zinc-900 dark:text-white truncate max-w-xs sm:max-w-md">
-                        Buffer de Lectura • {previewDoc.titulo}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[0.7rem] text-zinc-500 dark:text-zinc-400">
-                      <span className="hidden sm:inline">UTF-8 Encoded</span>
-                      <span>•</span>
-                      <span className="font-mono">Doc ID #{previewDoc.idDocumento}</span>
-                    </div>
-                  </div>
+              {/* Cuerpo del Visor Dual */}
+              <div className="flex-1 p-3 sm:p-5 bg-zinc-950/70 overflow-hidden flex flex-col">
+                
+                {/* 1. VISTA DOCUMENTO FORMAL (EFECTO HOJA A4) */}
+                {activeViewMode === 'pdf' && (
+                  <div className="w-full h-full bg-zinc-900/90 p-4 sm:p-8 overflow-y-auto rounded-2xl border border-zinc-800 shadow-inner flex justify-center">
+                    <div className="w-full max-w-4xl bg-white text-zinc-900 shadow-2xl ring-1 ring-black/10 rounded-sm p-8 sm:p-14 min-h-[950px] flex flex-col justify-between my-2">
+                      
+                      {/* Cabecera Formal de la Hoja A4 */}
+                      <div>
+                        <div className="border-b-2 border-zinc-900 pb-4 mb-6 flex justify-between items-start">
+                          <div>
+                            <div className="text-[0.68rem] font-black tracking-widest text-zinc-500 uppercase">
+                              IKERNELL SOLUCIONES SOFTWARE S.A.S. • INGENIERÍA & ARQUITECTURA
+                            </div>
+                            <h2 className="text-xl sm:text-2xl font-black text-zinc-950 mt-1 tracking-tight">
+                              {previewDoc.titulo}
+                            </h2>
+                            <div className="text-xs text-zinc-600 font-medium mt-1">
+                              Categoría Oficial: <span className="font-bold text-zinc-900">{previewDoc.categoria}</span> • Formato: <span className="font-bold text-blue-700">{previewDoc.formato || 'PDF'}</span>
+                            </div>
+                          </div>
 
-                  {/* Contenedor del Texto Técnico con Scroll Suave y Alto Contraste */}
-                  <div className="flex-1 p-5 sm:p-8 overflow-y-auto bg-zinc-50/60 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 selection:bg-blue-500 selection:text-white">
-                    <pre className="whitespace-pre-wrap font-mono text-xs sm:text-[0.84rem] leading-relaxed text-zinc-800 dark:text-zinc-200 font-normal">
-                      {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido de texto registrado en base de datos.'}
-                    </pre>
+                          <div className="text-right flex flex-col items-end">
+                            <span className="text-[0.65rem] font-black px-2.5 py-1 rounded bg-zinc-100 text-zinc-900 border border-zinc-300 font-mono">
+                              REF: DOC-0{previewDoc.idDocumento}
+                            </span>
+                            <span className="text-[0.65rem] text-zinc-500 font-bold mt-1">
+                              Versión {previewDoc.version || 'v1.0'}
+                            </span>
+                            <span className="text-[0.65rem] text-zinc-400 font-medium">
+                              {previewDoc.fechaSubida ? new Date(previewDoc.fechaSubida).toLocaleDateString() : 'Agosto 2026'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Cuerpo de la Hoja A4 */}
+                        <div className="prose max-w-none">
+                          <pre className="whitespace-pre-wrap font-sans text-xs sm:text-[0.88rem] leading-relaxed text-zinc-800 font-normal selection:bg-blue-100 selection:text-blue-900">
+                            {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido registrado.'}
+                          </pre>
+                        </div>
+                      </div>
+
+                      {/* Pie de Página Formal de la Hoja A4 */}
+                      <div className="border-t border-zinc-300 pt-4 mt-10 flex justify-between items-center text-[0.7rem] text-zinc-500">
+                        <div className="flex items-center gap-2">
+                          <Shield size={14} className="text-zinc-600" />
+                          <span>Documento Oficial Certificado • Cumplimiento Normativa ISO/IEC 25010</span>
+                        </div>
+                        <span className="font-mono text-zinc-400">IKernell Enterprise Core Platform</span>
+                      </div>
+
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* 2. VISTA TERMINAL / CÓDIGO FUENTE (DARK THEME) */}
+                {activeViewMode === 'terminal' && (
+                  <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-inner">
+                    <div className="p-3 bg-zinc-900 text-zinc-300 border-b border-zinc-800 text-xs font-mono flex items-center justify-between flex-shrink-0">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 mr-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                        </div>
+                        <Terminal size={14} className="text-emerald-400" />
+                        <span className="font-bold text-zinc-100 truncate max-w-xs sm:max-w-md">
+                          Terminal de Lectura • {previewDoc.titulo}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[0.7rem] text-zinc-400 font-mono">
+                        <span>UTF-8 Buffer</span>
+                        <span>•</span>
+                        <span>{(previewDoc.contenidoTexto || '').length.toLocaleString()} Chars</span>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 p-5 sm:p-8 overflow-y-auto bg-zinc-950 text-emerald-400 font-mono text-xs sm:text-[0.82rem] leading-relaxed selection:bg-emerald-500 selection:text-black">
+                      <pre className="whitespace-pre-wrap font-mono font-normal">
+                        {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido registrado.'}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
               </div>
 
               {/* Footer del Modal */}
               <div className="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-[0.7rem] text-zinc-500 bg-white dark:bg-zinc-900 flex-shrink-0">
-                <span className="hidden sm:inline">IKernell Digital Library • Visor Universal de Especificaciones Técnicas</span>
+                <span className="hidden sm:inline">IKernell Digital Library • Visor Certificado de Especificaciones Técnicas</span>
                 <span className="font-mono font-medium text-zinc-600 dark:text-zinc-400">
                   {previewDoc.categoria} • {previewDoc.version || 'v1.0'}
                 </span>
