@@ -578,12 +578,12 @@ export const BibliotecaDigital = () => {
               </div>
 
               {/* Cuerpo del Visor Dual */}
-              <div className="flex-1 bg-zinc-950 overflow-hidden flex flex-col">
+              <div className="flex-1 bg-zinc-900 overflow-hidden flex flex-col">
                 
                 {/* 1. VISTA DOCUMENTO FORMAL (EFECTO HOJA A4 CON REACT-MARKDOWN) */}
                 {activeViewMode === 'pdf' && (
-                  <div className="w-full h-full bg-zinc-900 p-4 sm:p-8 overflow-y-auto rounded-2xl border border-zinc-800 shadow-inner flex justify-center">
-                    <div className="w-full max-w-4xl mx-auto bg-white text-black shadow-2xl min-h-[1056px] p-10 sm:p-16 my-8 rounded-sm ring-1 ring-black/10 flex flex-col justify-between">
+                  <div className="w-full h-full bg-zinc-900 p-4 sm:p-8 overflow-y-auto flex justify-center">
+                    <div className="w-full max-w-4xl bg-white text-zinc-900 shadow-2xl min-h-[1056px] p-10 sm:p-16 rounded-sm ring-1 ring-black/10 flex flex-col justify-between self-start my-2">
                       
                       {/* Cabecera Formal de la Hoja A4 con Membrete Oficial */}
                       <div>
@@ -608,7 +608,7 @@ export const BibliotecaDigital = () => {
                         </div>
 
                         {/* Renderizado de Markdown Estructurado con Tailwind Typography */}
-                        <div className="prose prose-zinc max-w-none prose-headings:text-blue-900 prose-headings:font-black prose-h1:text-2xl prose-h1:border-b prose-h1:border-zinc-200 prose-h1:pb-2 prose-h2:text-xl prose-h2:text-blue-950 prose-h3:text-lg prose-a:text-blue-600 prose-table:border-collapse prose-th:bg-zinc-100 prose-th:p-3 prose-th:border prose-th:border-zinc-300 prose-td:p-3 prose-td:border prose-td:border-zinc-300 prose-pre:bg-zinc-900 prose-pre:text-emerald-400 prose-pre:rounded-xl prose-pre:p-4 prose-code:text-blue-900 prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none leading-relaxed text-[0.92rem]">
+                        <div className="prose prose-zinc max-w-none prose-headings:text-blue-900 prose-headings:font-black prose-h1:text-2xl prose-h1:border-b prose-h1:border-zinc-200 prose-h1:pb-2 prose-h2:text-xl prose-h2:text-blue-950 prose-h3:text-lg prose-a:text-blue-600 prose-table:border-collapse prose-th:bg-zinc-100 prose-th:p-3 prose-th:border prose-th:border-zinc-300 prose-td:p-3 prose-td:border prose-td:border-zinc-300 prose-pre:bg-zinc-950 prose-pre:text-emerald-400 prose-pre:rounded-xl prose-pre:p-4 prose-code:text-blue-900 prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none leading-relaxed text-[0.92rem]">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido registrado.'}
                           </ReactMarkdown>
@@ -630,30 +630,32 @@ export const BibliotecaDigital = () => {
 
                 {/* 2. VISTA TERMINAL / CÓDIGO FUENTE (DARK THEME) */}
                 {activeViewMode === 'terminal' && (
-                  <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-inner">
-                    <div className="p-3 bg-zinc-900 text-zinc-300 border-b border-zinc-800 text-xs font-mono flex items-center justify-between flex-shrink-0">
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1.5 mr-2">
-                          <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                  <div className="w-full h-full bg-zinc-900 p-4 sm:p-8 overflow-hidden flex justify-center">
+                    <div className="w-full max-w-5xl h-full bg-zinc-950 text-emerald-400 font-mono rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl flex flex-col">
+                      <div className="p-3 bg-zinc-900 text-zinc-300 border-b border-zinc-800 text-xs font-mono flex items-center justify-between flex-shrink-0">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 mr-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                          </div>
+                          <Terminal size={14} className="text-emerald-400" />
+                          <span className="font-bold text-zinc-100 truncate max-w-xs sm:max-w-md">
+                            Terminal de Lectura • {previewDoc.titulo}
+                          </span>
                         </div>
-                        <Terminal size={14} className="text-emerald-400" />
-                        <span className="font-bold text-zinc-100 truncate max-w-xs sm:max-w-md">
-                          Terminal de Lectura • {previewDoc.titulo}
-                        </span>
+                        <div className="flex items-center gap-2 text-[0.7rem] text-zinc-400 font-mono">
+                          <span>UTF-8 Buffer</span>
+                          <span>•</span>
+                          <span>{(previewDoc.contenidoTexto || '').length.toLocaleString()} Chars</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-[0.7rem] text-zinc-400 font-mono">
-                        <span>UTF-8 Buffer</span>
-                        <span>•</span>
-                        <span>{(previewDoc.contenidoTexto || '').length.toLocaleString()} Chars</span>
-                      </div>
-                    </div>
 
-                    <div className="flex-1 p-5 sm:p-8 overflow-y-auto bg-zinc-950 text-emerald-400 font-mono text-xs sm:text-[0.82rem] leading-relaxed selection:bg-emerald-500 selection:text-black">
-                      <pre className="whitespace-pre-wrap font-mono font-normal">
-                        {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido registrado.'}
-                      </pre>
+                      <div className="flex-1 p-5 sm:p-8 overflow-y-auto bg-zinc-950 text-emerald-400 font-mono text-xs sm:text-[0.82rem] leading-relaxed selection:bg-emerald-500 selection:text-black">
+                        <pre className="whitespace-pre-wrap font-mono font-normal">
+                          {previewDoc.contenidoTexto || previewDoc.descripcion || 'Sin contenido registrado.'}
+                        </pre>
+                      </div>
                     </div>
                   </div>
                 )}
