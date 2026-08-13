@@ -42,8 +42,8 @@ export const Navbar = () => {
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled 
-        ? 'bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 shadow-sm py-3.5' 
-        : 'bg-transparent py-4 sm:py-5'
+        ? 'bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 shadow-md py-3' 
+        : 'bg-white/80 dark:bg-zinc-950/75 backdrop-blur-md border-b border-zinc-200/50 dark:border-zinc-800/50 shadow-sm py-3.5 sm:py-4'
     }`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex items-center justify-between">
         
@@ -53,55 +53,55 @@ export const Navbar = () => {
             <Cpu size={22} />
           </div>
           <div>
-            <span className="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-white transition-colors duration-300">
+            <span className="text-xl font-black tracking-tight text-zinc-950 dark:text-white transition-colors duration-300 drop-shadow-sm dark:drop-shadow-none">
               IKernell
             </span>
-            <span className="block text-[0.65rem] text-blue-600 dark:text-blue-400 -mt-1 font-bold uppercase tracking-widest transition-colors duration-300">
+            <span className="block text-[0.65rem] text-blue-600 dark:text-blue-400 -mt-1 font-extrabold uppercase tracking-widest transition-colors duration-300">
               Soluciones Software
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-7 lg:gap-8">
           <Link 
             to="/" 
-            className={`text-sm font-semibold transition-colors ${
+            className={`text-sm tracking-tight transition-all duration-200 ${
               location.pathname === '/' 
-                ? 'text-blue-600 dark:text-blue-400 font-bold' 
-                : 'text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white'
+                ? 'text-blue-600 dark:text-blue-400 font-extrabold drop-shadow-sm' 
+                : 'text-zinc-900 font-bold hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white'
             }`}
           >
             Inicio
           </Link>
           <a 
             href="/#servicios" 
-            className="text-sm font-semibold text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white transition-colors"
+            className="text-sm font-bold tracking-tight text-zinc-900 hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white transition-all duration-200"
           >
             Servicios
           </a>
           <a 
             href="/#estrategia" 
-            className="text-sm font-semibold text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white transition-colors"
+            className="text-sm font-bold tracking-tight text-zinc-900 hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white transition-all duration-200"
           >
             Estrategia
           </a>
           <Link 
             to="/faqs" 
-            className={`text-sm font-semibold transition-colors ${
+            className={`text-sm tracking-tight transition-all duration-200 ${
               location.pathname === '/faqs' 
-                ? 'text-blue-600 dark:text-blue-400 font-bold' 
-                : 'text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white'
+                ? 'text-blue-600 dark:text-blue-400 font-extrabold drop-shadow-sm' 
+                : 'text-zinc-900 font-bold hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white'
             }`}
           >
             FAQs & Docs
           </Link>
           <Link 
             to="/contacto" 
-            className={`text-sm font-semibold transition-colors ${
+            className={`text-sm tracking-tight transition-all duration-200 ${
               location.pathname === '/contacto' 
-                ? 'text-blue-600 dark:text-blue-400 font-bold' 
-                : 'text-zinc-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-white'
+                ? 'text-blue-600 dark:text-blue-400 font-extrabold drop-shadow-sm' 
+                : 'text-zinc-900 font-bold hover:text-blue-600 dark:text-zinc-200 dark:hover:text-white'
             }`}
           >
             Contacto
@@ -115,7 +115,7 @@ export const Navbar = () => {
           <button
             onClick={toggleTheme}
             title={isDark ? "Cambiar a Modo Claro (Día)" : "Cambiar a Modo Oscuro (Noche)"}
-            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-amber-400 shadow-sm backdrop-blur-md cursor-pointer hover:border-blue-400 dark:hover:border-blue-500"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all bg-white/90 dark:bg-zinc-800/90 hover:bg-white dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700 text-zinc-950 dark:text-amber-400 shadow-sm backdrop-blur-md cursor-pointer hover:border-blue-500 dark:hover:border-blue-500"
             aria-label="Toggle theme"
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
@@ -177,8 +177,8 @@ export const Navbar = () => {
               <Link 
                 to="/" 
                 onClick={() => setMobileOpen(false)} 
-                className={`py-2 border-b border-zinc-100 dark:border-zinc-800 ${
-                  location.pathname === '/' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-zinc-700 dark:text-zinc-300'
+                className={`py-2.5 border-b border-zinc-200/80 dark:border-zinc-800 ${
+                  location.pathname === '/' ? 'text-blue-600 dark:text-blue-400 font-extrabold' : 'text-zinc-950 dark:text-zinc-100'
                 }`}
               >
                 Inicio
@@ -186,22 +186,22 @@ export const Navbar = () => {
               <a 
                 href="/#servicios" 
                 onClick={() => setMobileOpen(false)} 
-                className="py-2 border-b border-zinc-100 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300"
+                className="py-2.5 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100"
               >
                 Servicios
               </a>
               <a 
                 href="/#estrategia" 
                 onClick={() => setMobileOpen(false)} 
-                className="py-2 border-b border-zinc-100 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300"
+                className="py-2.5 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100"
               >
                 Estrategia
               </a>
               <Link 
                 to="/faqs" 
                 onClick={() => setMobileOpen(false)} 
-                className={`py-2 border-b border-zinc-100 dark:border-zinc-800 ${
-                  location.pathname === '/faqs' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-zinc-700 dark:text-zinc-300'
+                className={`py-2.5 border-b border-zinc-200/80 dark:border-zinc-800 ${
+                  location.pathname === '/faqs' ? 'text-blue-600 dark:text-blue-400 font-extrabold' : 'text-zinc-950 dark:text-zinc-100'
                 }`}
               >
                 FAQs & Documentación
@@ -209,8 +209,8 @@ export const Navbar = () => {
               <Link 
                 to="/contacto" 
                 onClick={() => setMobileOpen(false)} 
-                className={`py-2 border-b border-zinc-100 dark:border-zinc-800 ${
-                  location.pathname === '/contacto' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-zinc-700 dark:text-zinc-300'
+                className={`py-2.5 border-b border-zinc-200/80 dark:border-zinc-800 ${
+                  location.pathname === '/contacto' ? 'text-blue-600 dark:text-blue-400 font-extrabold' : 'text-zinc-950 dark:text-zinc-100'
                 }`}
               >
                 Centro de Contacto
