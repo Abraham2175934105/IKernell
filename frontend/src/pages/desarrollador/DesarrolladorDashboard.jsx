@@ -206,26 +206,40 @@ export const DesarrolladorDashboard = () => {
 
   // Efecto: Búsqueda difusa de Micro-Snippets en tiempo real (RF-36)
   useEffect(() => {
-    if (!showErrorModal || !errorForm.descripcion || errorForm.descripcion.trim().length < 4) {
+    if (!showErrorModal || !errorForm?.descripcion || errorForm.descripcion.trim().length < 4) {
       setSugerenciasSnippets([]);
+      setLoadingSnippets(false);
       return;
     }
 
+    let isMounted = true;
     const timer = setTimeout(async () => {
       try {
         setLoadingSnippets(true);
-        const queryTerm = `${errorForm.tipoError} ${errorForm.descripcion}`.trim();
+        const tipo = errorForm?.tipoError || '';
+        const desc = errorForm?.descripcion || '';
+        const queryTerm = `${tipo} ${desc}`.trim();
         const data = await api.get(`/snippets/sugerencias?termino=${encodeURIComponent(queryTerm)}&limite=2`);
-        setSugerenciasSnippets(Array.isArray(data) ? data : []);
+        if (isMounted) {
+          setSugerenciasSnippets(Array.isArray(data) ? data : []);
+        }
       } catch (err) {
         console.error('Error buscando micro-snippets sugeridos:', err);
+        if (isMounted) {
+          setSugerenciasSnippets([]);
+        }
       } finally {
-        setLoadingSnippets(false);
+        if (isMounted) {
+          setLoadingSnippets(false);
+        }
       }
     }, 350);
 
-    return () => clearTimeout(timer);
-  }, [errorForm.descripcion, errorForm.tipoError, showErrorModal, api]);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [errorForm?.descripcion, errorForm?.tipoError, showErrorModal, api]);
 
   // Efectos (Hooks)
   useEffect(() => {
@@ -825,20 +839,20 @@ export const DesarrolladorDashboard = () => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-700/50">
                     <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Tareas Activas</span>
-                    <span className="text-sm font-extrabold text-zinc-900 dark:text-white font-mono">
-                      {actividades.filter(a => a.estado === 'EN_PROGRESO').length}
+                    <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">
+                      {(actividades || []).filter(a => a?.estado === 'EN_PROGRESO').length}
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-700/50">
                     <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Errores Reportados</span>
-                    <span className="text-sm font-extrabold text-zinc-900 dark:text-white font-mono">
-                      {historialErrores.length}
+                    <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">
+                      {(misReportes?.errores || []).length}
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-700/50">
                     <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Interrupciones</span>
-                    <span className="text-sm font-extrabold text-zinc-900 dark:text-white font-mono">
-                      {historialInterrupciones.length}
+                    <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">
+                      {(misReportes?.interrupciones || []).length}
                     </span>
                   </div>
                 </div>
@@ -1270,7 +1284,7 @@ export const DesarrolladorDashboard = () => {
                     </div>
                   )}
 
-                  {sugerenciasSnippets.length > 0 && (
+                  {Array.isArray(sugerenciasSnippets) && sugerenciasSnippets.length > 0 && (
                     <div className="mt-2 space-y-2">
                       <div className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
                         <span className="flex items-center gap-1">
@@ -1278,8 +1292,8 @@ export const DesarrolladorDashboard = () => {
                         </span>
                         <span className="text-[10px] text-zinc-500">{sugerenciasSnippets.length} resultado(s)</span>
                       </div>
-                      {sugerenciasSnippets.map((snippet) => (
-                        <SnippetInjectionCard key={snippet.idSnippet} snippet={snippet} />
+                      {sugerenciasSnippets.map((snippet, idx) => (
+                        <SnippetInjectionCard key={snippet?.idSnippet || `snippet-${idx}`} snippet={snippet} />
                       ))}
                     </div>
                   )}
