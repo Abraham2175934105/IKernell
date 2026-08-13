@@ -53,7 +53,7 @@ export const Navbar = () => {
             <Cpu size={22} />
           </div>
           <div>
-            <span className="text-xl font-black tracking-tight text-zinc-950 dark:text-white transition-colors duration-300 drop-shadow-sm dark:drop-shadow-none">
+            <span className="text-xl font-black tracking-tight text-zinc-950 dark:text-white transition-colors duration-300">
               IKernell
             </span>
             <span className="block text-[0.65rem] text-blue-600 dark:text-blue-400 -mt-1 font-extrabold uppercase tracking-widest transition-colors duration-300">
@@ -66,42 +66,42 @@ export const Navbar = () => {
         <nav className="hidden md:flex items-center gap-7 lg:gap-8">
           <Link 
             to="/" 
-            className={`text-sm tracking-tight transition-all duration-200 ${
+            className={`text-sm font-bold tracking-tight transition-colors duration-200 ${
               location.pathname === '/' 
-                ? 'text-blue-600 dark:text-blue-400 font-extrabold drop-shadow-sm' 
-                : 'text-zinc-950 font-bold hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none'
+                ? 'text-blue-600 dark:text-blue-400 font-extrabold' 
+                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400'
             }`}
           >
             Inicio
           </Link>
           <a 
             href="/#servicios" 
-            className="text-sm font-bold tracking-tight text-zinc-950 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none transition-all duration-200"
+            className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
           >
             Servicios
           </a>
           <a 
             href="/#estrategia" 
-            className="text-sm font-bold tracking-tight text-zinc-950 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none transition-all duration-200"
+            className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
           >
             Estrategia
           </a>
           <Link 
             to="/faqs" 
-            className={`text-sm tracking-tight transition-all duration-200 ${
+            className={`text-sm font-bold tracking-tight transition-colors duration-200 ${
               location.pathname === '/faqs' 
-                ? 'text-blue-600 dark:text-blue-400 font-extrabold drop-shadow-sm' 
-                : 'text-zinc-950 font-bold hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none'
+                ? 'text-blue-600 dark:text-blue-400 font-extrabold' 
+                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400'
             }`}
           >
             FAQs & Docs
           </Link>
           <Link 
             to="/contacto" 
-            className={`text-sm tracking-tight transition-all duration-200 ${
+            className={`text-sm font-bold tracking-tight transition-colors duration-200 ${
               location.pathname === '/contacto' 
-                ? 'text-blue-600 dark:text-blue-400 font-extrabold drop-shadow-sm' 
-                : 'text-zinc-950 font-bold hover:text-blue-600 dark:text-zinc-100 dark:hover:text-white drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:drop-shadow-none'
+                ? 'text-blue-600 dark:text-blue-400 font-extrabold' 
+                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400'
             }`}
           >
             Contacto
