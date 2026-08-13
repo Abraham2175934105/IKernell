@@ -113,7 +113,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
   return (
     <div className="min-h-screen flex bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       
-      {/* Barra lateral navegable (colapsable en escritorio y deslizable en móvil) */}
+      {/* Barra lateral navegable (Mobile Drawer / Tablet Slim / Desktop Collapsible) */}
       <aside 
         onMouseEnter={() => {
           if (isCollapsed) setIsHovered(true);
@@ -121,10 +121,10 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         onMouseLeave={() => {
           if (isCollapsed) setIsHovered(false);
         }}
-        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col justify-between transition-all duration-300 ease-in-out shadow-lg lg:shadow-none ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col justify-between transition-all duration-300 ease-in-out shadow-xl md:shadow-none ${
+          sidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0'
         } ${
-          isExpanded ? 'w-72' : 'w-20'
+          sidebarOpen ? 'w-72' : (isExpanded ? 'md:w-20 lg:w-72' : 'md:w-20 lg:w-20')
         }`}
       >
         
@@ -137,7 +137,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
               </div>
               
               <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
-                isExpanded ? 'opacity-100 max-w-[160px]' : 'opacity-0 max-w-0'
+                sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block opacity-100 max-w-[160px]' : 'hidden opacity-0 max-w-0')
               }`}>
                 <span className="text-base font-extrabold tracking-tight text-zinc-900 dark:text-white block">
                   IKernell
@@ -148,13 +148,13 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
               </div>
             </Link>
 
-            {/* Toggle para alternar entre vista completa y barra delgada */}
+            {/* Toggle para alternar entre vista completa y barra delgada en Desktop */}
             <button
               type="button"
               onClick={toggleCollapse}
               title={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
               className={`hidden lg:flex p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer ${
-                !isExpanded ? 'mx-auto mt-2' : ''
+                !isExpanded ? 'mx-auto' : ''
               }`}
             >
               {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
@@ -163,7 +163,8 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             {/* Cierre del drawer en dispositivos móviles */}
             <button 
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+              className="md:hidden p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+              aria-label="Cerrar Menú"
             >
               <X size={20} />
             </button>
@@ -171,7 +172,8 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
 
           {/* Tarjeta de perfil con estado en línea */}
           <div className="my-3.5 mx-3">
-            {isExpanded ? (
+            {/* Vista Completa de Perfil: Visible en Móvil abierto o Desktop Expandido */}
+            <div className={`${sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')}`}>
               <motion.div
                 whileHover={{ y: -1 }}
                 transition={{ duration: 0.15 }}
@@ -203,12 +205,14 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                   </div>
                 </div>
               </motion.div>
-            ) : (
-              /* Mini Avatar Colapsado (w-20) */
+            </div>
+
+            {/* Mini Avatar Colapsado (Visible en Tablet o Desktop Colapsado cuando no es móvil drawer) */}
+            <div className={`${sidebarOpen ? 'hidden' : (isExpanded ? 'block lg:hidden' : 'block')}`}>
               <div className="flex justify-center p-1">
                 <div 
                   title={`${user?.nombre} ${user?.apellido || ''} [${roleInfo.badgeText}] - En línea`}
-                  className="relative group"
+                  className="relative group cursor-pointer"
                 >
                   <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-black text-xs flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                     {getInitials(user?.nombre, user?.apellido)}
@@ -219,7 +223,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                   </span>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Secciones de Navegación */}
@@ -227,11 +231,11 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             
             {/* Sección Principal del Rol */}
             <div>
-              {isExpanded && (
-                <span className="text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 block mb-2 transition-opacity duration-300">
-                  Panel del {user?.rol || 'Usuario'}
-                </span>
-              )}
+              <span className={`text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 mb-2 transition-opacity duration-300 ${
+                sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
+              }`}>
+                Panel del {user?.rol || 'Usuario'}
+              </span>
               
               <div className="space-y-1">
                 {roleNavItems.map(item => {
@@ -245,9 +249,11 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                         if (setActiveTab) setActiveTab(item.id);
                         setSidebarOpen(false);
                       }}
-                      title={!isExpanded ? item.label : undefined}
+                      title={item.label}
                       className={`w-full flex items-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        isExpanded ? 'gap-3 px-3.5 py-2.5' : 'justify-center p-2.5'
+                        sidebarOpen 
+                          ? 'gap-3 px-3.5 py-2.5 justify-start' 
+                          : (isExpanded ? 'justify-center lg:justify-start lg:gap-3 p-2.5 lg:px-3.5 lg:py-2.5' : 'justify-center p-2.5')
                       } ${
                         isActive
                           ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md'
@@ -257,7 +263,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                       <Icon size={18} className="flex-shrink-0" />
                       
                       <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden text-left ${
-                        isExpanded ? 'opacity-100 max-w-[170px]' : 'opacity-0 max-w-0 hidden'
+                        sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block opacity-100 max-w-[170px]' : 'hidden opacity-0 max-w-0')
                       }`}>
                         <div className="truncate">{item.label}</div>
                       </div>
@@ -269,11 +275,11 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
 
             {/* Sección de Herramientas Corporativas Transversales */}
             <div>
-              {isExpanded && (
-                <span className="text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 block mb-2 transition-opacity duration-300">
-                  Herramientas Corporativas
-                </span>
-              )}
+              <span className={`text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 mb-2 transition-opacity duration-300 ${
+                sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
+              }`}>
+                Herramientas Corporativas
+              </span>
               
               <div className="space-y-1">
                 {transversalTools.map(tool => {
@@ -286,9 +292,11 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                         setCurrentTool(tool.id);
                         setSidebarOpen(false);
                       }}
-                      title={!isExpanded ? tool.label : undefined}
+                      title={tool.label}
                       className={`w-full flex items-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        isExpanded ? 'justify-between px-3.5 py-2.5' : 'justify-center p-2.5'
+                        sidebarOpen 
+                          ? 'justify-between px-3.5 py-2.5' 
+                          : (isExpanded ? 'justify-center lg:justify-between p-2.5 lg:px-3.5 lg:py-2.5' : 'justify-center p-2.5')
                       } ${
                         isActive
                           ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md'
@@ -298,21 +306,21 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                       <span className="flex items-center gap-3 truncate">
                         <Icon size={18} className="flex-shrink-0" />
                         <span className={`transition-all duration-300 whitespace-nowrap overflow-hidden text-left ${
-                          isExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 hidden'
+                          sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block opacity-100 max-w-[130px]' : 'hidden opacity-0 max-w-0')
                         }`}>
                           {tool.label}
                         </span>
                       </span>
 
-                      {isExpanded && (
-                        <span className={`text-[0.55rem] font-black px-1.5 py-0.5 rounded-full transition-opacity duration-300 ${
-                          isActive 
-                            ? 'bg-zinc-700 text-white dark:bg-zinc-200 dark:text-zinc-900' 
-                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
-                        }`}>
-                          {tool.badge}
-                        </span>
-                      )}
+                      <span className={`text-[0.55rem] font-black px-1.5 py-0.5 rounded-full transition-opacity duration-300 ${
+                        sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
+                      } ${
+                        isActive 
+                          ? 'bg-zinc-700 text-white dark:bg-zinc-200 dark:text-zinc-900' 
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                      }`}>
+                        {tool.badge}
+                      </span>
                     </button>
                   );
                 })}
@@ -328,22 +336,24 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             onClick={handleLogout}
             title={!isExpanded ? "Cerrar Sesión" : undefined}
             className={`w-full flex items-center justify-center rounded-xl text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800/80 transition-all cursor-pointer shadow-sm ${
-              isExpanded ? 'gap-2 py-2.5 px-4' : 'p-2.5'
+              sidebarOpen 
+                ? 'gap-2 py-2.5 px-4' 
+                : (isExpanded ? 'justify-center lg:justify-center p-2.5 lg:gap-2 lg:py-2.5 lg:px-4' : 'p-2.5')
             }`}
           >
             <LogOut size={16} className="flex-shrink-0" />
             <span className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
-              isExpanded ? 'opacity-100 max-w-[120px]' : 'opacity-0 max-w-0 hidden'
+              sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block opacity-100 max-w-[120px]' : 'hidden opacity-0 max-w-0')
             }`}>
               Cerrar Sesión
             </span>
           </button>
 
-          {isExpanded && (
-            <div className="text-center transition-opacity duration-300">
-              <span className="text-[0.6rem] text-zinc-400 font-medium">IKernell v2.4 • JWT Stateless</span>
-            </div>
-          )}
+          <div className={`text-center transition-opacity duration-300 ${
+            sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
+          }`}>
+            <span className="text-[0.6rem] text-zinc-400 font-medium">IKernell v2.4 • JWT Stateless</span>
+          </div>
         </div>
 
       </aside>
@@ -352,50 +362,50 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
       {sidebarOpen && (
         <div 
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
         />
       )}
 
-      {/* 2. CONTENIDO PRINCIPAL Y TOPBAR (Ajuste fluido de padding según estado colapsado) */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+      {/* 2. CONTENIDO PRINCIPAL Y TOPBAR (Ajuste fluido de padding según estado: móvil pl-0, tablet pl-20, desktop pl-72/pl-20) */}
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 pl-0 md:pl-20 ${
         isCollapsed ? 'lg:pl-20' : 'lg:pl-72'
       }`}>
         
         {/* TOPBAR (HEADER PRIVADO) */}
-        <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-sm min-h-[73px]">
+        <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between shadow-sm min-h-[68px] sm:min-h-[73px]">
           
           {/* Lado Izquierdo: Botón Menú Móvil & Título */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
-              aria-label="Abrir Menú"
+              className="md:hidden p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex-shrink-0"
+              aria-label="Abrir Menú de Navegación"
             >
               <Menu size={20} />
             </button>
 
-            <div>
-              <h1 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white tracking-tight flex items-center gap-2">
-                {currentTool === 'chat' && <>Chat Corporativo <MessageSquare size={18} className="text-zinc-500" /></>}
-                {currentTool === 'biblioteca' && <>Biblioteca Digital <BookOpen size={18} className="text-zinc-500" /></>}
-                {currentTool === 'tutoriales' && <>Tutoriales e Inducción <GraduationCap size={18} className="text-zinc-500" /></>}
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base lg:text-lg font-extrabold text-zinc-900 dark:text-white tracking-tight flex items-center gap-2 truncate">
+                {currentTool === 'chat' && <>Chat Corporativo <MessageSquare size={16} className="text-zinc-500 flex-shrink-0" /></>}
+                {currentTool === 'biblioteca' && <>Biblioteca Digital <BookOpen size={16} className="text-zinc-500 flex-shrink-0" /></>}
+                {currentTool === 'tutoriales' && <>Tutoriales e Inducción <GraduationCap size={16} className="text-zinc-500 flex-shrink-0" /></>}
                 {!currentTool && (
-                  <>
+                  <span className="truncate">
                     Panel de {roleInfo.label}
-                  </>
+                  </span>
                 )}
               </h1>
-              <span className="hidden sm:block text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">
+              <span className="hidden sm:block text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium truncate">
                 {user?.especialidad || 'Especialista en Soluciones de Software'} • Sesión Autenticada
               </span>
             </div>
           </div>
 
           {/* Lado Derecho: Métricas Rápidas, Toggle Tema, Usuario & Logout */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             
             {/* Indicadores / Métricas Rápidas */}
-            <div className="hidden md:flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs">
+            <div className="hidden lg:flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs">
               <span className="flex items-center gap-1.5 font-bold text-zinc-700 dark:text-zinc-300">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 {customMetrics?.metric1 || 'Sistema Online'}
@@ -410,17 +420,17 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             <button
               onClick={toggleTheme}
               title={isDark ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
-              className="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-amber-400 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-amber-400 flex items-center justify-center transition-all cursor-pointer shadow-sm"
               aria-label="Toggle theme"
             >
-              {isDark ? <Sun size={18} /> : <Moon size={18} className="text-zinc-700" />}
+              {isDark ? <Sun size={17} /> : <Moon size={17} className="text-zinc-700" />}
             </button>
 
             {/* Botón Salir Rápido */}
             <button
               onClick={handleLogout}
               title="Cerrar Sesión"
-              className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer shadow-sm"
+              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer shadow-sm"
             >
               <LogOut size={14} /> Salir
             </button>
@@ -429,8 +439,8 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
 
         </header>
 
-        {/* 3. AREA DE CONTENIDO DEL DASHBOARD */}
-        <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto">
+        {/* 3. AREA DE CONTENIDO DEL DASHBOARD CON ESPACIADO ESTANDARIZADO RESPONSIVO */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           {currentTool ? (
             <div>
               <div className="mb-6 flex justify-between items-center">
