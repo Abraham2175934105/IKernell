@@ -44,7 +44,7 @@ export const Services = () => {
         <motion.div 
           initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="text-center mb-12 md:mb-16"
         >
@@ -63,7 +63,7 @@ export const Services = () => {
               key={idx} 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.15 }}
+              viewport={{ once: true, amount: 0.1 }}
               transition={{ duration: 0.35, delay: (idx % 3) * 0.08, ease: "easeOut" }}
               className="glass-card flex flex-col justify-between p-6 md:p-8 group hover:border-zinc-400 dark:hover:border-zinc-600 transition-all h-full"
             >

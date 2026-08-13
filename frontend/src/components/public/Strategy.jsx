@@ -11,7 +11,7 @@ export const Strategy = () => {
         <motion.div 
           initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="text-center mb-12 md:mb-16"
         >
@@ -29,7 +29,7 @@ export const Strategy = () => {
           <motion.div 
             initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.35, delay: 0.05, ease: "easeOut" }}
             className="glass-card flex flex-col justify-between p-6 md:p-8 h-full"
           >
@@ -48,7 +48,7 @@ export const Strategy = () => {
           <motion.div 
             initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
             className="glass-card flex flex-col justify-between p-6 md:p-8 h-full"
           >
@@ -67,7 +67,7 @@ export const Strategy = () => {
           <motion.div 
             initial={{ opacity: 0, y: 35, scale: 0.98 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
             className="glass-card flex flex-col justify-between p-6 md:p-8 border-2 border-zinc-900 dark:border-zinc-300 shadow-xl shadow-zinc-300/30 dark:shadow-none h-full"
           >

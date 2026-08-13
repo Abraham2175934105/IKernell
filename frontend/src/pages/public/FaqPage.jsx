@@ -28,7 +28,7 @@ export const FaqPage = () => {
         <motion.div 
           initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="text-center mb-12 md:mb-16"
         >
@@ -48,7 +48,7 @@ export const FaqPage = () => {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.35, delay: 0.05, ease: "easeOut" }}
             className="glass-card p-6 flex flex-col items-center text-center"
           >
@@ -62,7 +62,7 @@ export const FaqPage = () => {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
             className="glass-card p-6 flex flex-col items-center text-center"
           >
@@ -76,7 +76,7 @@ export const FaqPage = () => {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
             className="glass-card p-6 flex flex-col items-center text-center"
           >
@@ -92,7 +92,7 @@ export const FaqPage = () => {
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.1 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="glass-panel p-6 sm:p-10"
         >
@@ -103,7 +103,7 @@ export const FaqPage = () => {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
           className="mt-12 text-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 p-8 rounded-2xl"
         >

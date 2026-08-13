@@ -12,7 +12,7 @@ export const Hero = () => {
         <motion.div 
           initial={{ opacity: 0, y: -20, scale: 0.9 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs md:text-sm font-semibold mb-8 shadow-sm backdrop-blur-md"
         >
@@ -23,7 +23,7 @@ export const Hero = () => {
         <motion.h1 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
           className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-900 dark:text-white tracking-tight leading-[1.1] mb-6 max-w-5xl mx-auto"
         >
@@ -34,7 +34,7 @@ export const Hero = () => {
         <motion.p 
           initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
           className="text-zinc-600 dark:text-zinc-400 text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-10 font-medium leading-relaxed"
         >
@@ -45,7 +45,7 @@ export const Hero = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          viewport={{ once: false, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-16 md:mb-24"
         >
@@ -63,7 +63,7 @@ export const Hero = () => {
           <motion.div 
             initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
             className="glass-card flex flex-col justify-between p-6 md:p-8 h-full"
           >
@@ -79,7 +79,7 @@ export const Hero = () => {
           <motion.div 
             initial={{ opacity: 0, y: 35, scale: 0.98 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
             className="glass-card flex flex-col justify-between p-6 md:p-8 border-2 border-zinc-900 dark:border-zinc-300 shadow-xl shadow-zinc-300/30 dark:shadow-none h-full"
           >
@@ -95,7 +95,7 @@ export const Hero = () => {
           <motion.div 
             initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
             transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
             className="glass-card flex flex-col justify-between p-6 md:p-8 h-full"
           >
