@@ -1,6 +1,7 @@
-import React from 'react';
-import { Calendar, ArrowUpRight, Newspaper } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, ArrowRight, Newspaper, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { NewsModal } from './NewsModal';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -24,34 +25,84 @@ const itemVariants = {
 
 const newsItems = [
   {
-    date: "02 de Agosto, 2026",
-    tag: "Innovación 1",
-    title: "Despliegue del Semáforo Predictivo Inteligente en Proyectos Críticos",
-    summary: "IKernell lanza el módulo de análisis en tiempo real que calcula dinámicamente el Nivel de Riesgo a partir del consumo concurrente de errores e interrupciones reportados por los desarrolladores.",
-    image: "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    id: 1,
+    date: "08 de Agosto, 2026",
+    tag: "Innovación 1 • capacity.pulse",
+    title: "Lanzamiento del Dashboard Predictivo de Riesgos (capacity.pulse)",
+    summary: "IKernell despliega su motor analítico en tiempo real que evalúa patrones de errores e interrupciones en el WBS para prevenir el síndrome de burnout en desarrolladores y evitar retrasos en las entregas críticas.",
+    subtitle: "Telemetría Continua y Análisis sobre Ventanas Deslizantes de 21 Días",
+    fullText: "El nuevo módulo capacity.pulse de IKernell combina la captura de telemetría operativa en PostgreSQL con un algoritmo analítico avanzado ejecutado sobre 7 CTEs deslizantes. El sistema correlaciona la concentración de errores de código de alta severidad con los tiempos acumulados de interrupción técnica en ventanas de 21 días (3 semanas), calculando un Índice de Riesgo Operativo tricolor (Verde: Estable, Amarillo: Carga Elevada, Rojo: Riesgo Crítico). Esto permite a los Líderes de Proyecto y Coordinadores rebalancear tareas preventivamente antes de que impacten los plazos de entrega.",
+    stack: [
+      "PostgreSQL 14+ (Window Functions & 7 CTEs)",
+      "Java 17 / Spring Boot 3",
+      "@Transactional(readOnly = true)",
+      "React 18 + Recharts Radar",
+      "Framer Motion"
+    ],
+    benefits: [
+      "Reducción del 42% en cuellos de botella de entrega.",
+      "Detección temprana de sobrecarga cognitiva y fatiga.",
+      "Rebalanceo inteligente de asignaciones WBS.",
+      "Visibilidad ejecutiva de la salud del equipo en tiempo real."
+    ],
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
     featured: true
   },
   {
+    id: 2,
     date: "28 de Julio, 2026",
-    tag: "Innovación 2",
-    title: "Consolidación de la Alianza con Brasil mediante Automatización ETL",
-    summary: "Implementación exitosa del motor de exportación en un solo clic que estandariza formatos internacionales (ISO 8601 UTC) y transfiere archivos planos seguros por SFTP y correo corporativo.",
-    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    tag: "Innovación 2 • Alianza Brasil",
+    title: "Integración del Módulo ETL para Reportes Internacionales con Brasil",
+    summary: "Automatización desatendida en el backend con Java Spring Boot que procesa métricas de proyectos y genera archivos planos delimitados con estandarización ISO 8601 UTC y sellado criptográfico SHA-256.",
+    subtitle: "Pipeline Batch de Alta Velocidad y Transferencia Segura",
+    fullText: "Para consolidar el acuerdo de cooperación técnica con la filial de ingeniería en Brasil, IKernell integró un pipeline ETL automatizado en Spring Boot. El motor extrae métricas de productividad, horas hombre y avances de etapas, transformando los datos a formatos de zona horaria internacional ISO 8601 UTC y empaquetándolos en archivos planos delimitados por tuberías (|). Cada lote generado incluye un hash criptográfico SHA-256 para auditoría de integridad y soporte para transferencia directa por SFTP y descarga instantánea.",
+    stack: [
+      "Spring Batch / Scheduled Services",
+      "Java NIO (Streams de Alta Velocidad)",
+      "Criptografía SHA-256 MessageDigest",
+      "Protocolo SFTP Seguro",
+      "React DataViewer con Sintaxis de Tuberías"
+    ],
+    benefits: [
+      "Generación y sellado de lotes en menos de 500 ms.",
+      "Garantía de inmutabilidad de datos en transferencias transfronterizas.",
+      "Cumplimiento con normativas internacionales de auditoría.",
+      "Visor de registros interactivo con descarga directa en un clic."
+    ],
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
     featured: false
   },
   {
+    id: 3,
     date: "15 de Julio, 2026",
-    tag: "Seguridad & RNF",
-    title: "Actualización de Seguridad: Arquitectura REST Stateless con JWT y BCrypt",
-    summary: "Finalización de la refactorización perimetral de Spring Security garantizando autenticación tokenizada sin cookies y encriptación unidireccional de credenciales de trabajadores (RNF-08 a RNF-10).",
-    image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    tag: "Gestión del Conocimiento",
+    title: "Biblioteca Digital con Visor Dual A4 y Motor Snippet.inject",
+    summary: "Lanzamiento del visor corporativo de especificaciones técnicas con renderizado Markdown en hoja A4, descargas directas en PDF y motor de búsqueda difusa con pg_trgm.",
+    subtitle: "Centralización del Conocimiento Técnico e Inyección de Código",
+    fullText: "IKernell centraliza la documentación arquitectónica del sistema en una Biblioteca Digital interactiva con Visor Dual (Modo Hoja A4 institucional y Modo Terminal de código). Adicionalmente, el motor Snippet.inject permite a los desarrolladores buscar e inyectar fragmentos de código y soluciones homologadas mediante búsqueda difusa por trigramas (pg_trgm e índices GIN) con respuesta en menos de 50 ms.",
+    stack: [
+      "PostgreSQL pg_trgm & Índices GIN",
+      "react-markdown & remark-gfm",
+      "Tailwind Typography",
+      "Motor de Generación jsPDF",
+      "Debounce 200ms en Frontend"
+    ],
+    benefits: [
+      "Búsqueda difusa de soluciones en tiempo récord (<50 ms).",
+      "Lectura formal de manuales técnicos sin descargas pesadas.",
+      "Exportación client-side de PDFs maquetados.",
+      "Disminución drástica en el tiempo de resolución de incidencias."
+    ],
+    image: "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
     featured: false
   }
 ];
 
 export const News = () => {
+  const [selectedNews, setSelectedNews] = useState(null);
+
   return (
-    <section id="noticias" className="py-20 md:py-28 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/50">
+    <section id="noticias" className="py-20 md:py-28 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/50 relative">
       <motion.div 
         variants={containerVariants}
         initial="hidden"
@@ -66,66 +117,80 @@ export const News = () => {
           className="text-center mb-14 md:mb-20"
         >
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-5">
-            <Newspaper size={12} /> Actualidad
+            <Newspaper size={12} /> Actualidad & Innovación
           </span>
           <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
             Noticias & Actualidad Tecnológica
           </h2>
           <p className="text-zinc-600 dark:text-zinc-400 text-base md:text-lg max-w-2xl mx-auto font-medium">
-            Novedades corporativas, lanzamientos de arquitectura y avances en nuestras alianzas de desarrollo de software.
+            Descubre los últimos lanzamientos de arquitectura, herramientas predictivas y avances en nuestras alianzas de ingeniería de software.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
-          {newsItems.map((news, idx) => (
+        {/* News Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {newsItems.map((news) => (
             <motion.article 
-              key={idx} 
+              key={news.id} 
               variants={itemVariants}
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -6 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className={`group relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border flex flex-col h-full transition-all duration-300 ${
+              className={`group relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border flex flex-col h-full transition-all duration-300 ${
                 news.featured
-                  ? 'border-blue-500/40 shadow-lg shadow-blue-500/10 dark:shadow-blue-500/5'
-                  : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5'
+                  ? 'border-blue-500/50 shadow-xl shadow-blue-500/10 dark:shadow-blue-500/5 ring-1 ring-blue-500/20'
+                  : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/40 shadow-md hover:shadow-xl hover:shadow-blue-500/10'
               }`}
             >
               {/* Article Image */}
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-52 overflow-hidden bg-zinc-950">
                 <img 
                   src={news.image} 
                   alt={news.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent dark:from-zinc-900 dark:via-transparent dark:to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 
                 {/* Tag Badge */}
-                <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[0.65rem] font-black uppercase tracking-widest shadow-md ${
+                <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[0.68rem] font-extrabold uppercase tracking-wider shadow-lg backdrop-blur-md ${
                   news.featured 
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white/90 dark:bg-zinc-800/90 backdrop-blur-sm text-zinc-900 dark:text-zinc-100 border border-zinc-200/50 dark:border-zinc-700/50'
+                    ? 'bg-blue-600 text-white border border-blue-400/30'
+                    : 'bg-zinc-900/85 text-white border border-white/15'
                 }`}>
                   {news.tag}
                 </div>
+
+                {news.featured && (
+                  <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[0.65rem] font-bold uppercase tracking-wider bg-amber-500 text-zinc-950 flex items-center gap-1 shadow-md">
+                    <Sparkles size={11} /> Destacado
+                  </div>
+                )}
               </div>
 
               {/* Article Content */}
               <div className="p-6 md:p-7 flex flex-col flex-1">
-                <div className="flex items-center gap-1.5 mb-3">
-                  <Calendar size={13} className="text-blue-500 dark:text-blue-400" />
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">{news.date}</span>
+                <div className="flex items-center gap-1.5 mb-3 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                  <Calendar size={13} className="text-blue-600 dark:text-blue-400" />
+                  <span>{news.date}</span>
                 </div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2.5 leading-snug">{news.title}</h3>
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{news.summary}</p>
+                
+                <h3 className="text-xl font-bold text-zinc-950 dark:text-white mb-3 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  {news.title}
+                </h3>
+                
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1 mb-6">
+                  {news.summary}
+                </p>
 
-                <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800/70">
-                  <a 
-                    href="/#contacto" 
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 uppercase tracking-wider transition-colors group/link"
+                {/* Interactive 'Más Información' Button */}
+                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                  <button 
+                    onClick={() => setSelectedNews(news)}
+                    className="w-full inline-flex items-center justify-between py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-blue-600 dark:bg-blue-950/40 dark:hover:bg-blue-600 text-blue-700 hover:text-white dark:text-blue-300 dark:hover:text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 group/btn shadow-sm"
                   >
-                    Leer más 
-                    <ArrowUpRight size={13} className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-                  </a>
+                    <span>Más información</span>
+                    <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                  </button>
                 </div>
               </div>
             </motion.article>
@@ -133,6 +198,13 @@ export const News = () => {
         </div>
 
       </motion.div>
+
+      {/* Interactive Detail Modal */}
+      <NewsModal 
+        isOpen={!!selectedNews} 
+        onClose={() => setSelectedNews(null)} 
+        news={selectedNews} 
+      />
     </section>
   );
 };
