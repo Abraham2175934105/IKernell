@@ -278,13 +278,13 @@ export const CoordinadorDashboard = () => {
             />
           </motion.div>
 
-          {/* Tabla de Personal */}
+          {/* Tabla de Personal con Scroll Horizontal Fluido en Móvil */}
           <motion.div 
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm"
           >
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left text-xs min-w-[680px]">
                 <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-[0.65rem] uppercase tracking-wider font-extrabold text-zinc-500 dark:text-zinc-400">
                   <tr>
                     <th className="p-4">Identificación</th>
@@ -339,8 +339,8 @@ export const CoordinadorDashboard = () => {
                       </td>
                       <td className="p-4">
                         <span className={`inline-block text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-md border ${
-                          t.rol === 'COORDINADOR' ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800' :
-                          t.rol === 'LIDER' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' :
+                          t.rol === 'COORDINADOR' ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-950 dark:border-white' :
+                          t.rol === 'LIDER' ? 'bg-zinc-100 text-zinc-800 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700' :
                           'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
                         }`}>
                           {t.rol}

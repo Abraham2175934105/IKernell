@@ -271,7 +271,7 @@ export const BibliotecaDigital = () => {
       </div>
 
       {/* Grid de Documentos Técnicos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {loading && (
           <>
             <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 animate-pulse h-48" />
@@ -299,7 +299,7 @@ export const BibliotecaDigital = () => {
           return (
             <div 
               key={doc.idDocumento}
-              className="p-6 rounded-3xl bg-zinc-50/70 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between hover:border-zinc-400 dark:hover:border-zinc-600 transition-all shadow-sm hover:shadow-md space-y-4"
+              className="p-6 rounded-3xl bg-zinc-50/70 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between hover:border-zinc-400 dark:hover:border-zinc-600 transition-all shadow-sm hover:shadow-md space-y-4 h-full"
             >
               <div>
                 <div className="flex justify-between items-center mb-3">
@@ -326,12 +326,12 @@ export const BibliotecaDigital = () => {
                   {doc.formato || 'PDF'}
                 </span>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   {/* Botón Ver Documento / Previsualizar */}
                   <button
                     type="button"
                     onClick={() => abrirModalPrevisualizacion(doc)}
-                    className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex-1 sm:flex-none justify-center"
                     title="Abrir visor integrado en modal"
                   >
                     <Eye size={14} />
@@ -343,7 +343,7 @@ export const BibliotecaDigital = () => {
                   <button
                     type="button"
                     onClick={() => handleDownload(doc)}
-                    className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+                    className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md flex-1 sm:flex-none justify-center"
                     title={`Descargar archivo ${esPdf ? 'PDF' : 'TXT'} a su computadora`}
                   >
                     <ArrowDownToLine size={14} />
@@ -365,7 +365,7 @@ export const BibliotecaDigital = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl w-[96%] sm:w-[90%] lg:w-[80%] max-w-6xl h-[88vh] flex flex-col overflow-hidden"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-6xl h-[88vh] flex flex-col overflow-hidden"
             >
               
               {/* Header del Modal */}

@@ -484,13 +484,13 @@ export const DesarrolladorDashboard = () => {
             </div>
 
             {/* Grid de 3 Tarjetas Métricas KPI */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               
               {/* 1. Tarjeta: Pendientes */}
               <motion.div 
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
-                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 shadow-sm transition-colors flex items-center justify-between group"
+                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 shadow-sm transition-colors flex items-center justify-between group h-full"
               >
                 <div>
                   <div className="flex items-center gap-1.5 mb-1">
@@ -516,7 +516,7 @@ export const DesarrolladorDashboard = () => {
               <motion.div 
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
-                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 shadow-sm transition-colors flex items-center justify-between group"
+                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 shadow-sm transition-colors flex items-center justify-between group h-full"
               >
                 <div>
                   <div className="flex items-center gap-1.5 mb-1">
@@ -542,7 +542,7 @@ export const DesarrolladorDashboard = () => {
               <motion.div 
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
-                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-emerald-300 dark:hover:border-emerald-700 shadow-sm transition-colors flex items-center justify-between group"
+                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-emerald-300 dark:hover:border-emerald-700 shadow-sm transition-colors flex items-center justify-between group h-full"
               >
                 <div>
                   <div className="flex items-center gap-1.5 mb-1">
@@ -571,7 +571,7 @@ export const DesarrolladorDashboard = () => {
           {/* Grid de Actividades */}
           <motion.div 
             variants={itemVariants}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
           >
             
             {/* Loading Skeleton */}
@@ -608,7 +608,7 @@ export const DesarrolladorDashboard = () => {
               return (
                 <div 
                   key={act.idActividad}
-                  className={`p-5 rounded-3xl bg-white dark:bg-zinc-900 border flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 space-y-4 ${
+                  className={`p-5 rounded-3xl bg-white dark:bg-zinc-900 border flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 space-y-4 h-full ${
                     changingEstado === act.idActividad 
                       ? 'border-blue-400 dark:border-blue-600 ring-2 ring-blue-100 dark:ring-blue-900/30' 
                       : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600'

@@ -433,7 +433,7 @@ export const LiderDashboard = () => {
           className="space-y-6"
         >
           
-          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {loadingDetalle ? (
               <>
                 <SkeletonCard />
@@ -442,30 +442,40 @@ export const LiderDashboard = () => {
               </>
             ) : (
               <>
-                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                  <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Estado del Proyecto</span>
-                  <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-                    {proyectoSeleccionado?.estado || 'ACTIVO'}
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
+                  <div>
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Estado del Proyecto</span>
+                    <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                      {proyectoSeleccionado?.estado || 'ACTIVO'}
+                    </div>
                   </div>
-                  <span className="text-[0.7rem] text-zinc-500">
+                  <span className="text-[0.7rem] text-zinc-500 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                     Fin Estimado: {proyectoSeleccionado?.fechaFinEstimada || '2027-02-06'}
                   </span>
                 </div>
 
-                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                  <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Total Errores Evaluados</span>
-                  <div className="text-xl font-black text-zinc-900 dark:text-white mt-1">
-                    {errores?.length || 0} Incidencias
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
+                  <div>
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Total Errores Evaluados</span>
+                    <div className="text-xl font-black text-zinc-900 dark:text-white mt-1">
+                      {errores?.length || 0} Incidencias
+                    </div>
                   </div>
-                  <span className="text-[0.7rem] text-zinc-500">Persistidas en PostgreSQL</span>
+                  <span className="text-[0.7rem] text-zinc-500 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                    Persistidas en PostgreSQL
+                  </span>
                 </div>
 
-                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                  <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Horas de Interrupción</span>
-                  <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
-                    {totalHorasContingencia} Horas
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between sm:col-span-2 lg:col-span-1">
+                  <div>
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Horas de Interrupción</span>
+                    <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                      {totalHorasContingencia} Horas
+                    </div>
                   </div>
-                  <span className="text-[0.7rem] text-zinc-500">En {interrupciones?.length || 0} eventos reportados</span>
+                  <span className="text-[0.7rem] text-zinc-500 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                    En {interrupciones?.length || 0} eventos reportados
+                  </span>
                 </div>
               </>
             )}
@@ -673,29 +683,29 @@ export const LiderDashboard = () => {
           </motion.div>
 
           {/* Tarjetas Resumen */}
-          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
               <span className="text-[0.65rem] font-bold text-zinc-400 uppercase block mb-1">Total Reportes</span>
               <div className="text-2xl font-black text-zinc-900 dark:text-white">
                 {(errores?.length || 0) + (interrupciones?.length || 0)}
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
               <span className="text-[0.65rem] font-bold text-red-500 uppercase block mb-1">Errores Técnicos</span>
               <div className="text-2xl font-black text-red-600 dark:text-red-400">
                 {errores?.length || 0}
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
               <span className="text-[0.65rem] font-bold text-amber-500 uppercase block mb-1">Contingencias (Horas)</span>
               <div className="text-2xl font-black text-amber-600 dark:text-amber-400">
                 {totalHorasContingencia}h
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between">
               <span className="text-[0.65rem] font-bold text-emerald-500 uppercase block mb-1">Solucionados</span>
               <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                 {[...(errores || []), ...(interrupciones || [])].filter(i => i.estadoAtencion === 'SOLUCIONADO').length}
