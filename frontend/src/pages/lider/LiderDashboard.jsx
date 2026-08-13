@@ -4,6 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { SemaforoInteligente } from '../../components/dashboard/SemaforoInteligente';
 import { EtlBrasil } from '../../components/dashboard/EtlBrasil';
+import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
 import { 
   Briefcase, Layers, Plus, Activity, Sparkles, Download, 
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, X,
@@ -890,6 +891,19 @@ export const LiderDashboard = () => {
           className="space-y-6"
         >
           <EtlBrasil proyecto={proyectoSeleccionado} />
+        </motion.div>
+      )}
+
+      {/* 5. SECCIÓN: PREDICTOR DE BURNOUT HISTÓRICO (RF-35) */}
+      {activeTab === 'burnout' && (
+        <motion.div 
+          key="burnout"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-6"
+        >
+          <PredictorBurnout />
         </motion.div>
       )}
 

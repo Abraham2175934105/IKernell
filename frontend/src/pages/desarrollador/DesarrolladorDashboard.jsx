@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SnippetInjectionCard } from '../../components/dashboard/SnippetInjectionCard';
 
 // Variantes de animación de alto rendimiento y ultra rápidas (0.25s)
 const containerVariants = {
@@ -152,6 +153,8 @@ export const DesarrolladorDashboard = () => {
     descripcion: ''
   });
   const [errorFormErrors, setErrorFormErrors] = useState({});
+  const [sugerenciasSnippets, setSugerenciasSnippets] = useState([]);
+  const [loadingSnippets, setLoadingSnippets] = useState(false);
 
   const [interrupcionForm, setInterrupcionForm] = useState({
     idEtapa: '',
@@ -200,6 +203,29 @@ export const DesarrolladorDashboard = () => {
       setLoadingReportes(false);
     }
   }, [api]);
+
+  // Efecto: Búsqueda difusa de Micro-Snippets en tiempo real (RF-36)
+  useEffect(() => {
+    if (!showErrorModal || !errorForm.descripcion || errorForm.descripcion.trim().length < 4) {
+      setSugerenciasSnippets([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setLoadingSnippets(true);
+        const queryTerm = `${errorForm.tipoError} ${errorForm.descripcion}`.trim();
+        const data = await api.get(`/snippets/sugerencias?termino=${encodeURIComponent(queryTerm)}&limite=2`);
+        setSugerenciasSnippets(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error buscando micro-snippets sugeridos:', err);
+      } finally {
+        setLoadingSnippets(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [errorForm.descripcion, errorForm.tipoError, showErrorModal, api]);
 
   // Efectos (Hooks)
   useEffect(() => {
@@ -1191,6 +1217,27 @@ export const DesarrolladorDashboard = () => {
                     className={`input-field py-2 ${errorFormErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
                   />
                   <FieldError message={errorFormErrors.descripcion} />
+
+                  {/* Sugerencias de Micro-Snippets inyectadas en caliente (RF-36) */}
+                  {loadingSnippets && (
+                    <div className="mt-2 text-[11px] text-zinc-500 flex items-center gap-1.5 animate-pulse">
+                      <Sparkles size={12} className="text-amber-400" /> Buscando soluciones en el Playbook de Snippets...
+                    </div>
+                  )}
+
+                  {sugerenciasSnippets.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      <div className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
+                        <span className="flex items-center gap-1">
+                          <Sparkles size={12} className="text-amber-400" /> Soluciones Técnicas Sugeridas (Snippet.inject)
+                        </span>
+                        <span className="text-[10px] text-zinc-500">{sugerenciasSnippets.length} resultado(s)</span>
+                      </div>
+                      {sugerenciasSnippets.map((snippet) => (
+                        <SnippetInjectionCard key={snippet.idSnippet} snippet={snippet} />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}

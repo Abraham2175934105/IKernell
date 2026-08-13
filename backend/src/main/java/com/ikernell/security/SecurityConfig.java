@@ -78,6 +78,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/coordinador/**").hasRole("COORDINADOR")
                 .requestMatchers("/api/lider/**").hasAnyRole("COORDINADOR", "LIDER")
                 .requestMatchers("/api/desarrollador/**").hasAnyRole("COORDINADOR", "LIDER", "DESARROLLADOR")
+                .requestMatchers("/api/snippets/**").hasAnyRole("COORDINADOR", "LIDER", "DESARROLLADOR")
+                .requestMatchers("/api/analitica/**").hasAnyRole("COORDINADOR", "LIDER", "DESARROLLADOR")
                 .anyRequest().authenticated()
             );
 

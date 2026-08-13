@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
 
 // Variantes de animación de alto rendimiento y ultra rápidas (0.25s)
 const containerVariants = {
@@ -492,6 +493,19 @@ export const CoordinadorDashboard = () => {
             ))}
           </motion.div>
 
+        </motion.div>
+      )}
+
+      {/* 3. SECCIÓN: PREDICTOR DE BURNOUT HISTÓRICO (RF-35) */}
+      {activeTab === 'burnout' && (
+        <motion.div 
+          key="burnout"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-6"
+        >
+          <PredictorBurnout />
         </motion.div>
       )}
 

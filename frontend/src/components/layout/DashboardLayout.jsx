@@ -84,13 +84,15 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
     if (user?.rol === 'COORDINADOR') {
       return [
         { id: 'personal', label: 'Gestión de Personal', icon: Users, desc: 'CRUD y control de acceso' },
-        { id: 'solicitudes', label: 'Solicitudes Web', icon: FileText, desc: 'Consultas públicas' }
+        { id: 'solicitudes', label: 'Solicitudes Web', icon: FileText, desc: 'Consultas públicas' },
+        { id: 'burnout', label: 'Predictor de Burnout', icon: Activity, desc: 'Capacidad y desgaste 21d' }
       ];
     } else if (user?.rol === 'LIDER') {
       return [
         { id: 'wbs', label: 'WBS y Proyectos', icon: Layers, desc: 'Desglose por etapas' },
         { id: 'semaforo', label: 'Semáforo Predictivo', icon: Activity, desc: 'Matriz de riesgo en tiempo real' },
         { id: 'incidencias', label: 'Gestión de Incidencias', icon: AlertTriangle, desc: 'Bandeja de reportes de equipo' },
+        { id: 'burnout', label: 'Predictor de Burnout', icon: Activity, desc: 'Carga histórica de 21 días' },
         { id: 'etl', label: 'Exportación ETL Brasil', icon: Sparkles, desc: 'Métricas ISO 8601 UTC' }
       ];
     } else {
