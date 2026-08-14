@@ -298,6 +298,76 @@ public class LiderService {
         );
     }
 
+    // Calcula el semáforo de riesgo corporativo global consolidando todos los proyectos
+    @Transactional(readOnly = true)
+    public SemaforoMetricsDto calcularMetricasSemaforoGlobal() {
+        List<Error> todosErrores = errorRepository.findAll();
+        List<Interrupcion> todasInterrupciones = interrupcionRepository.findAll();
+
+        Map<String, Integer> severityCount = new HashMap<>();
+        severityCount.put("BAJA", 0);
+        severityCount.put("MEDIA", 0);
+        severityCount.put("ALTA", 0);
+        severityCount.put("CRITICA", 0);
+
+        int erroresCriticosOAltos = 0;
+        for (Error err : todosErrores) {
+            String sev = err.getSeveridad() != null ? err.getSeveridad().toUpperCase() : "BAJA";
+            severityCount.put(sev, severityCount.getOrDefault(sev, 0) + 1);
+            if ("CRITICA".equals(sev) || "ALTA".equals(sev)) {
+                erroresCriticosOAltos++;
+            }
+        }
+
+        int totalMinutos = 0;
+        for (Interrupcion intp : todasInterrupciones) {
+            totalMinutos += (intp.getDuracionMinutos() != null ? intp.getDuracionMinutos() : 0);
+        }
+
+        double totalHorasPerdidas = Math.round((totalMinutos / 60.0) * 10.0) / 10.0;
+
+        String nivel;
+        String titulo;
+        String recomendacion;
+        String badgeClass;
+        String iconClass;
+
+        if (totalHorasPerdidas > 25.0 || erroresCriticosOAltos >= 6) {
+            nivel = "ROJO";
+            titulo = "ALERTA CRÍTICA CORPORATIVA (Nivel Crítico)";
+            recomendacion = "Sobrecarga o incidencias críticas detectadas a nivel organizacional (" + totalHorasPerdidas + "h de contingencia, " + erroresCriticosOAltos + " errores de alto impacto). Se aconseja rebalancear prioridades y recursos entre proyectos activos.";
+            badgeClass = "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800/60";
+            iconClass = "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 shadow-lg";
+        } else if (totalHorasPerdidas >= 10.0 || erroresCriticosOAltos >= 3) {
+            nivel = "NARANJA";
+            titulo = "Riesgo Moderado Organizacional (Nivel Alto / Atención Requerida)";
+            recomendacion = "El ecosistema global presenta " + totalHorasPerdidas + "h acumuladas de contingencias y " + erroresCriticosOAltos + " incidencias críticas/altas. Mantener seguimiento preventivo en sprints activos.";
+            badgeClass = "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60";
+            iconClass = "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
+        } else {
+            nivel = "VERDE";
+            titulo = "Salud Organizacional Estable (Nivel Óptimo)";
+            recomendacion = "Todos los proyectos de la compañía operan con estabilidad y flujo de entrega controlado. Métricas dentro de parámetros ideales.";
+            badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60";
+            iconClass = "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300";
+        }
+
+        return new SemaforoMetricsDto(
+                null,
+                "🌐 Salud Global Corporativa (Todos los Proyectos)",
+                nivel,
+                titulo,
+                recomendacion,
+                badgeClass,
+                iconClass,
+                totalHorasPerdidas,
+                erroresCriticosOAltos,
+                todosErrores.size(),
+                todasInterrupciones.size(),
+                severityCount
+        );
+    }
+
     // Bandeja de reportes consolidados (errores e interrupciones) del equipo
     @Transactional(readOnly = true)
     public Map<String, Object> obtenerReportesConsolidadosProyecto(Long idProyecto) {

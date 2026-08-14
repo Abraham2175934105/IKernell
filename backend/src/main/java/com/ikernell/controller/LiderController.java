@@ -139,14 +139,28 @@ public class LiderController {
         return ResponseEntity.ok(actualizada);
     }
 
+    // Semáforo inteligente de riesgos corporativo global
+    @GetMapping("/proyectos/global/metricas-semaforo")
+    @Operation(
+        summary = "Métricas consolidadas para el Semáforo Inteligente Corporativo Global", 
+        description = "Calcula el nivel de riesgo consolidado de toda la organización integrando todos los proyectos activos"
+    )
+    public ResponseEntity<SemaforoMetricsDto> obtenerMetricasSemaforoGlobal() {
+        return ResponseEntity.ok(liderService.calcularMetricasSemaforoGlobal());
+    }
+
     // Semáforo inteligente de riesgos y salud del proyecto
     @GetMapping("/proyectos/{idProyecto}/metricas-semaforo")
     @Operation(
         summary = "Métricas en tiempo real para el Semáforo Inteligente", 
         description = "Calcula el nivel de riesgo del proyecto (Verde, Naranja, Rojo) basado en errores e interrupciones reales persistidos en PostgreSQL"
     )
-    public ResponseEntity<SemaforoMetricsDto> obtenerMetricasSemaforo(@PathVariable Long idProyecto) {
-        return ResponseEntity.ok(liderService.calcularMetricasSemaforo(idProyecto));
+    public ResponseEntity<SemaforoMetricsDto> obtenerMetricasSemaforo(@PathVariable String idProyecto) {
+        if ("GLOBAL".equalsIgnoreCase(idProyecto) || "all".equalsIgnoreCase(idProyecto) || "null".equalsIgnoreCase(idProyecto)) {
+            return ResponseEntity.ok(liderService.calcularMetricasSemaforoGlobal());
+        }
+        Long id = Long.valueOf(idProyecto);
+        return ResponseEntity.ok(liderService.calcularMetricasSemaforo(id));
     }
 
     @GetMapping("/proyectos/{idProyecto}/errores")
