@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, HelpCircle, Search, ArrowRight, X, MessageSquare } from 'lucide-react';
+import { ChevronDown, HelpCircle, Search, ArrowRight, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -87,13 +87,6 @@ export const Faq = ({ isFullView = false }) => {
     setOpenIndex(openIndex === idx ? null : idx);
   };
 
-  const scrollToContact = () => {
-    const el = document.getElementById('contacto');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   return (
     <div className="w-full flex flex-col justify-between">
       <div>
@@ -135,26 +128,28 @@ export const Faq = ({ isFullView = false }) => {
           )}
         </div>
 
-        {/* Category Filter Badges — Always visible */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => {
-                setActiveCategory(cat);
-                setOpenIndex(0);
-              }}
-              className={`text-[0.68rem] font-bold px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                activeCategory === cat
-                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-400 dark:hover:border-zinc-500'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {/* Category Filter Badges (Visible in Full View or when filtering) */}
+        {isFullView && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setActiveCategory(cat);
+                  setOpenIndex(0);
+                }}
+                className={`text-[0.68rem] font-bold px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                  activeCategory === cat
+                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-400 dark:hover:border-zinc-500'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* FAQ Accordion List */}
         <div className="flex flex-col gap-3">
@@ -169,18 +164,11 @@ export const Faq = ({ isFullView = false }) => {
                 <HelpCircle size={24} />
               </div>
               <h4 className="text-zinc-900 dark:text-white font-bold text-base mb-1.5">
-                No encontramos una pregunta relacionada con tu búsqueda.
+                No encontramos preguntas para "{searchTerm}"
               </h4>
-              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-md mx-auto mb-5 font-normal">
-                Si tu inquietud técnica o requerimiento de software no figura en nuestro catálogo, nuestro equipo de soporte está listo para asistirte.
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-md mx-auto font-normal">
+                Intenta buscar con otros términos clave como "Spring", "JWT", "Semáforo" o "PostgreSQL".
               </p>
-              <button
-                type="button"
-                onClick={scrollToContact}
-                className="gradient-button inline-flex items-center gap-2 text-xs uppercase tracking-wider py-2.5 px-6 font-bold shadow-md cursor-pointer hover:-translate-y-0.5 active:scale-95 transition-all"
-              >
-                <MessageSquare size={14} /> Contactar a la Administración
-              </button>
             </motion.div>
           ) : (
             <AnimatePresence>
@@ -193,7 +181,7 @@ export const Faq = ({ isFullView = false }) => {
                   transition={{ duration: 0.2, delay: idx * 0.03 }}
                   className={`rounded-2xl overflow-hidden border transition-all duration-200 ${
                     openIndex === idx 
-                      ? 'bg-white dark:bg-zinc-900 border-blue-500/40 dark:border-blue-500/40 shadow-md shadow-blue-500/5' 
+                      ? 'bg-white dark:bg-zinc-900 border-blue-500/50 dark:border-blue-500/50 shadow-md shadow-blue-500/5' 
                       : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
                   }`}
                 >
@@ -245,27 +233,18 @@ export const Faq = ({ isFullView = false }) => {
         </div>
       </div>
 
-      {/* Bottom CTA */}
+      {/* Bottom Link to Full FAQ Page */}
       {!isFullView && (
-        <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
             ¿Quieres explorar toda la base técnica?
           </span>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={scrollToContact}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 uppercase tracking-wider transition-all cursor-pointer hover:-translate-y-0.5 active:scale-95"
-            >
-              <MessageSquare size={13} /> Contactar
-            </button>
-            <Link 
-              to="/faqs" 
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 uppercase tracking-wider transition-all hover:-translate-y-0.5 active:scale-95"
-            >
-              Ver más detalles & FAQs <ArrowRight size={14} />
-            </Link>
-          </div>
+          <Link 
+            to="/faqs" 
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline uppercase tracking-wider transition-colors"
+          >
+            Ver más detalles & FAQs <ArrowRight size={14} />
+          </Link>
         </div>
       )}
     </div>
