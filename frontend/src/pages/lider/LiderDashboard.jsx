@@ -896,7 +896,11 @@ export const LiderDashboard = () => {
           animate="visible"
           className="space-y-6"
         >
-          <PredictorBurnout />
+          <PredictorBurnout 
+            proyecto={proyectoSeleccionado} 
+            etapas={etapas} 
+            onNavigateToWbs={() => setActiveTab('wbs')} 
+          />
         </motion.div>
       )}
 
