@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, ShieldCheck, Zap, Activity, ChevronDown, Globe2, Terminal, Layers, Cpu } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, Zap, Activity, ChevronDown, Globe2, Terminal, Layers, Cpu, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import heroLightImg from '../../assets/hero-light.jpg';
 
@@ -23,7 +23,42 @@ const itemVariants = {
 };
 
 /* ────────────────────────────────────────────────────────────────────────
-   Card Stack Data — telemetría corporativa sobria, sin emojis
+   Micro-Tooltip de Métrica Técnica
+──────────────────────────────────────────────────────────────────────── */
+const MetricTooltip = ({ text }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative inline-flex items-center ml-1">
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className="text-zinc-400 dark:text-zinc-500 hover:text-blue-500 transition-colors p-0.5 rounded cursor-help"
+        aria-label="Explicación técnica"
+      >
+        <Info size={11} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 w-44 p-2 rounded-xl bg-zinc-900 text-zinc-100 text-[0.65rem] leading-snug shadow-xl z-50 pointer-events-none border border-zinc-700 text-center font-normal"
+          >
+            {text}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-zinc-900" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ────────────────────────────────────────────────────────────────────────
+   Card Stack Data — telemetría corporativa con micro-guías
 ──────────────────────────────────────────────────────────────────────── */
 const stacks = [
   {
@@ -36,9 +71,9 @@ const stacks = [
     featured: false,
     headerTelemetria: 'Telemetría de Red & Sesión',
     metrics: [
-      { icon: <Terminal size={14} strokeWidth={1.8} />, label: 'Latencia Media API', value: '< 38 ms' },
-      { icon: <ShieldCheck size={14} strokeWidth={1.8} />, label: 'Autenticación', value: 'JWT · BCrypt (Costo 10)' },
-      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'HikariCP Pool', value: '10 Conn · Leak 20s' },
+      { icon: <Terminal size={14} strokeWidth={1.8} />, label: 'Latencia Media API', value: '< 38 ms', help: 'Rapidez de respuesta del sistema ante cada petición.' },
+      { icon: <ShieldCheck size={14} strokeWidth={1.8} />, label: 'Autenticación', value: 'JWT · BCrypt', help: 'Sesiones tokenizadas seguras sin almacenamiento de cookies.' },
+      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'HikariCP Pool', value: '10 Conn · Leak 20s', help: 'Gestor de conexiones de alta concurrencia para evitar caídas.' },
     ]
   },
   {
@@ -51,9 +86,9 @@ const stacks = [
     featured: true,
     headerTelemetria: 'Motor capacity.pulse Live',
     metrics: [
-      { icon: <Cpu size={14} strokeWidth={1.8} />, label: 'capacity.pulse Score', value: '18 — Estable' },
-      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'Ventana Analítica', value: '7 CTEs · 21 Días' },
-      { icon: <Activity size={14} strokeWidth={1.8} />, label: 'Rebalanceo WBS', value: '0 Bloqueos Críticos' },
+      { icon: <Cpu size={14} strokeWidth={1.8} />, label: 'capacity.pulse Score', value: '18 — Estable', help: 'Índice de fatiga operativa que previene el síndrome de burnout.' },
+      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'Ventana Analítica', value: '7 CTEs · 21 Días', help: 'Análisis temporal retrospectivo para detectar cuellos de botella.' },
+      { icon: <Activity size={14} strokeWidth={1.8} />, label: 'Rebalanceo WBS', value: '0 Bloqueos', help: 'Flujo de trabajo continuo sin dependencias que frenen el sprint.' },
     ]
   },
   {
@@ -66,9 +101,9 @@ const stacks = [
     featured: false,
     headerTelemetria: 'Integración Internacional & Trigrams',
     metrics: [
-      { icon: <Terminal size={14} strokeWidth={1.8} />, label: 'Formato Global', value: 'ISO 8601 UTC · Pipe' },
-      { icon: <ShieldCheck size={14} strokeWidth={1.8} />, label: 'Integridad', value: 'Firma SHA-256' },
-      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'Búsqueda GIN', value: 'pg_trgm < 50 ms' },
+      { icon: <Terminal size={14} strokeWidth={1.8} />, label: 'Formato Global', value: 'ISO 8601 UTC', help: 'Estandarización de fechas para intercambio seguro con Brasil.' },
+      { icon: <ShieldCheck size={14} strokeWidth={1.8} />, label: 'Integridad', value: 'Firma SHA-256', help: 'Sello criptográfico que certifica que los datos no fueron alterados.' },
+      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'Búsqueda GIN', value: 'pg_trgm < 50 ms', help: 'Búsqueda difusa de fragmentos de código a velocidad ultrarrápida.' },
     ]
   }
 ];
@@ -205,13 +240,14 @@ export const Hero = () => {
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
 
-                {/* Métricas con distribución uniforme */}
+                {/* Métricas con micro-guías / tooltips */}
                 <div className="space-y-2.5 py-2">
                   {s.metrics.map((m, i) => (
                     <div key={i} className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 text-[0.72rem] font-medium">
                         <span className="text-zinc-400 dark:text-zinc-500">{m.icon}</span>
                         {m.label}
+                        <MetricTooltip text={m.help} />
                       </span>
                       <span className="text-zinc-900 dark:text-zinc-100 text-[0.72rem] font-bold font-mono tracking-tight">
                         {m.value}

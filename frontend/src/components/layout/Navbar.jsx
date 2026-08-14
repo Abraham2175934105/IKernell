@@ -8,20 +8,43 @@ export const Navbar = () => {
   // Estados locales
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('inicio');
   
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleTheme, isDark } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
 
-  // Detecta el desplazamiento vertical para aplicar fondo glassmorphic sólido
+  // Detecta el desplazamiento vertical y la sección activa en pantalla
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
+
+      // Si estamos en la página de inicio, detectar la sección visible
+      if (location.pathname === '/') {
+        const sections = ['contacto', 'noticias', 'estrategia', 'servicios'];
+        const scrollPosition = window.scrollY + 200;
+
+        let current = 'inicio';
+        for (const sectionId of sections) {
+          const el = document.getElementById(sectionId);
+          if (el && scrollPosition >= el.offsetTop) {
+            current = sectionId;
+            break;
+          }
+        }
+        setActiveSection(current);
+      } else if (location.pathname === '/faqs') {
+        setActiveSection('faqs');
+      } else if (location.pathname === '/contacto') {
+        setActiveSection('contacto');
+      }
     };
-    window.addEventListener('scroll', handleScroll);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [location.pathname]);
 
   const isLoginPage = location.pathname === '/login';
 
@@ -62,49 +85,76 @@ export const Navbar = () => {
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
+        {/* Desktop Navigation Links con Active State Indicator */}
         <nav className="hidden md:flex items-center gap-7 lg:gap-8">
           <Link 
             to="/" 
-            className={`text-sm font-bold tracking-tight transition-colors duration-200 ${
-              location.pathname === '/' 
+            className={`relative text-sm tracking-tight transition-colors duration-200 ${
+              location.pathname === '/' && activeSection === 'inicio'
                 ? 'text-blue-600 dark:text-blue-400 font-extrabold' 
-                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400'
+                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 font-bold'
             }`}
           >
             Inicio
+            {location.pathname === '/' && activeSection === 'inicio' && (
+              <span className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
+            )}
           </Link>
+
           <a 
             href="/#servicios" 
-            className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+            className={`relative text-sm tracking-tight transition-colors duration-200 ${
+              location.pathname === '/' && activeSection === 'servicios'
+                ? 'text-blue-600 dark:text-blue-400 font-extrabold' 
+                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 font-bold'
+            }`}
           >
             Servicios
+            {location.pathname === '/' && activeSection === 'servicios' && (
+              <span className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
+            )}
           </a>
+
           <a 
             href="/#estrategia" 
-            className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+            className={`relative text-sm tracking-tight transition-colors duration-200 ${
+              location.pathname === '/' && activeSection === 'estrategia'
+                ? 'text-blue-600 dark:text-blue-400 font-extrabold' 
+                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 font-bold'
+            }`}
           >
             Estrategia
+            {location.pathname === '/' && activeSection === 'estrategia' && (
+              <span className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
+            )}
           </a>
+
           <Link 
             to="/faqs" 
-            className={`text-sm font-bold tracking-tight transition-colors duration-200 ${
+            className={`relative text-sm tracking-tight transition-colors duration-200 ${
               location.pathname === '/faqs' 
                 ? 'text-blue-600 dark:text-blue-400 font-extrabold' 
-                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400'
+                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 font-bold'
             }`}
           >
             FAQs & Docs
+            {location.pathname === '/faqs' && (
+              <span className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
+            )}
           </Link>
+
           <Link 
             to="/contacto" 
-            className={`text-sm font-bold tracking-tight transition-colors duration-200 ${
-              location.pathname === '/contacto' 
+            className={`relative text-sm tracking-tight transition-colors duration-200 ${
+              location.pathname === '/contacto' || (location.pathname === '/' && activeSection === 'contacto')
                 ? 'text-blue-600 dark:text-blue-400 font-extrabold' 
-                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400'
+                : 'text-zinc-900 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 font-bold'
             }`}
           >
             Contacto
+            {(location.pathname === '/contacto' || (location.pathname === '/' && activeSection === 'contacto')) && (
+              <span className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
+            )}
           </Link>
         </nav>
 
