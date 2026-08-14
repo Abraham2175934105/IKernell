@@ -11,9 +11,25 @@ import toast from 'react-hot-toast';
 import { Skeleton, SkeletonCard } from '../ui/Skeleton';
 
 /**
+ * Normaliza cualquier estado del backend a los 4 niveles homologados:
+ * - CRITICA (🔴 Nivel Crítico / Sobrecarga Extrema)
+ * - ALTA    (🟠 Nivel Alto / Sobrecarga)
+ * - MEDIA   (🟡 Nivel Medio / En Alerta)
+ * - BAJA    (🟢 Nivel Bajo / Estable)
+ */
+const normalizarEstado = (estado) => {
+  if (!estado) return 'BAJA';
+  const est = estado.toUpperCase();
+  if (est.includes('CRITIC') || est.includes('BURNOUT')) return 'CRITICA';
+  if (est.includes('ALT') || est.includes('SOBRECARGA')) return 'ALTA';
+  if (est.includes('MED') || est.includes('ESTRES') || est.includes('ALZA') || est.includes('ALERTA')) return 'MEDIA';
+  return 'BAJA';
+};
+
+/**
  * Predictor de Desgaste y Burnout Histórico (RF-35).
  * Analítica basada en Series Temporales de 21 días (S1, S2, S3) bajo norma ISO/IEC 25010.
- * Layout Split-View Master-Detail de ancho completo, ultra-reactivo y con filtros multinivel.
+ * Layout Split-View Master-Detail con los 4 niveles homologados del semáforo.
  */
 export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
   const api = useApi();
@@ -26,10 +42,9 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
 
   // Estados de filtrado y búsqueda interactiva
   const [searchQuery, setSearchQuery] = useState('');
-  const [filtroSemaforo, setFiltroSemaforo] = useState('TODOS'); // 'TODOS' | 'CRITICO' | 'SOBRECARGA' | 'ALERTA' | 'ESTABLE'
+  const [filtroSemaforo, setFiltroSemaforo] = useState('TODOS'); // 'TODOS' | 'CRITICA' | 'ALTA' | 'MEDIA' | 'BAJA'
   const [orden, setOrden] = useState('RIESGO_DESC'); // 'RIESGO_DESC' | 'RIESGO_ASC' | 'TAREAS_DESC' | 'NOMBRE_ASC'
   const [showHelpModal, setShowHelpModal] = useState(false);
-  const [copiando, setCopiando] = useState(false);
 
   // Determina si estamos en alcance de un proyecto específico o en vista global
   const isProyectoEspecifico = Boolean(proyecto && proyecto.idProyecto && proyecto.idProyecto !== 'GLOBAL');
@@ -82,16 +97,18 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
   const conteosSemaforo = useMemo(() => {
     const counts = {
       TODOS: metricasPorProyecto.length,
-      CRITICO: 0,
-      SOBRECARGA: 0,
-      ALERTA: 0,
-      ESTABLE: 0,
+      CRITICA: 0,
+      ALTA: 0,
+      MEDIA: 0,
+      BAJA: 0,
     };
     metricasPorProyecto.forEach(m => {
-      if (m.estadoAlerta === 'RIESGO_BURNOUT_INMINENTE') counts.CRITICO++;
-      else if (m.estadoAlerta === 'SOBRECARGA_AGUDA') counts.SOBRECARGA++;
-      else if (m.estadoAlerta === 'TENDENCIA_DE_ESTRES_ACELERADA') counts.ALERTA++;
-      else counts.ESTABLE++;
+      const nivel = normalizarEstado(m.estadoAlerta);
+      if (counts[nivel] !== undefined) {
+        counts[nivel]++;
+      } else {
+        counts.BAJA++;
+      }
     });
     return counts;
   }, [metricasPorProyecto]);
@@ -110,15 +127,9 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
       );
     }
 
-    // Filtro de semáforo
-    if (filtroSemaforo === 'CRITICO') {
-      result = result.filter(m => m.estadoAlerta === 'RIESGO_BURNOUT_INMINENTE');
-    } else if (filtroSemaforo === 'SOBRECARGA') {
-      result = result.filter(m => m.estadoAlerta === 'SOBRECARGA_AGUDA');
-    } else if (filtroSemaforo === 'ALERTA') {
-      result = result.filter(m => m.estadoAlerta === 'TENDENCIA_DE_ESTRES_ACELERADA');
-    } else if (filtroSemaforo === 'ESTABLE') {
-      result = result.filter(m => m.estadoAlerta === 'ESTABLE');
+    // Filtro de semáforo homologado
+    if (filtroSemaforo !== 'TODOS') {
+      result = result.filter(m => normalizarEstado(m.estadoAlerta) === filtroSemaforo);
     }
 
     // Ordenamiento
@@ -147,15 +158,16 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
   const getDiagnosticoClaro = (dev) => {
     if (!dev) return '';
     const score = Math.round(dev.promedioCarga || 0);
-    switch (dev.estadoAlerta) {
-      case 'RIESGO_BURNOUT_INMINENTE':
-        return `⚠️ Riesgo Crítico de Agotamiento: Acumula 3 semanas consecutivas con sobrecarga superior al 65% (${score}% global). Presenta ${dev.tareasActivas} tareas asignadas. Se requiere rebalanceo urgente para evitar bloqueos operativos o deserción.`;
-      case 'SOBRECARGA_AGUDA':
-        return `🟠 Sobrecarga Elevada: Registra un pico de esfuerzo de ${Math.round(dev.scoreSemana3 || 0)}% en los últimos 7 días con ${dev.tareasActivas} tareas activas. Se recomienda redistribuir actividades de alta complejidad.`;
-      case 'TENDENCIA_DE_ESTRES_ACELERADA':
-        return `🟡 Tendencia de Estrés en Aumento: La curva de carga muestra un incremento semanal constante (${Math.round(dev.scoreSemana1 || 0)}% → ${Math.round(dev.scoreSemana2 || 0)}% → ${Math.round(dev.scoreSemana3 || 0)}%). Conviene monitorear entregas para evitar sobrecarga.`;
+    const nivel = normalizarEstado(dev.estadoAlerta);
+    switch (nivel) {
+      case 'CRITICA':
+        return `🔴 Nivel Crítico (Crítica / Sobrecarga Extrema): Registra una carga promedio de ${score}% (> 80%) o desgaste sostenido superior al 65% en las 3 semanas evaluadas. Presenta ${dev.tareasActivas} tareas asignadas. Se requiere rebalanceo urgente para evitar bloqueos operativos o fallas en entregas.`;
+      case 'ALTA':
+        return `🟠 Nivel Alto (Alta / Sobrecarga): Presenta una carga de ${score}% (rango 65% - 80%) o tendencia acelerada en los últimos 7 días con ${dev.tareasActivas} tareas activas. Se recomienda redistribuir actividades de alta complejidad técnica.`;
+      case 'MEDIA':
+        return `🟡 Nivel Medio (Media / En Alerta): Mantiene una carga de ${score}% (rango 45% - 64%) con contingencias e interrupciones recurrentes. Se aconseja monitorear las entregas del sprint para evitar que pase a nivel alto.`;
       default:
-        return `🟢 Carga y Desempeño Estable: El desarrollador mantiene un nivel operativo óptimo (${score}% de carga media) con ritmo de trabajo balanceado y sostenible.`;
+        return `🟢 Nivel Bajo / Estable (Baja / Óptimo): Mantiene un flujo balanceado con una carga de ${score}% (< 45%) y ritmo de trabajo sostenible dentro de los parámetros de rendimiento óptimo.`;
     }
   };
 
@@ -180,6 +192,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
   const handleExportarDiagnostico = (dev) => {
     if (!dev) return;
     const fecha = new Date().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
+    const nivel = normalizarEstado(dev.estadoAlerta);
     const contenido = `===============================================================
 IKERNELL SOLUCIONES SOFTWARE - DICTAMEN DE ANALÍTICA PREDICTIVA
 MÓDULO: PREDICTOR DE DESGASTE Y BURNOUT HISTÓRICO (RF-35)
@@ -190,7 +203,7 @@ Fecha de Emisión: ${fecha}
 Desarrollador Evaluado: ${dev.nombreCompleto} (ID: ${dev.idTrabajador})
 Especialidad: ${dev.especialidad || 'Desarrollo de Software'}
 Correo Electrónico: ${dev.email}
-Estado de Alerta Predictiva: ${dev.estadoAlerta}
+Nivel Semafórico Homologado: ${nivel}
 Capacidad Bloqueada en Sistema: ${dev.capacidadBloqueada ? 'SÍ (Bloqueo Preventivo)' : 'NO'}
 
 ---------------------------------------------------------------
@@ -227,45 +240,47 @@ Generado automáticamente por el motor analítico IKernell v2.0
     toast.success(`Diagnóstico de ${dev.nombreCompleto} exportado con éxito.`);
   };
 
-  // Badge estilizado de estado
+  // Badge estilizado de estado homologado a 4 niveles
   const getBadgeEstado = (estado) => {
-    switch (estado) {
-      case 'RIESGO_BURNOUT_INMINENTE':
+    const nivel = normalizarEstado(estado);
+    switch (nivel) {
+      case 'CRITICA':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[0.65rem] font-black bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800 animate-pulse">
             <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
-            CRÍTICO
+            CRÍTICA
           </span>
         );
-      case 'SOBRECARGA_AGUDA':
+      case 'ALTA':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.65rem] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[0.65rem] font-bold bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+            ALTA
+          </span>
+        );
+      case 'MEDIA':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[0.65rem] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            SOBRECARGA
-          </span>
-        );
-      case 'TENDENCIA_DE_ESTRES_ACELERADA':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.65rem] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            EN ALZA
+            MEDIA
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.65rem] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[0.65rem] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            ESTABLE
+            BAJA / ESTABLE
           </span>
         );
     }
   };
 
   // Color de barra de progreso según carga
-  const getProgressColor = (score) => {
-    if (score >= 70) return 'bg-red-500';
-    if (score >= 50) return 'bg-amber-500';
-    if (score >= 35) return 'bg-blue-500';
+  const getProgressColor = (score, estado) => {
+    const nivel = normalizarEstado(estado);
+    if (nivel === 'CRITICA' || score >= 80) return 'bg-red-500';
+    if (nivel === 'ALTA' || score >= 65) return 'bg-orange-500';
+    if (nivel === 'MEDIA' || score >= 45) return 'bg-amber-500';
     return 'bg-emerald-500';
   };
 
@@ -295,7 +310,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
             Predictor de Desgaste & Burnout Histórico
           </h2>
           <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 max-w-3xl leading-relaxed">
-            Monitor de riesgo cognitivo y series temporales de 21 días (S1, S2, S3) bajo la norma ISO/IEC 25010. Detecta sobrecarga antes de que impacte en la calidad del software.
+            Monitor de riesgo cognitivo y series temporales de 21 días (S1, S2, S3) bajo la norma ISO/IEC 25010. Detección temprana clasificada en 4 niveles homologados: Crítica, Alta, Media y Baja/Estable.
           </p>
         </div>
 
@@ -304,10 +319,10 @@ Generado automáticamente por el motor analítico IKernell v2.0
             type="button"
             onClick={() => setShowHelpModal(true)}
             className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
-            title="¿Cómo funciona el algoritmo de predicción de Burnout?"
+            title="¿Cómo funciona la clasificación de 4 niveles de riesgo?"
           >
             <HelpCircle size={14} className="text-blue-600 dark:text-blue-400" />
-            <span>Guía & Criterios</span>
+            <span>Guía de 4 Niveles</span>
           </button>
 
           <button
@@ -382,7 +397,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por nombre, especialidad..."
+                placeholder="Buscar desarrollador o especialidad..."
                 className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl pl-9 pr-9 py-2 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm"
               />
               {searchQuery && (
@@ -396,10 +411,10 @@ Generado automáticamente por el motor analítico IKernell v2.0
               )}
             </div>
 
-            {/* Píldoras de Filtro Semafórico */}
+            {/* Píldoras de Filtro Semafórico Homologadas */}
             <div className="space-y-1.5">
               <span className="text-[0.62rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">
-                Filtrar por Semáforo de Riesgo:
+                Filtrar por Nivel de Riesgo Homologado:
               </span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
@@ -415,47 +430,47 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFiltroSemaforo('CRITICO')}
+                  onClick={() => setFiltroSemaforo('CRITICA')}
                   className={`text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
-                    filtroSemaforo === 'CRITICO'
+                    filtroSemaforo === 'CRITICA'
                       ? 'bg-red-600 text-white shadow-sm'
                       : 'bg-white dark:bg-zinc-900 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/30'
                   }`}
                 >
-                  🔴 Crítico ({conteosSemaforo.CRITICO})
+                  🔴 Crítica ({conteosSemaforo.CRITICA})
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFiltroSemaforo('SOBRECARGA')}
+                  onClick={() => setFiltroSemaforo('ALTA')}
                   className={`text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
-                    filtroSemaforo === 'SOBRECARGA'
+                    filtroSemaforo === 'ALTA'
+                      ? 'bg-orange-500 text-white shadow-sm'
+                      : 'bg-white dark:bg-zinc-900 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50 hover:bg-orange-50 dark:hover:bg-orange-950/30'
+                  }`}
+                >
+                  🟠 Alta ({conteosSemaforo.ALTA})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltroSemaforo('MEDIA')}
+                  className={`text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                    filtroSemaforo === 'MEDIA'
                       ? 'bg-amber-500 text-white shadow-sm'
                       : 'bg-white dark:bg-zinc-900 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-50 dark:hover:bg-amber-950/30'
                   }`}
                 >
-                  🟠 Sobrecarga ({conteosSemaforo.SOBRECARGA})
+                  🟡 Media ({conteosSemaforo.MEDIA})
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFiltroSemaforo('ALERTA')}
+                  onClick={() => setFiltroSemaforo('BAJA')}
                   className={`text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
-                    filtroSemaforo === 'ALERTA'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 hover:bg-blue-50 dark:hover:bg-blue-950/30'
-                  }`}
-                >
-                  🟡 En Alza ({conteosSemaforo.ALERTA})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFiltroSemaforo('ESTABLE')}
-                  className={`text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
-                    filtroSemaforo === 'ESTABLE'
+                    filtroSemaforo === 'BAJA'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'bg-white dark:bg-zinc-900 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
                   }`}
                 >
-                  🟢 Estable ({conteosSemaforo.ESTABLE})
+                  🟢 Baja / Estable ({conteosSemaforo.BAJA})
                 </button>
               </div>
             </div>
@@ -541,7 +556,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                         <div className="shrink-0">
                           {isSelected ? (
                             <span className="text-[0.62rem] font-black uppercase px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
-                              {dev.estadoAlerta?.replace(/_/g, ' ')}
+                              {normalizarEstado(dev.estadoAlerta)}
                             </span>
                           ) : (
                             getBadgeEstado(dev.estadoAlerta)
@@ -564,7 +579,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                         }`}>
                           <div
                             className={`h-full rounded-full transition-all duration-300 ${
-                              isSelected ? 'bg-white' : getProgressColor(score)
+                              isSelected ? 'bg-white' : getProgressColor(score, dev.estadoAlerta)
                             }`}
                             style={{ width: `${Math.min(score, 100)}%` }}
                           />
@@ -637,8 +652,9 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       Carga Promedio
                     </span>
                     <div className={`text-xl font-black ${
-                      selectedDev.promedioCarga >= 70 ? 'text-red-600 dark:text-red-400' :
-                      selectedDev.promedioCarga >= 50 ? 'text-amber-600 dark:text-amber-400' :
+                      normalizarEstado(selectedDev.estadoAlerta) === 'CRITICA' ? 'text-red-600 dark:text-red-400' :
+                      normalizarEstado(selectedDev.estadoAlerta) === 'ALTA' ? 'text-orange-600 dark:text-orange-400' :
+                      normalizarEstado(selectedDev.estadoAlerta) === 'MEDIA' ? 'text-amber-600 dark:text-amber-400' :
                       'text-emerald-600 dark:text-emerald-400'
                     }`}>
                       {Math.round(selectedDev.promedioCarga)}%
@@ -731,8 +747,9 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       <div className="w-full bg-zinc-200 dark:bg-zinc-700 h-1.5 rounded-full mt-2 overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${
-                            selectedDev.scoreSemana3 >= 70 ? 'bg-red-500' :
-                            selectedDev.scoreSemana3 >= 50 ? 'bg-amber-500' : 'bg-blue-600'
+                            normalizarEstado(selectedDev.estadoAlerta) === 'CRITICA' ? 'bg-red-500' :
+                            normalizarEstado(selectedDev.estadoAlerta) === 'ALTA' ? 'bg-orange-500' :
+                            normalizarEstado(selectedDev.estadoAlerta) === 'MEDIA' ? 'bg-amber-500' : 'bg-emerald-500'
                           }`}
                           style={{ width: `${Math.min(Math.round(selectedDev.scoreSemana3 || 0), 100)}%` }}
                         />
@@ -815,7 +832,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     <Sparkles size={16} />
                   </div>
                   <h3 className="text-base font-extrabold text-zinc-900 dark:text-white">
-                    Criterios del Algoritmo de Burnout (RF-35)
+                    Guía de 4 Niveles de Riesgo de Burnout (RF-35)
                   </h3>
                 </div>
                 <button
@@ -829,44 +846,44 @@ Generado automáticamente por el motor analítico IKernell v2.0
               <div className="space-y-3.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60">
                   <h4 className="font-bold text-zinc-900 dark:text-white mb-1">
-                    1. ¿Qué mide el Desgaste Cognitivo?
+                    1. Fundamentación del Algoritmo (ISO/IEC 25010)
                   </h4>
                   <p>
-                    Evalúa la acumulación de carga de trabajo, volumen de tareas concurrentes en el desglose WBS y la recurrencia de errores técnicos reportados a lo largo de un ciclo continuo de 21 días.
+                    El predictor analiza ventanas deslizantes de 21 días ponderando tareas activas en WBS, fallas críticas e interrupciones para estimar la carga cognitiva antes de que afecte la estabilidad del proyecto.
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60">
                   <h4 className="font-bold text-zinc-900 dark:text-white mb-1">
-                    2. Series Temporales (Ventanas S1, S2, S3)
+                    2. Convención Homologada de los 4 Niveles
                   </h4>
-                  <ul className="space-y-1 list-disc list-inside mt-1 font-mono text-[0.7rem]">
-                    <li><strong>Semana 1 (Días 15-21):</strong> Base histórica de carga.</li>
-                    <li><strong>Semana 2 (Días 8-14):</strong> Detección de aceleración intermedia.</li>
-                    <li><strong>Semana 3 (Últimos 7 días):</strong> Carga reciente y esfuerzo pico.</li>
-                  </ul>
-                </div>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex items-start gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-red-700 dark:text-red-400">🔴 Nivel Crítico (Crítica):</strong> Carga &gt; 80% o sobrecarga sostenida &ge; 65% en las 3 semanas consecutivas. Bloqueo preventivo de asignaciones.
+                      </div>
+                    </div>
 
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60">
-                  <h4 className="font-bold text-zinc-900 dark:text-white mb-1">
-                    3. Clasificación del Semáforo
-                  </h4>
-                  <div className="space-y-1.5 mt-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-600" />
-                      <span><strong>Crítico:</strong> 3 semanas consecutivas con sobrecarga ≥ 65%.</span>
+                    <div className="flex items-start gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-orange-700 dark:text-orange-400">🟠 Nivel Alto (Alta):</strong> Carga entre 65% y 80% o aceleración de estrés en los últimos 7 días (S3 &ge; 65%).
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" />
-                      <span><strong>Sobrecarga:</strong> Pico superior al 70% en la última semana.</span>
+
+                    <div className="flex items-start gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-amber-700 dark:text-amber-400">🟡 Nivel Medio (Media):</strong> Carga entre 45% y 64% con contingencias recurrentes. Requiere seguimiento de entregas.
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-500" />
-                      <span><strong>En Alza:</strong> Aumento progresivo en las 3 semanas (S3 &gt; S2 &gt; S1).</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span><strong>Estable:</strong> Niveles de esfuerzo controlados y sostenibles.</span>
+
+                    <div className="flex items-start gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-emerald-700 dark:text-emerald-400">🟢 Nivel Bajo / Estable (Baja / Estable):</strong> Carga &lt; 45% y flujo balanceado de tareas con ritmo de trabajo óptimo.
+                      </div>
                     </div>
                   </div>
                 </div>

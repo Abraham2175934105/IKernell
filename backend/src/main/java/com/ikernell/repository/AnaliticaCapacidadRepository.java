@@ -14,44 +14,15 @@ import java.util.List;
  * Toda la lógica de cálculo pesado (agregaciones, cruces, ponderaciones y clasificación)
  * se ejecuta directamente en PostgreSQL mediante una CTE analítica con generate_series.
  *
- * El backend Java NO realiza ningún cálculo matemático; únicamente consume la proyección.
+ * Clasificación homologada en 4 niveles semafóricos:
+ * - CRITICA  (🔴 Carga > 80% o sobrecarga sostenida en 3 semanas)
+ * - ALTA     (🟠 Carga 65% - 80% o aceleración de estrés S3 >= 65%)
+ * - MEDIA    (🟡 Carga 45% - 64% o contingencias recurrentes)
+ * - BAJA     (🟢 Carga < 45% y flujo balanceado)
  */
 @Repository
 public interface AnaliticaCapacidadRepository extends JpaRepository<Trabajador, Long> {
 
-    /**
-     * Consulta analítica nativa que calcula la Matriz de Burnout Histórico de 21 días.
-     *
-     * Arquitectura SQL:
-     * ─────────────────────────────────────────────────────────────────────────
-     * CTE 1 (calendario_analitico): Genera la serie temporal de 21 días con
-     *        generate_series() y etiqueta cada día en su ventana (S1, S2, S3).
-     *
-     * CTE 2 (desarrolladores):      Filtra trabajadores activos con rol DESARROLLADOR.
-     *
-     * CTE 3 (carga_wbs):            Cuenta tareas activas (PENDIENTE / EN_PROGRESO)
-     *        por desarrollador como indicador de saturación operativa.
-     *
-     * CTE 4 (errores_por_ventana):  Cruza errores con el calendario y agrega por ventana.
-     *        Aplica peso diferencial por severidad (CRITICA = x2).
-     *
-     * CTE 5 (interrupciones_por_ventana): Cruza interrupciones con el calendario
-     *        y convierte duración de minutos a horas decimales por ventana.
-     *
-     * CTE 6 (metricas_cruzadas):    LEFT JOIN de las 4 fuentes de datos.
-     *        Pivotea los indicadores por ventana (S1, S2, S3).
-     *
-     * CTE 7 (scores_finales):       Aplica la fórmula ponderada:
-     *        Score = min(100, carga_wbs + errores * peso + horas * peso)
-     *        S3 tiene coeficientes más altos (sensibilidad a carga reciente).
-     *
-     * SELECT final:                 Clasifica el estado predictivo con CASE:
-     *        - RIESGO_BURNOUT_INMINENTE: 3 semanas consecutivas >= 65%
-     *        - SOBRECARGA_AGUDA: S3 >= 80%
-     *        - TENDENCIA_DE_ESTRES_ACELERADA: delta(S3 - S1) >= 25
-     *        - ESTABLE: caso por defecto
-     * ─────────────────────────────────────────────────────────────────────────
-     */
     @Query(value = """
         WITH
         -- ═══════════════════════════════════════════════════════════════════
@@ -135,7 +106,7 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Trabajador, 
                 d.email,
                 COALESCE(d.especialidad, 'Ingeniería de Software')          AS especialidad,
                 COALESCE(w.tareas_activas, 0)                               AS tareas_activas,
-                LEAST(60.0, COALESCE(w.tareas_activas, 0) * 18.0)          AS carga_base_wbs,
+                LEAST(45.0, COALESCE(w.tareas_activas, 0) * 12.0)          AS carga_base_wbs,
                 COALESCE(SUM(CASE WHEN ev.ventana = 'S1' THEN ev.peso_errores END), 0)   AS errores_s1,
                 COALESCE(SUM(CASE WHEN ev.ventana = 'S2' THEN ev.peso_errores END), 0)   AS errores_s2,
                 COALESCE(SUM(CASE WHEN ev.ventana = 'S3' THEN ev.peso_errores END), 0)   AS errores_s3,
@@ -151,20 +122,20 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Trabajador, 
        
         -- ═══════════════════════════════════════════════════════════════════
         -- CTE 7: Fórmula ponderada de estrés por ventana temporal
-        -- S1/S2: errores x12, horas x8 (línea base / transición)
-        -- S3:    errores x15, horas x10 (sensibilidad alta a carga reciente)
+        -- S1/S2: errores x10, horas x6 (línea base / transición)
+        -- S3:    errores x12, horas x8 (sensibilidad alta a carga reciente)
         -- ═══════════════════════════════════════════════════════════════════
         scores_finales AS (
             SELECT
                 mc.*,
-                LEAST(100.0, mc.carga_base_wbs + mc.errores_s1 * 12.0 + mc.horas_s1 * 8.0)  AS score_s1,
-                LEAST(100.0, mc.carga_base_wbs + mc.errores_s2 * 12.0 + mc.horas_s2 * 8.0)  AS score_s2,
-                LEAST(100.0, mc.carga_base_wbs + mc.errores_s3 * 15.0 + mc.horas_s3 * 10.0) AS score_s3
+                LEAST(100.0, mc.carga_base_wbs + mc.errores_s1 * 10.0 + mc.horas_s1 * 6.0)  AS score_s1,
+                LEAST(100.0, mc.carga_base_wbs + mc.errores_s2 * 10.0 + mc.horas_s2 * 6.0)  AS score_s2,
+                LEAST(100.0, mc.carga_base_wbs + mc.errores_s3 * 12.0 + mc.horas_s3 * 8.0)  AS score_s3
             FROM metricas_cruzadas mc
         )
        
         -- ═══════════════════════════════════════════════════════════════════
-        -- SELECT FINAL: Clasificación predictiva del estado de burnout
+        -- SELECT FINAL: Clasificación homologada en 4 niveles de riesgo
         -- ═══════════════════════════════════════════════════════════════════
         SELECT
             sf.id_trabajador                                                           AS idTrabajador,
@@ -177,30 +148,41 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Trabajador, 
             ROUND(sf.score_s3::numeric, 1)                                             AS scoreSemana3,
             ROUND(((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0)::numeric, 1)      AS promedioCarga,
             CASE
-                WHEN sf.score_s1 >= 65 AND sf.score_s2 >= 65 AND sf.score_s3 >= 65
-                    THEN 'RIESGO_BURNOUT_INMINENTE'
-                WHEN sf.score_s3 >= 80
-                    THEN 'SOBRECARGA_AGUDA'
-                WHEN (sf.score_s3 - sf.score_s1) >= 25
-                    THEN 'TENDENCIA_DE_ESTRES_ACELERADA'
-                ELSE 'ESTABLE'
+                WHEN (sf.score_s1 >= 65 AND sf.score_s2 >= 65 AND sf.score_s3 >= 65) 
+                     OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 80
+                    THEN 'CRITICA'
+                WHEN sf.score_s3 >= 65 
+                     OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 60 
+                     OR (sf.score_s3 - sf.score_s1) >= 25
+                    THEN 'ALTA'
+                WHEN sf.score_s3 >= 45 
+                     OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 40 
+                     OR (sf.score_s3 - sf.score_s1) >= 15
+                    THEN 'MEDIA'
+                ELSE 'BAJA'
             END                                                                        AS estadoAlerta,
             CASE
-                WHEN sf.score_s1 >= 65 AND sf.score_s2 >= 65 AND sf.score_s3 >= 65
-                    THEN 'ALERTA CRITICA: Desgaste acumulado durante 3 semanas consecutivas. Redistribuir tareas WBS inmediatamente y restringir nuevas asignaciones.'
-                WHEN sf.score_s3 >= 80
-                    THEN 'Sobrecarga elevada en los ultimos 7 dias. Monitorear resolucion de contingencias y reducir asignaciones.'
-                WHEN (sf.score_s3 - sf.score_s1) >= 25
-                    THEN 'Incremento acelerado en el volumen de errores e interrupciones respecto a la linea base semanal.'
-                ELSE 'Carga operativa equilibrada dentro de los parametros de rendimiento optimo.'
+                WHEN (sf.score_s1 >= 65 AND sf.score_s2 >= 65 AND sf.score_s3 >= 65) 
+                     OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 80
+                    THEN 'ALERTA CRÍTICA: Desgaste severo acumulado en el ciclo de 21 días (Carga > 80%). Se requiere rebalanceo urgente de tareas WBS y restricción preventiva de nuevas asignaciones.'
+                WHEN sf.score_s3 >= 65 
+                     OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 60 
+                     OR (sf.score_s3 - sf.score_s1) >= 25
+                    THEN 'NIVEL ALTO: Sobrecarga considerable o tendencia acelerada en los últimos 7 días. Monitorear resolución de contingencias y redistribuir actividades complejas.'
+                WHEN sf.score_s3 >= 45 
+                     OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 40 
+                     OR (sf.score_s3 - sf.score_s1) >= 15
+                    THEN 'NIVEL MEDIO: Carga moderada con alertas preventivas e interrupciones recurrentes. Mantener seguimiento durante las entregas del sprint.'
+                ELSE 'NIVEL BAJO / ESTABLE: Carga operativa equilibrada y ritmo de trabajo sostenible dentro de los parámetros óptimos.'
             END                                                                        AS recomendacion,
             CASE
-                WHEN sf.score_s1 >= 65 AND sf.score_s2 >= 65 AND sf.score_s3 >= 65
+                WHEN (sf.score_s1 >= 65 AND sf.score_s2 >= 65 AND sf.score_s3 >= 65) 
+                     OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 80
                     THEN true
                 ELSE false
             END                                                                        AS capacidadBloqueada
         FROM scores_finales sf
-        ORDER BY sf.score_s3 DESC, sf.score_s2 DESC
+        ORDER BY ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) DESC, sf.score_s3 DESC
         """, nativeQuery = true)
     List<BurnoutProjection> calcularMatrizBurnout21Dias();
 }

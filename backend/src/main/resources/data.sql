@@ -61,11 +61,11 @@ DELETE FROM proyecto_desarrollador;
 
 INSERT INTO proyecto_desarrollador (proyecto_id, desarrollador_id)
 VALUES 
-  (1, 6), (1, 9), (1, 11),           -- Proyecto 1: Ana Gómez, David Valenzuela, Mateo Restrepo
-  (2, 6), (2, 9), (2, 12), (2, 13),   -- Proyecto 2: Ana Gómez, David Valenzuela, Sofía Benítez, Javier Arboleda
-  (3, 6), (3, 10), (3, 11),          -- Proyecto 3: Ana Gómez, Lucía Morales, Mateo Restrepo
-  (4, 10), (4, 12), (4, 13),         -- Proyecto 4: Lucía Morales, Sofía Benítez, Javier Arboleda
-  (5, 9), (5, 11);                   -- Proyecto 5: David Valenzuela, Mateo Restrepo
+  (1, 6), (1, 9), (1, 11), (1, 3),    -- Proyecto 1: Ana Gómez (🔴), David Valenzuela (🔴), Mateo Restrepo (🟠), Luis Pérez (🟢)
+  (2, 6), (2, 9), (2, 4), (2, 12), (2, 13), -- Proyecto 2: Ana Gómez (🔴), David Valenzuela (🔴), Marta López (🟠), Sofía Benítez (🟢), Javier Arboleda (🟡)
+  (3, 6), (3, 10), (3, 11),           -- Proyecto 3: Ana Gómez (🔴), Lucía Morales (🟡), Mateo Restrepo (🟠)
+  (4, 10), (4, 12), (4, 13), (4, 4),  -- Proyecto 4: Lucía Morales (🟡), Sofía Benítez (🟢), Javier Arboleda (🟡), Marta López (🟠)
+  (5, 9), (5, 11);                    -- Proyecto 5: David Valenzuela, Mateo Restrepo
 
 -- 5. ETAPAS (WBS)
 DELETE FROM etapa;
@@ -109,7 +109,7 @@ DELETE FROM actividad;
 
 INSERT INTO actividad (id_actividad, etapa_id, desarrollador_id, descripcion, estado)
 VALUES
-  -- Asignaciones para Ana Gómez (id: 6) - Carga de trabajo intensa para predictor de capacidad
+  -- Asignaciones para Ana Gómez (id: 6) - Carga de trabajo intensa -> CRÍTICA (🔴)
   (1001, 102, 6, 'Implementar firma digital XAdES con certificado corporativo RSA 2048-bit', 'EN_PROGRESO'),
   (1002, 102, 6, 'Construir generador de código QR fiscal para representación gráfica de factura', 'EN_PROGRESO'),
   (1003, 103, 6, 'Diseñar parser de exportación plana delimitada bajo norma internacional ISO 8601 UTC', 'EN_PROGRESO'),
@@ -119,7 +119,7 @@ VALUES
   (1007, 201, 6, 'Crear entidades JPA para auditoría inmutable de transacciones financieras', 'FINALIZADA'),
   (1008, 104, 6, 'Ejecutar pruebas de carga con k6 simulando 1,500 peticiones concurrentes por segundo', 'PENDIENTE'),
 
-  -- Asignaciones para David Valenzuela (id: 9) - Backend & Infra
+  -- Asignaciones para David Valenzuela (id: 9) - Backend & Infra -> CRÍTICA (🔴)
   (2001, 102, 9, 'Optimizar consultas de cálculo de impuestos en lote con Native Queries y CTEs', 'EN_PROGRESO'),
   (2002, 202, 9, 'Implementar mecanismo de Circuit Breaker con Resilience4j en pasarela de pagos', 'EN_PROGRESO'),
   (2003, 203, 9, 'Construir repository nativo para analítica de capacidad con Window Functions en PostgreSQL', 'EN_PROGRESO'),
@@ -127,7 +127,19 @@ VALUES
   (2005, 201, 9, 'Configurar pool HikariCP con detección de leaks a 20 segundos y métricas Micrometer', 'FINALIZADA'),
   (2006, 204, 9, 'Auditar algoritmos de encriptación de tarjetas de crédito cumpliendo norma PCI-DSS', 'PENDIENTE'),
 
-  -- Asignaciones para Lucía Morales (id: 10) - Frontend & UI/UX
+  -- Asignaciones para Marta López (id: 4) - Backend & Servicios -> ALTA (🟠)
+  (2007, 202, 4, 'Construir endpoint de consulta de saldos con validación de tokens JWT', 'EN_PROGRESO'),
+  (2008, 203, 4, 'Diseñar interceptores de auditoría para registro de peticiones HTTP en tiempo real', 'EN_PROGRESO'),
+  (2009, 402, 4, 'Configurar endpoints de señalización WebRTC para videoconsultas médicas', 'EN_PROGRESO'),
+
+  -- Asignaciones para Mateo Restrepo (id: 11) - Datos & ETL -> ALTA (🟠)
+  (4001, 103, 11, 'Configurar cliente SFTP con canal SSH2 cifrado y validación de Checksum MD5', 'EN_PROGRESO'),
+  (4002, 103, 11, 'Automatizar tarea programada @Scheduled para generación nocturna de lotes ETL', 'EN_PROGRESO'),
+  (4003, 502, 11, 'Ejecutar reconciliación de 2.4 millones de registros históricos en Data Warehouse', 'FINALIZADA'),
+  (4004, 302, 11, 'Construir vistas materializadas en PostgreSQL para reportes financieros instantáneos', 'EN_PROGRESO'),
+  (4005, 101, 11, 'Diseñar especificación de formato plano de 14 columnas para la alianza estratégica Brasil', 'FINALIZADA'),
+
+  -- Asignaciones para Lucía Morales (id: 10) - Frontend & UI/UX -> MEDIA (🟡)
   (3001, 301, 10, 'Crear sistema de diseño monocromático con soporte dinámico de modo Claro/Oscuro', 'FINALIZADA'),
   (3002, 302, 10, 'Construir componente interactivo de escáner QR con retroalimentación háptica', 'EN_PROGRESO'),
   (3003, 303, 10, 'Implementar motor de inyección de Micro-Snippets con búsqueda debounced en React', 'EN_PROGRESO'),
@@ -135,101 +147,115 @@ VALUES
   (3005, 401, 10, 'Diseñar prototipos de alta fidelidad para el módulo de prescripción médica digital', 'FINALIZADA'),
   (3006, 403, 10, 'Integrar animaciones con Framer Motion para transiciones suaves de triaje médico', 'PENDIENTE'),
 
-  -- Asignaciones para Mateo Restrepo (id: 11) - Datos & ETL
-  (4001, 103, 11, 'Configurar cliente SFTP con canal SSH2 cifrado y validación de Checksum MD5', 'EN_PROGRESO'),
-  (4002, 103, 11, 'Automatizar tarea programada @Scheduled para generación nocturna de lotes ETL', 'EN_PROGRESO'),
-  (4003, 502, 11, 'Ejecutar reconciliación de 2.4 millones de registros históricos en Data Warehouse', 'FINALIZADA'),
-  (4004, 302, 11, 'Construir vistas materializadas en PostgreSQL para reportes financieros instantáneos', 'EN_PROGRESO'),
-  (4005, 101, 11, 'Diseñar especificación de formato plano de 14 columnas para la alianza estratégica Brasil', 'FINALIZADA'),
+  -- Asignaciones para Javier Arboleda (id: 13) - DevOps & Cloud -> MEDIA (🟡)
+  (6001, 204, 13, 'Configurar pipeline de CI/CD en GitHub Actions con compilación Maven y pruebas Vite', 'EN_PROGRESO'),
+  (6002, 402, 13, 'Desplegar servidor de señalización WebRTC en clúster Kubernetes con autoescalado', 'EN_PROGRESO'),
+  (6003, 101, 13, 'Construir imágenes Docker multi-stage optimizadas para frontend y backend', 'FINALIZADA'),
+  (6004, 204, 13, 'Configurar monitoreo de métricas JVM con Prometheus y tableros en Grafana', 'PENDIENTE'),
 
-  -- Asignaciones para Sofía Benítez (id: 12) - QA & Ciberseguridad
+  -- Asignaciones para Sofía Benítez (id: 12) - QA & Ciberseguridad -> BAJA / ESTABLE (🟢)
   (5001, 204, 12, 'Ejecutar escaneo de vulnerabilidades con OWASP ZAP sobre endpoints de autenticación', 'EN_PROGRESO'),
   (5002, 203, 12, 'Automatizar suite de pruebas de integración para el Semáforo Inteligente de Riesgos', 'EN_PROGRESO'),
   (5003, 401, 12, 'Verificar cumplimiento de estándares HIPAA en el almacenamiento de datos clínicos', 'FINALIZADA'),
   (5004, 201, 12, 'Implementar pruebas unitarias con JUnit 5 y Mockito alcanzando 88% de cobertura', 'FINALIZADA'),
 
-  -- Asignaciones para Javier Arboleda (id: 13) - DevOps & Cloud
-  (6001, 204, 13, 'Configurar pipeline de CI/CD en GitHub Actions con compilación Maven y pruebas Vite', 'EN_PROGRESO'),
-  (6002, 402, 13, 'Desplegar servidor de señalización WebRTC en clúster Kubernetes con autoescalado', 'EN_PROGRESO'),
-  (6003, 101, 13, 'Construir imágenes Docker multi-stage optimizadas para frontend y backend', 'FINALIZADA'),
-  (6004, 204, 13, 'Configurar monitoreo de métricas JVM con Prometheus y tableros en Grafana', 'PENDIENTE');
+  -- Asignaciones para Luis Pérez (id: 3) - Contratista React -> BAJA / ESTABLE (🟢)
+  (7001, 102, 3, 'Implementar componentes visuales para previsualización de facturas electrónicas en PDF', 'EN_PROGRESO');
 
-SELECT setval('actividad_id_actividad_seq', 7000);
+SELECT setval('actividad_id_actividad_seq', 8000);
 
 -- 7. MÉTRICAS CRÍTICAS PARA EL PREDICTOR DE BURNOUT (capacity.pulse)
--- Ventana de 21 días:
--- S1: Días 15-21 (Línea base histórica)
--- S2: Días 8-14 (Transición / Incremento)
--- S3: Días 1-7 (Carga reciente crítica)
+-- Ventana de 21 días (S1: días 15-21, S2: días 8-14, S3: días 1-7)
 DELETE FROM error;
 DELETE FROM interrupcion;
 
--- Errores asignados a Ana Gómez (id: 6) -> Sobrecarga exponencial que dispara RIESGO_BURNOUT_INMINENTE
+-- Errores asignados a Ana Gómez (id: 6) -> 🔴 CRÍTICA
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion, resolucion_nota, fecha_resolucion)
 VALUES 
-  -- Ventana S1 (hace 16-20 días) - Línea base normal
   (101, 6, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '19 days', 'Falta de anotación @Valid en DTO de Facturación', 'SOLUCIONADO', 'Corregido en commit c1a', NOW() - INTERVAL '18 days'),
   (101, 6, 'LOGICO', 'MEDIA', NOW() - INTERVAL '16 days', 'Validación de fecha de vencimiento menor a fecha de emisión', 'SOLUCIONADO', 'Añadida aserción custom', NOW() - INTERVAL '15 days'),
-
-  -- Ventana S2 (hace 8-14 días) - Comienzo de tensión operacional
   (102, 6, 'INTEGRACION_REST', 'MEDIA', NOW() - INTERVAL '13 days', 'Timeout intermitente en conexión con web service de la DIAN', 'SOLUCIONADO', 'Aumentado socket timeout a 5000ms', NOW() - INTERVAL '12 days'),
   (102, 6, 'CONCURRENCIA', 'ALTA', NOW() - INTERVAL '11 days', 'Race condition al generar número consecutivo de factura electrónica', 'SOLUCIONADO', 'Aplicado bloqueo pesimista en base de datos', NOW() - INTERVAL '10 days'),
   (202, 6, 'VALIDACION', 'MEDIA', NOW() - INTERVAL '9 days', 'El formato del hash XML no cumple con estándar SHA-384', 'EN_REVISION', NULL, NULL),
-
-  -- Ventana S3 (Últimos 7 días) - SOBRECARGA CRÍTICA (Disparador de alerta de Burnout)
   (102, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '6 days', 'Deadlock en tabla factura_detalle bajo 500 hilos concurrentes', 'EN_REVISION', NULL, NULL),
   (202, 6, 'RENDIMIENTO', 'CRITICA', NOW() - INTERVAL '5 days', 'Consumo de CPU al 98% en algoritmo de firma criptográfica XAdES', 'REGISTRADO', NULL, NULL),
   (103, 6, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '4 days', 'Fallo de autenticación SSH al conectar con servidor SFTP de Brasil', 'REGISTRADO', NULL, NULL),
   (102, 6, 'LOGICO', 'ALTA', NOW() - INTERVAL '3 days', 'Inconsistencia en el cálculo de retención en la fuente para personas jurídicas', 'REGISTRADO', NULL, NULL),
-  (302, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '2 days', 'Pérdida de mensajes en el topic de transacciones de billetera digital', 'REGISTRADO', NULL, NULL),
-  (103, 6, 'VALIDACION', 'ALTA', NOW() - INTERVAL '1 day', 'Lote ETL rechazado en destino por zona horaria no normalizada en UTC', 'REGISTRADO', NULL, NULL),
-  (102, 6, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '4 hours', 'Fuga de memoria en pool de hilos de generación masiva de PDFs', 'REGISTRADO', NULL, NULL);
+  (302, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '2 days', 'Pérdida de mensajes en el topic de transacciones de billetera digital', 'REGISTRADO', NULL, NULL);
 
--- Interrupciones asignadas a Ana Gómez (id: 6)
 INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion, resolucion_nota, fecha_resolucion)
 VALUES 
-  -- S1
   (101, 6, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '18 days', 35, 'Reunión de alineación con cliente para definir esquema XML', 'SOLUCIONADO', 'Minuta aprobada', NOW() - INTERVAL '18 days'),
-  -- S2
   (102, 6, 'CAIDA_SERVICIO_EXTERNO', NOW() - INTERVAL '12 days', 50, 'Indisponibilidad del entorno de pruebas de la DIAN', 'SOLUCIONADO', 'Servicio reestablecido', NOW() - INTERVAL '12 days'),
   (102, 6, 'SOPORTE_URGENTE', NOW() - INTERVAL '10 days', 75, 'Atención de incidencia prioritaria en servidor de staging', 'SOLUCIONADO', 'Hotfix desplegado', NOW() - INTERVAL '10 days'),
   (202, 6, 'BLOQUEO_AMBIENTE', NOW() - INTERVAL '8 days', 45, 'Bloqueo de puerto 5432 en servidor de integración continua', 'SOLUCIONADO', 'Reglas de firewall actualizadas', NOW() - INTERVAL '8 days'),
-  -- S3 (Sobrecarga de horas perdidas)
   (102, 6, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '6 days', 120, 'Investigación de caída de servidor transaccional por saturación de RAM', 'REGISTRADO', NULL, NULL),
   (103, 6, 'REUNION_URGENCIA', NOW() - INTERVAL '4 days', 90, 'Comité de crisis con equipo técnico de Brasil por inconsistencias ETL', 'REGISTRADO', NULL, NULL),
   (202, 6, 'CAIDA_SERVICIO_EXTERNO', NOW() - INTERVAL '3 days', 150, 'Caída del proveedor de nube afectando base de datos principal', 'REGISTRADO', NULL, NULL),
-  (102, 6, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 180, 'Depuración de fallo en firma digital con equipo de seguridad', 'REGISTRADO', NULL, NULL),
-  (302, 6, 'BLOQUEO_AMBIENTE', NOW() - INTERVAL '1 day', 60, 'Falla en el despliegue del broker Kafka en cluster de desarrollo', 'REGISTRADO', NULL, NULL);
+  (102, 6, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 180, 'Depuración de fallo en firma digital con equipo de seguridad', 'REGISTRADO', NULL, NULL);
 
--- Errores e Interrupciones para David Valenzuela (id: 9) -> TENDENCIA_DE_ESTRES_ACELERADA (Naranja)
+-- Errores e Interrupciones para David Valenzuela (id: 9) -> 🔴 CRÍTICA
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
   (202, 9, 'LOGICO', 'BAJA', NOW() - INTERVAL '17 days', 'Cálculo inexacto de comisión para montos inferiores a $10 USD', 'SOLUCIONADO'),
-  (202, 9, 'RENDIMIENTO', 'MEDIA', NOW() - INTERVAL '11 days', 'Falta de índice compuesto en tabla movimientos_cuenta', 'SOLUCIONADO'),
+  (202, 9, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '11 days', 'Falta de índice compuesto en tabla movimientos_cuenta', 'SOLUCIONADO'),
   (202, 9, 'CONCURRENCIA', 'ALTA', NOW() - INTERVAL '9 days', 'Bloqueo de cuenta simultáneo en dos cajeros automáticos', 'SOLUCIONADO'),
-  (202, 9, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '4 days', 'Latencia de 1.8 segundos en consulta de historial bancario', 'EN_REVISION'),
-  (203, 9, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '2 days', 'Error 504 Gateway Timeout en microservicio de notificaciones Push', 'REGISTRADO'),
-  (102, 9, 'LOGICO', 'MEDIA', NOW() - INTERVAL '1 day', 'Filtro de paginación devuelve duplicados en transacciones concurrentes', 'REGISTRADO');
+  (202, 9, 'RENDIMIENTO', 'CRITICA', NOW() - INTERVAL '4 days', 'Latencia de 1.8 segundos en consulta de historial bancario', 'EN_REVISION'),
+  (203, 9, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '2 days', 'Error 504 Gateway Timeout en microservicio de notificaciones Push', 'REGISTRADO');
 
 INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
 VALUES 
   (202, 9, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '10 days', 45, 'Reunión de revisión de arquitectura de microservicios', 'SOLUCIONADO'),
   (202, 9, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '5 days', 90, 'Alerta de saturación de disco en servidor de base de datos', 'REGISTRADO'),
-  (203, 9, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 60, 'Asistencia técnica a equipo de QA para pruebas de estrés', 'REGISTRADO');
+  (203, 9, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 120, 'Asistencia técnica a equipo de QA para pruebas de estrés', 'REGISTRADO');
 
--- Errores e Interrupciones para Lucía Morales (id: 10) y Mateo Restrepo (id: 11) -> ESTABLE (Verde)
+-- Errores e Interrupciones para Marta López (id: 4) -> 🟠 ALTA
+INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
+VALUES 
+  (202, 4, 'CONCURRENCIA', 'ALTA', NOW() - INTERVAL '12 days', 'Bloqueo optimista fallido en actualización de saldo', 'SOLUCIONADO'),
+  (202, 4, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '4 days', 'Consumo elevado de conexiones en pool HikariCP', 'REGISTRADO'),
+  (402, 4, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '2 days', 'Timeout en respuesta de servidor de señalización WebRTC', 'EN_REVISION');
+
+INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
+VALUES 
+  (202, 4, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '11 days', 45, 'Revisión de caída de servicio en ambiente de pruebas', 'SOLUCIONADO'),
+  (202, 4, 'SOPORTE_URGENTE', NOW() - INTERVAL '3 days', 90, 'Depuración de fallo en autenticación con equipo de infraestructura', 'REGISTRADO');
+
+-- Errores e Interrupciones para Mateo Restrepo (id: 11) -> 🟠 ALTA
+INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
+VALUES 
+  (103, 11, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '10 days', 'Fallo en la negociación de cifrado SSH2 con servidor SFTP de Brasil', 'SOLUCIONADO'),
+  (103, 11, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '3 days', 'Procesamiento de lote ETL tarda más de 45 segundos para 10,000 registros', 'REGISTRADO');
+
+INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
+VALUES 
+  (103, 11, 'BLOQUEO_AMBIENTE', NOW() - INTERVAL '4 days', 75, 'Indisponibilidad de servidor SFTP de pruebas en filial Brasil', 'REGISTRADO');
+
+-- Errores e Interrupciones para Lucía Morales (id: 10) -> 🟡 MEDIA
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
   (301, 10, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '18 days', 'Advertencia de clave única (unique key) en lista de componentes React', 'SOLUCIONADO'),
   (302, 10, 'VALIDACION', 'BAJA', NOW() - INTERVAL '10 days', 'Mensaje de error no visible en pantallas móviles menores a 360px', 'SOLUCIONADO'),
-  (302, 10, 'LOGICO', 'MEDIA', NOW() - INTERVAL '3 days', 'Animación de carga se congela si la respuesta del servidor es menor a 50ms', 'REGISTRADO'),
-  (103, 11, 'VALIDACION', 'BAJA', NOW() - INTERVAL '15 days', 'Separador de decimales incorrecto en formato CSV de prueba', 'SOLUCIONADO'),
-  (103, 11, 'LOGICO', 'MEDIA', NOW() - INTERVAL '5 days', 'Conversión de caracteres especiales (ñ, acentos) en archivo plano', 'SOLUCIONADO');
+  (302, 10, 'LOGICO', 'MEDIA', NOW() - INTERVAL '3 days', 'Animación de carga se congela si la respuesta del servidor es menor a 50ms', 'REGISTRADO');
 
 INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
 VALUES 
-  (301, 10, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '14 days', 25, 'Sincronización de UI con el equipo de diseño', 'SOLUCIONADO'),
-  (103, 11, 'SOPORTE_URGENTE', NOW() - INTERVAL '7 days', 30, 'Verificación de llaves públicas con el equipo de Brasil', 'SOLUCIONADO');
+  (301, 10, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '14 days', 25, 'Sincronización de UI con el equipo de diseño', 'SOLUCIONADO');
+
+-- Errores e Interrupciones para Javier Arboleda (id: 13) -> 🟡 MEDIA
+INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
+VALUES 
+  (204, 13, 'LOGICO', 'MEDIA', NOW() - INTERVAL '5 days', 'Regla de autoescalado en Kubernetes no escala pods a tiempo', 'EN_REVISION');
+
+INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
+VALUES 
+  (402, 13, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '3 days', 40, 'Reunión de coordinación de infraestructura cloud', 'SOLUCIONADO');
+
+-- Errores para Sofía Benítez (id: 12) y Luis Pérez (id: 3) -> 🟢 BAJA / ESTABLE
+INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
+VALUES 
+  (204, 12, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '15 days', 'Aserción de prueba unitaria con mensaje incompleto', 'SOLUCIONADO'),
+  (102, 3, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '10 days', 'Etiqueta HTML no cerrada en plantilla de previsualización', 'SOLUCIONADO');
 
 SELECT setval('error_id_error_seq', (SELECT MAX(id_error) FROM error));
 SELECT setval('interrupcion_id_interrupcion_seq', (SELECT MAX(id_interrupcion) FROM interrupcion));
