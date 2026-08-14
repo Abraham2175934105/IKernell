@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, ShieldCheck, Zap, Activity, ChevronDown, CheckCircle2, Globe2, Terminal, Layers, Cpu } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, Zap, Activity, ChevronDown, Globe2, Terminal, Layers, Cpu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -23,7 +23,7 @@ const itemVariants = {
 };
 
 /* ────────────────────────────────────────────────────────────────────────
-   Card Stack Data — telemetría corporativa sin emojis, íconos vectoriales
+   Card Stack Data — telemetría corporativa sobria, sin emojis
 ──────────────────────────────────────────────────────────────────────── */
 const stacks = [
   {
@@ -33,12 +33,12 @@ const stacks = [
     title: 'N-Capas & JWT Security',
     description: 'Desacoplamiento total entre React 18 SPA y Spring Boot 3 con sesiones tokenizadas sin estado ni cookies.',
     ctaLabel: 'Ver métricas de conexión',
-    backBg: 'from-zinc-900 via-zinc-800 to-zinc-950',
-    backBorder: 'border-zinc-600/50',
+    featured: false,
+    headerTelemetria: 'Telemetría de Red & Sesión',
     metrics: [
-      { icon: <Terminal size={13} strokeWidth={1.8} />, label: 'Latencia Media API', value: '< 38 ms' },
-      { icon: <ShieldCheck size={13} strokeWidth={1.8} />, label: 'Autenticación', value: 'JWT · BCrypt Costo 10' },
-      { icon: <Layers size={13} strokeWidth={1.8} />, label: 'HikariCP Pool', value: '10 Conn · Leak 20s' },
+      { icon: <Terminal size={14} strokeWidth={1.8} />, label: 'Latencia Media API', value: '< 38 ms' },
+      { icon: <ShieldCheck size={14} strokeWidth={1.8} />, label: 'Autenticación', value: 'JWT · BCrypt (Costo 10)' },
+      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'HikariCP Pool', value: '10 Conn · Leak 20s' },
     ]
   },
   {
@@ -49,12 +49,11 @@ const stacks = [
     description: 'Algoritmo en tiempo real que evalúa errores e interrupciones en ventanas de 21 días para anticipar riesgos.',
     ctaLabel: 'Desplegar algoritmo capacity.pulse',
     featured: true,
-    backBg: 'from-blue-950 via-indigo-950 to-zinc-950',
-    backBorder: 'border-blue-500/40',
+    headerTelemetria: 'Motor capacity.pulse Live',
     metrics: [
-      { icon: <Cpu size={13} strokeWidth={1.8} />, label: 'capacity.pulse Score', value: '18 — Estable' },
-      { icon: <Layers size={13} strokeWidth={1.8} />, label: 'Ventana Analítica', value: '7 CTEs · 21 Días' },
-      { icon: <Activity size={13} strokeWidth={1.8} />, label: 'Rebalanceo WBS', value: '0 Bloqueos Críticos' },
+      { icon: <Cpu size={14} strokeWidth={1.8} />, label: 'capacity.pulse Score', value: '18 — Estable' },
+      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'Ventana Analítica', value: '7 CTEs · 21 Días' },
+      { icon: <Activity size={14} strokeWidth={1.8} />, label: 'Rebalanceo WBS', value: '0 Bloqueos Críticos' },
     ]
   },
   {
@@ -64,12 +63,12 @@ const stacks = [
     title: 'ETL Brasil & pg_trgm',
     description: 'Pipeline batch desatendido con exportaciones ISO 8601 UTC y motor Snippet.inject por trigramas en PostgreSQL.',
     ctaLabel: 'Ver detalles de exportación',
-    backBg: 'from-zinc-900 via-zinc-800 to-zinc-950',
-    backBorder: 'border-zinc-600/50',
+    featured: false,
+    headerTelemetria: 'Integración Internacional & Trigrams',
     metrics: [
-      { icon: <Terminal size={13} strokeWidth={1.8} />, label: 'Formato Global', value: 'ISO 8601 UTC · Pipe' },
-      { icon: <ShieldCheck size={13} strokeWidth={1.8} />, label: 'Integridad', value: 'Firma SHA-256' },
-      { icon: <Layers size={13} strokeWidth={1.8} />, label: 'Búsqueda GIN', value: 'pg_trgm < 50 ms' },
+      { icon: <Terminal size={14} strokeWidth={1.8} />, label: 'Formato Global', value: 'ISO 8601 UTC · Pipe' },
+      { icon: <ShieldCheck size={14} strokeWidth={1.8} />, label: 'Integridad', value: 'Firma SHA-256' },
+      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'Búsqueda GIN', value: 'pg_trgm < 50 ms' },
     ]
   }
 ];
@@ -78,7 +77,7 @@ export const Hero = () => {
   const [activeStack, setActiveStack] = useState(null);
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pb-12 pt-28 md:pt-32">
+    <section className="relative min-h-screen flex flex-col items-center justify-center pb-20 pt-28 md:pt-32">
 
       {/* ── Background: Adaptive Dual Mode ─────────────────────────────── */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-zinc-950 pointer-events-none">
@@ -144,7 +143,7 @@ export const Hero = () => {
         {/* CTAs */}
         <motion.div
           variants={itemVariants}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto mb-14"
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto mb-12"
         >
           <Link
             to="/contacto"
@@ -161,13 +160,16 @@ export const Hero = () => {
           </a>
         </motion.div>
 
-        {/* ── TARJETAS APILADAS ────────────────────────────────────────── */}
-        <motion.p variants={itemVariants} className="text-[0.7rem] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-500 mb-5 flex items-center justify-center gap-2">
-          <Layers size={12} className="text-blue-500" strokeWidth={2} />
-          Pase el cursor sobre cada tarjeta para desplegar la telemetría
-        </motion.p>
+        {/* ── Indicador Guía de Telemetría con Alto Contraste ─────────────── */}
+        <motion.div variants={itemVariants} className="flex justify-center mb-6">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-zinc-200/90 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-200 text-xs font-semibold shadow-sm tracking-wide">
+            <Layers size={14} className="text-blue-600 dark:text-blue-400" strokeWidth={2} />
+            Pase el cursor sobre cada tarjeta para desplegar la telemetría
+          </span>
+        </motion.div>
 
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 text-left">
+        {/* ── TARJETAS APILADAS ────────────────────────────────────────── */}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left pb-10">
 
           {stacks.map((s) => (
             <div
@@ -178,42 +180,62 @@ export const Hero = () => {
               onMouseLeave={() => setActiveStack(null)}
               onClick={() => setActiveStack(activeStack === s.id ? null : s.id)}
             >
-              {/* ── CAPA INFERIOR DE SOPORTE (Telemetría) ─────────────── */}
+              {/* ── CAPA INFERIOR DE SOPORTE (Telemetría / Modo Claro y Oscuro) ── */}
               <div
                 className={`
                   absolute inset-0 rounded-2xl p-5
-                  bg-gradient-to-br ${s.backBg}
-                  border ${s.backBorder}
-                  shadow-xl transition-all duration-500 ease-out
-                  flex flex-col justify-end
+                  bg-white/95 dark:bg-zinc-900/95
+                  backdrop-blur-xl border transition-all duration-300 ease-out
+                  flex flex-col justify-between
+                  ${s.featured
+                    ? 'border-blue-300 dark:border-blue-500/50 shadow-xl shadow-blue-500/10'
+                    : 'border-zinc-200 dark:border-zinc-700/80 shadow-xl shadow-zinc-300/40 dark:shadow-none'
+                  }
                   ${activeStack === s.id
-                    ? 'translate-y-[4.5rem] scale-100 opacity-100 z-30'
-                    : 'translate-y-2.5 scale-[0.975] opacity-70 z-0 group-hover/stack:translate-y-[4.5rem] group-hover/stack:scale-100 group-hover/stack:opacity-100 group-hover/stack:z-30'
+                    ? 'translate-y-[4.5rem] scale-[1.02] opacity-100 blur-0 z-30'
+                    : 'translate-y-2.5 scale-[0.98] opacity-75 blur-[1.5px] z-0 group-hover/stack:translate-y-[4.5rem] group-hover/stack:scale-[1.02] group-hover/stack:opacity-100 group-hover/stack:blur-0 group-hover/stack:z-30'
                   }
                 `}
               >
-                <div className="space-y-2.5 pt-3 border-t border-white/10">
+                {/* Header de la tarjeta inferior */}
+                <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
+                  <span className="text-[0.68rem] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    {s.headerTelemetria}
+                  </span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+
+                {/* Métricas con distribución uniforme */}
+                <div className="space-y-2.5 py-2">
                   {s.metrics.map((m, i) => (
                     <div key={i} className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-zinc-400 text-[0.7rem] font-semibold">
-                        <span className="text-zinc-500">{m.icon}</span>
+                      <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 text-[0.72rem] font-medium">
+                        <span className="text-zinc-400 dark:text-zinc-500">{m.icon}</span>
                         {m.label}
                       </span>
-                      <span className="text-white text-[0.7rem] font-bold font-mono tracking-tight">{m.value}</span>
+                      <span className="text-zinc-900 dark:text-zinc-100 text-[0.72rem] font-bold font-mono tracking-tight">
+                        {m.value}
+                      </span>
                     </div>
                   ))}
                 </div>
+
+                {/* Pie de estado */}
+                <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-semibold">
+                  <span>Estado del servicio</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Operativo</span>
+                </div>
               </div>
 
-              {/* ── CAPA PRINCIPAL (Frontal) ───────────────────────────── */}
+              {/* ── CAPA PRINCIPAL SUPERIOR (Frontal) ───────────────────────────── */}
               <div className={`
                 relative rounded-2xl p-6 backdrop-blur-xl
                 bg-white/95 dark:bg-zinc-900/95
                 border transition-all duration-300 z-10
                 flex flex-col justify-between
-                shadow-lg
+                shadow-lg shadow-zinc-200/50 dark:shadow-none
                 ${s.featured
-                  ? 'border-blue-500/50 shadow-blue-500/10 group-hover/stack:border-blue-500/70'
+                  ? 'border-blue-500/60 dark:border-blue-500/50 shadow-blue-500/10 group-hover/stack:border-blue-500'
                   : 'border-zinc-200/90 dark:border-zinc-800 group-hover/stack:border-zinc-400/60 dark:group-hover/stack:border-zinc-600/60'
                 }
               `} style={{ minHeight: 240 }}>
@@ -223,7 +245,7 @@ export const Hero = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-colors
                       ${s.featured
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-blue-600 text-white shadow-blue-600/30'
                         : 'bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 group-hover/stack:bg-blue-600 group-hover/stack:text-white group-hover/stack:border-blue-600'
                       }`}>
                       {s.icon}
@@ -231,7 +253,7 @@ export const Hero = () => {
                     <span className={`px-2.5 py-1 rounded-full text-[0.62rem] font-bold uppercase tracking-wider
                       ${s.featured
                         ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60'
-                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
                       }`}>
                       {s.badge}
                     </span>
