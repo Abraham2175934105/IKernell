@@ -144,6 +144,23 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
     return result;
   }, [metricasPorProyecto, searchQuery, filtroSemaforo, orden]);
 
+  // Mapeo reactivo de tareas asignadas por desarrollador en el proyecto activo
+  const tareasPorDevEnEsteProyecto = useMemo(() => {
+    const map = new Map();
+    if (!etapas || !Array.isArray(etapas)) return map;
+    etapas.forEach(etapa => {
+      if (Array.isArray(etapa?.actividades)) {
+        etapa.actividades.forEach(act => {
+          const devId = act?.desarrollador?.idTrabajador;
+          if (devId && (act.estado === 'PENDIENTE' || act.estado === 'EN_PROGRESO')) {
+            map.set(devId, (map.get(devId) || 0) + 1);
+          }
+        });
+      }
+    });
+    return map;
+  }, [etapas]);
+
   // Sincroniza la selección de desarrollador al cambiar filtros o proyecto
   useEffect(() => {
     if (metricasFiltradas.length > 0) {
@@ -577,10 +594,18 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       <div className="space-y-1 mt-3">
                         <div className="flex justify-between text-[0.65rem] font-bold">
                           <span className={isSelected ? 'text-blue-100' : 'text-zinc-500 dark:text-zinc-400'}>
-                            {dev.tareasActivas} tareas WBS asignadas
+                            {isProyectoEspecifico ? (
+                              <>
+                                <strong className={isSelected ? 'text-white' : 'text-zinc-900 dark:text-white'}>
+                                  {tareasPorDevEnEsteProyecto.get(dev.idTrabajador) || 0}
+                                </strong> en este proyecto • {dev.tareasActivas} globales
+                              </>
+                            ) : (
+                              <>{dev.tareasActivas} tareas globales</>
+                            )}
                           </span>
-                          <span className="font-mono">
-                            {score}/100 Score
+                          <span className="font-mono font-bold">
+                            {score}% Burnout
                           </span>
                         </div>
                         <div className={`w-full h-1.5 rounded-full overflow-hidden ${
@@ -644,6 +669,69 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-medium">
                   {getDiagnosticoClaro(selectedDev)}
                 </div>
+
+                {/* ── Desglose de Carga: Proyecto Actual vs Global Corporativa ── */}
+                {(() => {
+                  const tareasEsteProyecto = tareasPorDevEnEsteProyecto.get(selectedDev.idTrabajador) || 0;
+                  const totalTareas = selectedDev.tareasActivas || 0;
+                  const tareasOtrosProyectos = Math.max(0, totalTareas - tareasEsteProyecto);
+
+                  return (
+                    <div className="p-4.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/70 space-y-3">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-[0.68rem] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                          <Layers size={14} className="text-blue-600 dark:text-blue-400" />
+                          Desglose de Carga: Proyecto Actual vs Global Corporativa
+                        </span>
+                        <span className="text-[0.62rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          Métrica Multidisciplinaria
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                          <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
+                            En este proyecto
+                          </span>
+                          <div className="font-extrabold text-sm text-blue-600 dark:text-blue-400">
+                            {tareasEsteProyecto} tareas activas
+                          </div>
+                          <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5 truncate">
+                            {isProyectoEspecifico ? proyecto.nombre : 'Todas las iniciativas'}
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                          <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
+                            En otros proyectos
+                          </span>
+                          <div className="font-extrabold text-sm text-zinc-700 dark:text-zinc-300">
+                            {tareasOtrosProyectos} tareas activas
+                          </div>
+                          <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5 truncate">
+                            Otras iniciativas corporativas
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                          <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
+                            Carga Global Acumulada
+                          </span>
+                          <div className="font-extrabold text-sm text-zinc-900 dark:text-white">
+                            {Math.round(selectedDev.promedioCarga)}% Total
+                          </div>
+                          <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5">
+                            Fatiga acumulada (21 días)
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 leading-relaxed italic bg-blue-50/50 dark:bg-blue-950/20 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
+                        Nota: El índice de Burnout (RF-35) evalúa la fatiga acumulada del desarrollador en todos sus proyectos asignados. Al cambiar de proyecto en el dashboard, este porcentaje se mantiene constante porque el estrés cognitivo y la capacidad humana son globales.
+                      </p>
+                    </div>
+                  );
+                })()}
 
                 {/* 3. Grid de 4 Métricas Clave */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
