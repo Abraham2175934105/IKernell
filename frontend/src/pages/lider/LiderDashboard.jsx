@@ -118,7 +118,25 @@ export const LiderDashboard = () => {
 
   // Peticiones API
   const seleccionarProyecto = useCallback(async (proyecto) => {
-    if (!proyecto || !proyecto.idProyecto) return;
+    if (!proyecto) return;
+
+    if (proyecto.idProyecto === 'GLOBAL') {
+      setProyectoSeleccionado({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+      try {
+        setLoadingDetalle(true);
+        const devsRes = await api.get('/lider/desarrolladores').catch(() => []);
+        setDesarrolladores(Array.isArray(devsRes) ? devsRes : []);
+        setEtapas([]);
+        setErrores([]);
+        setInterrupciones([]);
+      } catch (err) {
+        console.error('Error cargando vista global:', err);
+      } finally {
+        setLoadingDetalle(false);
+      }
+      return;
+    }
+
     setProyectoSeleccionado(proyecto);
 
     try {
@@ -391,16 +409,22 @@ export const LiderDashboard = () => {
             </div>
           ) : (
             <select
-              value={proyectoSeleccionado?.idProyecto || ''}
+              value={proyectoSeleccionado?.idProyecto || 'GLOBAL'}
               onChange={(e) => {
-                const proj = proyectos?.find(p => p?.idProyecto === parseInt(e.target.value));
-                if (proj) seleccionarProyecto(proj);
+                const val = e.target.value;
+                if (val === 'GLOBAL') {
+                  seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                } else {
+                  const proj = proyectos?.find(p => p?.idProyecto === parseInt(val));
+                  if (proj) seleccionarProyecto(proj);
+                }
               }}
               className="input-field py-2 text-xs font-bold"
-              title="Selecciona el proyecto activo para visualizar su WBS y métricas"
+              title="Selecciona el proyecto activo o la vista global corporativa"
             >
+              <option value="GLOBAL">🌐 [Todos los Proyectos / Vista Global Corporativa]</option>
               {proyectos?.map(p => (
-                <option key={p?.idProyecto} value={p?.idProyecto}>{p?.nombre}</option>
+                <option key={p?.idProyecto} value={p?.idProyecto}>📁 {p?.nombre}</option>
               ))}
             </select>
           )}
