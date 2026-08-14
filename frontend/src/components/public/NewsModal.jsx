@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Tag, Cpu, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X, Calendar, Tag, Cpu, ShieldCheck, CheckCircle2, ArrowRight, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const NewsModal = ({ isOpen, onClose, news }) => {
@@ -40,7 +40,7 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
           {/* Close Button */}
           <button 
             onClick={onClose}
-            className="absolute top-5 right-5 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-colors backdrop-blur-md shadow-md"
+            className="absolute top-5 right-5 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-colors backdrop-blur-md shadow-md cursor-pointer"
             aria-label="Cerrar modal"
           >
             <X size={20} />
@@ -64,6 +64,11 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md text-white border border-white/20">
                   <Calendar size={12} /> {news.date}
                 </span>
+                {news.author && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md text-zinc-200 border border-white/10">
+                    <UserCheck size={12} /> {news.author}
+                  </span>
+                )}
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight">
                 {news.title}
@@ -144,7 +149,7 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <button 
                 onClick={onClose}
-                className="w-full sm:w-auto py-2.5 px-5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 font-bold text-xs transition-colors"
+                className="w-full sm:w-auto py-2.5 px-5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 font-bold text-xs transition-colors cursor-pointer"
               >
                 Cerrar
               </button>
