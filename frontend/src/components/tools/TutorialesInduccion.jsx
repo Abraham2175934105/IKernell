@@ -88,7 +88,7 @@ export const TutorialesInduccion = () => {
   };
 
   return (
-    <div className="glass-card p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 shadow-xl shadow-zinc-200/50 dark:shadow-none animate-fade-in">
+    <div className="glass-card p-4 sm:p-6 md:p-8 border border-zinc-200 dark:border-zinc-800 shadow-xl shadow-zinc-200/50 dark:shadow-none animate-fade-in">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">

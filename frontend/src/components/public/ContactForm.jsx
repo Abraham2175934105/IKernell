@@ -148,7 +148,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl z-10 my-auto text-zinc-900 dark:text-zinc-100"
+          className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-[95%] sm:w-full max-w-lg p-5 sm:p-7 md:p-8 shadow-2xl z-10 my-auto text-zinc-900 dark:text-zinc-100 max-h-[90vh] overflow-y-auto"
         >
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">

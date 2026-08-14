@@ -489,7 +489,7 @@ export const BibliotecaDigital = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl w-full max-w-6xl h-[92vh] flex flex-col overflow-hidden text-white"
+              className="bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl w-[95%] lg:w-[85%] max-w-6xl h-[92vh] max-h-[92vh] flex flex-col overflow-hidden text-white"
             >
               
               {/* Header del Modal */}
@@ -582,8 +582,8 @@ export const BibliotecaDigital = () => {
                 
                 {/* 1. VISTA DOCUMENTO FORMAL (EFECTO HOJA A4 CON REACT-MARKDOWN) */}
                 {activeViewMode === 'pdf' && (
-                  <div className="w-full h-full bg-zinc-900 p-4 sm:p-8 overflow-y-auto flex justify-center">
-                    <div className="w-full max-w-4xl bg-white text-zinc-900 shadow-2xl min-h-[1056px] p-10 sm:p-16 rounded-sm ring-1 ring-black/10 flex flex-col justify-between self-start my-2">
+                  <div className="w-full h-full bg-zinc-900 p-2 sm:p-6 lg:p-8 overflow-y-auto flex justify-center">
+                    <div className="w-full max-w-4xl bg-white text-zinc-900 shadow-2xl min-h-[1056px] p-6 sm:p-10 md:p-14 rounded-sm ring-1 ring-black/10 flex flex-col justify-between self-start my-2">
                       
                       {/* Cabecera Formal de la Hoja A4 con Membrete Oficial */}
                       <div>

@@ -35,7 +35,7 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl z-10 my-auto text-zinc-900 dark:text-zinc-100 flex flex-col"
+          className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-[95%] sm:w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl z-10 my-auto text-zinc-900 dark:text-zinc-100 flex flex-col"
         >
           {/* Close Button */}
           <button 

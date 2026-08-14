@@ -921,14 +921,14 @@ Generado automáticamente por el motor analítico IKernell v2.0
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center pb-3 border-b border-zinc-200 dark:border-zinc-800">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
                     <Sparkles size={16} />
                   </div>
-                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-white">
+                  <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-white">
                     Guía de 4 Niveles de Riesgo de Burnout (RF-35)
                   </h3>
                 </div>

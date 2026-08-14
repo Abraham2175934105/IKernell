@@ -373,8 +373,8 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         isCollapsed ? 'lg:pl-20' : 'lg:pl-72'
       }`}>
         
-        {/* TOPBAR (HEADER PRIVADO) - Alineación simétrica perfecta */}
-        <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 px-6 py-4 flex items-center justify-between shadow-sm min-h-[72px]">
+        {/* TOPBAR (HEADER PRIVADO) - Alineación simétrica perfecta y responsiva */}
+        <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between shadow-sm min-h-[68px] sm:min-h-[72px]">
           
           {/* Lado Izquierdo: Botón Menú Móvil & Título */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
