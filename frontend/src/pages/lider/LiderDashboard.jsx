@@ -9,7 +9,7 @@ import {
   Briefcase, Layers, Plus, Activity, Sparkles, Download, 
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, X,
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
-  Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check
+  Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -401,42 +401,56 @@ export const LiderDashboard = () => {
           </h2>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Proyecto Activo:</span>
-          {loadingProyectos ? (
-            <div className="input-field py-2 text-xs flex items-center gap-2 text-zinc-400">
-              <Loader2 size={12} className="animate-spin" /> Sincronizando...
-            </div>
-          ) : (
-            <select
-              value={proyectoSeleccionado?.idProyecto || 'GLOBAL'}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === 'GLOBAL') {
-                  seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
-                } else {
-                  const proj = proyectos?.find(p => p?.idProyecto === parseInt(val));
-                  if (proj) seleccionarProyecto(proj);
-                }
-              }}
-              className="input-field py-2 text-xs font-bold"
-              title="Selecciona el proyecto activo o la vista global corporativa"
-            >
-              <option value="GLOBAL">🌐 [Todos los Proyectos / Vista Global Corporativa]</option>
-              {proyectos?.map(p => (
-                <option key={p?.idProyecto} value={p?.idProyecto}>📁 {p?.nombre}</option>
-              ))}
-            </select>
-          )}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+            {proyectoSeleccionado?.idProyecto === 'GLOBAL' ? (
+              <Globe size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />
+            ) : (
+              <FolderGit2 size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            )}
+            
+            <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 shrink-0">Proyecto:</span>
+            
+            {loadingProyectos ? (
+              <div className="text-xs flex items-center gap-1.5 text-zinc-400 font-medium pr-2">
+                <Loader2 size={12} className="animate-spin text-blue-500" /> Sincronizando...
+              </div>
+            ) : (
+              <select
+                value={proyectoSeleccionado?.idProyecto || 'GLOBAL'}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'GLOBAL') {
+                    seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                  } else {
+                    const proj = proyectos?.find(p => p?.idProyecto === parseInt(val));
+                    if (proj) seleccionarProyecto(proj);
+                  }
+                }}
+                className="bg-transparent border-0 text-xs font-bold text-zinc-900 dark:text-white focus:ring-0 focus:outline-none cursor-pointer pr-4 py-0.5"
+                title="Selecciona el proyecto activo o la vista global corporativa"
+              >
+                <option value="GLOBAL" className="dark:bg-zinc-900 text-zinc-900 dark:text-white">
+                  [Vista Global Corporativa] Todos los Proyectos
+                </option>
+                {proyectos?.map(p => (
+                  <option key={p?.idProyecto} value={p?.idProyecto} className="dark:bg-zinc-900 text-zinc-900 dark:text-white">
+                    [PRJ-00{p?.idProyecto}] {p?.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
 
           <button
             type="button"
             onClick={cargarProyectos}
             disabled={loadingProyectos}
-            className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
             title="Sincronizar proyectos y etapas en tiempo real con PostgreSQL"
           >
-            <RefreshCw size={12} className={loadingProyectos ? 'animate-spin' : ''} />
+            <RefreshCw size={13} className={loadingProyectos ? 'animate-spin text-blue-500' : 'text-zinc-600 dark:text-zinc-300'} />
+            <span className="hidden sm:inline">{loadingProyectos ? 'Sincronizando...' : 'Actualizar'}</span>
           </button>
         </div>
       </motion.div>
@@ -450,15 +464,41 @@ export const LiderDashboard = () => {
           animate="visible"
           className="space-y-6"
         >
-          
-          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {loadingDetalle ? (
-              <>
-                <SkeletonCard />
-                <SkeletonCard />
-                <SkeletonCard />
-              </>
-            ) : (
+          {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
+            <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-10 sm:p-14 text-center max-w-2xl mx-auto shadow-sm my-4">
+              <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
+                <FolderGit2 size={32} />
+              </div>
+              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white mb-2">
+                Selecciona un proyecto específico para gestionar WBS
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
+                La estructura de desglose de trabajo (fases, etapas y asignación de tareas a desarrolladores) requiere el contexto de un proyecto individual y no puede operarse en la vista global corporativa.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {proyectos?.map(p => (
+                  <button
+                    key={p.idProyecto}
+                    type="button"
+                    onClick={() => seleccionarProyecto(p)}
+                    className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+                  >
+                    <FolderGit2 size={13} className="text-blue-500" />
+                    <span>{p.nombre}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {loadingDetalle ? (
+                  <>
+                    <SkeletonCard />
+                    <SkeletonCard />
+                    <SkeletonCard />
+                  </>
+                ) : (
               <>
                 <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
                   <div>
@@ -636,12 +676,13 @@ export const LiderDashboard = () => {
                         No hay tareas asignadas en esta etapa. Haga clic en "Asignar Actividad" para comenzar.
                       </div>
                     )}
-
                   </div>
                 ))}
               </div>
             )}
           </motion.div>
+          </>
+          )}
 
         </motion.div>
       )}
@@ -767,66 +808,63 @@ export const LiderDashboard = () => {
               </button>
             </div>
 
-            {/* Filtros Selectores */}
-            <div className="flex gap-2 items-center flex-wrap">
-              <div className="flex items-center gap-1.5 text-xs">
-                <span className="text-zinc-400 font-bold text-[0.65rem] uppercase">Estado:</span>
-                <select
-                  value={filtroEstadoInc}
-                  onChange={(e) => setFiltroEstadoInc(e.target.value)}
-                  className="input-field py-1 px-2.5 text-xs font-bold"
-                >
-                  <option value="TODOS">Todos los Estados</option>
-                  <option value="REGISTRADO">Registrado</option>
-                  <option value="EN_REVISION">En Revisión</option>
-                  <option value="SOLUCIONADO">Solucionado</option>
-                </select>
-              </div>
+            {/* Filtro Estado */}
+            <div className="flex items-center gap-2">
+              <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Estado:</span>
+              <select
+                value={filtroEstadoInc}
+                onChange={(e) => setFiltroEstadoInc(e.target.value)}
+                className="input-field py-1 px-2.5 text-xs"
+              >
+                <option value="TODOS">Todos los Estados</option>
+                <option value="REGISTRADO">Registrado</option>
+                <option value="EN_REVISION">En Revisión</option>
+                <option value="SOLUCIONADO">Solucionado</option>
+              </select>
+            </div>
 
-              <div className="flex items-center gap-1.5 text-xs">
-                <span className="text-zinc-400 font-bold text-[0.65rem] uppercase">Desarrollador:</span>
-                <select
-                  value={filtroDevInc}
-                  onChange={(e) => setFiltroDevInc(e.target.value)}
-                  className="input-field py-1 px-2.5 text-xs font-bold"
-                >
-                  <option value="TODOS">Todos los Desarrolladores</option>
-                  {desarrolladores?.map(dev => (
-                    <option key={dev.idTrabajador} value={dev.idTrabajador}>
-                      {dev.nombre} {dev.apellido}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Filtro Desarrollador */}
+            <div className="flex items-center gap-2">
+              <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Desarrollador:</span>
+              <select
+                value={filtroDevInc}
+                onChange={(e) => setFiltroDevInc(e.target.value)}
+                className="input-field py-1 px-2.5 text-xs"
+              >
+                <option value="TODOS">Todos los Desarrolladores</option>
+                {desarrolladores.map(d => (
+                  <option key={d.idTrabajador} value={d.idTrabajador}>
+                    {d.nombre} {d.apellido} ({d.especialidad})
+                  </option>
+                ))}
+              </select>
             </div>
           </motion.div>
 
-          {/* Listado de Tarjetas */}
+          {/* Listado Unificado */}
           <motion.div variants={itemVariants} className="space-y-3">
             {loadingDetalle && (
-              <div className="p-8 text-center bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center gap-2">
-                <Loader2 size={16} className="animate-spin text-zinc-500" />
-                <span className="text-xs font-bold text-zinc-500">Cargando incidencias de equipo...</span>
+              <div className="space-y-3">
+                <div className="h-20 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-2xl" />
+                <div className="h-20 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-2xl" />
               </div>
             )}
 
             {!loadingDetalle && listaIncidenciasUnificada.length === 0 && (
-              <div className="p-12 text-center bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800">
-                <Inbox size={36} className="mx-auto text-zinc-400 mb-3" />
-                <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 mb-1">Sin incidencias registradas</h3>
-                <p className="text-xs text-zinc-500 max-w-sm mx-auto">No hay reportes de equipo que coincidan con los filtros seleccionados.</p>
+              <div className="text-center py-12 text-zinc-400 text-xs font-medium border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                No hay incidencias reportadas con los filtros seleccionados.
               </div>
             )}
 
             {!loadingDetalle && listaIncidenciasUnificada.map(item => {
               const isError = item._tipo === 'ERROR';
-              const devName = item.desarrollador ? `${item.desarrollador.nombre} ${item.desarrollador.apellido}` : 'Desarrollador';
+              const devName = item.desarrollador ? `${item.desarrollador.nombre} ${item.desarrollador.apellido}` : 'Sin Asignar';
               const fechaStr = new Date(item._fecha).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
 
               return (
-                <div
+                <div 
                   key={item._id}
-                  className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 space-y-3"
+                  className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 space-y-3 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200"
                 >
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div className="flex items-center gap-2.5">
@@ -849,8 +887,9 @@ export const LiderDashboard = () => {
                               {item.duracionMinutos} min
                             </span>
                           )}
-                          <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                            👤 {devName}
+                          <span className="inline-flex items-center text-[0.65rem] font-bold px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                            <User size={11} className="mr-1 text-zinc-500" />
+                            {devName}
                           </span>
                         </div>
                         <span className="text-[0.65rem] text-zinc-400 font-medium block mt-0.5">
@@ -907,7 +946,34 @@ export const LiderDashboard = () => {
           animate="visible"
           className="space-y-6"
         >
-          <EtlBrasil proyecto={proyectoSeleccionado} />
+          {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
+            <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-10 sm:p-14 text-center max-w-2xl mx-auto shadow-sm my-4">
+              <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
+                <FileText size={32} />
+              </div>
+              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white mb-2">
+                Selecciona un proyecto para exportar el lote ETL Brasil
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
+                La exportación bajo norma ISO 8601 UTC para la Alianza Estratégica Brasil requiere empaquetar los registros operativos de un proyecto individual.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {proyectos?.map(p => (
+                  <button
+                    key={p.idProyecto}
+                    type="button"
+                    onClick={() => seleccionarProyecto(p)}
+                    className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+                  >
+                    <FolderGit2 size={13} className="text-blue-500" />
+                    <span>{p.nombre}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <EtlBrasil proyecto={proyectoSeleccionado} />
+          )}
         </motion.div>
       )}
 

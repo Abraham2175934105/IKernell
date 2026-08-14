@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { 
-  ShieldAlert, AlertTriangle, CheckCircle, Clock, Bug, RefreshCw, 
-  FileText, Send, Zap, X, Loader2, Globe, Target, Sparkles, TrendingUp
+  ShieldAlert, AlertTriangle, CheckCircle2, Clock, Bug, RefreshCw, 
+  FileText, Send, Zap, X, Loader2, Globe, Target, Sparkles, FolderGit2
 } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useApi } from '../../hooks/useApi';
@@ -81,7 +81,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
 
   // Manejador de exportación ETL hacia Brasil (RF-28 a RF-30)
   const handleExportEtlBrasil = async () => {
-    const targetId = isGlobal ? 1 : idProyecto; // Si es global, genera el lote consolidado
+    const targetId = isGlobal ? 1 : idProyecto;
     setExporting(true);
     setEtlResult(null);
 
@@ -90,7 +90,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
     try {
       const response = await api.post(`/lider/proyectos/${targetId}/etl-export-brasil`);
       setEtlResult(response);
-      toast.success('¡Lote ETL exportado y transmitido a sftp.brasil.ikernell.com exitosamente!', { id: toastId });
+      toast.success('Lote ETL exportado y transmitido exitosamente.', { id: toastId });
       if (onEtlExportSuccess) onEtlExportSuccess(response);
     } catch (err) {
       console.error('Error en exportación ETL:', err);
@@ -106,36 +106,41 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
   const totalErrores = metrics?.totalErrores ?? 0;
   const totalInterrupciones = metrics?.totalInterrupciones ?? 0;
 
-  // Configuración de estilos y badges según el nivel semafórico
+  // Configuración de estilos, puntos SVG y badges sin emojis
   const nivelConfig = {
     ROJO: {
+      dotColor: 'bg-red-500',
       badge: 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800 animate-pulse',
-      iconBg: 'bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400',
-      label: '🔴 Nivel Crítico (Alerta Roja)',
+      iconBg: 'bg-red-100 text-red-600 dark:bg-red-950/80 dark:text-red-400 border border-red-200 dark:border-red-900',
+      label: 'Nivel Crítico (Alerta Roja)',
       Icon: ShieldAlert
     },
     NARANJA: {
+      dotColor: 'bg-orange-500',
       badge: 'bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border-orange-200 dark:border-orange-800',
-      iconBg: 'bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400',
-      label: '🟠 Nivel Alto (Riesgo Moderado)',
+      iconBg: 'bg-orange-100 text-orange-600 dark:bg-orange-950/80 dark:text-orange-400 border border-orange-200 dark:border-orange-900',
+      label: 'Nivel Alto (Riesgo Moderado)',
       Icon: AlertTriangle
     },
     AMARILLO: {
+      dotColor: 'bg-amber-500',
       badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-      iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400',
-      label: '🟡 Nivel Medio (En Alerta)',
+      iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-200 dark:border-amber-900',
+      label: 'Nivel Medio (En Alerta)',
       Icon: AlertTriangle
     },
     VERDE: {
+      dotColor: 'bg-emerald-500',
       badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-      iconBg: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400',
-      label: '🟢 Nivel Bajo (Operación Estable)',
-      Icon: CheckCircle
+      iconBg: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/80 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900',
+      label: 'Nivel Bajo (Operación Estable)',
+      Icon: CheckCircle2
     }
   }[currentLevel] || {
+    dotColor: 'bg-zinc-400',
     badge: 'bg-zinc-100 text-zinc-700 border-zinc-200',
     iconBg: 'bg-zinc-100 text-zinc-700',
-    label: 'Desconocido',
+    label: 'Estado Desconocido',
     Icon: Zap
   };
 
@@ -146,21 +151,21 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="glass-panel p-6 md:p-8 mb-8 border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm space-y-6"
+      className="glass-panel p-6 md:p-8 mb-8 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm space-y-6"
     >
       
-      {/* ─── Encabezado Reactivo (Global vs Proyecto Específico) ─── */}
+      {/* ─── Encabezado Corporativo (Global vs Proyecto Específico) ─── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
             <div className="p-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm">
-              {isGlobal ? <Globe size={20} className="text-blue-500" /> : <Target size={20} className="text-emerald-500" />}
+              {isGlobal ? <Globe size={20} className="text-blue-500" /> : <FolderGit2 size={20} className="text-emerald-500" />}
             </div>
             <div>
               <h3 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white">
                 {isGlobal 
-                  ? '🌐 Semáforo de Riesgo Organizacional (Salud Global de la Empresa)'
-                  : `🎯 Semáforo de Riesgo: ${proyectoNombre || metrics?.nombreProyecto || 'Proyecto Activo'}`
+                  ? 'Semáforo de Riesgo Organizacional (Salud Global)'
+                  : `Semáforo de Riesgo: ${proyectoNombre || metrics?.nombreProyecto || 'Proyecto Activo'}`
                 }
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
@@ -190,8 +195,8 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
             className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
             title="Recalcular métricas en base a PostgreSQL en tiempo real"
           >
-            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            <span>Recalcular</span>
+            <RefreshCw size={13} className={loading ? 'animate-spin text-blue-500' : ''} />
+            <span>Actualizar</span>
           </button>
           
           <button
@@ -226,10 +231,11 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
           {/* 1. Tarjeta Principal del Semáforo (Nivel Visual) */}
           <div className="lg:col-span-5 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 md:p-8 flex flex-col justify-center items-center text-center bg-white dark:bg-zinc-900 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all">
             <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-md ${nivelConfig.iconBg}`}>
-              <LevelIcon size={40} />
+              <LevelIcon size={38} />
             </div>
 
-            <span className={`text-xs font-black tracking-wider uppercase px-3 py-1 rounded-full border mb-2 ${nivelConfig.badge}`}>
+            <span className={`inline-flex items-center gap-2 text-xs font-black tracking-wider uppercase px-3 py-1 rounded-full border mb-2 ${nivelConfig.badge}`}>
+              <span className={`w-2 h-2 rounded-full ${nivelConfig.dotColor}`} />
               {nivelConfig.label}
             </span>
 

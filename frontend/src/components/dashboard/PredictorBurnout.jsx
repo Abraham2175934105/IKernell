@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   ShieldAlert, Activity, TrendingUp, AlertTriangle, CheckCircle2, 
-  User, RefreshCw, Sparkles, Lock, Layers, Users, ArrowRight,
+  User, RefreshCw, Sparkles, Lock, Layers, Users,
   Briefcase, Check, Info, Search, X, HelpCircle, Download,
-  TrendingDown, Minus, Clock, ChevronRight
+  TrendingDown, Minus, Clock, Globe, FolderGit2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
 import toast from 'react-hot-toast';
-import { Skeleton, SkeletonCard } from '../ui/Skeleton';
+import { SkeletonCard } from '../ui/Skeleton';
 
 /**
  * Normaliza de forma robusta cualquier estado a los 4 niveles homologados:
- * - CRITICA (🔴 Nivel Crítico / Sobrecarga Extrema)
- * - ALTA    (🟠 Nivel Alto / Sobrecarga)
- * - MEDIA   (🟡 Nivel Medio / En Alerta)
- * - BAJA    (🟢 Nivel Bajo / Estable)
+ * - CRITICA (Nivel Crítico / Sobrecarga Extrema)
+ * - ALTA    (Nivel Alto / Sobrecarga)
+ * - MEDIA   (Nivel Medio / En Alerta)
+ * - BAJA    (Nivel Bajo / Estable)
  */
 const normalizarEstado = (estado) => {
   if (!estado) return 'BAJA';
@@ -154,20 +154,20 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
     }
   }, [metricasFiltradas]);
 
-  // Genera un diagnóstico claro y libre de tecnicismos
+  // Genera un diagnóstico claro y profesional libre de emojis
   const getDiagnosticoClaro = (dev) => {
     if (!dev) return '';
     const score = Math.round(dev.promedioCarga || 0);
     const nivel = normalizarEstado(dev.estadoAlerta);
     switch (nivel) {
       case 'CRITICA':
-        return `🔴 Nivel Crítico (Crítica / Sobrecarga Extrema): Registra una carga promedio de ${score}% (> 80%) con desgaste acumulado en el ciclo de 21 días y ${dev.tareasActivas} tareas asignadas. Se requiere rebalanceo urgente de su carga WBS y restricción preventiva de nuevas asignaciones.`;
+        return `Nivel Crítico (Sobrecarga Extrema): Registra una carga promedio de ${score}% (> 80%) con desgaste acumulado en el ciclo de 21 días y ${dev.tareasActivas} tareas asignadas. Se requiere rebalanceo urgente de su carga WBS y restricción preventiva de nuevas asignaciones.`;
       case 'ALTA':
-        return `🟠 Nivel Alto (Alta / Sobrecarga): Presenta una carga de ${score}% (rango 65% - 79%) o tendencia acelerada en los últimos 7 días con ${dev.tareasActivas} tareas activas. Se recomienda redistribuir actividades complejas.`;
+        return `Nivel Alto (Sobrecarga): Presenta una carga de ${score}% (rango 65% - 79%) o tendencia acelerada en los últimos 7 días con ${dev.tareasActivas} tareas activas. Se recomienda redistribuir actividades complejas.`;
       case 'MEDIA':
-        return `🟡 Nivel Medio (Media / En Alerta): Mantiene una carga de ${score}% (rango 45% - 64%) con contingencias e interrupciones recurrentes. Se aconseja monitorear las entregas del sprint para evitar sobrecarga.`;
+        return `Nivel Medio (En Alerta): Mantiene una carga de ${score}% (rango 45% - 64%) con contingencias e interrupciones recurrentes. Se aconseja monitorear las entregas del sprint para evitar sobrecarga.`;
       default:
-        return `🟢 Nivel Bajo / Estable (Baja / Óptimo): Mantiene un flujo balanceado con una carga de ${score}% (< 45%) y ritmo de trabajo sostenible dentro de los parámetros de rendimiento óptimo.`;
+        return `Nivel Bajo / Estable (Óptimo): Mantiene un flujo balanceado con una carga de ${score}% (< 45%) y ritmo de trabajo sostenible dentro de los parámetros de rendimiento óptimo.`;
     }
   };
 
@@ -188,7 +188,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
     return { label: 'Carga Homogénea / Estable', icon: Minus, color: 'text-blue-500' };
   };
 
-  // Exporta o descarga el informe diagnóstico del desarrollador
+  // Exporta el informe diagnóstico en archivo de texto estructurado
   const handleExportarDiagnostico = (dev) => {
     if (!dev) return;
     const fecha = new Date().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
@@ -240,7 +240,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
     toast.success(`Diagnóstico de ${dev.nombreCompleto} exportado con éxito.`);
   };
 
-  // Badge estilizado de estado homologado a 4 niveles
+  // Badge estilizado con indicadores SVG limpios (sin emojis)
   const getBadgeEstado = (estado) => {
     const nivel = normalizarEstado(estado);
     switch (nivel) {
@@ -297,11 +297,16 @@ Generado automáticamente por el motor analítico IKernell v2.0
             
             {/* Contexto del Proyecto o Alcance Global */}
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold border border-zinc-200 dark:border-zinc-700">
-              <Briefcase size={12} className="text-blue-600 dark:text-blue-400" />
               {isProyectoEspecifico ? (
-                <>Proyecto: <strong className="text-zinc-900 dark:text-white truncate max-w-[220px]">{proyecto.nombre}</strong></>
+                <>
+                  <FolderGit2 size={12} className="text-blue-600 dark:text-blue-400" />
+                  <span>Proyecto: <strong className="text-zinc-900 dark:text-white truncate max-w-[220px]">{proyecto.nombre}</strong></span>
+                </>
               ) : (
-                <span className="text-blue-600 dark:text-blue-400">🌐 Alcance Corporativo Global (Todos los Proyectos)</span>
+                <>
+                  <Globe size={12} className="text-blue-600 dark:text-blue-400" />
+                  <span className="text-blue-600 dark:text-blue-400 font-semibold">Alcance Corporativo Global (Todos los Proyectos)</span>
+                </>
               )}
             </span>
           </div>
@@ -332,8 +337,8 @@ Generado automáticamente por el motor analítico IKernell v2.0
             className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
             title="Sincronizar métricas con PostgreSQL en tiempo real"
           >
-            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            <span>Sincronizar Matriz</span>
+            <RefreshCw size={13} className={loading ? 'animate-spin text-blue-500' : ''} />
+            <span>Actualizar</span>
           </button>
         </div>
       </div>
@@ -411,10 +416,10 @@ Generado automáticamente por el motor analítico IKernell v2.0
               )}
             </div>
 
-            {/* 2. Píldoras de Filtro Semafórico Homologadas (Reactivo con Conteos Reales) */}
+            {/* 2. Píldoras de Filtro Semafórico Homologadas (Sin emojis, con dots SVG) */}
             <div className="space-y-1.5">
               <span className="text-[0.62rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">
-                Filtrar por Nivel de Riesgo Homologado:
+                Filtrar por Nivel de Riesgo:
               </span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
@@ -431,46 +436,50 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 <button
                   type="button"
                   onClick={() => setFiltroSemaforo('CRITICA')}
-                  className={`text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                  className={`inline-flex items-center text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
                     filtroSemaforo === 'CRITICA'
                       ? 'bg-red-600 text-white shadow-sm'
                       : 'bg-white dark:bg-zinc-900 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/30'
                   }`}
                 >
-                  🔴 Crítica ({conteosSemaforo.CRITICA})
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5 inline-block" />
+                  Crítica ({conteosSemaforo.CRITICA})
                 </button>
                 <button
                   type="button"
                   onClick={() => setFiltroSemaforo('ALTA')}
-                  className={`text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                  className={`inline-flex items-center text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
                     filtroSemaforo === 'ALTA'
                       ? 'bg-orange-500 text-white shadow-sm'
                       : 'bg-white dark:bg-zinc-900 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50 hover:bg-orange-50 dark:hover:bg-orange-950/30'
                   }`}
                 >
-                  🟠 Alta ({conteosSemaforo.ALTA})
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5 inline-block" />
+                  Alta ({conteosSemaforo.ALTA})
                 </button>
                 <button
                   type="button"
                   onClick={() => setFiltroSemaforo('MEDIA')}
-                  className={`text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                  className={`inline-flex items-center text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
                     filtroSemaforo === 'MEDIA'
                       ? 'bg-amber-500 text-white shadow-sm'
                       : 'bg-white dark:bg-zinc-900 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-50 dark:hover:bg-amber-950/30'
                   }`}
                 >
-                  🟡 Media ({conteosSemaforo.MEDIA})
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 inline-block" />
+                  Media ({conteosSemaforo.MEDIA})
                 </button>
                 <button
                   type="button"
                   onClick={() => setFiltroSemaforo('BAJA')}
-                  className={`text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                  className={`inline-flex items-center text-[0.68rem] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
                     filtroSemaforo === 'BAJA'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'bg-white dark:bg-zinc-900 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
                   }`}
                 >
-                  🟢 Baja / Estable ({conteosSemaforo.BAJA})
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 inline-block" />
+                  Baja / Estable ({conteosSemaforo.BAJA})
                 </button>
               </div>
             </div>
@@ -780,7 +789,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       type="button"
                       onClick={() => handleExportarDiagnostico(selectedDev)}
                       className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm flex-1 sm:flex-initial"
-                      title="Descargar informe clínico-técnico en formato plano"
+                      title="Descargar informe técnico en formato plano"
                     >
                       <Download size={13} /> Exportar Diagnóstico
                     </button>
@@ -857,32 +866,32 @@ Generado automáticamente por el motor analítico IKernell v2.0
                   <h4 className="font-bold text-zinc-900 dark:text-white mb-1">
                     2. Convención Homologada de los 4 Niveles
                   </h4>
-                  <div className="space-y-2 mt-2">
+                  <div className="space-y-2.5 mt-2.5">
                     <div className="flex items-start gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 shrink-0 mt-0.5" />
+                      <span className="w-2 h-2 rounded-full bg-red-600 shrink-0 mt-1" />
                       <div>
-                        <strong className="text-red-700 dark:text-red-400">🔴 Nivel Crítico (Crítica):</strong> Carga &gt; 80% o sobrecarga sostenida &ge; 65% en las 3 semanas consecutivas. Bloqueo preventivo de asignaciones.
+                        <strong className="text-red-700 dark:text-red-400">Nivel Crítico (Crítica):</strong> Carga &gt; 80% o sobrecarga sostenida &ge; 65% en las 3 semanas consecutivas. Bloqueo preventivo de asignaciones.
                       </div>
                     </div>
 
                     <div className="flex items-start gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0 mt-0.5" />
+                      <span className="w-2 h-2 rounded-full bg-orange-500 shrink-0 mt-1" />
                       <div>
-                        <strong className="text-orange-700 dark:text-orange-400">🟠 Nivel Alto (Alta):</strong> Carga entre 65% y 79% o aceleración de estrés en los últimos 7 días (S3 &ge; 75%).
+                        <strong className="text-orange-700 dark:text-orange-400">Nivel Alto (Alta):</strong> Carga entre 65% y 79% o aceleración de estrés en los últimos 7 días (S3 &ge; 75%).
                       </div>
                     </div>
 
                     <div className="flex items-start gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 mt-0.5" />
+                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 mt-1" />
                       <div>
-                        <strong className="text-amber-700 dark:text-amber-400">🟡 Nivel Medio (Media):</strong> Carga entre 45% y 64% con contingencias recurrentes. Requiere seguimiento de entregas.
+                        <strong className="text-amber-700 dark:text-amber-400">Nivel Medio (Media):</strong> Carga entre 45% y 64% con contingencias recurrentes. Requiere seguimiento de entregas.
                       </div>
                     </div>
 
                     <div className="flex items-start gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 mt-0.5" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1" />
                       <div>
-                        <strong className="text-emerald-700 dark:text-emerald-400">🟢 Nivel Bajo / Estable (Baja / Estable):</strong> Carga &lt; 45% y flujo balanceado de tareas con ritmo de trabajo óptimo.
+                        <strong className="text-emerald-700 dark:text-emerald-400">Nivel Bajo / Estable (Baja / Estable):</strong> Carga &lt; 45% y flujo balanceado de tareas con ritmo de trabajo óptimo.
                       </div>
                     </div>
                   </div>
