@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Skeleton, SkeletonCard, SkeletonTable, SkeletonMetricCard } from '../../components/ui/Skeleton';
 
 // Variantes de animación ultra rápidas y fluidas (0.25s)
 const containerVariants = {
@@ -64,14 +65,6 @@ const EstadoAtencionBadge = ({ estado }) => {
   );
 };
 
-// Componente esqueleto para estados de carga
-const SkeletonCard = () => (
-  <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse">
-    <div className="h-3 w-28 bg-zinc-200 dark:bg-zinc-700 rounded mb-2" />
-    <div className="h-6 w-36 bg-zinc-200 dark:bg-zinc-700 rounded mb-2" />
-    <div className="h-3 w-24 bg-zinc-200 dark:bg-zinc-700 rounded" />
-  </div>
-);
 
 export const LiderDashboard = () => {
   const { user } = useAuth();

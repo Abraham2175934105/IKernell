@@ -11,6 +11,7 @@ import {
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SnippetInjectionCard } from '../../components/dashboard/SnippetInjectionCard';
+import { Skeleton, SkeletonCard, SkeletonTable } from '../../components/ui/Skeleton';
 
 // Variantes de animación de alto rendimiento y ultra rápidas (0.25s)
 const containerVariants = {
@@ -50,21 +51,6 @@ const parseReasignacion = (descripcion) => {
   return { isReassigned: false, motivo: null, cleanDescripcion: descripcion };
 };
 
-// Componente esqueleto para estados de carga
-const SkeletonCard = () => (
-  <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse">
-    <div className="flex justify-between items-center mb-3">
-      <div className="h-3 w-24 bg-zinc-200 dark:bg-zinc-700 rounded" />
-      <div className="h-5 w-20 bg-zinc-200 dark:bg-zinc-700 rounded-full" />
-    </div>
-    <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-700 rounded mb-2" />
-    <div className="h-4 w-3/4 bg-zinc-200 dark:bg-zinc-700 rounded mb-4" />
-    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex justify-between">
-      <div className="h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded" />
-      <div className="h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded" />
-    </div>
-  </div>
-);
 
 // Estado vacío cuando no hay registros para mostrar
 const EmptyState = ({ icon: Icon, title, description, action }) => (
@@ -949,9 +935,9 @@ export const DesarrolladorDashboard = () => {
           {/* Listado de Tarjetas */}
           <motion.div variants={itemVariants} className="space-y-3">
             {loadingReportes && (
-              <div className="p-8 text-center bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center gap-2">
-                <Loader2 size={16} className="animate-spin text-zinc-500" />
-                <span className="text-xs font-bold text-zinc-500">Cargando reportes desde PostgreSQL...</span>
+              <div className="space-y-3">
+                <SkeletonCard rows={2} />
+                <SkeletonCard rows={2} />
               </div>
             )}
 
