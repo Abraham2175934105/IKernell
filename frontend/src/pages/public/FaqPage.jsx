@@ -4,7 +4,8 @@ import {
   ArrowLeft, MessageSquare, ShieldCheck, Cpu, Sparkles, 
   Search, ChevronDown, HelpCircle, X, Layers, Database, Lock,
   Activity, RefreshCw, Terminal, Check, Copy, Clock, ThumbsUp, 
-  ThumbsDown, AlertCircle, LifeBuoy, UserCheck, CheckCircle2
+  ThumbsDown, AlertCircle, LifeBuoy, UserCheck, CheckCircle2,
+  Workflow, Globe2, Server
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,80 +21,118 @@ const normalizeText = (text) => {
     .trim();
 };
 
-const faqsData = [
+export const faqsData = [
+  /* ── Categoría 1: General & Servicios Corporativos ── */
   {
     id: 1,
-    category: 'ARQUITECTURA',
-    roleTag: 'General · Público',
-    readTime: '1 min de lectura',
-    question: "¿Qué tipo de soluciones de software desarrolla IKernell?",
-    answer: "IKernell se especializa en aplicaciones empresariales de alta complejidad desarrolladas en Java Spring Boot y React.js, aplicando desgloses WBS por etapas, control transaccional e inteligencia predictiva de riesgos."
+    category: 'GENERAL',
+    roleTag: 'Público',
+    readTime: '1 min',
+    question: "¿Qué es IKernell y cómo ayuda a las empresas de tecnología?",
+    answer: "Es una plataforma integral diseñada para planificar, monitorear y predecir el avance de proyectos de software. Centraliza la asignación de actividades, el control de tiempos y la comunicación del equipo en un solo entorno seguro."
   },
   {
     id: 2,
-    category: 'SEMÁFORO',
-    roleTag: 'Líder · Coordinador',
-    readTime: '1 min de lectura',
-    question: "¿Cómo funciona el algoritmo del Semáforo Predictivo?",
-    answer: "El motor analiza en tiempo real las métricas de errores tipificados y la duración en minutos de las interrupciones reportadas por los desarrolladores. Si la tasa acumulada supera los umbrales de riesgo, el semáforo alerta automáticamente a los líderes para reasignar personal o extender plazos."
+    category: 'GENERAL',
+    roleTag: 'Comercial',
+    readTime: '1 min',
+    question: "¿Cómo puedo solicitar una cotización o asesoría para un desarrollo de software?",
+    answer: "Puedes utilizar nuestro formulario de contacto en línea seleccionando el tipo de servicio y el presupuesto estimado. Un coordinador técnico revisará tu solicitud y se comunicará en menos de 24 horas."
   },
   {
     id: 3,
-    category: 'ETL BRASIL',
-    roleTag: 'Líder · Internacional',
-    readTime: '1 min de lectura',
-    question: "¿En qué consiste la automatización ETL para la Alianza en Brasil?",
-    answer: "Es un proceso que recopila las métricas del proyecto con un solo clic del Líder (o mediante una tarea programada batch desatendida), las estandariza a formatos ISO 8601 UTC en archivos planos con delimitador '|' y las envía mediante canales seguros por SFTP o correo corporativo."
+    category: 'GENERAL',
+    roleTag: 'Gestión',
+    readTime: '1 min',
+    question: "¿Qué metodologías de trabajo soporta la plataforma?",
+    answer: "Soporta descomposición estructurada del trabajo (WBS) y flujos ágiles. Permite organizar proyectos por etapas secuenciales, asignar tareas específicas a desarrolladores y hacer seguimiento visual del cumplimiento."
   },
+
+  /* ── Categoría 2: Gestión de Proyectos y Roles ── */
   {
     id: 4,
-    category: 'SEGURIDAD',
-    roleTag: 'Desarrollador · Seguridad',
-    readTime: '1 min de lectura',
-    question: "¿Cómo garantiza IKernell la seguridad de los datos de usuario y credenciales?",
-    answer: "Cumplimos con una arquitectura de seguridad perimetral basada en JWT (sin cookies de sesión) y almacenamiento unidireccional de contraseñas con el algoritmo BCrypt (RNF-08 a RNF-10)."
+    category: 'GESTIÓN',
+    roleTag: 'Roles',
+    readTime: '1 min',
+    question: "¿Cuáles son los roles de usuario y sus permisos dentro del sistema?",
+    answer: "IKernell maneja tres roles operativos: el Coordinador (administra talento y solicitudes), el Líder de Proyecto (crea etapas, asigna actividades y genera reportes) y el Desarrollador (registra avances, errores e interrupciones)."
   },
   {
     id: 5,
-    category: 'COMERCIAL',
-    roleTag: 'Público · Clientes',
-    readTime: '1 min de lectura',
-    question: "¿Cómo puedo solicitar una cotización o consultoría tecnológica?",
-    answer: "Puedes completar el formulario interactivo en el Centro de Contacto de este portal. Nuestro equipo de administración revisará tu solicitud y se pondrá en contacto en menos de 24 horas."
+    category: 'GESTIÓN',
+    roleTag: 'Operación',
+    readTime: '1 min',
+    question: "¿Cómo se mide el avance real de cada etapa o actividad?",
+    answer: "Cada desarrollador actualiza el estado de sus actividades (Pendiente, En Proceso, Finalizada). El sistema consolida automáticamente estos porcentajes para mostrar el progreso global de la etapa y del proyecto en tiempo real."
   },
   {
     id: 6,
-    category: 'ARQUITECTURA',
-    roleTag: 'Desarrollador · Base de Datos',
-    readTime: '1 min de lectura',
-    question: "¿Qué motor de base de datos utiliza el ecosistema IKernell?",
-    answer: "Utilizamos PostgreSQL 15+ con esquemas fuertemente tipados, índices B-Tree para optimización de consultas de alta concurrencia, restricciones de integridad referencial CASCADE y aislamiento transaccional READ COMMITTED."
+    category: 'GESTIÓN',
+    roleTag: 'Métricas',
+    readTime: '1 min',
+    question: "¿Cómo se realiza el registro de errores e interrupciones en el desarrollo?",
+    answer: "Los desarrolladores cuentan con formularios rápidos para reportar bloqueos técnicos (con nivel de severidad) o tiempos muertos externos, asociándolos directamente a la fase y al proyecto en ejecución."
   },
+
+  /* ── Categoría 3: Funcionalidades Innovadoras ── */
   {
     id: 7,
-    category: 'SEGURIDAD',
-    roleTag: 'Todos los Roles (RBAC)',
-    readTime: '1 min de lectura',
-    question: "¿Cómo se gestionan los roles y permisos (RBAC)?",
-    answer: "El sistema diferencia 3 roles de negocio: Coordinador (crea y gestiona personal), Líder (administra proyectos y monitorea el semáforo predictivo) y Desarrollador (reporta actividades, errores e interrupciones)."
+    category: 'INNOVACIÓN',
+    roleTag: 'Predictivo',
+    readTime: '1 min',
+    question: "¿Qué es el Semáforo Inteligente o Dashboard Predictivo de Riesgos?",
+    answer: "Es un panel automatizado que analiza la acumulación de errores, retrasos e interrupciones. Clasifica la salud del proyecto en tres niveles (Verde, Amarillo y Rojo) para anticipar cuellos de botella antes de que afecten la entrega."
   },
   {
     id: 8,
-    category: 'ETL BRASIL',
-    roleTag: 'Seguridad · Internacional',
-    readTime: '1 min de lectura',
-    question: "¿Qué validaciones de integridad se aplican a los archivos exportados?",
-    answer: "Cada archivo generado para la alianza con Brasil incorpora una firma criptográfica SHA-256 en su encabezado y valida la estructura de campos numéricos y fechas ISO antes de su transmisión."
+    category: 'INNOVACIÓN',
+    roleTag: 'Integración',
+    readTime: '1 min',
+    question: "¿En qué consiste la Automatización ETL para el reporte internacional (Brasil)?",
+    answer: "Es un proceso que consolida las métricas del proyecto y las exporta en un archivo plano estandarizado con un solo clic, listo para su transmisión e integración con la empresa aliada en Brasil."
+  },
+  {
+    id: 9,
+    category: 'INNOVACIÓN',
+    roleTag: 'Colaboración',
+    readTime: '1 min',
+    question: "¿Qué herramientas colaborativas internas incluye el sistema?",
+    answer: "Incluye un chat corporativo en tiempo real, una biblioteca digital para documentación técnica con buscador de comandos y un centro de tutoriales de capacitación interna."
+  },
+
+  /* ── Categoría 4: Seguridad & Arquitectura ── */
+  {
+    id: 10,
+    category: 'SEGURIDAD',
+    roleTag: 'Seguridad',
+    readTime: '1 min',
+    question: "¿Cómo se garantiza la seguridad de las sesiones y la información?",
+    answer: "La plataforma utiliza tokens de acceso JWT (JSON Web Tokens) firmados digitalmente para validar cada petición y cifra todas las contraseñas en la base de datos mediante el algoritmo seguro BCrypt."
+  },
+  {
+    id: 11,
+    category: 'SEGURIDAD',
+    roleTag: 'Arquitectura',
+    readTime: '1 min',
+    question: "¿Qué tecnologías componen el sistema?",
+    answer: "La interfaz de usuario está construida con React y Tailwind CSS para máxima fluidez, conectada a través de una API REST protegida a un backend empresarial desarrollado en Java Spring Boot con PostgreSQL."
+  },
+  {
+    id: 12,
+    category: 'SEGURIDAD',
+    roleTag: 'Infraestructura',
+    readTime: '1 min',
+    question: "¿Los datos del proyecto están respaldados y sincronizados?",
+    answer: "Sí, la base de datos relacional garantiza la integridad y consistencia de la información transaccional, y el código fuente se encuentra gestionado de forma distribuida en Git."
   }
 ];
 
 const categoryItems = [
   { id: 'TODAS', label: 'Todas', icon: <Layers size={13} strokeWidth={1.8} /> },
-  { id: 'ARQUITECTURA', label: 'Arquitectura', icon: <Cpu size={13} strokeWidth={1.8} /> },
-  { id: 'SEMÁFORO', label: 'Semáforo', icon: <Activity size={13} strokeWidth={1.8} /> },
-  { id: 'ETL BRASIL', label: 'ETL Brasil', icon: <RefreshCw size={13} strokeWidth={1.8} /> },
-  { id: 'SEGURIDAD', label: 'Seguridad', icon: <ShieldCheck size={13} strokeWidth={1.8} /> },
-  { id: 'COMERCIAL', label: 'Comercial', icon: <Database size={13} strokeWidth={1.8} /> },
+  { id: 'GENERAL', label: 'General & Servicios', icon: <HelpCircle size={13} strokeWidth={1.8} /> },
+  { id: 'GESTIÓN', label: 'Gestión & Roles', icon: <Workflow size={13} strokeWidth={1.8} /> },
+  { id: 'INNOVACIÓN', label: 'Innovación & AI', icon: <Sparkles size={13} strokeWidth={1.8} /> },
+  { id: 'SEGURIDAD', label: 'Seguridad & Arquitectura', icon: <ShieldCheck size={13} strokeWidth={1.8} /> },
 ];
 
 export const FaqPage = () => {
@@ -102,7 +141,7 @@ export const FaqPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('TODAS');
   const [copiedId, setCopiedId] = useState(null);
-  const [feedbackState, setFeedbackState] = useState({}); // { [faqId]: 'yes' | 'no' }
+  const [feedbackState, setFeedbackState] = useState({});
 
   // Filtrado predictivo y en tiempo real
   const filteredFaqs = useMemo(() => {
@@ -206,7 +245,7 @@ export const FaqPage = () => {
               </span>
               <p className="leading-snug">
                 <strong className="text-zinc-900 dark:text-white block mb-0.5">Filtra o busca:</strong>
-                Escribe tu inquietud o elige una categoría temáticа.
+                Escribe tu inquietud o elige una categoría temática.
               </p>
             </div>
 
@@ -292,7 +331,7 @@ export const FaqPage = () => {
                 <HelpCircle size={22} />
               </div>
               <div>
-                <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Preguntas & Respuestas Técnicas</h3>
+                <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Preguntas & Respuestas</h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Filtra por módulo temático o busca palabras clave</p>
               </div>
             </div>
@@ -301,7 +340,7 @@ export const FaqPage = () => {
             {filteredFaqs.length > 0 && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
                 <Check size={13} className="text-emerald-600 dark:text-emerald-400" />
-                {filteredFaqs.length} {filteredFaqs.length === 1 ? 'respuesta disponible' : 'respuestas técnicas'}
+                {filteredFaqs.length} {filteredFaqs.length === 1 ? 'pregunta disponible' : 'preguntas disponibles'}
               </span>
             )}
           </div>
@@ -311,7 +350,7 @@ export const FaqPage = () => {
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
             <input
               type="text"
-              placeholder="Buscar por pregunta, tecnología o concepto (ej. JWT, riesgo, ETL, PostgreSQL)..."
+              placeholder="Buscar por pregunta, tecnología o concepto (ej. WBS, roles, semáforo, JWT)..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -422,7 +461,7 @@ export const FaqPage = () => {
                             <Clock size={10} /> {faq.readTime}
                           </span>
                           <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                          <span className="inline-flex items-center gap-1 text-[0.62rem] font-semibold text-zinc-500 dark:text-zinc-400">
+                          <span className="inline-flex items-center gap-1 text-[0.62rem] font-semibold text-blue-600 dark:text-blue-400">
                             <UserCheck size={10} /> {faq.roleTag}
                           </span>
                         </div>
