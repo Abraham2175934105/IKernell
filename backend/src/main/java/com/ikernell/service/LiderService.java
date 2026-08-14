@@ -202,6 +202,12 @@ public class LiderService {
         return errores;
     }
 
+    // Consulta todos los errores técnicos globales reportados en la organización
+    @Transactional(readOnly = true)
+    public List<Error> obtenerTodosLosErrores() {
+        return errorRepository.findAll();
+    }
+
     // Consulta interrupciones y contingencias operativas reportadas
     @Transactional(readOnly = true)
     public List<Interrupcion> obtenerInterrupcionesPorProyecto(Long idProyecto) {
@@ -213,6 +219,21 @@ public class LiderService {
             interrupciones.addAll(interrupcionRepository.findByEtapa(e));
         }
         return interrupciones;
+    }
+
+    // Consulta todas las interrupciones y contingencias globales reportadas en la organización
+    @Transactional(readOnly = true)
+    public List<Interrupcion> obtenerTodasLasInterrupciones() {
+        return interrupcionRepository.findAll();
+    }
+
+    // Consulta consolidada global de incidencias (errores e interrupciones)
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerReportesConsolidadosGlobal() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("errores", errorRepository.findAll());
+        response.put("interrupciones", interrupcionRepository.findAll());
+        return response;
     }
 
     // Calcula el semáforo de riesgo ponderando errores críticos y minutos de contingencia

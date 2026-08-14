@@ -163,16 +163,40 @@ public class LiderController {
         return ResponseEntity.ok(liderService.calcularMetricasSemaforo(id));
     }
 
+    @GetMapping("/errores/global")
+    @Operation(summary = "Listar todas las incidencias globales", description = "Devuelve todos los errores reportados en la compañía")
+    public ResponseEntity<List<Error>> obtenerTodosLosErrores() {
+        return ResponseEntity.ok(liderService.obtenerTodosLosErrores());
+    }
+
+    @GetMapping("/interrupciones/global")
+    @Operation(summary = "Listar todas las interrupciones globales", description = "Devuelve todas las contingencias reportadas en la compañía")
+    public ResponseEntity<List<Interrupcion>> obtenerTodasLasInterrupciones() {
+        return ResponseEntity.ok(liderService.obtenerTodasLasInterrupciones());
+    }
+
+    @GetMapping("/incidencias/global")
+    @Operation(summary = "Reportes consolidados globales", description = "Devuelve todos los errores e interrupciones de todos los proyectos")
+    public ResponseEntity<Map<String, Object>> obtenerIncidenciasGlobales() {
+        return ResponseEntity.ok(liderService.obtenerReportesConsolidadosGlobal());
+    }
+
     @GetMapping("/proyectos/{idProyecto}/errores")
-    @Operation(summary = "Listar incidencias de un proyecto", description = "Devuelve todos los errores reportados en las fases del proyecto")
-    public ResponseEntity<List<Error>> obtenerErroresProyecto(@PathVariable Long idProyecto) {
-        return ResponseEntity.ok(liderService.obtenerErroresPorProyecto(idProyecto));
+    @Operation(summary = "Listar incidencias de un proyecto o globales", description = "Devuelve todos los errores reportados en las fases del proyecto")
+    public ResponseEntity<List<Error>> obtenerErroresProyecto(@PathVariable String idProyecto) {
+        if ("GLOBAL".equalsIgnoreCase(idProyecto) || "all".equalsIgnoreCase(idProyecto) || "null".equalsIgnoreCase(idProyecto)) {
+            return ResponseEntity.ok(liderService.obtenerTodosLosErrores());
+        }
+        return ResponseEntity.ok(liderService.obtenerErroresPorProyecto(Long.valueOf(idProyecto)));
     }
 
     @GetMapping("/proyectos/{idProyecto}/interrupciones")
-    @Operation(summary = "Listar interrupciones de un proyecto", description = "Devuelve todas las contingencias reportadas en el proyecto")
-    public ResponseEntity<List<Interrupcion>> obtenerInterrupcionesProyecto(@PathVariable Long idProyecto) {
-        return ResponseEntity.ok(liderService.obtenerInterrupcionesPorProyecto(idProyecto));
+    @Operation(summary = "Listar interrupciones de un proyecto o globales", description = "Devuelve todas las contingencias reportadas en el proyecto")
+    public ResponseEntity<List<Interrupcion>> obtenerInterrupcionesProyecto(@PathVariable String idProyecto) {
+        if ("GLOBAL".equalsIgnoreCase(idProyecto) || "all".equalsIgnoreCase(idProyecto) || "null".equalsIgnoreCase(idProyecto)) {
+            return ResponseEntity.ok(liderService.obtenerTodasLasInterrupciones());
+        }
+        return ResponseEntity.ok(liderService.obtenerInterrupcionesPorProyecto(Long.valueOf(idProyecto)));
     }
 
     // Pipeline de exportación y estandarización ETL para Alianza Brasil
@@ -189,8 +213,11 @@ public class LiderController {
     // Consola de gestión y resolución de incidencias del equipo
     @GetMapping("/proyectos/{idProyecto}/reportes-consolidados")
     @Operation(summary = "Reportes consolidados de equipo", description = "Devuelve errores e interrupciones cargados por desarrolladores en el proyecto (RF-22 a RF-24)")
-    public ResponseEntity<Map<String, Object>> obtenerReportesConsolidados(@PathVariable Long idProyecto) {
-        return ResponseEntity.ok(liderService.obtenerReportesConsolidadosProyecto(idProyecto));
+    public ResponseEntity<Map<String, Object>> obtenerReportesConsolidados(@PathVariable String idProyecto) {
+        if ("GLOBAL".equalsIgnoreCase(idProyecto) || "all".equalsIgnoreCase(idProyecto) || "null".equalsIgnoreCase(idProyecto)) {
+            return ResponseEntity.ok(liderService.obtenerReportesConsolidadosGlobal());
+        }
+        return ResponseEntity.ok(liderService.obtenerReportesConsolidadosProyecto(Long.valueOf(idProyecto)));
     }
 
     @PatchMapping("/errores/{idError}/atender")

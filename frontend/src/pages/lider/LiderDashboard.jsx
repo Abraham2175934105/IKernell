@@ -124,11 +124,15 @@ export const LiderDashboard = () => {
       setProyectoSeleccionado({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
       try {
         setLoadingDetalle(true);
-        const devsRes = await api.get('/lider/desarrolladores').catch(() => []);
+        const [erroresRes, interrupcionesRes, devsRes] = await Promise.all([
+          api.get('/lider/errores/global').catch(() => []),
+          api.get('/lider/interrupciones/global').catch(() => []),
+          api.get('/lider/desarrolladores').catch(() => [])
+        ]);
+        setErrores(Array.isArray(erroresRes) ? erroresRes : []);
+        setInterrupciones(Array.isArray(interrupcionesRes) ? interrupcionesRes : []);
         setDesarrolladores(Array.isArray(devsRes) ? devsRes : []);
         setEtapas([]);
-        setErrores([]);
-        setInterrupciones([]);
       } catch (err) {
         console.error('Error cargando vista global:', err);
       } finally {
@@ -893,6 +897,11 @@ export const LiderDashboard = () => {
                           </span>
                         </div>
                         <span className="text-[0.65rem] text-zinc-400 font-medium block mt-0.5">
+                          {item.etapa?.proyecto?.nombre ? (
+                            <span className="font-bold text-blue-600 dark:text-blue-400 mr-1.5">
+                              [{item.etapa.proyecto.nombre}]
+                            </span>
+                          ) : null}
                           {item.etapa?.nombreEtapa || 'Etapa WBS'} • {fechaStr}
                         </span>
                       </div>
