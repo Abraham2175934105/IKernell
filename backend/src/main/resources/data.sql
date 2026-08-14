@@ -10,23 +10,23 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- 2. TRABAJADORES (COORDINADOR, LÍDERES Y DESARROLLADORES)
 -- Contraseña estándar para todos los perfiles de prueba: 'password123'
--- Hash BCrypt: $2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6
+-- Hash BCrypt: $2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG
 
 INSERT INTO trabajador (id_trabajador, identificacion, nombre, apellido, fecha_nacimiento, direccion, profesion, especialidad, tipo_trabajador, foto_url, email, rol, password_hash, estado)
 VALUES 
-  (1, '1001001', 'Carlos', 'Gómez', '1985-04-12', 'Av. Empresarial 100', 'Ingeniero de Sistemas', 'Gestión de Proyectos', 'PLANTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'carlos.coordinador@ikernell.com', 'COORDINADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (2, '1001002', 'Ana', 'Martínez', '1988-08-23', 'Calle 45 # 12-30', 'Ingeniera de Software', 'Scrum Master & Cloud', 'PLANTA', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', 'ana.lider@ikernell.com', 'LIDER', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (3, '1001003', 'Luis', 'Pérez', '1992-11-05', 'Carrera 15 # 80-45', 'Desarrollador Full Stack', 'React & Spring Boot', 'CONTRATISTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'luis.dev@ikernell.com', 'DESARROLLADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (4, '1001004', 'Marta', 'López', '1994-02-18', 'Av. Circunvalar 23-10', 'Desarrolladora Backend', 'Java & Microservicios', 'PLANTA', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', 'marta.dev@ikernell.com', 'DESARROLLADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (5, '1001005', 'Carlos', 'Mendoza', '1986-06-15', 'Calle 100 # 19-40', 'Tech Lead & Arquitecto', 'Arquitectura Distribuida & Java 17', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'carlos.lider@ikernell.org', 'LIDER', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (6, '1001006', 'Ana', 'Gómez', '1993-09-20', 'Carrera 7 # 116-50', 'Desarrolladora Senior Full-Stack', 'React 18, Spring Boot 3 & PostgreSQL', 'PLANTA', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'ana.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (7, '1001007', 'Roberto', 'Silva', '1980-03-10', 'Transversal 23 # 95-12', 'Coordinador General de Operaciones', 'Gestión de Proyectos & Auditoría CMMI', 'PLANTA', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'roberto.coord@ikernell.org', 'COORDINADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (8, '1001008', 'Elena', 'Rostova', '1989-12-01', 'Calle 127 # 53-10', 'Líder de Proyecto & Cloud Architect', 'Kubernetes, AWS & Microfrontends', 'PLANTA', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', 'elena.lider@ikernell.org', 'LIDER', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (9, '1001009', 'David', 'Valenzuela', '1995-05-14', 'Av. Boyacá # 72-15', 'Ingeniero Backend Senior', 'Java 17, JPA/Hibernate & Concurrencia', 'PLANTA', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'david.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (10, '1001010', 'Lucía', 'Morales', '1996-10-30', 'Carrera 68 # 45-20', 'Especialista UI/UX & Frontend Lead', 'React 18, Tailwind CSS & Framer Motion', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'lucia.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (11, '1001011', 'Mateo', 'Restrepo', '1994-07-22', 'Calle 80 # 11-45', 'Ingeniero de Datos & ETL Lead', 'PostgreSQL, Window Functions & Python', 'CONTRATISTA', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150', 'mateo.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (12, '1001012', 'Sofía', 'Benítez', '1997-01-19', 'Calle 134 # 9-60', 'Ingeniera QA & Seguridad Aplicativa', 'Pruebas Automatizadas, Jest & OWASP', 'PLANTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'sofia.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true),
-  (13, '1001013', 'Javier', 'Arboleda', '1991-04-03', 'Diagonal 45 # 22-80', 'Ingeniero DevOps & Resiliencia', 'Docker, CI/CD, Nginx & Monitoring', 'PLANTA', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', 'javier.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$n/dMU9LngzX5waGY7YmROeHMC9OwvPxYq88WuGwmMel4D8edFrT.6', true)
+  (1, '1001001', 'Carlos', 'Gómez', '1985-04-12', 'Av. Empresarial 100', 'Ingeniero de Sistemas', 'Gestión de Proyectos', 'PLANTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'carlos.coordinador@ikernell.com', 'COORDINADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (2, '1001002', 'Ana', 'Martínez', '1988-08-23', 'Calle 45 # 12-30', 'Ingeniera de Software', 'Scrum Master & Cloud', 'PLANTA', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', 'ana.lider@ikernell.com', 'LIDER', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (3, '1001003', 'Luis', 'Pérez', '1992-11-05', 'Carrera 15 # 80-45', 'Desarrollador Full Stack', 'React & Spring Boot', 'CONTRATISTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'luis.dev@ikernell.com', 'DESARROLLADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (4, '1001004', 'Marta', 'López', '1994-02-18', 'Av. Circunvalar 23-10', 'Desarrolladora Backend', 'Java & Microservicios', 'PLANTA', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', 'marta.dev@ikernell.com', 'DESARROLLADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (5, '1001005', 'Carlos', 'Mendoza', '1986-06-15', 'Calle 100 # 19-40', 'Tech Lead & Arquitecto', 'Arquitectura Distribuida & Java 17', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'carlos.lider@ikernell.org', 'LIDER', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (6, '1001006', 'Ana', 'Gómez', '1993-09-20', 'Carrera 7 # 116-50', 'Desarrolladora Senior Full-Stack', 'React 18, Spring Boot 3 & PostgreSQL', 'PLANTA', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'ana.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (7, '1001007', 'Roberto', 'Silva', '1980-03-10', 'Transversal 23 # 95-12', 'Coordinador General de Operaciones', 'Gestión de Proyectos & Auditoría CMMI', 'PLANTA', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'roberto.coord@ikernell.org', 'COORDINADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (8, '1001008', 'Elena', 'Rostova', '1989-12-01', 'Calle 127 # 53-10', 'Líder de Proyecto & Cloud Architect', 'Kubernetes, AWS & Microfrontends', 'PLANTA', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', 'elena.lider@ikernell.org', 'LIDER', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (9, '1001009', 'David', 'Valenzuela', '1995-05-14', 'Av. Boyacá # 72-15', 'Ingeniero Backend Senior', 'Java 17, JPA/Hibernate & Concurrencia', 'PLANTA', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'david.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (10, '1001010', 'Lucía', 'Morales', '1996-10-30', 'Carrera 68 # 45-20', 'Especialista UI/UX & Frontend Lead', 'React 18, Tailwind CSS & Framer Motion', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'lucia.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (11, '1001011', 'Mateo', 'Restrepo', '1994-07-22', 'Calle 80 # 11-45', 'Ingeniero de Datos & ETL Lead', 'PostgreSQL, Window Functions & Python', 'CONTRATISTA', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150', 'mateo.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (12, '1001012', 'Sofía', 'Benítez', '1997-01-19', 'Calle 134 # 9-60', 'Ingeniera QA & Seguridad Aplicativa', 'Pruebas Automatizadas, Jest & OWASP', 'PLANTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'sofia.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true),
+  (13, '1001013', 'Javier', 'Arboleda', '1991-04-03', 'Diagonal 45 # 22-80', 'Ingeniero DevOps & Resiliencia', 'Docker, CI/CD, Nginx & Monitoring', 'PLANTA', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', 'javier.dev@ikernell.org', 'DESARROLLADOR', '$2a$10$GVn/FMWL/swgoaRnJZ3HNe3RK/YMut0wHdZ9/Fd.ZhZ6Hu2J5bIhG', true)
 ON CONFLICT (id_trabajador) DO UPDATE SET
   nombre = EXCLUDED.nombre,
   apellido = EXCLUDED.apellido,
@@ -61,10 +61,10 @@ DELETE FROM proyecto_desarrollador;
 
 INSERT INTO proyecto_desarrollador (proyecto_id, desarrollador_id)
 VALUES 
-  (1, 6), (1, 9), (1, 11), (1, 3),    -- Proyecto 1: Ana Gómez (🔴), David Valenzuela (🔴), Mateo Restrepo (🟠), Luis Pérez (🟢)
-  (2, 6), (2, 9), (2, 4), (2, 12), (2, 13), -- Proyecto 2: Ana Gómez (🔴), David Valenzuela (🔴), Marta López (🟠), Sofía Benítez (🟢), Javier Arboleda (🟡)
-  (3, 6), (3, 10), (3, 11),           -- Proyecto 3: Ana Gómez (🔴), Lucía Morales (🟡), Mateo Restrepo (🟠)
-  (4, 10), (4, 12), (4, 13), (4, 4),  -- Proyecto 4: Lucía Morales (🟡), Sofía Benítez (🟢), Javier Arboleda (🟡), Marta López (🟠)
+  (1, 6), (1, 9), (1, 11), (1, 3),    -- Proyecto 1: Ana Gómez (🔴), David Valenzuela (🟠), Mateo Restrepo (🟡), Luis Pérez (🟢)
+  (2, 6), (2, 9), (2, 4), (2, 12), (2, 13), -- Proyecto 2: Ana Gómez (🔴), David Valenzuela (🟠), Marta López (🟡), Sofía Benítez (🟢), Javier Arboleda (🟢)
+  (3, 6), (3, 10), (3, 11),           -- Proyecto 3: Ana Gómez (🔴), Lucía Morales (🟢), Mateo Restrepo (🟡)
+  (4, 10), (4, 12), (4, 13), (4, 4),  -- Proyecto 4: Lucía Morales (🟢), Sofía Benítez (🟢), Javier Arboleda (🟢), Marta López (🟡)
   (5, 9), (5, 11);                    -- Proyecto 5: David Valenzuela, Mateo Restrepo
 
 -- 5. ETAPAS (WBS)
@@ -119,7 +119,7 @@ VALUES
   (1007, 201, 6, 'Crear entidades JPA para auditoría inmutable de transacciones financieras', 'FINALIZADA'),
   (1008, 104, 6, 'Ejecutar pruebas de carga con k6 simulando 1,500 peticiones concurrentes por segundo', 'PENDIENTE'),
 
-  -- Asignaciones para David Valenzuela (id: 9) - Backend & Infra -> CRÍTICA (🔴)
+  -- Asignaciones para David Valenzuela (id: 9) - Backend & Infra -> ALTA (🟠)
   (2001, 102, 9, 'Optimizar consultas de cálculo de impuestos en lote con Native Queries y CTEs', 'EN_PROGRESO'),
   (2002, 202, 9, 'Implementar mecanismo de Circuit Breaker con Resilience4j en pasarela de pagos', 'EN_PROGRESO'),
   (2003, 203, 9, 'Construir repository nativo para analítica de capacidad con Window Functions en PostgreSQL', 'EN_PROGRESO'),
@@ -127,29 +127,29 @@ VALUES
   (2005, 201, 9, 'Configurar pool HikariCP con detección de leaks a 20 segundos y métricas Micrometer', 'FINALIZADA'),
   (2006, 204, 9, 'Auditar algoritmos de encriptación de tarjetas de crédito cumpliendo norma PCI-DSS', 'PENDIENTE'),
 
-  -- Asignaciones para Marta López (id: 4) - Backend & Servicios -> ALTA (🟠)
+  -- Asignaciones para Marta López (id: 4) - Backend & Servicios -> MEDIA (🟡)
   (2007, 202, 4, 'Construir endpoint de consulta de saldos con validación de tokens JWT', 'EN_PROGRESO'),
   (2008, 203, 4, 'Diseñar interceptores de auditoría para registro de peticiones HTTP en tiempo real', 'EN_PROGRESO'),
-  (2009, 402, 4, 'Configurar endpoints de señalización WebRTC para videoconsultas médicas', 'EN_PROGRESO'),
+  (2009, 402, 4, 'Configurar endpoints de señalización WebRTC para videoconsultas médicas', 'FINALIZADA'),
 
-  -- Asignaciones para Mateo Restrepo (id: 11) - Datos & ETL -> ALTA (🟠)
+  -- Asignaciones para Mateo Restrepo (id: 11) - Datos & ETL -> MEDIA (🟡)
   (4001, 103, 11, 'Configurar cliente SFTP con canal SSH2 cifrado y validación de Checksum MD5', 'EN_PROGRESO'),
   (4002, 103, 11, 'Automatizar tarea programada @Scheduled para generación nocturna de lotes ETL', 'EN_PROGRESO'),
   (4003, 502, 11, 'Ejecutar reconciliación de 2.4 millones de registros históricos en Data Warehouse', 'FINALIZADA'),
   (4004, 302, 11, 'Construir vistas materializadas en PostgreSQL para reportes financieros instantáneos', 'EN_PROGRESO'),
   (4005, 101, 11, 'Diseñar especificación de formato plano de 14 columnas para la alianza estratégica Brasil', 'FINALIZADA'),
 
-  -- Asignaciones para Lucía Morales (id: 10) - Frontend & UI/UX -> MEDIA (🟡)
+  -- Asignaciones para Lucía Morales (id: 10) - Frontend & UI/UX -> BAJA / ESTABLE (🟢)
   (3001, 301, 10, 'Crear sistema de diseño monocromático con soporte dinámico de modo Claro/Oscuro', 'FINALIZADA'),
   (3002, 302, 10, 'Construir componente interactivo de escáner QR con retroalimentación háptica', 'EN_PROGRESO'),
-  (3003, 303, 10, 'Implementar motor de inyección de Micro-Snippets con búsqueda debounced en React', 'EN_PROGRESO'),
-  (3004, 402, 10, 'Desarrollar interfaz de videollamada WebRTC con controles flotantes en Tailwind CSS', 'EN_PROGRESO'),
+  (3003, 303, 10, 'Implementar motor de inyección de Micro-Snippets con búsqueda debounced en React', 'FINALIZADA'),
+  (3004, 402, 10, 'Desarrollar interfaz de videollamada WebRTC con controles flotantes en Tailwind CSS', 'FINALIZADA'),
   (3005, 401, 10, 'Diseñar prototipos de alta fidelidad para el módulo de prescripción médica digital', 'FINALIZADA'),
   (3006, 403, 10, 'Integrar animaciones con Framer Motion para transiciones suaves de triaje médico', 'PENDIENTE'),
 
-  -- Asignaciones para Javier Arboleda (id: 13) - DevOps & Cloud -> MEDIA (🟡)
+  -- Asignaciones para Javier Arboleda (id: 13) - DevOps & Cloud -> BAJA / ESTABLE (🟢)
   (6001, 204, 13, 'Configurar pipeline de CI/CD en GitHub Actions con compilación Maven y pruebas Vite', 'EN_PROGRESO'),
-  (6002, 402, 13, 'Desplegar servidor de señalización WebRTC en clúster Kubernetes con autoescalado', 'EN_PROGRESO'),
+  (6002, 402, 13, 'Desplegar servidor de señalización WebRTC en clúster Kubernetes con autoescalado', 'FINALIZADA'),
   (6003, 101, 13, 'Construir imágenes Docker multi-stage optimizadas para frontend y backend', 'FINALIZADA'),
   (6004, 204, 13, 'Configurar monitoreo de métricas JVM con Prometheus y tableros en Grafana', 'PENDIENTE'),
 
@@ -169,96 +169,65 @@ SELECT setval('actividad_id_actividad_seq', 8000);
 DELETE FROM error;
 DELETE FROM interrupcion;
 
--- Errores asignados a Ana Gómez (id: 6) -> 🔴 CRÍTICA
+-- 1. Ana Gómez (id: 6) -> 🔴 CRÍTICA (1 desarrollador con sobrecarga extrema)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion, resolucion_nota, fecha_resolucion)
 VALUES 
-  (101, 6, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '19 days', 'Falta de anotación @Valid en DTO de Facturación', 'SOLUCIONADO', 'Corregido en commit c1a', NOW() - INTERVAL '18 days'),
-  (101, 6, 'LOGICO', 'MEDIA', NOW() - INTERVAL '16 days', 'Validación de fecha de vencimiento menor a fecha de emisión', 'SOLUCIONADO', 'Añadida aserción custom', NOW() - INTERVAL '15 days'),
-  (102, 6, 'INTEGRACION_REST', 'MEDIA', NOW() - INTERVAL '13 days', 'Timeout intermitente en conexión con web service de la DIAN', 'SOLUCIONADO', 'Aumentado socket timeout a 5000ms', NOW() - INTERVAL '12 days'),
+  (101, 6, 'LOGICO', 'ALTA', NOW() - INTERVAL '17 days', 'Validación de fecha de vencimiento menor a fecha de emisión', 'SOLUCIONADO', 'Añadida aserción custom', NOW() - INTERVAL '15 days'),
   (102, 6, 'CONCURRENCIA', 'ALTA', NOW() - INTERVAL '11 days', 'Race condition al generar número consecutivo de factura electrónica', 'SOLUCIONADO', 'Aplicado bloqueo pesimista en base de datos', NOW() - INTERVAL '10 days'),
-  (202, 6, 'VALIDACION', 'MEDIA', NOW() - INTERVAL '9 days', 'El formato del hash XML no cumple con estándar SHA-384', 'EN_REVISION', NULL, NULL),
-  (102, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '6 days', 'Deadlock en tabla factura_detalle bajo 500 hilos concurrentes', 'EN_REVISION', NULL, NULL),
-  (202, 6, 'RENDIMIENTO', 'CRITICA', NOW() - INTERVAL '5 days', 'Consumo de CPU al 98% en algoritmo de firma criptográfica XAdES', 'REGISTRADO', NULL, NULL),
-  (103, 6, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '4 days', 'Fallo de autenticación SSH al conectar con servidor SFTP de Brasil', 'REGISTRADO', NULL, NULL),
-  (102, 6, 'LOGICO', 'ALTA', NOW() - INTERVAL '3 days', 'Inconsistencia en el cálculo de retención en la fuente para personas jurídicas', 'REGISTRADO', NULL, NULL),
+  (102, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '5 days', 'Deadlock en tabla factura_detalle bajo 500 hilos concurrentes', 'EN_REVISION', NULL, NULL),
+  (202, 6, 'RENDIMIENTO', 'CRITICA', NOW() - INTERVAL '4 days', 'Consumo de CPU al 98% en algoritmo de firma criptográfica XAdES', 'REGISTRADO', NULL, NULL),
   (302, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '2 days', 'Pérdida de mensajes en el topic de transacciones de billetera digital', 'REGISTRADO', NULL, NULL);
 
 INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion, resolucion_nota, fecha_resolucion)
 VALUES 
-  (101, 6, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '18 days', 35, 'Reunión de alineación con cliente para definir esquema XML', 'SOLUCIONADO', 'Minuta aprobada', NOW() - INTERVAL '18 days'),
-  (102, 6, 'CAIDA_SERVICIO_EXTERNO', NOW() - INTERVAL '12 days', 50, 'Indisponibilidad del entorno de pruebas de la DIAN', 'SOLUCIONADO', 'Servicio reestablecido', NOW() - INTERVAL '12 days'),
-  (102, 6, 'SOPORTE_URGENTE', NOW() - INTERVAL '10 days', 75, 'Atención de incidencia prioritaria en servidor de staging', 'SOLUCIONADO', 'Hotfix desplegado', NOW() - INTERVAL '10 days'),
-  (202, 6, 'BLOQUEO_AMBIENTE', NOW() - INTERVAL '8 days', 45, 'Bloqueo de puerto 5432 en servidor de integración continua', 'SOLUCIONADO', 'Reglas de firewall actualizadas', NOW() - INTERVAL '8 days'),
-  (102, 6, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '6 days', 120, 'Investigación de caída de servidor transaccional por saturación de RAM', 'REGISTRADO', NULL, NULL),
-  (103, 6, 'REUNION_URGENCIA', NOW() - INTERVAL '4 days', 90, 'Comité de crisis con equipo técnico de Brasil por inconsistencias ETL', 'REGISTRADO', NULL, NULL),
-  (202, 6, 'CAIDA_SERVICIO_EXTERNO', NOW() - INTERVAL '3 days', 150, 'Caída del proveedor de nube afectando base de datos principal', 'REGISTRADO', NULL, NULL),
+  (101, 6, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '18 days', 60, 'Reunión de alineación con cliente para definir esquema XML', 'SOLUCIONADO', 'Minuta aprobada', NOW() - INTERVAL '18 days'),
+  (102, 6, 'CAIDA_SERVICIO_EXTERNO', NOW() - INTERVAL '12 days', 90, 'Indisponibilidad del entorno de pruebas de la DIAN', 'SOLUCIONADO', 'Servicio reestablecido', NOW() - INTERVAL '12 days'),
+  (102, 6, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '4 days', 120, 'Investigación de caída de servidor transaccional', 'REGISTRADO', NULL, NULL),
   (102, 6, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 180, 'Depuración de fallo en firma digital con equipo de seguridad', 'REGISTRADO', NULL, NULL);
 
--- Errores e Interrupciones para David Valenzuela (id: 9) -> 🔴 CRÍTICA
+-- 2. David Valenzuela (id: 9) -> 🟠 ALTA (1 desarrollador con tensión acelerada en S3)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
-  (202, 9, 'LOGICO', 'BAJA', NOW() - INTERVAL '17 days', 'Cálculo inexacto de comisión para montos inferiores a $10 USD', 'SOLUCIONADO'),
-  (202, 9, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '11 days', 'Falta de índice compuesto en tabla movimientos_cuenta', 'SOLUCIONADO'),
-  (202, 9, 'CONCURRENCIA', 'ALTA', NOW() - INTERVAL '9 days', 'Bloqueo de cuenta simultáneo en dos cajeros automáticos', 'SOLUCIONADO'),
-  (202, 9, 'RENDIMIENTO', 'CRITICA', NOW() - INTERVAL '4 days', 'Latencia de 1.8 segundos en consulta de historial bancario', 'EN_REVISION'),
+  (202, 9, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '4 days', 'Latencia de 1.8 segundos en consulta de historial bancario', 'EN_REVISION'),
   (203, 9, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '2 days', 'Error 504 Gateway Timeout en microservicio de notificaciones Push', 'REGISTRADO');
 
 INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
 VALUES 
-  (202, 9, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '10 days', 45, 'Reunión de revisión de arquitectura de microservicios', 'SOLUCIONADO'),
-  (202, 9, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '5 days', 90, 'Alerta de saturación de disco en servidor de base de datos', 'REGISTRADO'),
-  (203, 9, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 120, 'Asistencia técnica a equipo de QA para pruebas de estrés', 'REGISTRADO');
+  (202, 9, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '5 days', 60, 'Alerta de saturación de disco en servidor de base de datos', 'REGISTRADO'),
+  (203, 9, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 90, 'Asistencia técnica a equipo de QA para pruebas de estrés', 'REGISTRADO');
 
--- Errores e Interrupciones para Marta López (id: 4) -> 🟠 ALTA
+-- 3. Marta López (id: 4) -> 🟡 MEDIA (Desarrollador 1 de 2 en Media)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
-  (202, 4, 'CONCURRENCIA', 'ALTA', NOW() - INTERVAL '12 days', 'Bloqueo optimista fallido en actualización de saldo', 'SOLUCIONADO'),
-  (202, 4, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '4 days', 'Consumo elevado de conexiones en pool HikariCP', 'REGISTRADO'),
-  (402, 4, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '2 days', 'Timeout en respuesta de servidor de señalización WebRTC', 'EN_REVISION');
+  (202, 4, 'LOGICO', 'MEDIA', NOW() - INTERVAL '10 days', 'Inconsistencia menor en cálculo de comisiones', 'SOLUCIONADO'),
+  (202, 4, 'RENDIMIENTO', 'MEDIA', NOW() - INTERVAL '3 days', 'Consumo moderado de memoria en procesamiento de lotes', 'EN_REVISION');
 
 INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
 VALUES 
-  (202, 4, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '11 days', 45, 'Revisión de caída de servicio en ambiente de pruebas', 'SOLUCIONADO'),
-  (202, 4, 'SOPORTE_URGENTE', NOW() - INTERVAL '3 days', 90, 'Depuración de fallo en autenticación con equipo de infraestructura', 'REGISTRADO');
+  (202, 4, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '3 days', 30, 'Reunión de coordinación técnica de microservicios', 'SOLUCIONADO');
 
--- Errores e Interrupciones para Mateo Restrepo (id: 11) -> 🟠 ALTA
+-- 4. Mateo Restrepo (id: 11) -> 🟡 MEDIA (Desarrollador 2 de 2 en Media)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
-  (103, 11, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '10 days', 'Fallo en la negociación de cifrado SSH2 con servidor SFTP de Brasil', 'SOLUCIONADO'),
-  (103, 11, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '3 days', 'Procesamiento de lote ETL tarda más de 45 segundos para 10,000 registros', 'REGISTRADO');
+  (103, 11, 'VALIDACION', 'MEDIA', NOW() - INTERVAL '10 days', 'Formato de fecha no compatible con especificación ISO 8601', 'SOLUCIONADO'),
+  (103, 11, 'LOGICO', 'MEDIA', NOW() - INTERVAL '3 days', 'Caracteres especiales en extracción de archivo plano', 'REGISTRADO');
 
 INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
 VALUES 
-  (103, 11, 'BLOQUEO_AMBIENTE', NOW() - INTERVAL '4 days', 75, 'Indisponibilidad de servidor SFTP de pruebas en filial Brasil', 'REGISTRADO');
+  (103, 11, 'BLOQUEO_AMBIENTE', NOW() - INTERVAL '4 days', 30, 'Mantenimiento preventivo en servidor SFTP de pruebas', 'SOLUCIONADO');
 
--- Errores e Interrupciones para Lucía Morales (id: 10) -> 🟡 MEDIA
+-- 5. Desarrolladores en Nivel Óptimo -> 🟢 BAJA / ESTABLE (4 desarrolladores)
+-- Lucía Morales (id: 10), Javier Arboleda (id: 13), Sofía Benítez (id: 12), Luis Pérez (id: 3)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
-  (301, 10, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '18 days', 'Advertencia de clave única (unique key) en lista de componentes React', 'SOLUCIONADO'),
-  (302, 10, 'VALIDACION', 'BAJA', NOW() - INTERVAL '10 days', 'Mensaje de error no visible en pantallas móviles menores a 360px', 'SOLUCIONADO'),
-  (302, 10, 'LOGICO', 'MEDIA', NOW() - INTERVAL '3 days', 'Animación de carga se congela si la respuesta del servidor es menor a 50ms', 'REGISTRADO');
-
-INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
-VALUES 
-  (301, 10, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '14 days', 25, 'Sincronización de UI con el equipo de diseño', 'SOLUCIONADO');
-
--- Errores e Interrupciones para Javier Arboleda (id: 13) -> 🟡 MEDIA
-INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
-VALUES 
-  (204, 13, 'LOGICO', 'MEDIA', NOW() - INTERVAL '5 days', 'Regla de autoescalado en Kubernetes no escala pods a tiempo', 'EN_REVISION');
-
-INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
-VALUES 
-  (402, 13, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '3 days', 40, 'Reunión de coordinación de infraestructura cloud', 'SOLUCIONADO');
-
--- Errores para Sofía Benítez (id: 12) y Luis Pérez (id: 3) -> 🟢 BAJA / ESTABLE
-INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
-VALUES 
+  (301, 10, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '16 days', 'Warning menor de propTypes en componente botón', 'SOLUCIONADO'),
+  (204, 13, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '14 days', 'Comentario desactualizado en Dockerfile multi-stage', 'SOLUCIONADO'),
   (204, 12, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '15 days', 'Aserción de prueba unitaria con mensaje incompleto', 'SOLUCIONADO'),
   (102, 3, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '10 days', 'Etiqueta HTML no cerrada en plantilla de previsualización', 'SOLUCIONADO');
 
 SELECT setval('error_id_error_seq', (SELECT MAX(id_error) FROM error));
 SELECT setval('interrupcion_id_interrupcion_seq', (SELECT MAX(id_interrupcion) FROM interrupcion));
+
 
 -- 8. MICRO SNIPPETS TÉCNICOS PARA EL BUSCADOR (Snippet.inject - RF-36)
 DELETE FROM micro_snippet;

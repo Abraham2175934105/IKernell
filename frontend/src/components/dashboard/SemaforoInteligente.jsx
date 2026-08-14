@@ -14,9 +14,15 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
   const [exporting, setExporting] = useState(false);
   const [etlResult, setEtlResult] = useState(null);
 
+  const isGlobal = !idProyecto || idProyecto === 'GLOBAL';
+
   // Peticiones API
   const cargarMetricas = useCallback(async () => {
-    if (!idProyecto) return;
+    if (isGlobal) {
+      setLoading(false);
+      setMetrics(null);
+      return;
+    }
     try {
       setLoading(true);
       const data = await api.get(`/lider/proyectos/${idProyecto}/metricas-semaforo`);
@@ -27,7 +33,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
     } finally {
       setLoading(false);
     }
-  }, [api, idProyecto]);
+  }, [api, idProyecto, isGlobal]);
 
   // Efectos (Hooks)
   useEffect(() => {
@@ -61,8 +67,8 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
 
   // Manejadores de eventos (Handlers)
   const handleExportEtlBrasil = async () => {
-    if (!idProyecto) {
-      toast.error('Seleccione un proyecto para exportar.');
+    if (!idProyecto || idProyecto === 'GLOBAL') {
+      toast.error('Seleccione un proyecto específico para exportar el lote ETL.');
       return;
     }
     setExporting(true);
@@ -82,6 +88,22 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
       setExporting(false);
     }
   };
+
+  if (isGlobal) {
+    return (
+      <div className="glass-panel p-8 mb-8 border border-zinc-200 dark:border-zinc-800 rounded-3xl text-center">
+        <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner">
+          <Zap size={26} />
+        </div>
+        <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white">
+          Semáforo de Calidad y Contingencias por Proyecto (RF-25)
+        </h3>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto mt-1.5 leading-relaxed">
+          Seleccione un proyecto específico en el menú superior para visualizar el estado operacional, severidad de errores y generar la exportación ETL bajo norma ISO 8601 UTC.
+        </p>
+      </div>
+    );
+  }
 
   if (loading && !metrics) {
     return (

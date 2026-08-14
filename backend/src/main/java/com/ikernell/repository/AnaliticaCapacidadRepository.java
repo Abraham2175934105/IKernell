@@ -16,7 +16,7 @@ import java.util.List;
  *
  * Clasificación homologada en 4 niveles semafóricos:
  * - CRITICA  (🔴 Carga > 80% o sobrecarga sostenida en 3 semanas)
- * - ALTA     (🟠 Carga 65% - 80% o aceleración de estrés S3 >= 65%)
+ * - ALTA     (🟠 Carga 65% - 80% o aceleración de estrés S3 >= 75%)
  * - MEDIA    (🟡 Carga 45% - 64% o contingencias recurrentes)
  * - BAJA     (🟢 Carga < 45% y flujo balanceado)
  */
@@ -138,49 +138,49 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Trabajador, 
         -- SELECT FINAL: Clasificación homologada en 4 niveles de riesgo
         -- ═══════════════════════════════════════════════════════════════════
         SELECT
-            sf.id_trabajador                                                           AS idTrabajador,
-            sf.nombre_completo                                                         AS nombreCompleto,
-            sf.email                                                                   AS email,
-            sf.especialidad                                                            AS especialidad,
-            sf.tareas_activas::int                                                     AS tareasActivas,
-            ROUND(sf.score_s1::numeric, 1)                                             AS scoreSemana1,
-            ROUND(sf.score_s2::numeric, 1)                                             AS scoreSemana2,
-            ROUND(sf.score_s3::numeric, 1)                                             AS scoreSemana3,
-            ROUND(((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0)::numeric, 1)      AS promedioCarga,
+            sf.id_trabajador                                                               AS idTrabajador,
+            sf.nombre_completo                                                             AS nombreCompleto,
+            sf.email                                                                       AS email,
+            sf.especialidad                                                                AS especialidad,
+            sf.tareas_activas::int                                                         AS tareasActivas,
+            ROUND(sf.score_s1::numeric, 1)::float8                                         AS scoreSemana1,
+            ROUND(sf.score_s2::numeric, 1)::float8                                         AS scoreSemana2,
+            ROUND(sf.score_s3::numeric, 1)::float8                                         AS scoreSemana3,
+            ROUND(((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0)::numeric, 1)::float8     AS promedioCarga,
             CASE
                 WHEN (sf.score_s1 >= 65 AND sf.score_s2 >= 65 AND sf.score_s3 >= 65) 
                      OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 80
                     THEN 'CRITICA'
-                WHEN sf.score_s3 >= 65 
+                WHEN sf.score_s3 >= 75 
                      OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 60 
-                     OR (sf.score_s3 - sf.score_s1) >= 25
+                     OR (sf.score_s3 - sf.score_s1) >= 30
                     THEN 'ALTA'
                 WHEN sf.score_s3 >= 45 
                      OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 40 
                      OR (sf.score_s3 - sf.score_s1) >= 15
                     THEN 'MEDIA'
                 ELSE 'BAJA'
-            END                                                                        AS estadoAlerta,
+            END                                                                            AS estadoAlerta,
             CASE
                 WHEN (sf.score_s1 >= 65 AND sf.score_s2 >= 65 AND sf.score_s3 >= 65) 
                      OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 80
                     THEN 'ALERTA CRÍTICA: Desgaste severo acumulado en el ciclo de 21 días (Carga > 80%). Se requiere rebalanceo urgente de tareas WBS y restricción preventiva de nuevas asignaciones.'
-                WHEN sf.score_s3 >= 65 
+                WHEN sf.score_s3 >= 75 
                      OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 60 
-                     OR (sf.score_s3 - sf.score_s1) >= 25
+                     OR (sf.score_s3 - sf.score_s1) >= 30
                     THEN 'NIVEL ALTO: Sobrecarga considerable o tendencia acelerada en los últimos 7 días. Monitorear resolución de contingencias y redistribuir actividades complejas.'
                 WHEN sf.score_s3 >= 45 
                      OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 40 
                      OR (sf.score_s3 - sf.score_s1) >= 15
                     THEN 'NIVEL MEDIO: Carga moderada con alertas preventivas e interrupciones recurrentes. Mantener seguimiento durante las entregas del sprint.'
                 ELSE 'NIVEL BAJO / ESTABLE: Carga operativa equilibrada y ritmo de trabajo sostenible dentro de los parámetros óptimos.'
-            END                                                                        AS recomendacion,
+            END                                                                            AS recomendacion,
             CASE
                 WHEN (sf.score_s1 >= 65 AND sf.score_s2 >= 65 AND sf.score_s3 >= 65) 
                      OR ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) >= 80
                     THEN true
                 ELSE false
-            END                                                                        AS capacidadBloqueada
+            END                                                                            AS capacidadBloqueada
         FROM scores_finales sf
         ORDER BY ((sf.score_s1 + sf.score_s2 + sf.score_s3) / 3.0) DESC, sf.score_s3 DESC
         """, nativeQuery = true)
