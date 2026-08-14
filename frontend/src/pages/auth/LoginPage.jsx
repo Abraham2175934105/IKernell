@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Cpu, Lock, Mail, LogIn, AlertCircle, Shield, ArrowLeft, KeyRound, CheckCircle2, Loader2 } from 'lucide-react';
+import { Cpu, Lock, Mail, LogIn, AlertCircle, Shield, ArrowLeft, KeyRound, CheckCircle2, Loader2, UserCheck, Briefcase, Code } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,9 +38,8 @@ export const LoginPage = () => {
       login(data);
 
       // 3. Alerta de Bienvenida rápida y elegante (Toast)
-      toast.success(`¡Bienvenido de nuevo, ${data.nombre || 'Usuario'}!`, {
+      toast.success(`Bienvenido de nuevo, ${data.nombre || 'Usuario'}`, {
         duration: 3500,
-        icon: '👋',
         style: {
           borderRadius: '16px',
           background: '#18181b',
@@ -71,7 +70,7 @@ export const LoginPage = () => {
 
   const setDemoCredentials = (rolEmail, rolName) => {
     setEmail(rolEmail);
-    setPassword('abrah1234');
+    setPassword('password123');
     setError('');
     setActiveDemo(rolName);
   };
@@ -220,7 +219,7 @@ export const LoginPage = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setDemoCredentials('ana.dev@ikernell.org', 'Desarrollador')}
+                onClick={() => setDemoCredentials('diego.dev@ikernell.org', 'Desarrollador')}
                 className={`p-2.5 text-center rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                   activeDemo === 'Desarrollador'
                     ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-md'
@@ -231,7 +230,7 @@ export const LoginPage = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setDemoCredentials('roberto.coord@ikernell.org', 'Coordinador')}
+                onClick={() => setDemoCredentials('ana.coordinador@ikernell.org', 'Coordinador')}
                 className={`p-2.5 text-center rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                   activeDemo === 'Coordinador'
                     ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-md'
@@ -254,7 +253,3 @@ export const LoginPage = () => {
     </div>
   );
 };
-
-
-
-
