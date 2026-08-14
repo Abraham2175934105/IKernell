@@ -274,7 +274,7 @@ export const BibliotecaDigital = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+              <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Biblioteca Digital de Documentos
               </h3>
               <span className="text-[0.65rem] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">

@@ -156,7 +156,7 @@ export const Hero = () => {
         {/* H1 */}
         <motion.h1
           variants={itemVariants}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-950 dark:text-white tracking-tight leading-[1.07] mb-5 max-w-5xl mx-auto transition-colors duration-300"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-950 dark:text-zinc-100 tracking-tight leading-[1.07] mb-5 max-w-5xl mx-auto transition-colors duration-300"
         >
           Construimos Soluciones Tecnológicas de{' '}
           <span className="relative inline-block">
@@ -295,7 +295,7 @@ export const Hero = () => {
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-black text-zinc-950 dark:text-white mb-2 leading-snug">{s.title}</h3>
+                  <h3 className="text-lg font-black text-zinc-950 dark:text-zinc-100 mb-2 leading-snug">{s.title}</h3>
                   <p className="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed font-medium">{s.description}</p>
                 </div>
 

@@ -162,7 +162,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
               {isGlobal ? <Globe size={20} className="text-blue-500" /> : <FolderGit2 size={20} className="text-emerald-500" />}
             </div>
             <div>
-              <h3 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white">
+              <h3 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
                 {isGlobal 
                   ? 'Semáforo de Riesgo Organizacional (Salud Global)'
                   : `Semáforo de Riesgo: ${proyectoNombre || metrics?.nombreProyecto || 'Proyecto Activo'}`

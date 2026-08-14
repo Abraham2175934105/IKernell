@@ -15,7 +15,7 @@ export const ContactPage = () => {
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="text-center mb-16"
         >
-          <h1 className="text-4xl md:text-5xl font-extrabold text-black dark:text-white tracking-tight mb-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-4">
             Centro de Contacto Corporativo
           </h1>
           <p className="text-text-muted text-base md:text-lg max-w-2xl mx-auto font-medium">

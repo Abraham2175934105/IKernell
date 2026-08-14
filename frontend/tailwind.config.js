@@ -7,6 +7,29 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      colors: {
+        zinc: {
+          50: '#fafafa',
+          100: '#f4f5f8',
+          200: '#e5e7eb',
+          300: '#c8cbd6',
+          400: '#9ea3b2',
+          500: '#757b8e',
+          600: '#525768',
+          700: '#383c4a',
+          800: '#262934',
+          850: '#1e212b',
+          900: '#181a22',
+          950: '#121318',
+        },
+        dark: {
+          bg: '#121318',
+          surface: '#181a22',
+          card: '#1e212b',
+          border: '#2e3240',
+          input: '#15171e',
+        }
+      },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },

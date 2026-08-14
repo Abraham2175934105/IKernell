@@ -83,7 +83,7 @@ export const Faq = () => {
               <HelpCircle size={22} />
             </div>
             <div>
-              <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Preguntas Frecuentes</h3>
+              <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">Preguntas Frecuentes</h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Búsqueda predictiva y respuestas técnicas en vivo</p>
             </div>
           </div>

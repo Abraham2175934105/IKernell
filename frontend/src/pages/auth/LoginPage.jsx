@@ -83,13 +83,13 @@ export const LoginPage = () => {
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-50 pointer-events-none" />
 
         {/* Card: Radiant Pure White in Light Mode, Elegant Dark Zinc in Dark Mode */}
-        <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-10 md:p-12 shadow-2xl shadow-zinc-300/60 dark:shadow-none transition-all duration-300">
+        <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/90 rounded-3xl p-6 sm:p-10 md:p-12 shadow-2xl shadow-zinc-300/60 dark:shadow-2xl dark:shadow-black/50 transition-all duration-300">
           
           {/* Top back link */}
           <div className="mb-6 flex justify-between items-center">
             <Link 
               to="/" 
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
             >
               <ArrowLeft size={14} /> Volver al Inicio
             </Link>
@@ -100,10 +100,10 @@ export const LoginPage = () => {
 
           {/* Logo & Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transition-transform hover:scale-105">
+            <div className="w-16 h-16 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transition-transform hover:scale-105">
               <Cpu size={32} />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-2">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-2">
               Acceso al Portal
             </h2>
             <p className="text-zinc-600 dark:text-zinc-400 text-xs sm:text-sm font-medium">

@@ -120,7 +120,7 @@ export const ChatCorporativo = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Chat Corporativo Transversal
               </h3>
               <span className="text-[0.65rem] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
@@ -255,7 +255,7 @@ export const ChatCorporativo = () => {
                   className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-zinc-900 dark:text-white">
+                    <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
                       {isCurrentUser ? 'Tú' : nombreRemitente}
                     </span>
                     <span className={`text-[0.6rem] font-extrabold uppercase px-1.5 py-0.2 rounded border ${
@@ -270,7 +270,7 @@ export const ChatCorporativo = () => {
                   </div>
                   <div className={`p-3.5 rounded-2xl max-w-lg text-xs sm:text-sm leading-relaxed ${
                     isCurrentUser
-                      ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-medium rounded-tr-none shadow-sm'
+                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-medium rounded-tr-none shadow-sm'
                       : 'bg-zinc-100 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 rounded-tl-none border border-zinc-200 dark:border-zinc-700/80 shadow-sm'
                   }`}>
                     {msg.contenido}

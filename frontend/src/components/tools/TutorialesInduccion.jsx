@@ -97,7 +97,7 @@ export const TutorialesInduccion = () => {
             <GraduationCap size={20} />
           </div>
           <div>
-            <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+            <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
               Tutoriales e Induccion Operativa
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -159,7 +159,7 @@ export const TutorialesInduccion = () => {
               </span>
             </div>
 
-            <h4 className="text-xl font-extrabold text-zinc-900 dark:text-white mb-6">
+            <h4 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-6">
               {current.title}
             </h4>
 
@@ -188,7 +188,7 @@ export const TutorialesInduccion = () => {
                     </button>
 
                     <div className="flex-1">
-                      <h5 className={`font-bold text-sm mb-1 ${isDone ? 'text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                      <h5 className={`font-bold text-sm mb-1 ${isDone ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-700 dark:text-zinc-300'}`}>
                         {st.title}
                       </h5>
                       <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">

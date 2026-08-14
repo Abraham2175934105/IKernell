@@ -216,7 +216,7 @@ export const FaqPage = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs font-bold uppercase tracking-wider mb-4 shadow-sm">
             <Sparkles size={14} className="text-blue-600 dark:text-blue-400" /> Base de Conocimiento Institucional
           </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-4">
             Centro de Preguntas Frecuentes & Documentación
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
@@ -244,7 +244,7 @@ export const FaqPage = () => {
                 1
               </span>
               <p className="leading-snug">
-                <strong className="text-zinc-900 dark:text-white block mb-0.5">Filtra o busca:</strong>
+                <strong className="text-zinc-900 dark:text-zinc-100 block mb-0.5">Filtra o busca:</strong>
                 Escribe tu inquietud o elige una categoría temática.
               </p>
             </div>
@@ -254,7 +254,7 @@ export const FaqPage = () => {
                 2
               </span>
               <p className="leading-snug">
-                <strong className="text-zinc-900 dark:text-white block mb-0.5">Despliega la solución:</strong>
+                <strong className="text-zinc-900 dark:text-zinc-100 block mb-0.5">Despliega la solución:</strong>
                 Haz clic sobre cualquier tarjeta para leer la respuesta.
               </p>
             </div>
@@ -264,7 +264,7 @@ export const FaqPage = () => {
                 3
               </span>
               <p className="leading-snug">
-                <strong className="text-zinc-900 dark:text-white block mb-0.5">Soporte directo:</strong>
+                <strong className="text-zinc-900 dark:text-zinc-100 block mb-0.5">Soporte directo:</strong>
                 ¿No encuentras lo que buscas? Usa el botón inferior a contacto.
               </p>
             </div>
@@ -283,7 +283,7 @@ export const FaqPage = () => {
             <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 flex items-center justify-center mb-4 shadow-sm">
               <Cpu size={24} />
             </div>
-            <h4 className="font-bold text-zinc-900 dark:text-white mb-1">Arquitectura N-Capas</h4>
+            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">Arquitectura N-Capas</h4>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Spring Boot 3 REST + React 18 SPA desacoplado.</p>
           </motion.div>
 
@@ -297,7 +297,7 @@ export const FaqPage = () => {
             <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 flex items-center justify-center mb-4 shadow-sm">
               <Sparkles size={24} />
             </div>
-            <h4 className="font-bold text-zinc-900 dark:text-white mb-1">Semáforo Predictivo</h4>
+            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">Semáforo Predictivo</h4>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Cálculo dinámico de riesgos y contingencias.</p>
           </motion.div>
 
@@ -311,7 +311,7 @@ export const FaqPage = () => {
             <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 flex items-center justify-center mb-4 shadow-sm">
               <ShieldCheck size={24} />
             </div>
-            <h4 className="font-bold text-zinc-900 dark:text-white mb-1">Seguridad BCrypt & JWT</h4>
+            <h4 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">Seguridad BCrypt & JWT</h4>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Autenticación stateless sin cookies de sesión.</p>
           </motion.div>
         </div>
@@ -331,7 +331,7 @@ export const FaqPage = () => {
                 <HelpCircle size={22} />
               </div>
               <div>
-                <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Preguntas & Respuestas</h3>
+                <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">Preguntas & Respuestas</h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Filtra por módulo temático o busca palabras clave</p>
               </div>
             </div>
@@ -404,7 +404,7 @@ export const FaqPage = () => {
                 <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 shadow-sm">
                   <AlertCircle size={28} />
                 </div>
-                <h4 className="text-zinc-900 dark:text-white font-bold text-lg mb-1.5">
+                <h4 className="text-zinc-900 dark:text-zinc-100 font-bold text-lg mb-1.5">
                   No encontramos coincidencias para esa búsqueda
                 </h4>
                 <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-md mx-auto mb-6 font-normal">
@@ -465,7 +465,7 @@ export const FaqPage = () => {
                             <UserCheck size={10} /> {faq.roleTag}
                           </span>
                         </div>
-                        <span className="font-bold text-base text-zinc-900 dark:text-white leading-snug">
+                        <span className="font-bold text-base text-zinc-900 dark:text-zinc-100 leading-snug">
                           {faq.question}
                         </span>
                       </div>
@@ -559,7 +559,7 @@ export const FaqPage = () => {
           transition={{ duration: 0.35, ease: "easeOut" }}
           className="mt-12 text-center bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 p-8 sm:p-10 rounded-3xl shadow-sm"
         >
-          <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2 tracking-tight">
+          <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2 tracking-tight">
             ¿Tienes dudas adicionales o un proyecto en mente?
           </h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-md mx-auto mb-6 font-medium leading-relaxed">

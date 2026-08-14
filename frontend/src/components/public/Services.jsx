@@ -135,7 +135,7 @@ export const Services = () => {
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-5">
             Portafolio
           </span>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-4">
             Servicios Tecnológicos
           </h2>
           <p className="text-zinc-600 dark:text-zinc-400 text-base md:text-lg max-w-2xl mx-auto font-medium">
@@ -184,7 +184,7 @@ export const Services = () => {
 
               {/* Card Content */}
               <div className="p-6 md:p-7 flex flex-col flex-1">
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2.5 leading-snug">{srv.title}</h3>
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2.5 leading-snug">{srv.title}</h3>
                 <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{srv.description}</p>
                 <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800/70">
                   <a 
@@ -210,7 +210,7 @@ export const Services = () => {
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold uppercase tracking-wider mb-5 shadow-md">
               <ShieldCheck size={14} /> Seguridad Corporativa de Nivel Bancario
             </span>
-            <h3 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
+            <h3 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-4">
               Arquitectura de Seguridad RBAC & JWT
             </h3>
             <p className="text-zinc-600 dark:text-zinc-400 text-base md:text-lg max-w-3xl mx-auto font-medium leading-relaxed">
@@ -231,7 +231,7 @@ export const Services = () => {
                 <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 flex items-center justify-center mb-5 shadow-sm group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors duration-300">
                   {feat.icon}
                 </div>
-                <h4 className="text-lg font-bold text-zinc-900 dark:text-white mb-2.5 leading-snug">{feat.title}</h4>
+                <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2.5 leading-snug">{feat.title}</h4>
                 <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{feat.description}</p>
               </motion.div>
             ))}

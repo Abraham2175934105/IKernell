@@ -156,7 +156,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
               <MessageSquare size={22} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-zinc-950 dark:text-white leading-tight">
+              <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-100 leading-tight">
                 ¿Confirmas el envío de tu consulta?
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
@@ -169,7 +169,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
           <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-3 mb-6 text-xs">
             <div className="flex items-start justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700/60 pb-2">
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem]">Remitente</span>
-              <span className="font-bold text-zinc-900 dark:text-white text-right">{data.nombre}</span>
+              <span className="font-bold text-zinc-900 dark:text-zinc-100 text-right">{data.nombre}</span>
             </div>
             <div className="flex items-start justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700/60 pb-2">
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem]">Correo</span>
@@ -183,7 +183,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
             )}
             <div className="flex items-start justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700/60 pb-2">
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem]">Asunto</span>
-              <span className="font-semibold text-zinc-900 dark:text-white text-right">{data.asunto}</span>
+              <span className="font-semibold text-zinc-900 dark:text-zinc-100 text-right">{data.asunto}</span>
             </div>
             <div>
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem] block mb-1">Mensaje</span>
@@ -346,7 +346,7 @@ export const ContactForm = () => {
         <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white flex items-center justify-center shadow-sm">
           <MessageSquare size={18} strokeWidth={1.8} />
         </div>
-        <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Formulario de Contacto</h3>
+        <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">Formulario de Contacto</h3>
       </div>
       <p className="text-zinc-600 dark:text-zinc-400 mb-6 text-sm font-medium">
         ¿Tienes un requerimiento de software o consultoría? Envíanos tu mensaje directo a la administración.
@@ -370,7 +370,7 @@ export const ContactForm = () => {
           <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-200 dark:border-emerald-800">
             <CheckCircle2 size={30} />
           </div>
-          <h4 className="text-zinc-900 dark:text-white text-xl font-bold mb-2">¡Mensaje Enviado con Éxito!</h4>
+          <h4 className="text-zinc-900 dark:text-zinc-100 text-xl font-bold mb-2">¡Mensaje Enviado con Éxito!</h4>
           <p className="text-zinc-600 dark:text-zinc-400 text-sm max-w-md mx-auto mb-6 font-normal">
             Gracias por contactar a IKernell Soluciones Software. Un asesor técnico revisará tu solicitud y se comunicará contigo a la brevedad.
           </p>

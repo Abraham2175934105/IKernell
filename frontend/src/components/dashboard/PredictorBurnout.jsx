@@ -317,7 +317,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
               {isProyectoEspecifico ? (
                 <>
                   <FolderGit2 size={12} className="text-blue-600 dark:text-blue-400" />
-                  <span>Proyecto: <strong className="text-zinc-900 dark:text-white truncate max-w-[220px]">{proyecto.nombre}</strong></span>
+                  <span>Proyecto: <strong className="text-zinc-900 dark:text-zinc-100 truncate max-w-[220px]">{proyecto.nombre}</strong></span>
                 </>
               ) : (
                 <>
@@ -420,7 +420,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar desarrollador o especialidad..."
-                className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl pl-9 pr-9 py-2 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm"
+                className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl pl-9 pr-9 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm"
               />
               {searchQuery && (
                 <button
@@ -596,7 +596,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                           <span className={isSelected ? 'text-blue-100' : 'text-zinc-500 dark:text-zinc-400'}>
                             {isProyectoEspecifico ? (
                               <>
-                                <strong className={isSelected ? 'text-white' : 'text-zinc-900 dark:text-white'}>
+                                <strong className={isSelected ? 'text-white' : 'text-zinc-900 dark:text-zinc-100'}>
                                   {tareasPorDevEnEsteProyecto.get(dev.idTrabajador) || 0}
                                 </strong> en este proyecto • {dev.tareasActivas} globales
                               </>
@@ -647,7 +647,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-white">
+                        <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100">
                           {selectedDev.nombreCompleto}
                         </h3>
                         {getBadgeEstado(selectedDev.estadoAlerta)}
@@ -717,7 +717,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                           <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
                             Carga Global Acumulada
                           </span>
-                          <div className="font-extrabold text-sm text-zinc-900 dark:text-white">
+                          <div className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
                             {Math.round(selectedDev.promedioCarga)}% Total
                           </div>
                           <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5">
@@ -739,7 +739,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                       Tareas Asignadas
                     </span>
-                    <div className="text-xl font-black text-zinc-900 dark:text-white">
+                    <div className="text-xl font-black text-zinc-900 dark:text-zinc-100">
                       {selectedDev.tareasActivas} <span className="text-[0.65rem] font-normal text-zinc-500">WBS</span>
                     </div>
                   </div>
@@ -762,7 +762,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                       Pico Máximo
                     </span>
-                    <div className="text-xl font-black text-zinc-900 dark:text-white">
+                    <div className="text-xl font-black text-zinc-900 dark:text-zinc-100">
                       {Math.max(
                         Math.round(selectedDev.scoreSemana1 || 0),
                         Math.round(selectedDev.scoreSemana2 || 0),
@@ -806,7 +806,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                         S1 • Días 15-21
                       </span>
-                      <span className="text-2xl font-black font-mono text-zinc-900 dark:text-white">
+                      <span className="text-2xl font-black font-mono text-zinc-900 dark:text-zinc-100">
                         {Math.round(selectedDev.scoreSemana1 || 0)}%
                       </span>
                       <div className="w-full bg-zinc-200 dark:bg-zinc-700 h-1.5 rounded-full mt-2 overflow-hidden">
@@ -822,7 +822,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                         S2 • Días 8-14
                       </span>
-                      <span className="text-2xl font-black font-mono text-zinc-900 dark:text-white">
+                      <span className="text-2xl font-black font-mono text-zinc-900 dark:text-zinc-100">
                         {Math.round(selectedDev.scoreSemana2 || 0)}%
                       </span>
                       <div className="w-full bg-zinc-200 dark:bg-zinc-700 h-1.5 rounded-full mt-2 overflow-hidden">
@@ -838,7 +838,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                         S3 • Últimos 7d
                       </span>
-                      <span className="text-2xl font-black font-mono text-zinc-900 dark:text-white">
+                      <span className="text-2xl font-black font-mono text-zinc-900 dark:text-zinc-100">
                         {Math.round(selectedDev.scoreSemana3 || 0)}%
                       </span>
                       <div className="w-full bg-zinc-200 dark:bg-zinc-700 h-1.5 rounded-full mt-2 overflow-hidden">
@@ -928,7 +928,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                   <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
                     <Sparkles size={16} />
                   </div>
-                  <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-white">
+                  <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-zinc-100">
                     Guía de 4 Niveles de Riesgo de Burnout (RF-35)
                   </h3>
                 </div>
@@ -942,7 +942,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
 
               <div className="space-y-3.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60">
-                  <h4 className="font-bold text-zinc-900 dark:text-white mb-1">
+                  <h4 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">
                     1. Fundamentación del Algoritmo (ISO/IEC 25010)
                   </h4>
                   <p>
@@ -951,7 +951,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60">
-                  <h4 className="font-bold text-zinc-900 dark:text-white mb-1">
+                  <h4 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">
                     2. Convención Homologada de los 4 Niveles
                   </h4>
                   <div className="space-y-2.5 mt-2.5">

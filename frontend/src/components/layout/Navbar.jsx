@@ -76,7 +76,7 @@ export const Navbar = () => {
             <Cpu size={22} />
           </div>
           <div>
-            <span className="text-xl font-black tracking-tight text-zinc-950 dark:text-white transition-colors duration-300">
+            <span className="text-xl font-black tracking-tight text-zinc-950 dark:text-zinc-100 transition-colors duration-300">
               IKernell
             </span>
             <span className="block text-[0.65rem] text-blue-600 dark:text-blue-400 -mt-1 font-extrabold uppercase tracking-widest transition-colors duration-300">

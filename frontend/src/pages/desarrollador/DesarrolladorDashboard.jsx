@@ -671,7 +671,7 @@ export const DesarrolladorDashboard = () => {
                     )}
 
                     {/* Descripción de la Tarea */}
-                    <h3 className="font-bold text-zinc-900 dark:text-white text-sm leading-snug">
+                    <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm leading-snug">
                       {cleanDescripcion}
                     </h3>
                   </div>
@@ -758,7 +758,7 @@ export const DesarrolladorDashboard = () => {
             <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
               Control de Calidad y Rendimiento (RF-22 a RF-24)
             </span>
-            <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+            <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
               Módulo de Reportes de Incidencias e Interrupciones
             </h2>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -774,7 +774,7 @@ export const DesarrolladorDashboard = () => {
                 <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-white mb-4">
                   <Bug size={24} />
                 </div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">Reportar Error Técnico (RF-22)</h3>
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Reportar Error Técnico (RF-22)</h3>
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
                   Registre cualquier fallo de lógica, sintaxis, concurrencia o validación. Clasifique la severidad (Baja, Media, Alta, Crítica) para recalibrar el Semáforo de Riesgos.
                 </p>
@@ -795,7 +795,7 @@ export const DesarrolladorDashboard = () => {
                 <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-white mb-4">
                   <AlertTriangle size={24} />
                 </div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">Registrar Interrupción / Tiempos Muertos (RF-23, RF-24)</h3>
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Registrar Interrupción / Tiempos Muertos (RF-23, RF-24)</h3>
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
                   Notifique fallas de suministro eléctrico, caídas de servidores, problemas de ISP o indisponibilidad de dependencias indicando los minutos de inactividad.
                 </p>
@@ -816,7 +816,7 @@ export const DesarrolladorDashboard = () => {
                 <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
                   <Activity size={24} />
                 </div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">Estado de tu Capacidad</h3>
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Estado de tu Capacidad</h3>
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
                   Resumen operativo de tu productividad y contribución al motor predictivo del proyecto.
                 </p>
@@ -878,7 +878,7 @@ export const DesarrolladorDashboard = () => {
               <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-1">
                 Trazabilidad Bidireccional (RF-22 a RF-24)
               </span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Historial de Mis Reportes
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -970,7 +970,7 @@ export const DesarrolladorDashboard = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-extrabold text-sm text-zinc-900 dark:text-white">
+                          <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
                             {isError ? `Error: ${item.tipoError}` : `Interrupción: ${item.tipoInterrupcion?.replace(/_/g, ' ')}`}
                           </h4>
                           {isError ? (
@@ -1039,7 +1039,7 @@ export const DesarrolladorDashboard = () => {
                       <FileText size={20} />
                     </div>
                     <div>
-                      <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white">
+                      <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
                         Especificación de la Tarea #{detalleModalDoc.idActividad}
                       </h3>
                       <span className="text-xs text-zinc-500 font-medium">
@@ -1073,7 +1073,7 @@ export const DesarrolladorDashboard = () => {
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60">
                     <span className="text-zinc-500 font-semibold block text-[0.65rem]">Fase / Etapa WBS:</span>
-                    <span className="font-bold text-zinc-900 dark:text-white">
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
                       {detalleModalDoc.etapa?.nombreEtapa || '#Etapa ' + detalleModalDoc.etapa?.idEtapa}
                     </span>
                   </div>
@@ -1085,7 +1085,7 @@ export const DesarrolladorDashboard = () => {
 
                   <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 col-span-2">
                     <span className="text-zinc-500 font-semibold block text-[0.65rem]">Desarrollador Responsable:</span>
-                    <span className="font-bold text-zinc-900 dark:text-white">
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
                       {user?.nombre} {user?.apellido} ({user?.especialidad || 'Desarrollador'})
                     </span>
                   </div>
@@ -1175,7 +1175,7 @@ export const DesarrolladorDashboard = () => {
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <Bug size={20} /> Reportar Error Técnico (RF-22)
                 </h3>
                 <button onClick={() => { setShowErrorModal(false); setErrorFormErrors({}); setEtapaPreseleccionada(null); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
@@ -1321,7 +1321,7 @@ export const DesarrolladorDashboard = () => {
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <AlertTriangle size={20} /> Registrar Interrupción Operativa (RF-23, RF-24)
                 </h3>
                 <button onClick={() => { setShowInterrupcionModal(false); setInterrupcionFormErrors({}); setEtapaPreseleccionada(null); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">

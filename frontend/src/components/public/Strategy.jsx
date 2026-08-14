@@ -65,7 +65,7 @@ export const Strategy = () => {
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-5">
             Corporativo
           </span>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-4">
             Lineamientos Estratégicos
           </h2>
           <p className="text-zinc-600 dark:text-zinc-400 text-base md:text-lg max-w-2xl mx-auto font-medium">
@@ -115,7 +115,7 @@ export const Strategy = () => {
 
               {/* Card Content */}
               <div className="p-6 md:p-7 flex flex-col flex-1">
-                <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-3 leading-snug">{item.title}</h3>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-3 leading-snug">{item.title}</h3>
                 <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{item.description}</p>
               </div>
             </motion.div>

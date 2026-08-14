@@ -431,14 +431,14 @@ export const LiderDashboard = () => {
                     if (proj) seleccionarProyecto(proj);
                   }
                 }}
-                className="bg-transparent border-0 text-xs font-bold text-zinc-900 dark:text-white focus:ring-0 focus:outline-none cursor-pointer pr-4 py-0.5"
+                className="bg-transparent border-0 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:ring-0 focus:outline-none cursor-pointer pr-4 py-0.5"
                 title="Selecciona el proyecto activo o la vista global corporativa"
               >
-                <option value="GLOBAL" className="dark:bg-zinc-900 text-zinc-900 dark:text-white">
+                <option value="GLOBAL" className="dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
                   [Vista Global Corporativa] Todos los Proyectos
                 </option>
                 {proyectos?.map(p => (
-                  <option key={p?.idProyecto} value={p?.idProyecto} className="dark:bg-zinc-900 text-zinc-900 dark:text-white">
+                  <option key={p?.idProyecto} value={p?.idProyecto} className="dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
                     [PRJ-00{p?.idProyecto}] {p?.nombre}
                   </option>
                 ))}
@@ -473,7 +473,7 @@ export const LiderDashboard = () => {
               <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <FolderGit2 size={32} />
               </div>
-              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white mb-2">
+              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
                 Selecciona un proyecto específico para gestionar WBS
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
@@ -550,7 +550,7 @@ export const LiderDashboard = () => {
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
-                <h3 className="text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <Layers size={18} /> Estructura de Desglose de Trabajo (WBS)
                 </h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -601,7 +601,7 @@ export const LiderDashboard = () => {
                     {/* Cabecera de la Etapa */}
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-zinc-200/80 dark:border-zinc-700/60 pb-3">
                       <div>
-                        <div className="font-extrabold text-sm text-zinc-900 dark:text-white flex items-center gap-2">
+                        <div className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                           <span>{etapa?.nombreEtapa}</span>
                           <span className="text-[0.65rem] font-mono text-zinc-400">#Etapa {etapa?.idEtapa}</span>
                         </div>
@@ -879,7 +879,7 @@ export const LiderDashboard = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-extrabold text-sm text-zinc-900 dark:text-white">
+                          <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
                             {isError ? `Error: ${item.tipoError}` : `Interrupción: ${item.tipoInterrupcion?.replace(/_/g, ' ')}`}
                           </h4>
                           {isError ? (
@@ -960,7 +960,7 @@ export const LiderDashboard = () => {
               <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <FileText size={32} />
               </div>
-              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white mb-2">
+              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
                 Selecciona un proyecto para exportar el lote ETL Brasil
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
@@ -1015,7 +1015,7 @@ export const LiderDashboard = () => {
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <UserCheck size={20} /> Asignar Tarea a Desarrollador (RF-17)
                 </h3>
                 <button onClick={() => { setShowAsignarModal(false); setFormErrors({}); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
@@ -1107,7 +1107,7 @@ export const LiderDashboard = () => {
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <Layers size={20} /> Registrar Nueva Etapa WBS (RF-15)
                 </h3>
                 <button onClick={() => setShowNuevaEtapaModal(false)} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
@@ -1170,7 +1170,7 @@ export const LiderDashboard = () => {
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <RotateCcw size={20} /> Reasignar Tarea a Desarrollador
                 </h3>
                 <button onClick={() => setShowReasignarModal(false)} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
@@ -1179,7 +1179,7 @@ export const LiderDashboard = () => {
               </div>
 
               <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs mb-4">
-                <div className="font-bold text-zinc-900 dark:text-white mb-1">Tarea a transferir:</div>
+                <div className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">Tarea a transferir:</div>
                 <div className="text-zinc-600 dark:text-zinc-300 italic mb-2">"{actividadAReasignar.descripcion}"</div>
                 <div className="text-[0.7rem] text-zinc-500 font-semibold flex items-center gap-1.5">
                   <User size={12} />
@@ -1271,7 +1271,7 @@ export const LiderDashboard = () => {
                     {incidenciaAAtender._tipo === 'ERROR' ? <Bug size={20} /> : <AlertTriangle size={20} />}
                   </div>
                   <div>
-                    <h3 className="text-base font-extrabold text-zinc-900 dark:text-white">
+                    <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">
                       Gestión de {incidenciaAAtender._tipo === 'ERROR' ? 'Error Técnico' : 'Contingencia'} #{incidenciaAAtender.idError || incidenciaAAtender.idInterrupcion}
                     </h3>
                     <span className="text-xs text-zinc-500 font-medium">
