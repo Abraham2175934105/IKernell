@@ -1,7 +1,7 @@
 package com.ikernell.repository;
 
 import com.ikernell.dto.BurnoutProjection;
-import com.ikernell.model.Trabajador;
+import com.ikernell.model.Actividad;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -9,43 +9,38 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * Repositorio analítico especializado para el Predictor de Burnout Histórico (RF-35).
- *
- * Toda la lógica de cálculo pesado (agregaciones, cruces, ponderaciones y clasificación)
- * se ejecuta directamente en PostgreSQL mediante una CTE analítica con generate_series.
- *
- * Clasificación homologada en 4 niveles semafóricos:
- * - CRITICA  (🔴 Carga > 80% o sobrecarga sostenida en 3 semanas)
- * - ALTA     (🟠 Carga 65% - 80% o aceleración de estrés S3 >= 75%)
- * - MEDIA    (🟡 Carga 45% - 64% o contingencias recurrentes)
- * - BAJA     (🟢 Carga < 45% y flujo balanceado)
+ * Repositorio de analítica de capacidad operativa y detección temprana de Burnout (RF-35).
+ * Ejecuta una consulta nativa de alto rendimiento en PostgreSQL utilizando CTEs
+ * y funciones de ventana deslizante de 21 días (Semanas S1, S2, S3) bajo la norma ISO/IEC 25010.
  */
 @Repository
-public interface AnaliticaCapacidadRepository extends JpaRepository<Trabajador, Long> {
+public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, Long> {
 
     @Query(value = """
         WITH
         -- ═══════════════════════════════════════════════════════════════════
-        -- CTE 1: Calendario analítico de 21 días generado por PostgreSQL
-        -- Cada día se etiqueta en su ventana temporal (S1, S2, S3)
+        -- CTE 1: Calendario de los últimos 21 días dividido en 3 ventanas
+        -- S3 (días 1 a 7): Carga reciente (mayor sensibilidad al estrés)
+        -- S2 (días 8 a 14): Carga intermedia
+        -- S1 (días 15 a 21): Línea base histórica
         -- ═══════════════════════════════════════════════════════════════════
         calendario_analitico AS (
-            SELECT
-                dia::date AS dia,
-                CASE
-                    WHEN dia::date >= CURRENT_DATE - 6  THEN 'S3'
-                    WHEN dia::date >= CURRENT_DATE - 13 THEN 'S2'
+            SELECT 
+                d::date AS dia,
+                CASE 
+                    WHEN d::date >= CURRENT_DATE - INTERVAL '6 days'  THEN 'S3'
+                    WHEN d::date >= CURRENT_DATE - INTERVAL '13 days' THEN 'S2'
                     ELSE 'S1'
                 END AS ventana
             FROM generate_series(
-                CURRENT_DATE - INTERVAL '20 days',
-                CURRENT_DATE,
+                CURRENT_DATE - INTERVAL '20 days', 
+                CURRENT_DATE, 
                 INTERVAL '1 day'
-            ) AS dia
+            ) AS d
         ),
        
         -- ═══════════════════════════════════════════════════════════════════
-        -- CTE 2: Desarrolladores activos en el sistema
+        -- CTE 2: Desarrolladores activos en la plataforma
         -- ═══════════════════════════════════════════════════════════════════
         desarrolladores AS (
             SELECT id_trabajador, nombre, apellido, email, especialidad
@@ -96,8 +91,33 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Trabajador, 
         ),
        
         -- ═══════════════════════════════════════════════════════════════════
-        -- CTE 6: Cruce maestro (LEFT JOIN) de todas las fuentes de datos
-        -- Pivotea indicadores por ventana temporal (S1, S2, S3)
+        -- CTE 6: Consolidación limpia por ventana sin producto cartesiano
+        -- ═══════════════════════════════════════════════════════════════════
+        metricas_por_ventana AS (
+            SELECT 
+                COALESCE(e.desarrollador_id, i.desarrollador_id) AS desarrollador_id,
+                COALESCE(e.ventana, i.ventana) AS ventana,
+                COALESCE(e.peso_errores, 0) AS peso_errores,
+                COALESCE(i.horas_perdidas, 0.0) AS horas_perdidas
+            FROM errores_por_ventana e
+            FULL OUTER JOIN interrupciones_por_ventana i 
+              ON e.desarrollador_id = i.desarrollador_id AND e.ventana = i.ventana
+        ),
+        metricas_pivoteadas AS (
+            SELECT
+                desarrollador_id,
+                SUM(CASE WHEN ventana = 'S1' THEN peso_errores ELSE 0 END) AS errores_s1,
+                SUM(CASE WHEN ventana = 'S2' THEN peso_errores ELSE 0 END) AS errores_s2,
+                SUM(CASE WHEN ventana = 'S3' THEN peso_errores ELSE 0 END) AS errores_s3,
+                SUM(CASE WHEN ventana = 'S1' THEN horas_perdidas ELSE 0.0 END) AS horas_s1,
+                SUM(CASE WHEN ventana = 'S2' THEN horas_perdidas ELSE 0.0 END) AS horas_s2,
+                SUM(CASE WHEN ventana = 'S3' THEN horas_perdidas ELSE 0.0 END) AS horas_s3
+            FROM metricas_por_ventana
+            GROUP BY desarrollador_id
+        ),
+
+        -- ═══════════════════════════════════════════════════════════════════
+        -- CTE 7: Cruce maestro 1-a-1 por desarrollador
         -- ═══════════════════════════════════════════════════════════════════
         metricas_cruzadas AS (
             SELECT
@@ -107,21 +127,19 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Trabajador, 
                 COALESCE(d.especialidad, 'Ingeniería de Software')          AS especialidad,
                 COALESCE(w.tareas_activas, 0)                               AS tareas_activas,
                 LEAST(45.0, COALESCE(w.tareas_activas, 0) * 12.0)          AS carga_base_wbs,
-                COALESCE(SUM(CASE WHEN ev.ventana = 'S1' THEN ev.peso_errores END), 0)   AS errores_s1,
-                COALESCE(SUM(CASE WHEN ev.ventana = 'S2' THEN ev.peso_errores END), 0)   AS errores_s2,
-                COALESCE(SUM(CASE WHEN ev.ventana = 'S3' THEN ev.peso_errores END), 0)   AS errores_s3,
-                COALESCE(SUM(CASE WHEN iv.ventana = 'S1' THEN iv.horas_perdidas END), 0) AS horas_s1,
-                COALESCE(SUM(CASE WHEN iv.ventana = 'S2' THEN iv.horas_perdidas END), 0) AS horas_s2,
-                COALESCE(SUM(CASE WHEN iv.ventana = 'S3' THEN iv.horas_perdidas END), 0) AS horas_s3
+                COALESCE(mp.errores_s1, 0)                                  AS errores_s1,
+                COALESCE(mp.errores_s2, 0)                                  AS errores_s2,
+                COALESCE(mp.errores_s3, 0)                                  AS errores_s3,
+                COALESCE(mp.horas_s1, 0.0)                                  AS horas_s1,
+                COALESCE(mp.horas_s2, 0.0)                                  AS horas_s2,
+                COALESCE(mp.horas_s3, 0.0)                                  AS horas_s3
             FROM desarrolladores d
             LEFT JOIN carga_wbs w               ON w.desarrollador_id = d.id_trabajador
-            LEFT JOIN errores_por_ventana ev    ON ev.desarrollador_id = d.id_trabajador
-            LEFT JOIN interrupciones_por_ventana iv ON iv.desarrollador_id = d.id_trabajador
-            GROUP BY d.id_trabajador, d.nombre, d.apellido, d.email, d.especialidad, w.tareas_activas
+            LEFT JOIN metricas_pivoteadas mp    ON mp.desarrollador_id = d.id_trabajador
         ),
-       
+
         -- ═══════════════════════════════════════════════════════════════════
-        -- CTE 7: Fórmula ponderada de estrés por ventana temporal
+        -- CTE 8: Fórmula ponderada de estrés por ventana temporal
         -- S1/S2: errores x10, horas x6 (línea base / transición)
         -- S3:    errores x12, horas x8 (sensibilidad alta a carga reciente)
         -- ═══════════════════════════════════════════════════════════════════

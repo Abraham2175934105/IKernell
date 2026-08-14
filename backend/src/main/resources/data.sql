@@ -169,36 +169,43 @@ SELECT setval('actividad_id_actividad_seq', 8000);
 DELETE FROM error;
 DELETE FROM interrupcion;
 
--- 1. Ana Gómez (id: 6) -> 🔴 CRÍTICA (1 desarrollador con sobrecarga extrema)
+-- 1. Ana Gómez (id: 6) -> 🔴 CRÍTICA (1 desarrollador con sobrecarga extrema, Score > 80%)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion, resolucion_nota, fecha_resolucion)
 VALUES 
-  (101, 6, 'LOGICO', 'ALTA', NOW() - INTERVAL '17 days', 'Validación de fecha de vencimiento menor a fecha de emisión', 'SOLUCIONADO', 'Añadida aserción custom', NOW() - INTERVAL '15 days'),
-  (102, 6, 'CONCURRENCIA', 'ALTA', NOW() - INTERVAL '11 days', 'Race condition al generar número consecutivo de factura electrónica', 'SOLUCIONADO', 'Aplicado bloqueo pesimista en base de datos', NOW() - INTERVAL '10 days'),
+  (101, 6, 'LOGICO', 'ALTA', NOW() - INTERVAL '18 days', 'Validación de fecha de vencimiento menor a fecha de emisión', 'SOLUCIONADO', 'Añadida aserción custom', NOW() - INTERVAL '17 days'),
+  (102, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '16 days', 'Bloqueo pesimista en base de datos', 'SOLUCIONADO', 'Bloqueo optimista aplicado', NOW() - INTERVAL '15 days'),
+  (102, 6, 'CONCURRENCIA', 'ALTA', NOW() - INTERVAL '11 days', 'Race condition al generar número consecutivo', 'SOLUCIONADO', 'Secuencia atómica', NOW() - INTERVAL '10 days'),
+  (202, 6, 'RENDIMIENTO', 'CRITICA', NOW() - INTERVAL '9 days', 'Latencia en algoritmo de firma criptográfica XAdES', 'SOLUCIONADO', 'Paralelizado', NOW() - INTERVAL '8 days'),
   (102, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '5 days', 'Deadlock en tabla factura_detalle bajo 500 hilos concurrentes', 'EN_REVISION', NULL, NULL),
   (202, 6, 'RENDIMIENTO', 'CRITICA', NOW() - INTERVAL '4 days', 'Consumo de CPU al 98% en algoritmo de firma criptográfica XAdES', 'REGISTRADO', NULL, NULL),
-  (302, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '2 days', 'Pérdida de mensajes en el topic de transacciones de billetera digital', 'REGISTRADO', NULL, NULL);
+  (302, 6, 'CONCURRENCIA', 'CRITICA', NOW() - INTERVAL '2 days', 'Pérdida de mensajes en topic de transacciones de billetera', 'REGISTRADO', NULL, NULL);
 
 INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion, resolucion_nota, fecha_resolucion)
 VALUES 
-  (101, 6, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '18 days', 60, 'Reunión de alineación con cliente para definir esquema XML', 'SOLUCIONADO', 'Minuta aprobada', NOW() - INTERVAL '18 days'),
-  (102, 6, 'CAIDA_SERVICIO_EXTERNO', NOW() - INTERVAL '12 days', 90, 'Indisponibilidad del entorno de pruebas de la DIAN', 'SOLUCIONADO', 'Servicio reestablecido', NOW() - INTERVAL '12 days'),
+  (101, 6, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '18 days', 60, 'Reunión de alineación con DIAN para validación de XML', 'SOLUCIONADO', 'Minuta aprobada', NOW() - INTERVAL '18 days'),
+  (102, 6, 'CAIDA_SERVICIO_EXTERNO', NOW() - INTERVAL '12 days', 90, 'Indisponibilidad del entorno de pruebas DIAN', 'SOLUCIONADO', 'Servicio reestablecido', NOW() - INTERVAL '12 days'),
   (102, 6, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '4 days', 120, 'Investigación de caída de servidor transaccional', 'REGISTRADO', NULL, NULL),
   (102, 6, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 180, 'Depuración de fallo en firma digital con equipo de seguridad', 'REGISTRADO', NULL, NULL);
 
--- 2. David Valenzuela (id: 9) -> 🟠 ALTA (1 desarrollador con tensión acelerada en S3)
+-- 2. David Valenzuela (id: 9) -> 🟠 ALTA (1 desarrollador con tensión en rango 65% - 79%)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
+  (202, 9, 'LOGICO', 'MEDIA', NOW() - INTERVAL '17 days', 'Cálculo inexacto en redondeo de céntimos en liquidación', 'SOLUCIONADO'),
+  (202, 9, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '11 days', 'Falta de índice compuesto en tabla transacciones_bancarias', 'SOLUCIONADO'),
   (202, 9, 'RENDIMIENTO', 'ALTA', NOW() - INTERVAL '4 days', 'Latencia de 1.8 segundos en consulta de historial bancario', 'EN_REVISION'),
   (203, 9, 'INTEGRACION_REST', 'ALTA', NOW() - INTERVAL '2 days', 'Error 504 Gateway Timeout en microservicio de notificaciones Push', 'REGISTRADO');
 
 INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion)
 VALUES 
-  (202, 9, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '5 days', 60, 'Alerta de saturación de disco en servidor de base de datos', 'REGISTRADO'),
-  (203, 9, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 90, 'Asistencia técnica a equipo de QA para pruebas de estrés', 'REGISTRADO');
+  (202, 9, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '17 days', 30, 'Revisión de arquitectura técnica', 'SOLUCIONADO'),
+  (202, 9, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '10 days', 60, 'Revisión de microservicios transaccionales', 'SOLUCIONADO'),
+  (202, 9, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '5 days', 60, 'Alerta de saturación de disco en base de datos', 'REGISTRADO'),
+  (203, 9, 'SOPORTE_URGENTE', NOW() - INTERVAL '2 days', 90, 'Asistencia técnica a equipo de QA para pruebas de carga', 'REGISTRADO');
 
--- 3. Marta López (id: 4) -> 🟡 MEDIA (Desarrollador 1 de 2 en Media)
+-- 3. Marta López (id: 4) -> 🟡 MEDIA (Desarrollador 1 de 2 en Media, Score 45% - 64%)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
+  (202, 4, 'LOGICO', 'MEDIA', NOW() - INTERVAL '16 days', 'Inconsistencia en validación de formato de teléfono internacional', 'SOLUCIONADO'),
   (202, 4, 'LOGICO', 'MEDIA', NOW() - INTERVAL '10 days', 'Inconsistencia menor en cálculo de comisiones', 'SOLUCIONADO'),
   (202, 4, 'RENDIMIENTO', 'MEDIA', NOW() - INTERVAL '3 days', 'Consumo moderado de memoria en procesamiento de lotes', 'EN_REVISION');
 
@@ -206,9 +213,10 @@ INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_o
 VALUES 
   (202, 4, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '3 days', 30, 'Reunión de coordinación técnica de microservicios', 'SOLUCIONADO');
 
--- 4. Mateo Restrepo (id: 11) -> 🟡 MEDIA (Desarrollador 2 de 2 en Media)
+-- 4. Mateo Restrepo (id: 11) -> 🟡 MEDIA (Desarrollador 2 de 2 en Media, Score 45% - 64%)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
+  (103, 11, 'VALIDACION', 'MEDIA', NOW() - INTERVAL '17 days', 'Validación de caracteres especiales en campos de texto plano', 'SOLUCIONADO'),
   (103, 11, 'VALIDACION', 'MEDIA', NOW() - INTERVAL '10 days', 'Formato de fecha no compatible con especificación ISO 8601', 'SOLUCIONADO'),
   (103, 11, 'LOGICO', 'MEDIA', NOW() - INTERVAL '3 days', 'Caracteres especiales en extracción de archivo plano', 'REGISTRADO');
 
@@ -216,7 +224,7 @@ INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_o
 VALUES 
   (103, 11, 'BLOQUEO_AMBIENTE', NOW() - INTERVAL '4 days', 30, 'Mantenimiento preventivo en servidor SFTP de pruebas', 'SOLUCIONADO');
 
--- 5. Desarrolladores en Nivel Óptimo -> 🟢 BAJA / ESTABLE (4 desarrolladores)
+-- 5. Desarrolladores en Nivel Óptimo -> 🟢 BAJA / ESTABLE (4 desarrolladores, Score < 45%)
 -- Lucía Morales (id: 10), Javier Arboleda (id: 13), Sofía Benítez (id: 12), Luis Pérez (id: 3)
 INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
 VALUES 
@@ -227,6 +235,7 @@ VALUES
 
 SELECT setval('error_id_error_seq', (SELECT MAX(id_error) FROM error));
 SELECT setval('interrupcion_id_interrupcion_seq', (SELECT MAX(id_interrupcion) FROM interrupcion));
+
 
 
 -- 8. MICRO SNIPPETS TÉCNICOS PARA EL BUSCADOR (Snippet.inject - RF-36)

@@ -4,8 +4,8 @@ package com.ikernell.dto;
  * Interfaz de Proyección JPA (Interface-Based Projection) para mapear directamente
  * los resultados de la consulta analítica nativa de PostgreSQL (RF-35).
  * 
- * Spring Data JPA instancia automáticamente proxies de esta interfaz,
- * eliminando la necesidad de mapeo manual con Object[] o constructores.
+ * Se utiliza Number para scores y promedios para garantizar total interoperabilidad
+ * con BigDecimal, Double, Float y tipos numéricos nativos de PostgreSQL.
  */
 public interface BurnoutProjection {
 
@@ -19,13 +19,13 @@ public interface BurnoutProjection {
 
     Integer getTareasActivas();
 
-    Double getScoreSemana1();
+    Number getScoreSemana1();
 
-    Double getScoreSemana2();
+    Number getScoreSemana2();
 
-    Double getScoreSemana3();
+    Number getScoreSemana3();
 
-    Double getPromedioCarga();
+    Number getPromedioCarga();
 
     String getEstadoAlerta();
 

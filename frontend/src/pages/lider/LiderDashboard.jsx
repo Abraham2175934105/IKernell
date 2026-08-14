@@ -656,8 +656,8 @@ export const LiderDashboard = () => {
           className="space-y-6"
         >
           <SemaforoInteligente 
-            idProyecto={proyectoSeleccionado?.idProyecto} 
-            proyectoNombre={proyectoSeleccionado?.nombre}
+            idProyecto={proyectoSeleccionado?.idProyecto === 'GLOBAL' ? null : proyectoSeleccionado?.idProyecto} 
+            proyectoNombre={proyectoSeleccionado?.idProyecto === 'GLOBAL' ? 'Alcance Global' : proyectoSeleccionado?.nombre}
           />
         </motion.div>
       )}

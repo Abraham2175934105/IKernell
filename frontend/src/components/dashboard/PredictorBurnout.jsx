@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   ShieldAlert, Activity, TrendingUp, AlertTriangle, CheckCircle2, 
-  User, RefreshCw, Sparkles, Lock, Filter, Layers, Users, ArrowRight,
-  Briefcase, Check, Info, Search, X, HelpCircle, Download, Copy,
-  TrendingDown, Minus, Clock, FileText, ChevronRight, Award, Shield
+  User, RefreshCw, Sparkles, Lock, Layers, Users, ArrowRight,
+  Briefcase, Check, Info, Search, X, HelpCircle, Download,
+  TrendingDown, Minus, Clock, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import { Skeleton, SkeletonCard } from '../ui/Skeleton';
 
 /**
- * Normaliza cualquier estado del backend a los 4 niveles homologados:
+ * Normaliza de forma robusta cualquier estado a los 4 niveles homologados:
  * - CRITICA (🔴 Nivel Crítico / Sobrecarga Extrema)
  * - ALTA    (🟠 Nivel Alto / Sobrecarga)
  * - MEDIA   (🟡 Nivel Medio / En Alerta)
@@ -19,10 +19,10 @@ import { Skeleton, SkeletonCard } from '../ui/Skeleton';
  */
 const normalizarEstado = (estado) => {
   if (!estado) return 'BAJA';
-  const est = estado.toUpperCase();
-  if (est.includes('CRITIC') || est.includes('BURNOUT')) return 'CRITICA';
-  if (est.includes('ALT') || est.includes('SOBRECARGA')) return 'ALTA';
-  if (est.includes('MED') || est.includes('ESTRES') || est.includes('ALZA') || est.includes('ALERTA')) return 'MEDIA';
+  const est = estado.toString().toUpperCase().trim();
+  if (est.includes('CRITIC') || est.includes('BURNOUT') || est === 'ROJO') return 'CRITICA';
+  if (est.includes('ALT') || est.includes('SOBRECARGA') || est === 'NARANJA') return 'ALTA';
+  if (est.includes('MED') || est.includes('ESTRES') || est.includes('ALZA') || est.includes('ALERTA') || est === 'AMARILLO') return 'MEDIA';
   return 'BAJA';
 };
 
@@ -40,7 +40,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
   const [error, setError] = useState(null);
   const [selectedDev, setSelectedDev] = useState(null);
 
-  // Estados de filtrado y búsqueda interactiva
+  // Estados de filtrado y búsqueda interactiva (Panel único y limpio)
   const [searchQuery, setSearchQuery] = useState('');
   const [filtroSemaforo, setFiltroSemaforo] = useState('TODOS'); // 'TODOS' | 'CRITICA' | 'ALTA' | 'MEDIA' | 'BAJA'
   const [orden, setOrden] = useState('RIESGO_DESC'); // 'RIESGO_DESC' | 'RIESGO_ASC' | 'TAREAS_DESC' | 'NOMBRE_ASC'
@@ -93,7 +93,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
     return metricas.filter(m => devIdsEnProyecto.has(m.idTrabajador));
   }, [metricas, isProyectoEspecifico, devIdsEnProyecto]);
 
-  // 2. Conteo de métricas para las píldoras de semáforo
+  // 2. Conteo reactivo e insensible de métricas para las píldoras de semáforo
   const conteosSemaforo = useMemo(() => {
     const counts = {
       TODOS: metricasPorProyecto.length,
@@ -161,11 +161,11 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
     const nivel = normalizarEstado(dev.estadoAlerta);
     switch (nivel) {
       case 'CRITICA':
-        return `🔴 Nivel Crítico (Crítica / Sobrecarga Extrema): Registra una carga promedio de ${score}% (> 80%) o desgaste sostenido superior al 65% en las 3 semanas evaluadas. Presenta ${dev.tareasActivas} tareas asignadas. Se requiere rebalanceo urgente para evitar bloqueos operativos o fallas en entregas.`;
+        return `🔴 Nivel Crítico (Crítica / Sobrecarga Extrema): Registra una carga promedio de ${score}% (> 80%) con desgaste acumulado en el ciclo de 21 días y ${dev.tareasActivas} tareas asignadas. Se requiere rebalanceo urgente de su carga WBS y restricción preventiva de nuevas asignaciones.`;
       case 'ALTA':
-        return `🟠 Nivel Alto (Alta / Sobrecarga): Presenta una carga de ${score}% (rango 65% - 80%) o tendencia acelerada en los últimos 7 días con ${dev.tareasActivas} tareas activas. Se recomienda redistribuir actividades de alta complejidad técnica.`;
+        return `🟠 Nivel Alto (Alta / Sobrecarga): Presenta una carga de ${score}% (rango 65% - 79%) o tendencia acelerada en los últimos 7 días con ${dev.tareasActivas} tareas activas. Se recomienda redistribuir actividades complejas.`;
       case 'MEDIA':
-        return `🟡 Nivel Medio (Media / En Alerta): Mantiene una carga de ${score}% (rango 45% - 64%) con contingencias e interrupciones recurrentes. Se aconseja monitorear las entregas del sprint para evitar que pase a nivel alto.`;
+        return `🟡 Nivel Medio (Media / En Alerta): Mantiene una carga de ${score}% (rango 45% - 64%) con contingencias e interrupciones recurrentes. Se aconseja monitorear las entregas del sprint para evitar sobrecarga.`;
       default:
         return `🟢 Nivel Bajo / Estable (Baja / Óptimo): Mantiene un flujo balanceado con una carga de ${score}% (< 45%) y ritmo de trabajo sostenible dentro de los parámetros de rendimiento óptimo.`;
     }
@@ -386,11 +386,11 @@ Generado automáticamente por el motor analítico IKernell v2.0
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* ═════════════════════════════════════════════════════════════════════
-              COLUMNA IZQUIERDA (~40%): Panel de Selección, Búsqueda y Filtros
+              COLUMNA IZQUIERDA (~40%): Panel Único de Búsqueda, Filtros y Selección
              ═════════════════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-5 space-y-4 bg-zinc-50/60 dark:bg-zinc-800/30 p-4 sm:p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800/80">
             
-            {/* Buscador Rápido */}
+            {/* 1. Buscador Rápido */}
             <div className="relative">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
@@ -411,7 +411,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
               )}
             </div>
 
-            {/* Píldoras de Filtro Semafórico Homologadas */}
+            {/* 2. Píldoras de Filtro Semafórico Homologadas (Reactivo con Conteos Reales) */}
             <div className="space-y-1.5">
               <span className="text-[0.62rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">
                 Filtrar por Nivel de Riesgo Homologado:
@@ -475,7 +475,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
               </div>
             </div>
 
-            {/* Selector de Ordenamiento */}
+            {/* 3. Selector de Ordenamiento */}
             <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-200/80 dark:border-zinc-800">
               <span className="text-[0.62rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                 Ordenar por:
@@ -492,7 +492,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
               </select>
             </div>
 
-            {/* Listado de Tarjetas Interactivas de Desarrolladores */}
+            {/* 4. Listado de Tarjetas Interactivas de Desarrolladores */}
             <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
               {metricasFiltradas.length === 0 ? (
                 <div className="p-8 text-center bg-white dark:bg-zinc-900 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800">
@@ -772,7 +772,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 {/* 6. Panel de Acciones Rápidas del Líder */}
                 <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div className="text-[0.68rem] text-zinc-400 font-medium">
-                    IKernell Predictive Analytics Engine • PostgreSQL Engine
+                    IKernell Predictive Analytics Engine • PostgreSQL Live
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
@@ -868,7 +868,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     <div className="flex items-start gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0 mt-0.5" />
                       <div>
-                        <strong className="text-orange-700 dark:text-orange-400">🟠 Nivel Alto (Alta):</strong> Carga entre 65% y 80% o aceleración de estrés en los últimos 7 días (S3 &ge; 65%).
+                        <strong className="text-orange-700 dark:text-orange-400">🟠 Nivel Alto (Alta):</strong> Carga entre 65% y 79% o aceleración de estrés en los últimos 7 días (S3 &ge; 75%).
                       </div>
                     </div>
 
