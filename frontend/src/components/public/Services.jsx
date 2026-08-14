@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Code2, Database, ShieldAlert, Cpu, Layers, Workflow, ArrowRight, ShieldCheck, Lock, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -20,6 +20,34 @@ const itemVariants = {
     y: 0,
     transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
   }
+};
+
+/* ────────────────────────────────────────────────────────────────────────
+   Componente de Imagen con Fallback Seguro y Gradiente Glow
+──────────────────────────────────────────────────────────────────────── */
+const ServiceCardImage = ({ src, alt, fallbackIcon }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError || !src) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-zinc-900 via-blue-950 to-zinc-950 flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
+        <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] opacity-25" />
+        <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center shadow-xl shadow-blue-500/20 backdrop-blur-sm z-10">
+          {fallbackIcon || <ShieldCheck size={32} className="text-blue-400" />}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={src} 
+      alt={alt}
+      onError={() => setHasError(true)}
+      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+      loading="lazy"
+    />
+  );
 };
 
 const servicesList = [
@@ -62,7 +90,7 @@ const servicesList = [
     icon: <Cpu size={28} />,
     title: "Arquitectura de Seguridad RBAC & JWT",
     description: "Protección perimetral con tokens encriptados sin cookies, encriptación unidireccional BCrypt y perfiles unificados de trabajo.",
-    image: "https://images.unsplash.com/photo-1563986768609-322da13575f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     featured: false
   }
 ];
@@ -115,7 +143,7 @@ export const Services = () => {
           </p>
         </motion.div>
 
-        {/* Services Cards Grid (All 6 Services Maintained) */}
+        {/* Services Cards Grid (All 6 Services Maintained with Fallback Images) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
           {servicesList.map((srv, idx) => (
             <motion.div 
@@ -129,13 +157,12 @@ export const Services = () => {
                   : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 dark:hover:shadow-blue-500/5'
               }`}
             >
-              {/* Card Image */}
+              {/* Card Image con protección anti-rotura */}
               <div className="relative h-44 overflow-hidden">
-                <img 
+                <ServiceCardImage 
                   src={srv.image} 
-                  alt={srv.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                  loading="lazy"
+                  alt={srv.title} 
+                  fallbackIcon={srv.icon} 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-white via-white/30 to-transparent dark:from-zinc-900 dark:via-zinc-900/30 dark:to-transparent" />
                 
