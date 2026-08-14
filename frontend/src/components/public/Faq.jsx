@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, HelpCircle, Search, ArrowRight, X, MessageSquare, Sparkles } from 'lucide-react';
+import { ChevronDown, HelpCircle, Search, ArrowRight, X, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -64,7 +64,7 @@ export const Faq = ({ isFullView = false }) => {
   // Filtrado reactivo en tiempo real con normalización de mayúsculas, minúsculas y tildes
   const filteredFaqs = useMemo(() => {
     const term = normalizeText(searchTerm);
-    const baseList = isFullView ? faqs : (term ? faqs : initialList);
+    const baseList = isFullView ? faqs : (term || activeCategory !== 'TODAS' ? faqs : initialList);
 
     return baseList.filter(faq => {
       const normalizedQuestion = normalizeText(faq.question);
@@ -87,6 +87,13 @@ export const Faq = ({ isFullView = false }) => {
     setOpenIndex(openIndex === idx ? null : idx);
   };
 
+  const scrollToContact = () => {
+    const el = document.getElementById('contacto');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="w-full flex flex-col justify-between">
       <div>
@@ -104,7 +111,7 @@ export const Faq = ({ isFullView = false }) => {
         </div>
 
         {/* Real-Time Search Bar */}
-        <div className="relative mb-6">
+        <div className="relative mb-5">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
           <input
             type="text"
@@ -120,7 +127,7 @@ export const Faq = ({ isFullView = false }) => {
             <button 
               type="button"
               onClick={() => setSearchTerm('')} 
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white p-1 rounded-md transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white p-1 rounded-md transition-colors cursor-pointer"
               title="Limpiar búsqueda"
             >
               <X size={16} />
@@ -128,31 +135,29 @@ export const Faq = ({ isFullView = false }) => {
           )}
         </div>
 
-        {/* Category Filter Badges in Full View */}
-        {isFullView && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => {
-                  setActiveCategory(cat);
-                  setOpenIndex(0);
-                }}
-                className={`text-xs font-bold px-3.5 py-1.5 rounded-full transition-all ${
-                  activeCategory === cat
-                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Category Filter Badges — Always visible */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => {
+                setActiveCategory(cat);
+                setOpenIndex(0);
+              }}
+              className={`text-[0.68rem] font-bold px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                activeCategory === cat
+                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-400 dark:hover:border-zinc-500'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
 
         {/* FAQ Accordion List */}
-        <div className="flex flex-col gap-3.5">
+        <div className="flex flex-col gap-3">
           {filteredFaqs.length === 0 ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.96 }}
@@ -164,17 +169,18 @@ export const Faq = ({ isFullView = false }) => {
                 <HelpCircle size={24} />
               </div>
               <h4 className="text-zinc-900 dark:text-white font-bold text-base mb-1.5">
-                No encontramos una pregunta relacionada con tu búsqueda. ¿Deseas contactarnos?
+                No encontramos una pregunta relacionada con tu búsqueda.
               </h4>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-md mx-auto mb-5 font-normal">
                 Si tu inquietud técnica o requerimiento de software no figura en nuestro catálogo, nuestro equipo de soporte está listo para asistirte.
               </p>
-              <Link 
-                to="/contacto" 
-                className="gradient-button inline-flex items-center gap-2 text-xs uppercase tracking-wider py-2.5 px-6 font-bold shadow-md"
+              <button
+                type="button"
+                onClick={scrollToContact}
+                className="gradient-button inline-flex items-center gap-2 text-xs uppercase tracking-wider py-2.5 px-6 font-bold shadow-md cursor-pointer hover:-translate-y-0.5 active:scale-95 transition-all"
               >
                 <MessageSquare size={14} /> Contactar a la Administración
-              </Link>
+              </button>
             </motion.div>
           ) : (
             <AnimatePresence>
@@ -185,10 +191,10 @@ export const Faq = ({ isFullView = false }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2, delay: idx * 0.03 }}
-                  className={`glass-card p-0 transition-all overflow-hidden ${
+                  className={`rounded-2xl overflow-hidden border transition-all duration-200 ${
                     openIndex === idx 
-                      ? 'border-zinc-400 dark:border-zinc-600 shadow-md' 
-                      : 'hover:border-zinc-300 dark:hover:border-zinc-700'
+                      ? 'bg-white dark:bg-zinc-900 border-blue-500/40 dark:border-blue-500/40 shadow-md shadow-blue-500/5' 
+                      : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
                   }`}
                 >
                   <button
@@ -197,19 +203,24 @@ export const Faq = ({ isFullView = false }) => {
                     className="w-full p-5 text-left flex justify-between items-center gap-4 bg-transparent cursor-pointer"
                   >
                     <div className="flex flex-col gap-1">
-                      <span className="text-[0.65rem] font-black tracking-widest text-zinc-500 dark:text-zinc-400 uppercase">
+                      <span className={`text-[0.62rem] font-black tracking-widest uppercase transition-colors ${
+                        openIndex === idx 
+                          ? 'text-blue-600 dark:text-blue-400' 
+                          : 'text-zinc-500 dark:text-zinc-400'
+                      }`}>
                         {faq.category}
                       </span>
                       <span className="font-bold text-base text-zinc-900 dark:text-white leading-snug">
                         {faq.question}
                       </span>
                     </div>
-                    <ChevronDown 
-                      size={18} 
-                      className={`text-zinc-800 dark:text-zinc-200 transition-transform duration-300 flex-shrink-0 ${
-                        openIndex === idx ? 'rotate-180' : 'rotate-0'
-                      }`}
-                    />
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                      openIndex === idx
+                        ? 'bg-blue-600 text-white rotate-180'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rotate-0'
+                    }`}>
+                      <ChevronDown size={16} strokeWidth={2.2} />
+                    </div>
                   </button>
 
                   <AnimatePresence initial={false}>
@@ -234,24 +245,29 @@ export const Faq = ({ isFullView = false }) => {
         </div>
       </div>
 
-      {/* "Ver más detalles" CTA */}
+      {/* Bottom CTA */}
       {!isFullView && (
-        <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+        <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
             ¿Quieres explorar toda la base técnica?
           </span>
-          <Link 
-            to="/faqs" 
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 dark:text-white hover:underline uppercase tracking-wider"
-          >
-            Ver más detalles & FAQs <ArrowRight size={14} />
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={scrollToContact}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 uppercase tracking-wider transition-all cursor-pointer hover:-translate-y-0.5 active:scale-95"
+            >
+              <MessageSquare size={13} /> Contactar
+            </button>
+            <Link 
+              to="/faqs" 
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 uppercase tracking-wider transition-all hover:-translate-y-0.5 active:scale-95"
+            >
+              Ver más detalles & FAQs <ArrowRight size={14} />
+            </Link>
+          </div>
         </div>
       )}
     </div>
   );
 };
-
-
-
-

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Code2, Database, ShieldAlert, Cpu, Layers, Workflow, ArrowRight } from 'lucide-react';
+import { Code2, Database, ShieldAlert, Cpu, Layers, Workflow, ArrowRight, ShieldCheck, Lock, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const containerVariants = {
@@ -57,14 +57,28 @@ const servicesList = [
     description: "Desglose estructural del trabajo por etapas y asignación granular de actividades para equipos multidisciplinarios.",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     featured: false
+  }
+];
+
+/* ────────────────────────────────────────────────────────────────────────
+   Bloques técnicos del módulo RBAC & JWT
+──────────────────────────────────────────────────────────────────────── */
+const securityFeatures = [
+  {
+    icon: <ShieldCheck size={22} strokeWidth={1.8} />,
+    title: 'RBAC — Control Basado en Roles',
+    description: 'Tres perfiles de negocio segregados: Coordinador, Líder y Desarrollador. Cada rol accede exclusivamente a las funcionalidades autorizadas por el Spring Security Filter Chain.',
   },
   {
-    icon: <Cpu size={28} />,
-    title: "Arquitectura de Seguridad RBAC & JWT",
-    description: "Protección perimetral con tokens encriptados sin cookies, encriptación unidireccional BCrypt y perfiles unificados de trabajo.",
-    image: "https://images.unsplash.com/photo-1563986768609-322da13575f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    featured: false
-  }
+    icon: <KeyRound size={22} strokeWidth={1.8} />,
+    title: 'JWT Stateless Authentication',
+    description: 'Autenticación sin cookies ni sesión en servidor. Cada petición HTTP porta un token firmado con HMAC-SHA256 que el backend valida atómicamente en cada endpoint.',
+  },
+  {
+    icon: <Lock size={22} strokeWidth={1.8} />,
+    title: 'BCrypt — Cifrado Unidireccional',
+    description: 'Las contraseñas se almacenan con hashing irreversible BCrypt (costo 10). Ni siquiera un administrador puede recuperar la contraseña original del usuario.',
+  },
 ];
 
 export const Services = () => {
@@ -151,6 +165,44 @@ export const Services = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* ── Bloque Destacado: Arquitectura de Seguridad RBAC & JWT ──── */}
+        <motion.div
+          variants={itemVariants}
+          className="mt-16 md:mt-24"
+        >
+          {/* Section Header */}
+          <div className="text-center mb-10 md:mb-14">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold uppercase tracking-wider mb-5 shadow-md">
+              <ShieldCheck size={14} /> Seguridad Corporativa de Nivel Bancario
+            </span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-4">
+              Arquitectura de Seguridad RBAC & JWT
+            </h2>
+            <p className="text-zinc-600 dark:text-zinc-400 text-base md:text-lg max-w-3xl mx-auto font-medium leading-relaxed">
+              Control de acceso basado en roles, protección de endpoints stateless y cifrado unidireccional de credenciales con BCrypt.
+            </p>
+          </div>
+
+          {/* Security Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {securityFeatures.map((feat, idx) => (
+              <motion.div
+                key={idx}
+                variants={itemVariants}
+                whileHover={{ y: -4 }}
+                transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                className="group relative rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-7 flex flex-col hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300"
+              >
+                <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 flex items-center justify-center mb-5 shadow-sm group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors duration-300">
+                  {feat.icon}
+                </div>
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2.5 leading-snug">{feat.title}</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{feat.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
 
       </motion.div>
     </section>
