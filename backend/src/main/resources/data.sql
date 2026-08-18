@@ -41,16 +41,18 @@ ON CONFLICT (id_trabajador) DO UPDATE SET
 SELECT setval('trabajador_id_trabajador_seq', (SELECT MAX(id_trabajador) FROM trabajador));
 
 -- 3. PROYECTOS EMPRESARIALES
-INSERT INTO proyecto (id_proyecto, nombre, descripcion, fecha_inicio, fecha_fin_estimada, estado, lider_id)
+INSERT INTO proyecto (id_proyecto, nombre, cliente, descripcion, presupuesto, fecha_inicio, fecha_fin_estimada, estado, lider_id)
 VALUES 
-  (1, 'Sistema Facturación Cloud & ETL Brasil', 'Plataforma empresarial para emisión de facturación electrónica y sincronización de métricas operacionales bajo estándar ISO 8601 hacia filiales en Brasil.', '2026-01-15', '2026-11-30', 'ACTIVO', 5),
-  (2, 'Core Bancario & Microservicios Cloud', 'Modernización de la arquitectura financiera con servicios transaccionales idempotentes, seguridad stateless JWT y alta concurrencia.', '2026-02-01', '2026-12-15', 'ACTIVO', 5),
-  (3, 'App Móvil Fintech & Billetera Digital', 'Billetera digital multiplataforma con pagos QR dinámicos, autenticación biométrica y transferencias interbancarias inmediatas.', '2026-03-01', '2026-10-30', 'ACTIVO', 8),
-  (4, 'Plataforma Telemedicina & Triaje Inteligente', 'Sistema de atención médica virtual con streaming WebRTC de baja latencia, recetas digitales encriptadas y triaje automatizado.', '2026-04-10', '2026-09-30', 'ACTIVO', 8),
-  (5, 'Migración ERP Empresarial & Data Warehouse', 'Migración masiva de base de datos legada hacia cluster PostgreSQL con pipelines de analítica predictiva en tiempo real.', '2025-06-01', '2026-01-30', 'COMPLETADO', 5)
+  (1, 'Sistema Facturación Cloud & ETL Brasil', 'Banco Santander Brasil S.A.', 'Plataforma empresarial para emisión de facturación electrónica y sincronización de métricas operacionales bajo estándar ISO 8601 hacia filiales en Brasil.', 85000.00, '2026-01-15', '2026-11-30', 'ACTIVO', 5),
+  (2, 'Core Bancario & Microservicios Cloud', 'Itaú Unibanco Holding', 'Modernización de la arquitectura financiera con servicios transaccionales idempotentes, seguridad stateless JWT y alta concurrencia.', 120000.00, '2026-02-01', '2026-12-15', 'ACTIVO', 5),
+  (3, 'App Móvil Fintech & Billetera Digital', 'Nubank Brasil S.A.', 'Billetera digital multiplataforma con pagos QR dinámicos, autenticación biométrica y transferencias interbancarias inmediatas.', 65000.00, '2026-03-01', '2026-10-30', 'ACTIVO', 8),
+  (4, 'Plataforma Telemedicina & Triaje Inteligente', 'Hospital Israelita Albert Einstein', 'Sistema de atención médica virtual con streaming WebRTC de baja latencia, recetas digitales encriptadas y triaje automatizado.', 48000.00, '2026-04-10', '2026-09-30', 'ACTIVO', 8),
+  (5, 'Migración ERP Empresarial & Data Warehouse', 'Embraer Enterprise Solutions', 'Migración masiva de base de datos legada hacia cluster PostgreSQL con pipelines de analítica predictiva en tiempo real.', 95000.00, '2025-06-01', '2026-01-30', 'COMPLETADO', 5)
 ON CONFLICT (id_proyecto) DO UPDATE SET
   nombre = EXCLUDED.nombre,
+  cliente = EXCLUDED.cliente,
   descripcion = EXCLUDED.descripcion,
+  presupuesto = EXCLUDED.presupuesto,
   fecha_inicio = EXCLUDED.fecha_inicio,
   fecha_fin_estimada = EXCLUDED.fecha_fin_estimada,
   estado = EXCLUDED.estado,
