@@ -1575,7 +1575,8 @@ export const LiderDashboard = () => {
                     const isError = item._tipo === 'ERROR';
                     const devName = item.desarrollador ? `${item.desarrollador.nombre} ${item.desarrollador.apellido}` : 'Sin Asignar';
                     const fechaStr = new Date(item._fecha).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
-                    const proyectoNombre = item.etapa?.proyecto?.nombre || (proyectoSeleccionado?.idProyecto !== 'GLOBAL' ? proyectoSeleccionado?.nombre : 'General');
+                    const projId = item.etapa?.proyecto?.idProyecto || item.proyecto?.idProyecto;
+                    const projName = item.etapa?.proyecto?.nombre || item.proyecto?.nombre || (proyectoSeleccionado?.idProyecto !== 'GLOBAL' && proyectoSeleccionado?.idProyecto !== 'TODOS' ? proyectoSeleccionado?.nombre : 'Proyecto Corporativo');
                     const etapaNombre = item.etapa?.nombreEtapa || 'WBS General';
 
                     return (
@@ -1623,11 +1624,11 @@ export const LiderDashboard = () => {
 
                         {/* Proyecto & Fase */}
                         <td className="py-4 px-5">
-                          <div className="max-w-[160px] truncate">
-                            <span className="font-bold text-blue-600 dark:text-blue-400 block truncate" title={proyectoNombre}>
-                              {proyectoNombre}
+                          <div className="max-w-[180px] truncate">
+                            <span className="font-bold text-blue-600 dark:text-blue-400 block truncate text-xs" title={projName}>
+                              {projId ? `[PRJ-00${projId}] ` : ''}{projName}
                             </span>
-                            <span className="text-[0.65rem] text-zinc-400 block truncate" title={etapaNombre}>
+                            <span className="text-[0.65rem] text-zinc-400 dark:text-zinc-500 block truncate" title={etapaNombre}>
                               {etapaNombre}
                             </span>
                           </div>
