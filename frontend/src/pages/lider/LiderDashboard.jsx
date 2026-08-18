@@ -556,8 +556,13 @@ export const LiderDashboard = () => {
     }
   };
 
-  // Atención y resolución de incidencias del equipo
+  // Atención y resolución de incidencias del equipo (RF-24)
   const handleAbrirAtenderIncidencia = (item) => {
+    if (!item) return;
+    if (item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO') {
+      toast.info('Esta incidencia ya se encuentra resuelta y archivada para auditoría.');
+      return;
+    }
     setIncidenciaAAtender(item);
     setAtencionForm({
       estadoAtencion: item.estadoAtencion || 'EN_REVISION',
@@ -569,6 +574,12 @@ export const LiderDashboard = () => {
   const handleAtenderIncidencia = async (e) => {
     e.preventDefault();
     if (!incidenciaAAtender) return;
+
+    if (incidenciaAAtender.estadoAtencion === 'SOLUCIONADO' || incidenciaAAtender.estadoAtencion === 'RESUELTO') {
+      toast.error('No se puede modificar una incidencia que ya ha sido marcada como resuelta.');
+      setShowAtenderModal(false);
+      return;
+    }
 
     try {
       setSubmittingAtencion(true);
@@ -694,19 +705,34 @@ export const LiderDashboard = () => {
       }}
     >
       
-      {/* Selector de Proyecto en Cabecera */}
+      {/* Selector de Proyecto en Cabecera (Enterprise Jira/Linear Style) */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="mb-6 bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm min-w-0"
+        className="mb-6 bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200/90 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm min-w-0"
       >
         <div className="min-w-0 flex-1 max-w-full md:max-w-md lg:max-w-xl">
-          <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
-            Gestión y Control de Proyectos WBS
-          </span>
-          <h2 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight truncate" title={proyectoSeleccionado?.nombre}>
-            {proyectoSeleccionado?.nombre || (loadingProyectos ? 'Cargando proyectos...' : 'Panel del Líder')}
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800/80">
+              Workspace del Líder
+            </span>
+            <span className="text-zinc-300 dark:text-zinc-700">/</span>
+            <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400">
+              Gestión WBS & Métricas
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight truncate flex items-center gap-2" title={proyectoSeleccionado?.nombre}>
+            {proyectoSeleccionado?.idProyecto === 'GLOBAL' ? (
+              <span className="flex items-center gap-2 truncate">
+                <Globe size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                <span>Vista Global Corporativa</span>
+              </span>
+            ) : (
+              <span className="truncate">
+                {proyectoSeleccionado?.nombre || (loadingProyectos ? 'Cargando proyectos...' : 'Panel del Líder')}
+              </span>
+            )}
           </h2>
         </div>
 
@@ -717,27 +743,32 @@ export const LiderDashboard = () => {
               type="button"
               onClick={() => setDropdownProyectosOpen(prev => !prev)}
               disabled={loadingProyectos}
-              className="flex items-center justify-between gap-2.5 bg-zinc-50 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl px-3.5 py-2 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer min-w-[260px] sm:min-w-[320px] max-w-full disabled:opacity-60"
+              className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200/90 dark:border-zinc-700/80 rounded-2xl px-4 py-2.5 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer min-w-[270px] sm:min-w-[340px] max-w-full disabled:opacity-60"
               title="Selecciona el proyecto activo o la vista global corporativa"
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 {loadingProyectos ? (
                   <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate">
                     <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />
                     <span>Sincronizando proyectos...</span>
                   </div>
                 ) : (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
                       <Globe size={13} />
                     </div>
-                    <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate">
-                      [Vista Global Corporativa]
+                    <div className="text-left truncate">
+                      <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 block truncate">
+                        [Vista Global Corporativa]
+                      </span>
+                    </div>
+                    <span className="text-[0.6rem] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 ml-auto shrink-0">
+                      GLOBAL
                     </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div className="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-2xs">
                       <FolderGit2 size={13} />
                     </div>
                     <span className="font-mono text-[0.7rem] font-extrabold text-zinc-500 dark:text-zinc-400 shrink-0">
@@ -773,8 +804,13 @@ export const LiderDashboard = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.98 }}
                   transition={{ duration: 0.15, ease: 'easeOut' }}
-                  className="absolute right-0 top-full mt-2 w-full min-w-[300px] sm:min-w-[380px] max-w-lg z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-xl rounded-xl max-h-80 overflow-y-auto p-1.5 space-y-1"
+                  className="absolute right-0 top-full mt-2 w-full min-w-[320px] sm:min-w-[400px] max-w-lg z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xl rounded-2xl max-h-84 overflow-y-auto p-2 space-y-1.5"
                 >
+                  {/* Encabezado Categoría 1 */}
+                  <div className="px-2 pt-1 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400">
+                    Vistas Consolidadas
+                  </div>
+
                   {/* Opción 1: Vista Global Corporativa */}
                   <button
                     type="button"
@@ -784,16 +820,16 @@ export const LiderDashboard = () => {
                     }}
                     className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL')
-                        ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                        ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
                         : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                        <Globe size={13} />
+                      <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                        <Globe size={14} />
                       </div>
                       <div className="text-left truncate">
-                        <span className="block truncate font-extrabold">[Vista Global Corporativa] Todos los Proyectos</span>
+                        <span className="block truncate font-extrabold text-xs">[Vista Global Corporativa] Todos los Proyectos</span>
                         <span className="block text-[0.65rem] text-zinc-500 font-medium truncate">Consolidado general de métricas e incidencias</span>
                       </div>
                     </div>
@@ -807,7 +843,13 @@ export const LiderDashboard = () => {
                     </div>
                   </button>
 
-                  <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+                  <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5"></div>
+
+                  {/* Encabezado Categoría 2 */}
+                  <div className="px-2 pt-0.5 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
+                    <span>Proyectos Asignados</span>
+                    <span className="font-mono">{proyectos?.length || 0}</span>
+                  </div>
 
                   {/* Mapeo de Proyectos */}
                   {proyectos && proyectos.length > 0 ? (
@@ -825,13 +867,13 @@ export const LiderDashboard = () => {
                           }}
                           className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                              ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
                               : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <div className="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center justify-center shrink-0">
-                              <FolderGit2 size={13} />
+                            <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center justify-center shrink-0">
+                              <FolderGit2 size={14} />
                             </div>
                             <div className="text-left min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 min-w-0">
@@ -887,7 +929,7 @@ export const LiderDashboard = () => {
               setNuevoProyectoErrors({});
               setShowNuevoProyectoModal(true);
             }}
-            className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+            className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
             title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11 / RF-13)"
           >
             <FolderPlus size={14} />
@@ -898,10 +940,10 @@ export const LiderDashboard = () => {
             type="button"
             onClick={handleManualRefresh}
             disabled={loadingProyectos || refreshingManual}
-            className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+            className="outline-button text-xs py-2.5 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             title="Sincronizar proyectos y etapas en tiempo real con PostgreSQL"
           >
-            <RefreshCw size={13} className={loadingProyectos || refreshingManual ? 'animate-spin text-blue-500' : 'text-zinc-600 dark:text-zinc-300'} />
+            <RefreshCw size={13} className={loadingProyectos || refreshingManual ? 'animate-spin text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-300'} />
             <span className="hidden sm:inline">{loadingProyectos || refreshingManual ? 'Sincronizando...' : 'Actualizar'}</span>
           </button>
         </div>
@@ -1674,14 +1716,24 @@ export const LiderDashboard = () => {
 
                         {/* Acción */}
                         <td className="py-4 px-5 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleAbrirAtenderIncidencia(item)}
-                            className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
-                          >
-                            <Edit3 size={12} /> Atender
-                          </button>
+                          {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
+                            <span 
+                              className="inline-flex items-center gap-1.5 text-[0.65rem] font-extrabold uppercase px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
+                              title="Incidencia resuelta y congelada para auditoría y trazabilidad histórica (RF-24)"
+                            >
+                              <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <span>Resuelto y Archivado</span>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleAbrirAtenderIncidencia(item)}
+                              className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                              title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
+                            >
+                              <Edit3 size={12} /> Atender
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );

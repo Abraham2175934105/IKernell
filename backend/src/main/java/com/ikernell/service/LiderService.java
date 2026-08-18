@@ -1,6 +1,7 @@
 package com.ikernell.service;
 
 import com.ikernell.dto.SemaforoMetricsDto;
+import com.ikernell.exception.BusinessLogicException;
 import com.ikernell.exception.ResourceNotFoundException;
 import com.ikernell.model.*;
 import com.ikernell.model.Error;
@@ -580,33 +581,47 @@ public class LiderService {
         return respuesta;
     }
 
-    // Actualiza el estado de atención y nota de respuesta para un error técnico
+    // Actualiza el estado de atención y nota de respuesta para un error técnico (RF-24)
     public Error atenderError(Long idError, String estadoAtencion, String resolucionNota) {
         // Validaciones
         Error error = errorRepository.findById(idError)
                 .orElseThrow(() -> new ResourceNotFoundException("Error no encontrado con ID: " + idError));
         
+        // Validación Defensiva RF-24: Proteger trazabilidad y auditoría de incidencias ya resueltas
+        if ("SOLUCIONADO".equalsIgnoreCase(error.getEstadoAtencion()) || "RESUELTO".equalsIgnoreCase(error.getEstadoAtencion())) {
+            throw new BusinessLogicException("No se puede modificar una incidencia que ya ha sido marcada como resuelta.");
+        }
+
         // Persistencia
         error.setEstadoAtencion(estadoAtencion != null ? estadoAtencion : "EN_REVISION");
         if (resolucionNota != null) {
             error.setResolucionNota(resolucionNota);
         }
-        error.setFechaResolucion(LocalDateTime.now());
+        if ("SOLUCIONADO".equalsIgnoreCase(estadoAtencion) || "RESUELTO".equalsIgnoreCase(estadoAtencion)) {
+            error.setFechaResolucion(LocalDateTime.now());
+        }
         return errorRepository.save(error);
     }
 
-    // Actualiza el estado de atención y observaciones para una interrupción operativa
+    // Actualiza el estado de atención y observaciones para una interrupción operativa (RF-24)
     public Interrupcion atenderInterrupcion(Long idInterrupcion, String estadoAtencion, String resolucionNota) {
         // Validaciones
         Interrupcion interrupcion = interrupcionRepository.findById(idInterrupcion)
                 .orElseThrow(() -> new ResourceNotFoundException("Interrupción no encontrada con ID: " + idInterrupcion));
         
+        // Validación Defensiva RF-24: Proteger trazabilidad y auditoría de contingencias ya resueltas
+        if ("SOLUCIONADO".equalsIgnoreCase(interrupcion.getEstadoAtencion()) || "RESUELTO".equalsIgnoreCase(interrupcion.getEstadoAtencion())) {
+            throw new BusinessLogicException("No se puede modificar una incidencia que ya ha sido marcada como resuelta.");
+        }
+
         // Persistencia
         interrupcion.setEstadoAtencion(estadoAtencion != null ? estadoAtencion : "EN_REVISION");
         if (resolucionNota != null) {
             interrupcion.setResolucionNota(resolucionNota);
         }
-        interrupcion.setFechaResolucion(LocalDateTime.now());
+        if ("SOLUCIONADO".equalsIgnoreCase(estadoAtencion) || "RESUELTO".equalsIgnoreCase(estadoAtencion)) {
+            interrupcion.setFechaResolucion(LocalDateTime.now());
+        }
         return interrupcionRepository.save(interrupcion);
     }
 }
