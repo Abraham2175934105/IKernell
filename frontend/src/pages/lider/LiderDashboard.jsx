@@ -82,6 +82,7 @@ export const LiderDashboard = () => {
   
   const [loadingProyectos, setLoadingProyectos] = useState(true);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
+  const [refreshingManual, setRefreshingManual] = useState(false);
 
   const [showNuevoProyectoModal, setShowNuevoProyectoModal] = useState(false);
   const [submittingProyecto, setSubmittingProyecto] = useState(false);
@@ -213,6 +214,25 @@ export const LiderDashboard = () => {
       setLoadingProyectos(false);
     }
   }, [api, proyectoSeleccionado, seleccionarProyecto]);
+
+  // Manejador para refrescar manualmente con animación en el botón
+  const handleManualRefresh = async () => {
+    try {
+      setRefreshingManual(true);
+      await cargarProyectos();
+      if (proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL') {
+        await seleccionarProyecto(proyectoSeleccionado);
+      } else if (proyectoSeleccionado && proyectoSeleccionado.idProyecto === 'GLOBAL') {
+        await seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+      }
+      toast.success('Datos y métricas actualizados en tiempo real.');
+    } catch (err) {
+      console.error('Error en actualización manual:', err);
+      toast.error('Error al sincronizar datos.');
+    } finally {
+      setTimeout(() => setRefreshingManual(false), 500);
+    }
+  };
 
   // Efectos (Hooks)
   useEffect(() => {
@@ -623,13 +643,13 @@ export const LiderDashboard = () => {
 
           <button
             type="button"
-            onClick={cargarProyectos}
-            disabled={loadingProyectos}
+            onClick={handleManualRefresh}
+            disabled={loadingProyectos || refreshingManual}
             className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
             title="Sincronizar proyectos y etapas en tiempo real con PostgreSQL"
           >
-            <RefreshCw size={13} className={loadingProyectos ? 'animate-spin text-blue-500' : 'text-zinc-600 dark:text-zinc-300'} />
-            <span className="hidden sm:inline">{loadingProyectos ? 'Sincronizando...' : 'Actualizar'}</span>
+            <RefreshCw size={13} className={loadingProyectos || refreshingManual ? 'animate-spin text-blue-500' : 'text-zinc-600 dark:text-zinc-300'} />
+            <span className="hidden sm:inline">{loadingProyectos || refreshingManual ? 'Sincronizando...' : 'Actualizar'}</span>
           </button>
         </div>
       </motion.div>
@@ -752,10 +772,10 @@ export const LiderDashboard = () => {
           {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
             <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-10 sm:p-14 text-center max-w-2xl mx-auto shadow-sm my-4">
               <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
-                <FolderGit2 size={32} />
+                <Layers size={32} />
               </div>
-              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
-                Seleccione un proyecto específico en el menú superior para gestionar su estructura WBS y asignar tareas.
+              <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
+                Vista Global Activa. Seleccione un proyecto específico en el menú superior para gestionar su Estructura de Desglose de Trabajo (WBS) y asignar actividades.
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
                 La estructura de desglose de trabajo (fases, etapas y asignación de tareas a desarrolladores) requiere el contexto de un proyecto individual y no puede operarse en la vista global corporativa.
@@ -1281,8 +1301,8 @@ export const LiderDashboard = () => {
               <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <FileText size={32} />
               </div>
-              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
-                Seleccione un proyecto específico en el menú superior para exportar el lote ETL Brasil.
+              <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
+                Vista Global Activa. Seleccione un proyecto específico en el menú superior para exportar el lote ETL Brasil.
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
                 La exportación bajo norma ISO 8601 UTC para la Alianza Estratégica Brasil requiere empaquetar los registros operativos de un proyecto individual y no está disponible en la vista global.
