@@ -1339,7 +1339,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
         )}
       </AnimatePresence>
 
-      {/* ─── Modal 2: Guía de 4 Pasos & Niveles de Riesgo de Burnout (RF-35 / ISO/IEC 25010) ─── */}
+      {/* ─── Modal 2: Guía de 4 Pasos & Niveles de Riesgo de Burnout ─── */}
       <AnimatePresence>
         {showHelpModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
@@ -1357,14 +1357,9 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     <ShieldCheck size={22} />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60">
-                        RF-35 • ISO/IEC 25010
-                      </span>
-                      <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100">
-                        Guía de 4 Pasos: Niveles de Riesgo & Algoritmo Predictivo
-                      </h3>
-                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100">
+                      Guía de 4 Pasos: Niveles de Riesgo & Algoritmo Predictivo
+                    </h3>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">
                       Protocolo homologado de evaluación de carga cognitiva y mitigación de desgaste en series temporales de 21 días
                     </p>
@@ -1384,8 +1379,9 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 <div className="p-4 rounded-2xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-800/70 space-y-2 flex flex-col justify-between">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-black text-[0.68rem] text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/80 px-2 py-0.5 rounded-md">
-                        PASO 1
+                      <span className="font-mono font-black text-[0.68rem] text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/80 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                        <ShieldAlert size={12} className="shrink-0" />
+                        <span>PASO 1</span>
                       </span>
                       <span className="text-[0.65rem] font-black uppercase text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-red-900/40 border border-red-200 dark:border-red-800">
                         Score &gt; 80% • CRÍTICA
@@ -1398,8 +1394,12 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       <strong>Diagnóstico:</strong> Carga sostenida extrema en las series S1, S2 y S3, concurrencia de más de 6 tareas críticas o acumulación severa de errores técnicos e interrupciones.
                     </p>
                   </div>
-                  <div className="pt-2 border-t border-red-200/80 dark:border-red-800/60 text-[0.7rem] text-red-800 dark:text-red-300 font-bold bg-white/60 dark:bg-red-950/40 p-2 rounded-xl">
-                    🚨 <strong>Protocolo Mandatorio:</strong> Bloqueo preventivo en WBS para nuevas asignaciones. Rebalanceo urgente de tareas hacia integrantes estables.
+                  <div className="pt-2.5 border-t border-red-200/80 dark:border-red-800/60 text-[0.72rem] text-red-900 dark:text-red-200 font-medium bg-white/80 dark:bg-red-950/50 p-2.5 rounded-xl flex items-start gap-2">
+                    <ShieldAlert size={15} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-extrabold text-red-800 dark:text-red-300 block mb-0.5">Protocolo Mandatorio:</strong>
+                      Bloqueo preventivo en WBS para nuevas asignaciones. Rebalanceo urgente de tareas hacia integrantes estables.
+                    </div>
                   </div>
                 </div>
 
@@ -1407,8 +1407,9 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 <div className="p-4 rounded-2xl bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/70 space-y-2 flex flex-col justify-between">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-black text-[0.68rem] text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/80 px-2 py-0.5 rounded-md">
-                        PASO 2
+                      <span className="font-mono font-black text-[0.68rem] text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/80 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                        <AlertTriangle size={12} className="shrink-0" />
+                        <span>PASO 2</span>
                       </span>
                       <span className="text-[0.65rem] font-black uppercase text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-orange-900/40 border border-orange-200 dark:border-orange-800">
                         Score 65% - 79% • ALTA
@@ -1421,8 +1422,12 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       <strong>Diagnóstico:</strong> Aceleración de tensión operacional en los últimos 7 días (S3 &ge; 75%) o promedio sostenido entre 65% y 79% con tareas complejas simultáneas.
                     </p>
                   </div>
-                  <div className="pt-2 border-t border-orange-200/80 dark:border-orange-800/60 text-[0.7rem] text-orange-800 dark:text-orange-300 font-bold bg-white/60 dark:bg-orange-950/40 p-2 rounded-xl">
-                    ⚠️ <strong>Protocolo Mandatorio:</strong> Rebalanceo proactivo de subtareas complejas antes del cierre del sprint para prevenir la entrada a estado crítico.
+                  <div className="pt-2.5 border-t border-orange-200/80 dark:border-orange-800/60 text-[0.72rem] text-orange-900 dark:text-orange-200 font-medium bg-white/80 dark:bg-orange-950/50 p-2.5 rounded-xl flex items-start gap-2">
+                    <AlertTriangle size={15} className="text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-extrabold text-orange-800 dark:text-orange-300 block mb-0.5">Protocolo Mandatorio:</strong>
+                      Rebalanceo proactivo de subtareas complejas antes del cierre del sprint para prevenir la entrada a estado crítico.
+                    </div>
                   </div>
                 </div>
 
@@ -1430,8 +1435,9 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/70 space-y-2 flex flex-col justify-between">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-black text-[0.68rem] text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/80 px-2 py-0.5 rounded-md">
-                        PASO 3
+                      <span className="font-mono font-black text-[0.68rem] text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/80 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                        <Activity size={12} className="shrink-0" />
+                        <span>PASO 3</span>
                       </span>
                       <span className="text-[0.65rem] font-black uppercase text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800">
                         Score 45% - 64% • MEDIA
@@ -1444,8 +1450,12 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       <strong>Diagnóstico:</strong> Desgaste asociado a contingencias imprevistas, bloqueos de ambiente, reuniones urgentes o soporte imprevisto de producción.
                     </p>
                   </div>
-                  <div className="pt-2 border-t border-amber-200/80 dark:border-amber-800/60 text-[0.7rem] text-amber-800 dark:text-amber-300 font-bold bg-white/60 dark:bg-amber-950/40 p-2 rounded-xl">
-                    ⏱️ <strong>Protocolo Mandatorio:</strong> Monitoreo continuo de cadencia en dailies y contención de interrupciones externas no planificadas.
+                  <div className="pt-2.5 border-t border-amber-200/80 dark:border-amber-800/60 text-[0.72rem] text-amber-900 dark:text-amber-200 font-medium bg-white/80 dark:bg-amber-950/50 p-2.5 rounded-xl flex items-start gap-2">
+                    <Clock size={15} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-extrabold text-amber-800 dark:text-amber-300 block mb-0.5">Protocolo Mandatorio:</strong>
+                      Monitoreo continuo de cadencia en dailies y contención de interrupciones externas no planificadas.
+                    </div>
                   </div>
                 </div>
 
@@ -1453,8 +1463,9 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/70 space-y-2 flex flex-col justify-between">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-black text-[0.68rem] text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/80 px-2 py-0.5 rounded-md">
-                        PASO 4
+                      <span className="font-mono font-black text-[0.68rem] text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/80 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                        <CheckCircle2 size={12} className="shrink-0" />
+                        <span>PASO 4</span>
                       </span>
                       <span className="text-[0.65rem] font-black uppercase text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800">
                         Score &lt; 45% • BAJA / ESTABLE
@@ -1464,11 +1475,15 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       Nivel Bajo / Estable (Rendimiento Óptimo)
                     </h4>
                     <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] leading-relaxed">
-                      <strong>Diagnóstico:</strong> Flujo de trabajo balanceado, cadencia sostenible y alta fiabilidad bajo la norma ISO/IEC 25010 sin fatiga acumulada.
+                      <strong>Diagnóstico:</strong> Flujo de trabajo balanceado, cadencia sostenible y alta fiabilidad sin fatiga acumulada en los ciclos de entrega.
                     </p>
                   </div>
-                  <div className="pt-2 border-t border-emerald-200/80 dark:border-emerald-800/60 text-[0.7rem] text-emerald-800 dark:text-emerald-300 font-bold bg-white/60 dark:bg-emerald-950/40 p-2 rounded-xl">
-                    ✅ <strong>Protocolo Mandatorio:</strong> Capacidad disponible para asumir nuevas actividades WBS o liderar iniciativas de arquitectura y mentoría.
+                  <div className="pt-2.5 border-t border-emerald-200/80 dark:border-emerald-800/60 text-[0.72rem] text-emerald-900 dark:text-emerald-200 font-medium bg-white/80 dark:bg-emerald-950/50 p-2.5 rounded-xl flex items-start gap-2">
+                    <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-extrabold text-emerald-800 dark:text-emerald-300 block mb-0.5">Protocolo Mandatorio:</strong>
+                      Capacidad disponible para asumir nuevas actividades WBS o liderar iniciativas de arquitectura y mentoría.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1476,23 +1491,23 @@ Generado automáticamente por el motor analítico IKernell v2.0
               {/* Cuadro Técnico: Fundamentación Matemática y Ventana de 21 Días */}
               <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2 text-xs">
                 <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-zinc-100 text-[0.75rem]">
-                  <Sparkles size={14} className="text-blue-500" />
+                  <Layers size={14} className="text-blue-500" />
                   <span>Fundamentación del Motor Analítico (Series Temporales de 21 Días)</span>
                 </div>
                 <p className="text-zinc-600 dark:text-zinc-400 text-[0.72rem] leading-relaxed">
                   El algoritmo divide el histórico en 3 series ponderadas: <strong>Semana 1</strong> (Días 15 a 21), <strong>Semana 2</strong> (Días 8 a 14) y <strong>Semana 3</strong> (Últimos 7 días). La ponderación multidimensional combina:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[0.7rem] pt-1">
-                  <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                    <strong className="text-blue-600 dark:text-blue-400 block font-mono">45% Ponderación</strong>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                    <strong className="text-blue-600 dark:text-blue-400 block font-mono font-extrabold">45% Ponderación</strong>
                     <span>Tareas activas en WBS y horas estimadas vs consumidas</span>
                   </div>
-                  <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                    <strong className="text-red-600 dark:text-red-400 block font-mono">35% Ponderación</strong>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                    <strong className="text-red-600 dark:text-red-400 block font-mono font-extrabold">35% Ponderación</strong>
                     <span>Errores técnicos no resueltos y fallos de integración</span>
                   </div>
-                  <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                    <strong className="text-amber-600 dark:text-amber-400 block font-mono">20% Ponderación</strong>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                    <strong className="text-amber-600 dark:text-amber-400 block font-mono font-extrabold">20% Ponderación</strong>
                     <span>Minutos acumulados en interrupciones y contingencias</span>
                   </div>
                 </div>
