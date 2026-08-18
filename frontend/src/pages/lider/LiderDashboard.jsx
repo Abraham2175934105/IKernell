@@ -704,6 +704,44 @@ export const LiderDashboard = () => {
     return (totalMin / 60).toFixed(1);
   }, [interrupciones]);
 
+  // Evidencia de auditoría para finalización de proyecto (RF-20)
+  const evidenciaWbsFinalizacion = useMemo(() => {
+    if (!etapas || !Array.isArray(etapas)) {
+      return { etapasIncompletas: [], actividadesIncompletas: [], todasCompletadas: true, totalEtapas: 0, totalActividades: 0 };
+    }
+
+    const etapasIncompletas = [];
+    const actividadesIncompletas = [];
+    let totalActividades = 0;
+
+    etapas.forEach(et => {
+      const isEtapaFin = et.estado === 'FINALIZADA' || et.estado === 'COMPLETADA';
+      const acts = Array.isArray(et.actividades) ? et.actividades : [];
+      totalActividades += acts.length;
+
+      const actsInc = acts.filter(a => a.estado !== 'FINALIZADA' && a.estado !== 'COMPLETADA');
+      if (actsInc.length > 0) {
+        actividadesIncompletas.push(...actsInc.map(a => ({ ...a, etapaNombre: et.nombreEtapa })));
+      }
+
+      if (!isEtapaFin || actsInc.length > 0) {
+        etapasIncompletas.push({
+          ...et,
+          actividadesIncompletas: actsInc,
+          actividadesPendientesCount: actsInc.length
+        });
+      }
+    });
+
+    return {
+      etapasIncompletas,
+      actividadesIncompletas,
+      todasCompletadas: etapasIncompletas.length === 0 && actividadesIncompletas.length === 0,
+      totalEtapas: etapas.length,
+      totalActividades
+    };
+  }, [etapas]);
+
   return (
     <DashboardLayout
       activeTab={activeTab}
@@ -2524,7 +2562,7 @@ export const LiderDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal: Doble Confirmación Defensiva para Finalizar Proyecto */}
+      {/* Modal: Doble Confirmación Defensiva para Finalizar Proyecto (con Auditoría WBS) */}
       <AnimatePresence>
         {showConfirmFinalizar && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -2533,7 +2571,7 @@ export const LiderDashboard = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
                 <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 flex items-center justify-center shrink-0 shadow-inner">
@@ -2549,10 +2587,62 @@ export const LiderDashboard = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-red-50/60 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 text-xs text-red-900 dark:text-red-300 leading-relaxed font-medium space-y-2">
-                <p>
-                  ¿Estás absolutamente seguro de que deseas dar por finalizado este proyecto? Esta acción cambiará el estado a COMPLETADO, congelará permanentemente el WBS y liberará la carga operativa de todos los desarrolladores asignados. Esta acción NO se puede deshacer.
-                </p>
+              {/* Alerta de Auditoría WBS: Fases o Tareas no culminadas */}
+              {!evidenciaWbsFinalizacion.todasCompletadas ? (
+                <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-xs space-y-2.5 shadow-2xs">
+                  <div className="flex items-center gap-2 font-extrabold text-amber-800 dark:text-amber-300 uppercase tracking-wider text-[0.7rem]">
+                    <ShieldAlert size={15} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                    <span>Alerta de Auditoría: Fases y Actividades Incompletas</span>
+                  </div>
+
+                  <p className="text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
+                    El proyecto aún cuenta con <strong>{evidenciaWbsFinalizacion.etapasIncompletas.length} etapas</strong> y <strong>{evidenciaWbsFinalizacion.actividadesIncompletas.length} actividades</strong> sin finalizar o en progreso:
+                  </p>
+
+                  {/* Lista de Evidencia WBS Pendiente */}
+                  <div className="max-h-36 overflow-y-auto space-y-1.5 p-2.5 rounded-xl bg-white/80 dark:bg-zinc-900/80 border border-amber-200/80 dark:border-amber-800/60 font-mono text-[0.7rem]">
+                    {evidenciaWbsFinalizacion.etapasIncompletas.map(et => (
+                      <div key={et.idEtapa} className="border-b border-zinc-100 dark:border-zinc-800/80 last:border-0 pb-1 last:pb-0">
+                        <div className="flex items-center justify-between text-zinc-800 dark:text-zinc-200 font-bold">
+                          <span className="truncate max-w-[220px]">Etapa: {et.nombreEtapa}</span>
+                          <span className="text-[0.6rem] uppercase px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-extrabold">
+                            {et.estado}
+                          </span>
+                        </div>
+                        {et.actividadesIncompletas && et.actividadesIncompletas.length > 0 && (
+                          <div className="pl-3 space-y-0.5 mt-0.5 text-zinc-600 dark:text-zinc-400 font-normal">
+                            {et.actividadesIncompletas.map(act => (
+                              <div key={act.idActividad} className="truncate">
+                                ↳ <span className="text-zinc-700 dark:text-zinc-300 font-medium">{act.descripcion}</span> ({act.estado})
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <p className="text-[0.68rem] text-amber-800 dark:text-amber-300/90 font-semibold italic">
+                    Al confirmar, el backend forzará automáticamente el cierre de todas estas etapas y tareas para consolidar la trazabilidad histórica de auditoría (RF-20).
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2.5 font-medium shadow-2xs">
+                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="block font-bold">Verificación WBS Completa (100%)</strong>
+                    <span>Todas las etapas y actividades del cronograma han culminado con éxito. El cierre formal se realizará con trazabilidad íntegra.</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="p-3.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium space-y-1">
+                <strong className="text-zinc-900 dark:text-zinc-100 block">Consecuencias del Cierre Definitivo:</strong>
+                <ul className="list-disc list-inside space-y-0.5 text-[0.72rem] text-zinc-600 dark:text-zinc-400">
+                  <li>El estado del proyecto cambiará a <strong className="text-zinc-900 dark:text-zinc-100">FINALIZADO</strong>.</li>
+                  <li>El WBS se congelará permanentemente en modo solo lectura.</li>
+                  <li>Se liberará la dedicación horaria de todos los desarrolladores asignados en el predictor de burnout.</li>
+                </ul>
               </div>
 
               <div className="flex justify-end gap-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
@@ -2568,15 +2658,15 @@ export const LiderDashboard = () => {
                   type="button"
                   onClick={handleFinalizarProyecto}
                   disabled={submittingFinalizar}
-                  className="bg-red-600 hover:bg-red-700 text-white text-xs py-2 px-4 rounded-xl font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 transition-colors"
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs py-2.5 px-5 rounded-xl font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50 transition-colors"
                 >
                   {submittingFinalizar ? (
                     <>
-                      <Loader2 size={13} className="animate-spin" /> Finalizando...
+                      <Loader2 size={14} className="animate-spin" /> Finalizando Proyecto...
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 size={14} /> Sí, Finalizar Proyecto
+                      <CheckCircle2 size={14} /> Confirmar Cierre Formal
                     </>
                   )}
                 </button>
