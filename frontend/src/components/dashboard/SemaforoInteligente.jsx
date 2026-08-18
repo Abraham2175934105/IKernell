@@ -106,34 +106,34 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
   const totalErrores = metrics?.totalErrores ?? 0;
   const totalInterrupciones = metrics?.totalInterrupciones ?? 0;
 
-  // Configuración de estilos, puntos SVG y badges ejecutivos sin emojis
+  // Configuración de estilos, puntos de estado CSS animados y badges ejecutivos (100% Cero Emojis)
   const nivelConfig = {
     ROJO: {
-      dotColor: 'bg-red-500',
-      badge: 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800 animate-pulse',
+      dotColor: 'bg-red-500 animate-pulse',
+      badge: 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800',
       iconBg: 'bg-red-100 text-red-600 dark:bg-red-950/80 dark:text-red-400 border border-red-200 dark:border-red-900',
       label: isGlobal ? 'Riesgo Organizacional Crítico' : 'Riesgo Crítico de Proyecto',
       Icon: ShieldAlert
     },
     NARANJA: {
-      dotColor: 'bg-orange-500',
-      badge: 'bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border-orange-200 dark:border-orange-800',
-      iconBg: 'bg-orange-100 text-orange-600 dark:bg-orange-950/80 dark:text-orange-400 border border-orange-200 dark:border-orange-900',
+      dotColor: 'bg-amber-500 animate-pulse',
+      badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+      iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-200 dark:border-amber-900',
       label: 'Riesgo Alto (Alerta Preventiva)',
       Icon: AlertTriangle
     },
     AMARILLO: {
-      dotColor: 'bg-amber-500',
+      dotColor: 'bg-amber-400',
       badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
       iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-200 dark:border-amber-900',
-      label: 'Riesgo Medio (En Supervisión)',
+      label: 'Riesgo Moderado (En Supervisión)',
       Icon: AlertTriangle
     },
     VERDE: {
       dotColor: 'bg-emerald-500',
       badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
       iconBg: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/80 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900',
-      label: 'Operación Estable (Riesgo Bajo)',
+      label: 'Operación Estable - Umbral Adecuado',
       Icon: CheckCircle2
     }
   }[currentLevel] || {
@@ -141,7 +141,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
     badge: 'bg-zinc-100 text-zinc-700 border-zinc-200',
     iconBg: 'bg-zinc-100 text-zinc-700',
     label: 'Estado en Evaluación',
-    Icon: Zap
+    Icon: Activity
   };
 
   const LevelIcon = nivelConfig.Icon;
@@ -231,9 +231,9 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
               <LevelIcon size={38} />
             </div>
 
-            <span className={`inline-flex items-center gap-2 text-xs font-black tracking-wider uppercase px-3 py-1 rounded-full border mb-2 ${nivelConfig.badge}`}>
-              <span className={`w-2 h-2 rounded-full ${nivelConfig.dotColor}`} />
-              {nivelConfig.label}
+            <span className={`inline-flex items-center gap-2 text-xs font-black tracking-wider uppercase px-3.5 py-1.5 rounded-full border mb-2 shadow-2xs ${nivelConfig.badge}`}>
+              <span className={`w-3 h-3 rounded-full ${nivelConfig.dotColor} shrink-0`} />
+              <span>{nivelConfig.label}</span>
             </span>
 
             <h4 className="text-xl font-extrabold mb-1.5 text-zinc-900 dark:text-zinc-100">

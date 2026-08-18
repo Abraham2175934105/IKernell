@@ -298,6 +298,15 @@ export const LiderDashboard = () => {
     }
   }, [api, proyectoSeleccionado, seleccionarProyecto]);
 
+  // Forzar contexto de proyecto individual al navegar a WBS o ETL
+  useEffect(() => {
+    if ((activeTab === 'wbs' || activeTab === 'etl') && proyectoSeleccionado?.idProyecto === 'GLOBAL') {
+      if (proyectos && proyectos.length > 0) {
+        seleccionarProyecto(proyectos[0]);
+      }
+    }
+  }, [activeTab, proyectoSeleccionado, proyectos, seleccionarProyecto]);
+
   // Manejador para refrescar manualmente con animación en el botón
   const handleManualRefresh = async () => {
     try {
@@ -806,44 +815,47 @@ export const LiderDashboard = () => {
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                   className="absolute right-0 top-full mt-2 w-full min-w-[320px] sm:min-w-[400px] max-w-lg z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xl rounded-2xl max-h-84 overflow-y-auto p-2 space-y-1.5"
                 >
-                  {/* Encabezado Categoría 1 */}
-                  <div className="px-2 pt-1 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400">
-                    Vistas Consolidadas
-                  </div>
-
-                  {/* Opción 1: Vista Global Corporativa */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
-                      setDropdownProyectosOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL')
-                        ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
-                        : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                        <Globe size={14} />
+                  {/* Opción 1: Vista Global Corporativa (Solo disponible en módulos analíticos globales: Semáforo e Incidencias) */}
+                  {(activeTab === 'semaforo' || activeTab === 'incidencias') && (
+                    <>
+                      <div className="px-2 pt-1 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400">
+                        Vistas Consolidadas
                       </div>
-                      <div className="text-left truncate">
-                        <span className="block truncate font-extrabold text-xs">[Vista Global Corporativa] Todos los Proyectos</span>
-                        <span className="block text-[0.65rem] text-zinc-500 font-medium truncate">Consolidado general de métricas e incidencias</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        GLOBAL
-                      </span>
-                      {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') && (
-                        <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                      )}
-                    </div>
-                  </button>
 
-                  <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5"></div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                          setDropdownProyectosOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL')
+                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
+                            : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                            <Globe size={14} />
+                          </div>
+                          <div className="text-left truncate">
+                            <span className="block truncate font-extrabold text-xs">[Vista Global Corporativa] Todos los Proyectos</span>
+                            <span className="block text-[0.65rem] text-zinc-500 font-medium truncate">Consolidado general de métricas e incidencias</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            GLOBAL
+                          </span>
+                          {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') && (
+                            <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                          )}
+                        </div>
+                      </button>
+
+                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5"></div>
+                    </>
+                  )}
 
                   {/* Encabezado Categoría 2 */}
                   <div className="px-2 pt-0.5 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
@@ -940,11 +952,10 @@ export const LiderDashboard = () => {
             type="button"
             onClick={handleManualRefresh}
             disabled={loadingProyectos || refreshingManual}
-            className="outline-button text-xs py-2.5 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="outline-button p-2.5 rounded-2xl font-bold inline-flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             title="Sincronizar proyectos y etapas en tiempo real con PostgreSQL"
           >
-            <RefreshCw size={13} className={loadingProyectos || refreshingManual ? 'animate-spin text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-300'} />
-            <span className="hidden sm:inline">{loadingProyectos || refreshingManual ? 'Sincronizando...' : 'Actualizar'}</span>
+            <RefreshCw size={15} className={loadingProyectos || refreshingManual ? 'animate-spin text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-300'} />
           </button>
         </div>
       </motion.div>
@@ -1566,18 +1577,18 @@ export const LiderDashboard = () => {
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm"
           >
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left text-xs min-w-[850px]">
+            <div className="overflow-x-auto w-full pb-1">
+              <table className="w-full text-left text-xs min-w-[1050px]">
                 <thead className="bg-zinc-50/90 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   <tr>
-                    <th className="py-4 px-5" title="Tipo de registro: Error técnico en código o Contingencia/interrupción operativa">Tipo</th>
-                    <th className="py-4 px-5" title="Nivel de gravedad del fallo que afecta al Semáforo Predictivo o duración en minutos">Severidad / Duración</th>
-                    <th className="py-4 px-5" title="Proyecto y fase WBS asociada al reporte en PostgreSQL">Proyecto & Fase</th>
-                    <th className="py-4 px-5" title="Descripción detallada del hallazgo técnico o causa de la interrupción">Descripción del Hallazgo</th>
-                    <th className="py-4 px-5" title="Desarrollador asignado responsable del reporte">Desarrollador</th>
-                    <th className="py-4 px-5" title="Fecha y hora exacta en que se registró la incidencia">Fecha</th>
-                    <th className="py-4 px-5" title="Estado actual del flujo de atención del reporte">Estado</th>
-                    <th className="py-4 px-5 text-right" title="Gestionar estado, registrar acción correctiva y asignar resolución técnica">Acción</th>
+                    <th className="py-4 px-5 whitespace-nowrap" title="Tipo de registro: Error técnico en código o Contingencia/interrupción operativa">Tipo</th>
+                    <th className="py-4 px-5 whitespace-nowrap" title="Nivel de gravedad del fallo que afecta al Semáforo Predictivo o duración en minutos">Severidad / Duración</th>
+                    <th className="py-4 px-5 whitespace-nowrap" title="Proyecto y fase WBS asociada al reporte en PostgreSQL">Proyecto & Fase</th>
+                    <th className="py-4 px-5 min-w-[220px]" title="Descripción detallada del hallazgo técnico o causa de la interrupción">Descripción del Hallazgo</th>
+                    <th className="py-4 px-5 whitespace-nowrap" title="Desarrollador asignado responsable del reporte">Desarrollador</th>
+                    <th className="py-4 px-5 whitespace-nowrap" title="Fecha y hora exacta en que se registró la incidencia">Fecha</th>
+                    <th className="py-4 px-5 whitespace-nowrap" title="Estado actual del flujo de atención del reporte">Estado</th>
+                    <th className="py-4 px-5 text-right whitespace-nowrap min-w-[150px]" title="Gestionar estado, registrar acción correctiva y asignar resolución técnica">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/80 dark:divide-zinc-800/80 font-medium">
@@ -1627,7 +1638,7 @@ export const LiderDashboard = () => {
                         className="transition-colors duration-150 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group"
                       >
                         {/* Tipo */}
-                        <td className="py-4 px-5">
+                        <td className="py-4 px-5 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                               isError ? 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400'
@@ -1641,7 +1652,7 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Severidad / Duración */}
-                        <td className="py-4 px-5">
+                        <td className="py-4 px-5 whitespace-nowrap">
                           {isError ? (
                             <span 
                               title="Nivel de gravedad del fallo que afecta al Semáforo Predictivo"
@@ -1665,7 +1676,7 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Proyecto & Fase */}
-                        <td className="py-4 px-5">
+                        <td className="py-4 px-5 whitespace-nowrap">
                           <div className="max-w-[180px] truncate">
                             <span className="font-bold text-blue-600 dark:text-blue-400 block truncate text-xs" title={projName}>
                               {projId ? `[PRJ-00${projId}] ` : ''}{projName}
@@ -1694,7 +1705,7 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Desarrollador */}
-                        <td className="py-4 px-5">
+                        <td className="py-4 px-5 whitespace-nowrap">
                           <span 
                             title="Desarrollador asignado responsable del reporte"
                             className="inline-flex items-center text-[0.65rem] font-bold px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
@@ -1710,15 +1721,15 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Estado */}
-                        <td className="py-4 px-5">
+                        <td className="py-4 px-5 whitespace-nowrap">
                           <EstadoAtencionBadge estado={item.estadoAtencion} />
                         </td>
 
                         {/* Acción */}
-                        <td className="py-4 px-5 text-right">
+                        <td className="py-4 px-5 text-right whitespace-nowrap min-w-[150px]">
                           {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
                             <span 
-                              className="inline-flex items-center gap-1.5 text-[0.65rem] font-extrabold uppercase px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
+                              className="inline-flex items-center gap-1.5 text-[0.65rem] font-extrabold uppercase px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
                               title="Incidencia resuelta y congelada para auditoría y trazabilidad histórica (RF-24)"
                             >
                               <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -1728,10 +1739,11 @@ export const LiderDashboard = () => {
                             <button
                               type="button"
                               onClick={() => handleAbrirAtenderIncidencia(item)}
-                              className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                              className="outline-button text-xs py-1.5 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                               title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
                             >
-                              <Edit3 size={12} /> Atender
+                              <Edit3 size={12} />
+                              <span>Atender / Editar</span>
                             </button>
                           )}
                         </td>
@@ -2305,11 +2317,10 @@ export const LiderDashboard = () => {
 
                 <div>
                   <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    Nota de Respuesta o Acción Correctiva *
+                    Nota de Respuesta o Acción Correctiva (Opcional)
                   </label>
                   <textarea
                     rows={3}
-                    required
                     value={atencionForm.resolucionNota}
                     onChange={(e) => setAtencionForm({ ...atencionForm, resolucionNota: e.target.value })}
                     placeholder="Escriba las instrucciones, solución técnica o causa raíz para el desarrollador..."
