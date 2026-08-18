@@ -82,7 +82,7 @@ export const BibliotecaDigital = () => {
     }
   }, [api]);
 
-  // Debounce para búsqueda predictiva y filtrado
+  // Debounce para búsqueda predictiva y filtrado (optimizado a 300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       cargarDocumentos(searchTerm, selectedCategory);
@@ -92,7 +92,7 @@ export const BibliotecaDigital = () => {
         setSuggestions([]);
         setShowSuggestions(false);
       }
-    }, 200);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchTerm, selectedCategory, cargarDocumentos, fetchSuggestions]);
