@@ -1572,23 +1572,23 @@ export const LiderDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Tabla Corporativa de Incidencias e Interrupciones con Tooltips y Micro-Badges */}
+          {/* Tabla Corporativa de Incidencias e Interrupciones (Optimizada para pantalla completa en PC/Tablet) */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm"
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm w-full"
           >
-            <div className="overflow-x-auto w-full pb-1">
-              <table className="w-full text-left text-xs min-w-[1050px]">
-                <thead className="bg-zinc-50/90 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <div className="overflow-x-auto md:overflow-x-visible w-full">
+              <table className="w-full text-left text-xs table-auto">
+                <thead className="bg-zinc-50/90 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-[0.7rem] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   <tr>
-                    <th className="py-4 px-5 whitespace-nowrap" title="Tipo de registro: Error técnico en código o Contingencia/interrupción operativa">Tipo</th>
-                    <th className="py-4 px-5 whitespace-nowrap" title="Nivel de gravedad del fallo que afecta al Semáforo Predictivo o duración en minutos">Severidad / Duración</th>
-                    <th className="py-4 px-5 whitespace-nowrap" title="Proyecto y fase WBS asociada al reporte en PostgreSQL">Proyecto & Fase</th>
-                    <th className="py-4 px-5 min-w-[220px]" title="Descripción detallada del hallazgo técnico o causa de la interrupción">Descripción del Hallazgo</th>
-                    <th className="py-4 px-5 whitespace-nowrap" title="Desarrollador asignado responsable del reporte">Desarrollador</th>
-                    <th className="py-4 px-5 whitespace-nowrap" title="Fecha y hora exacta en que se registró la incidencia">Fecha</th>
-                    <th className="py-4 px-5 whitespace-nowrap" title="Estado actual del flujo de atención del reporte">Estado</th>
-                    <th className="py-4 px-5 text-right whitespace-nowrap min-w-[150px]" title="Gestionar estado, registrar acción correctiva y asignar resolución técnica">Acción</th>
+                    <th className="py-3.5 px-3.5 whitespace-nowrap" title="Tipo de registro: Error técnico en código o Contingencia/interrupción operativa">Tipo</th>
+                    <th className="py-3.5 px-3.5 whitespace-nowrap" title="Nivel de gravedad del fallo o duración en minutos">Severidad / Duración</th>
+                    <th className="py-3.5 px-3.5" title="Proyecto y fase WBS asociada al reporte en PostgreSQL">Proyecto & Fase</th>
+                    <th className="py-3.5 px-3.5" title="Descripción detallada del hallazgo técnico o causa de la interrupción">Descripción</th>
+                    <th className="py-3.5 px-3.5 whitespace-nowrap" title="Desarrollador asignado responsable del reporte">Desarrollador</th>
+                    <th className="py-3.5 px-3.5 whitespace-nowrap" title="Fecha y hora exacta en que se registró la incidencia">Fecha</th>
+                    <th className="py-3.5 px-3.5 whitespace-nowrap text-center" title="Estado actual del flujo de atención del reporte">Estado</th>
+                    <th className="py-3.5 px-3.5 text-right whitespace-nowrap" title="Gestionar estado, registrar acción correctiva y asignar resolución técnica">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/80 dark:divide-zinc-800/80 font-medium">
@@ -1638,7 +1638,7 @@ export const LiderDashboard = () => {
                         className="transition-colors duration-150 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group"
                       >
                         {/* Tipo */}
-                        <td className="py-4 px-5 whitespace-nowrap">
+                        <td className="py-3.5 px-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                               isError ? 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400'
@@ -1652,7 +1652,7 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Severidad / Duración */}
-                        <td className="py-4 px-5 whitespace-nowrap">
+                        <td className="py-3.5 px-3.5 whitespace-nowrap">
                           {isError ? (
                             <span 
                               title="Nivel de gravedad del fallo que afecta al Semáforo Predictivo"
@@ -1676,8 +1676,8 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Proyecto & Fase */}
-                        <td className="py-4 px-5 whitespace-nowrap">
-                          <div className="max-w-[180px] truncate">
+                        <td className="py-3.5 px-3.5">
+                          <div className="max-w-[130px] lg:max-w-[160px] truncate">
                             <span className="font-bold text-blue-600 dark:text-blue-400 block truncate text-xs" title={projName}>
                               {projId ? `[PRJ-00${projId}] ` : ''}{projName}
                             </span>
@@ -1688,9 +1688,9 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Descripción */}
-                        <td className="py-4 px-5">
-                          <div className="max-w-xs space-y-1">
-                            <p className="text-zinc-700 dark:text-zinc-300 line-clamp-2 text-xs leading-relaxed" title={item.descripcion || item.comentarios}>
+                        <td className="py-3.5 px-3.5">
+                          <div className="max-w-[180px] lg:max-w-xs space-y-0.5">
+                            <p className="text-zinc-700 dark:text-zinc-300 truncate text-xs leading-relaxed" title={item.descripcion || item.comentarios}>
                               {item.descripcion || item.comentarios || 'Sin descripción detallada'}
                             </p>
                             {item.resolucionNota && (
@@ -1705,41 +1705,41 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Desarrollador */}
-                        <td className="py-4 px-5 whitespace-nowrap">
+                        <td className="py-3.5 px-3.5 whitespace-nowrap">
                           <span 
                             title="Desarrollador asignado responsable del reporte"
-                            className="inline-flex items-center text-[0.65rem] font-bold px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
+                            className="inline-flex items-center text-[0.65rem] font-bold px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
                           >
                             <User size={11} className="mr-1 text-zinc-500 shrink-0" />
-                            <span className="truncate max-w-[120px]">{devName}</span>
+                            <span className="truncate max-w-[100px] lg:max-w-[130px]">{devName}</span>
                           </span>
                         </td>
 
                         {/* Fecha */}
-                        <td className="py-4 px-5 font-mono text-[0.7rem] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                        <td className="py-3.5 px-3.5 font-mono text-[0.7rem] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                           {fechaStr}
                         </td>
 
                         {/* Estado */}
-                        <td className="py-4 px-5 whitespace-nowrap">
+                        <td className="py-3.5 px-3.5 whitespace-nowrap text-center">
                           <EstadoAtencionBadge estado={item.estadoAtencion} />
                         </td>
 
                         {/* Acción */}
-                        <td className="py-4 px-5 text-right whitespace-nowrap min-w-[150px]">
+                        <td className="py-3.5 px-3.5 text-right whitespace-nowrap">
                           {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
                             <span 
-                              className="inline-flex items-center gap-1.5 text-[0.65rem] font-extrabold uppercase px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
+                              className="inline-flex items-center gap-1.5 text-[0.65rem] font-extrabold uppercase px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
                               title="Incidencia resuelta y congelada para auditoría y trazabilidad histórica (RF-24)"
                             >
                               <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                              <span>Resuelto y Archivado</span>
+                              <span>Resuelto</span>
                             </span>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleAbrirAtenderIncidencia(item)}
-                              className="outline-button text-xs py-1.5 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                              className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                               title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
                             >
                               <Edit3 size={12} />
