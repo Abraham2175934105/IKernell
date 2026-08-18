@@ -75,10 +75,10 @@ public class LiderService {
                     .orElseThrow(() -> new ResourceNotFoundException("No se encontró ningún Líder o Coordinador activo para asociar al proyecto."));
         }
         
-        // Persistencia
+        // Persistencia (HU-11: Estado inicial EN_PLANIFICACION o ACTIVO)
         proyecto.setLider(lider);
         if (proyecto.getEstado() == null || proyecto.getEstado().isBlank()) {
-            proyecto.setEstado("ACTIVO");
+            proyecto.setEstado("EN_PLANIFICACION");
         }
         return proyectoRepository.save(proyecto);
     }
