@@ -249,6 +249,10 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                       onClick={() => {
                         setCurrentTool(null);
                         if (setActiveTab) setActiveTab(item.id);
+                        const roleHome = user?.rol === 'COORDINADOR' ? '/coordinador' : user?.rol === 'LIDER' ? '/lider' : '/desarrollador';
+                        if (location.pathname !== roleHome) {
+                          navigate(roleHome);
+                        }
                         setSidebarOpen(false);
                       }}
                       title={item.label}

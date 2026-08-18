@@ -66,11 +66,11 @@ export const AppRouter = () => {
                 <Route path="/coordinador" element={<CoordinadorDashboard />} />
               </Route>
 
-              <Route element={<ProtectedRoute allowedRoles={['COORDINADOR', 'LIDER']} />}>
+              <Route element={<ProtectedRoute allowedRoles={['LIDER']} />}>
                 <Route path="/lider" element={<LiderDashboard />} />
               </Route>
 
-              <Route element={<ProtectedRoute allowedRoles={['COORDINADOR', 'LIDER', 'DESARROLLADOR']} />}>
+              <Route element={<ProtectedRoute allowedRoles={['DESARROLLADOR']} />}>
                 <Route path="/desarrollador" element={<DesarrolladorDashboard />} />
               </Route>
 
