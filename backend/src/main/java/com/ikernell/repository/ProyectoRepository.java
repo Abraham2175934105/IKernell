@@ -19,5 +19,11 @@ public interface ProyectoRepository extends JpaRepository<Proyecto, Long> {
     List<Proyecto> findByEstado(String estado);
 
     Page<Proyecto> findByEstado(String estado, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT p FROM Proyecto p LEFT JOIN FETCH p.lider ORDER BY p.idProyecto ASC")
+    List<Proyecto> findAllWithLider();
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT p FROM Proyecto p LEFT JOIN FETCH p.lider WHERE p.lider = :lider ORDER BY p.idProyecto ASC")
+    List<Proyecto> findByLiderWithLider(@org.springframework.data.repository.query.Param("lider") Trabajador lider);
 }
 

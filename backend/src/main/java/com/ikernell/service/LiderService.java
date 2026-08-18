@@ -190,10 +190,10 @@ public class LiderService {
         return proyectoRepository.findByLider(lider);
     }
 
-    // Listado general de proyectos
+    // Listado general de proyectos optimizado con FETCH del Líder
     @Transactional(readOnly = true)
     public List<Proyecto> listarTodosLosProyectos() {
-        return proyectoRepository.findAll();
+        return proyectoRepository.findAllWithLider();
     }
 
     // Consultas paginadas para tablas con alto volumen de proyectos
@@ -209,17 +209,12 @@ public class LiderService {
         return proyectoRepository.findAll(pageable);
     }
 
-    // Obtiene las etapas WBS y sus actividades asociadas
+    // Obtiene las etapas WBS y sus actividades asociadas en 1 sola consulta optimizada (Anti N+1)
     @Transactional(readOnly = true)
     public List<Etapa> obtenerEtapasPorProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
-        for (Etapa e : etapas) {
-            List<Actividad> acts = actividadRepository.findByEtapa(e);
-            e.setActividades(acts != null ? acts : new ArrayList<>());
-        }
-        return etapas;
+        return etapaRepository.findByProyectoWithActividades(proyecto);
     }
 
     // Lista desarrolladores activos disponibles para asignaciones
@@ -228,42 +223,32 @@ public class LiderService {
         return trabajadorRepository.findByRolAndEstado(Rol.DESARROLLADOR, true);
     }
 
-    // Consulta errores técnicos reportados en las fases del proyecto
+    // Consulta errores técnicos reportados en las fases del proyecto en 1 sola consulta (Anti N+1)
     @Transactional(readOnly = true)
     public List<Error> obtenerErroresPorProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
-        List<Error> errores = new ArrayList<>();
-        for (Etapa e : etapas) {
-            errores.addAll(errorRepository.findByEtapa(e));
-        }
-        return errores;
+        return errorRepository.findByProyectoWithDetails(proyecto);
     }
 
-    // Consulta todos los errores técnicos globales reportados en la organización
+    // Consulta todos los errores técnicos globales reportados en la organización con JOIN FETCH
     @Transactional(readOnly = true)
     public List<Error> obtenerTodosLosErrores() {
-        return errorRepository.findAll();
+        return errorRepository.findAllWithDetails();
     }
 
-    // Consulta interrupciones y contingencias operativas reportadas
+    // Consulta interrupciones y contingencias operativas reportadas en 1 sola consulta (Anti N+1)
     @Transactional(readOnly = true)
     public List<Interrupcion> obtenerInterrupcionesPorProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
-        List<Interrupcion> interrupciones = new ArrayList<>();
-        for (Etapa e : etapas) {
-            interrupciones.addAll(interrupcionRepository.findByEtapa(e));
-        }
-        return interrupciones;
+        return interrupcionRepository.findByProyectoWithDetails(proyecto);
     }
 
-    // Consulta todas las interrupciones y contingencias globales reportadas en la organización
+    // Consulta todas las interrupciones operativas con JOIN FETCH
     @Transactional(readOnly = true)
     public List<Interrupcion> obtenerTodasLasInterrupciones() {
-        return interrupcionRepository.findAll();
+        return interrupcionRepository.findAllWithDetails();
     }
 
     // Consulta consolidada global de incidencias (errores e interrupciones)

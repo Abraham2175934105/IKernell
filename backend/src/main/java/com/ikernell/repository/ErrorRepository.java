@@ -28,4 +28,10 @@ public interface ErrorRepository extends JpaRepository<Error, Long> {
 
     /** Paginación de errores por severidad para filtrado del Dashboard. */
     Page<Error> findBySeveridad(String severidad, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT err FROM Error err LEFT JOIN FETCH err.desarrollador LEFT JOIN FETCH err.etapa e WHERE e.proyecto = :proyecto ORDER BY err.idError DESC")
+    List<Error> findByProyectoWithDetails(@org.springframework.data.repository.query.Param("proyecto") com.ikernell.model.Proyecto proyecto);
+
+    @org.springframework.data.jpa.repository.Query("SELECT err FROM Error err LEFT JOIN FETCH err.desarrollador LEFT JOIN FETCH err.etapa e ORDER BY err.idError DESC")
+    List<Error> findAllWithDetails();
 }
