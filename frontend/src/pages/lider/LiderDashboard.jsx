@@ -548,19 +548,19 @@ export const LiderDashboard = () => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="mb-6 bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm"
+        className="mb-6 bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm min-w-0"
       >
-        <div>
+        <div className="min-w-0 flex-1 max-w-full md:max-w-md lg:max-w-xl">
           <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
             Gestión y Control de Proyectos WBS
           </span>
-          <h2 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+          <h2 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight truncate" title={proyectoSeleccionado?.nombre}>
             {proyectoSeleccionado?.nombre || (loadingProyectos ? 'Cargando proyectos...' : 'Panel del Líder')}
           </h2>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0 min-w-0 max-w-full">
+          <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all max-w-full sm:max-w-xs md:max-w-sm">
             {proyectoSeleccionado?.idProyecto === 'GLOBAL' ? (
               <Globe size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />
             ) : (
@@ -585,7 +585,7 @@ export const LiderDashboard = () => {
                     if (proj) seleccionarProyecto(proj);
                   }
                 }}
-                className="bg-transparent border-0 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:ring-0 focus:outline-none cursor-pointer pr-4 py-0.5"
+                className="bg-transparent border-0 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:ring-0 focus:outline-none cursor-pointer pr-4 py-0.5 max-w-[170px] sm:max-w-[220px] md:max-w-[260px] truncate"
                 title="Selecciona el proyecto activo o la vista global corporativa"
               >
                 <option value="GLOBAL" className="dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
@@ -640,64 +640,64 @@ export const LiderDashboard = () => {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="mb-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 shadow-sm space-y-4"
+          className="mb-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 shadow-sm space-y-4 min-w-0"
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-900 dark:text-zinc-100 shrink-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80 pb-4 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-sm">
                 <FolderGit2 size={20} />
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight truncate max-w-full sm:max-w-md lg:max-w-xl" title={proyectoSeleccionado.nombre}>
                     {proyectoSeleccionado.nombre}
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                  <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 shrink-0">
                     {proyectoSeleccionado.estado || 'ACTIVO'}
                   </span>
                 </div>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                  Identificador del Proyecto: <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300">PRJ-00{proyectoSeleccionado.idProyecto}</span>
+                  Identificador del Proyecto: <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">PRJ-00{proyectoSeleccionado.idProyecto}</span>
                 </p>
               </div>
             </div>
 
             {proyectoSeleccionado.lider && (
-              <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
-                <User size={14} className="text-zinc-600 dark:text-zinc-300" />
+              <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
+                <User size={14} className="text-blue-600 dark:text-blue-400" />
                 <span>
-                  Líder: <strong className="text-zinc-800 dark:text-zinc-200">{proyectoSeleccionado.lider.nombre} {proyectoSeleccionado.lider.apellido}</strong>
+                  Líder: <strong className="text-zinc-900 dark:text-zinc-100">{proyectoSeleccionado.lider.nombre} {proyectoSeleccionado.lider.apellido}</strong>
                 </span>
               </div>
             )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-            {/* Cliente u Organización */}
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800">
-              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 shadow-2xs">
+            {/* 1. Cliente u Organización */}
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
                 <Building2 size={16} />
               </div>
-              <div className="min-w-0">
-                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase tracking-wider block">
+              <div className="min-w-0 flex-1">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
                   Cliente / Organización
                 </span>
-                <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate mt-0.5">
+                <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate" title={proyectoSeleccionado.cliente || 'Organización Interna IKernell'}>
                   {proyectoSeleccionado.cliente || 'Organización Interna IKernell'}
                 </p>
               </div>
             </div>
 
-            {/* Presupuesto Inicial */}
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800">
-              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 shadow-2xs">
+            {/* 2. Dimensión Presupuestal */}
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
                 <CircleDollarSign size={16} />
               </div>
-              <div className="min-w-0">
-                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase tracking-wider block">
+              <div className="min-w-0 flex-1">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
                   Dimensión Presupuestal
                 </span>
-                <p className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100 truncate mt-0.5">
+                <p className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
                   {proyectoSeleccionado.presupuesto !== null && proyectoSeleccionado.presupuesto !== undefined
                     ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(Number(proyectoSeleccionado.presupuesto))
                     : 'Sin dimensionar'}
@@ -705,33 +705,33 @@ export const LiderDashboard = () => {
               </div>
             </div>
 
-            {/* Fechas de Ejecución */}
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 sm:col-span-2 lg:col-span-1">
-              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 shadow-2xs">
+            {/* 3. Cronograma Estimado */}
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 sm:col-span-2 lg:col-span-1 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 shadow-2xs">
                 <CalendarClock size={16} />
               </div>
-              <div className="min-w-0">
-                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase tracking-wider block">
+              <div className="min-w-0 flex-1">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
                   Cronograma Estimado
                 </span>
-                <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate mt-0.5">
+                <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate">
                   {proyectoSeleccionado.fechaInicio || 'N/A'} &rarr; {proyectoSeleccionado.fechaFinEstimada || 'N/A'}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Descripción del Alcance */}
+          {/* 4. Descripción del Alcance */}
           {proyectoSeleccionado.descripcion && (
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 text-xs">
-              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 shadow-2xs">
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 text-xs min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-2xs">
                 <AlignLeft size={16} />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase tracking-wider block">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
                   Descripción del Alcance y Objetivos
                 </span>
-                <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed mt-0.5">
+                <p className="text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed">
                   {proyectoSeleccionado.descripcion}
                 </p>
               </div>
@@ -916,9 +916,11 @@ export const LiderDashboard = () => {
                     {/* Cabecera de la Etapa */}
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-zinc-200/80 dark:border-zinc-700/60 pb-3">
                       <div>
-                        <div className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                        <div className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2 flex-wrap">
                           <span>{etapa?.nombreEtapa}</span>
-                          <span className="text-[0.65rem] font-mono text-zinc-400">#Etapa {etapa?.idEtapa}</span>
+                          <span className="px-2 py-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-700/60 text-zinc-800 dark:text-zinc-200 text-[0.65rem] font-mono font-extrabold border border-zinc-300/80 dark:border-zinc-600">
+                            #Etapa {etapa?.idEtapa}
+                          </span>
                         </div>
                         <span className="text-xs text-zinc-500 font-medium">
                           {etapa?.actividades ? `${etapa.actividades.length} tarea(s) vinculadas` : 'Sin tareas'}
@@ -944,21 +946,23 @@ export const LiderDashboard = () => {
                             key={act.idActividad}
                             className="bg-white dark:bg-zinc-900 p-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs shadow-sm"
                           >
-                            <div className="space-y-1.5">
+                            <div className="space-y-1.5 min-w-0 flex-1">
                               <div className="font-semibold text-zinc-800 dark:text-zinc-200 leading-snug">
                                 {act.descripcion}
                               </div>
                               
                               {/* Trazabilidad: Desarrollador Asignado */}
-                              <div className="flex items-center gap-2 text-[0.7rem] text-zinc-500 font-medium flex-wrap">
+                              <div className="flex items-center gap-2 text-[0.7rem] text-zinc-500 font-medium flex-wrap min-w-0">
                                 {act.desarrollador ? (
-                                  <span className="inline-flex items-center gap-1 font-bold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                    <UserCheck size={13} className="text-emerald-500" />
-                                    {act.desarrollador.nombre} {act.desarrollador.apellido}
+                                  <div className="inline-flex items-center gap-1.5 font-bold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800/80 px-2.5 py-1 rounded-xl border border-zinc-200 dark:border-zinc-700/80 flex-wrap min-w-0">
+                                    <UserCheck size={13} className="text-emerald-500 shrink-0" />
+                                    <span>{act.desarrollador.nombre} {act.desarrollador.apellido}</span>
                                     {act.desarrollador.especialidad && (
-                                      <span className="text-zinc-400 font-normal">({act.desarrollador.especialidad})</span>
+                                      <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 text-[0.65rem] font-bold border border-indigo-100 dark:border-indigo-800 truncate max-w-[200px] sm:max-w-[280px]">
+                                        {act.desarrollador.especialidad}
+                                      </span>
                                     )}
-                                  </span>
+                                  </div>
                                 ) : (
                                   <span className="inline-flex items-center gap-1 font-bold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-xl border border-red-200 dark:border-red-800">
                                     <AlertTriangle size={13} className="text-red-500" />
@@ -969,10 +973,10 @@ export const LiderDashboard = () => {
                             </div>
 
                             <div className="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
-                              <span className={`text-[0.6rem] font-bold uppercase px-2.5 py-1 rounded-md border ${
-                                act.estado === 'FINALIZADA' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                act.estado === 'EN_PROGRESO' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                'bg-zinc-100 text-zinc-600 border-zinc-200'
+                              <span className={`text-[0.65rem] font-extrabold uppercase px-2.5 py-1 rounded-md border ${
+                                act.estado === 'FINALIZADA' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800' :
+                                act.estado === 'EN_PROGRESO' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800' :
+                                'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
                               }`}>
                                 {act.estado}
                               </span>
