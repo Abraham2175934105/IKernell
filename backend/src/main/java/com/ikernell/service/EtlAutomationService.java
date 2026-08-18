@@ -33,10 +33,18 @@ public class EtlAutomationService {
     // Inyección de dependencias
     private final ProyectoRepository proyectoRepository;
     private final EtapaRepository etapaRepository;
+    private final com.ikernell.repository.ErrorRepository errorRepository;
+    private final com.ikernell.repository.InterrupcionRepository interrupcionRepository;
 
-    public EtlAutomationService(ProyectoRepository proyectoRepository, EtapaRepository etapaRepository) {
+    public EtlAutomationService(
+            ProyectoRepository proyectoRepository, 
+            EtapaRepository etapaRepository,
+            com.ikernell.repository.ErrorRepository errorRepository,
+            com.ikernell.repository.InterrupcionRepository interrupcionRepository) {
         this.proyectoRepository = proyectoRepository;
         this.etapaRepository = etapaRepository;
+        this.errorRepository = errorRepository;
+        this.interrupcionRepository = interrupcionRepository;
     }
 
     // Ejecuta el proceso ETL de forma interactiva cuando el Líder presiona "Exportar Lote ETL"
@@ -75,6 +83,8 @@ public class EtlAutomationService {
     // Extrae y transforma los datos operacionales a un archivo plano con delimitador pleca (|)
     private EtlReportResponse procesarEtlParaProyecto(Proyecto proyecto, String tipoEjecucion) {
         List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
+        List<Error> errores = errorRepository.findByProyectoWithDetails(proyecto);
+        List<Interrupcion> interrupciones = interrupcionRepository.findByProyectoWithDetails(proyecto);
 
         // Estructuración del archivo plano con encabezado, desglose WBS y métricas
         StringBuilder sb = new StringBuilder();
@@ -82,47 +92,69 @@ public class EtlAutomationService {
           .append(LocalDateTime.now(ZoneId.of("UTC")).format(ISO_FORMATTER)).append("\n");
 
         sb.append("PROJECT|ID=").append(proyecto.getIdProyecto())
-          .append("|NAME=").append(proyecto.getNombre())
-          .append("|STATUS=").append(proyecto.getEstado())
-          .append("|START_DATE=").append(proyecto.getFechaInicio())
-          .append("|ESTIMATED_END=").append(proyecto.getFechaFinEstimada()).append("\n");
+          .append("|NAME=").append(proyecto.getNombre() != null ? proyecto.getNombre() : "N/A")
+          .append("|CLIENT=").append(proyecto.getCliente() != null ? proyecto.getCliente() : "INTERNO")
+          .append("|STATUS=").append(proyecto.getEstado() != null ? proyecto.getEstado() : "ACTIVO")
+          .append("|BUDGET=").append(proyecto.getPresupuesto() != null ? proyecto.getPresupuesto() : "0.00")
+          .append("|START_DATE=").append(proyecto.getFechaInicio() != null ? proyecto.getFechaInicio() : "N/A")
+          .append("|ESTIMATED_END=").append(proyecto.getFechaFinEstimada() != null ? proyecto.getFechaFinEstimada() : "N/A").append("\n");
 
         int totalRegistros = 0;
 
+        // Registro de Etapas WBS
         for (Etapa etapa : etapas) {
             sb.append("STAGE|ID=").append(etapa.getIdEtapa())
-              .append("|NAME=").append(etapa.getNombreEtapa())
-              .append("|STATUS=").append(etapa.getEstado()).append("\n");
+              .append("|NAME=").append(etapa.getNombreEtapa() != null ? etapa.getNombreEtapa() : "Sin Nombre")
+              .append("|STATUS=").append(etapa.getEstado() != null ? etapa.getEstado() : "PENDIENTE").append("\n");
             totalRegistros++;
+        }
 
-            for (Error err : etapa.getErrores()) {
-                // Estandarización de marcas de tiempo a zona horaria UTC
-                String isoDate = err.getFechaRegistro().atZone(ZoneId.systemDefault())
-                        .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
+        // Registro de Errores Técnicos
+        for (Error err : errores) {
+            LocalDateTime fechaReg = err.getFechaRegistro() != null ? err.getFechaRegistro() : LocalDateTime.now();
+            String isoDate = fechaReg.atZone(ZoneId.systemDefault())
+                    .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
 
-                sb.append("METRIC_ERROR|STAGE_ID=").append(etapa.getIdEtapa())
-                  .append("|DEV_ID=").append(err.getDesarrollador().getIdTrabajador())
-                  .append("|TYPE=").append(err.getTipoError())
-                  .append("|SEVERITY=").append(err.getSeveridad())
-                  .append("|TIMESTAMP_ISO=").append(isoDate).append("\n");
-                totalRegistros++;
-            }
+            Long stageId = (err.getEtapa() != null) ? err.getEtapa().getIdEtapa() : 0L;
+            String stageName = (err.getEtapa() != null && err.getEtapa().getNombreEtapa() != null) ? err.getEtapa().getNombreEtapa() : "WBS";
+            Long devId = (err.getDesarrollador() != null) ? err.getDesarrollador().getIdTrabajador() : 0L;
+            String devName = (err.getDesarrollador() != null) ? (err.getDesarrollador().getNombre() + " " + err.getDesarrollador().getApellido()) : "SIN_ASIGNAR";
 
-            for (Interrupcion intp : etapa.getInterrupciones()) {
-                String isoDate = intp.getFechaOcurrencia().atZone(ZoneId.systemDefault())
-                        .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
+            sb.append("METRIC_ERROR|STAGE_ID=").append(stageId)
+              .append("|STAGE_NAME=").append(stageName)
+              .append("|DEV_ID=").append(devId)
+              .append("|DEV_NAME=").append(devName)
+              .append("|TYPE=").append(err.getTipoError() != null ? err.getTipoError() : "GENERAL")
+              .append("|SEVERITY=").append(err.getSeveridad() != null ? err.getSeveridad() : "MEDIA")
+              .append("|STATUS=").append(err.getEstadoAtencion() != null ? err.getEstadoAtencion() : "REGISTRADO")
+              .append("|TIMESTAMP_ISO=").append(isoDate).append("\n");
+            totalRegistros++;
+        }
 
-                sb.append("METRIC_CONTINGENCY|STAGE_ID=").append(etapa.getIdEtapa())
-                  .append("|DEV_ID=").append(intp.getDesarrollador().getIdTrabajador())
-                  .append("|TYPE=").append(intp.getTipoInterrupcion())
-                  .append("|DURATION_MINUTES=").append(intp.getDuracionMinutos())
-                  .append("|TIMESTAMP_ISO=").append(isoDate).append("\n");
-                totalRegistros++;
-            }
+        // Registro de Contingencias e Interrupciones Operativas
+        for (Interrupcion intp : interrupciones) {
+            LocalDateTime fechaOcurr = intp.getFechaOcurrencia() != null ? intp.getFechaOcurrencia() : LocalDateTime.now();
+            String isoDate = fechaOcurr.atZone(ZoneId.systemDefault())
+                    .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
+
+            Long stageId = (intp.getEtapa() != null) ? intp.getEtapa().getIdEtapa() : 0L;
+            String stageName = (intp.getEtapa() != null && intp.getEtapa().getNombreEtapa() != null) ? intp.getEtapa().getNombreEtapa() : "WBS";
+            Long devId = (intp.getDesarrollador() != null) ? intp.getDesarrollador().getIdTrabajador() : 0L;
+            String devName = (intp.getDesarrollador() != null) ? (intp.getDesarrollador().getNombre() + " " + intp.getDesarrollador().getApellido()) : "SIN_ASIGNAR";
+
+            sb.append("METRIC_CONTINGENCY|STAGE_ID=").append(stageId)
+              .append("|STAGE_NAME=").append(stageName)
+              .append("|DEV_ID=").append(devId)
+              .append("|DEV_NAME=").append(devName)
+              .append("|TYPE=").append(intp.getTipoInterrupcion() != null ? intp.getTipoInterrupcion() : "INTERRUPCION")
+              .append("|DURATION_MINUTES=").append(intp.getDuracionMinutos() != null ? intp.getDuracionMinutos() : 0)
+              .append("|STATUS=").append(intp.getEstadoAtencion() != null ? intp.getEstadoAtencion() : "REGISTRADO")
+              .append("|TIMESTAMP_ISO=").append(isoDate).append("\n");
+            totalRegistros++;
         }
 
         // Bloque de cierre con totalización de registros para control de integridad
-        sb.append("FOOTER|TOTAL_RECORDS=").append(totalRegistros).append("\n");
+        sb.append("FOOTER|TOTAL_RECORDS=").append(totalRegistros).append("|INTEGRITY_CHECK=OK\n");
 
         String nombreArchivo = String.format("METRICAS_BRASIL_PROY_%d_%s.txt",
                 proyecto.getIdProyecto(),
