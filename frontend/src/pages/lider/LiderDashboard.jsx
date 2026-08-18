@@ -10,7 +10,7 @@ import {
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, X,
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
-  FolderPlus, DollarSign
+  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -633,6 +633,112 @@ export const LiderDashboard = () => {
           </button>
         </div>
       </motion.div>
+
+      {/* Tarjeta de Detalles del Proyecto Seleccionado */}
+      {proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="mb-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 shadow-sm space-y-4"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-900 dark:text-zinc-100 shrink-0">
+                <FolderGit2 size={20} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                    {proyectoSeleccionado.nombre}
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                    {proyectoSeleccionado.estado || 'ACTIVO'}
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                  Identificador del Proyecto: <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300">PRJ-00{proyectoSeleccionado.idProyecto}</span>
+                </p>
+              </div>
+            </div>
+
+            {proyectoSeleccionado.lider && (
+              <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
+                <User size={14} className="text-zinc-600 dark:text-zinc-300" />
+                <span>
+                  Líder: <strong className="text-zinc-800 dark:text-zinc-200">{proyectoSeleccionado.lider.nombre} {proyectoSeleccionado.lider.apellido}</strong>
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+            {/* Cliente u Organización */}
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800">
+              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 shadow-2xs">
+                <Building2 size={16} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Cliente / Organización
+                </span>
+                <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate mt-0.5">
+                  {proyectoSeleccionado.cliente || 'Organización Interna IKernell'}
+                </p>
+              </div>
+            </div>
+
+            {/* Presupuesto Inicial */}
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800">
+              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 shadow-2xs">
+                <CircleDollarSign size={16} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Dimensión Presupuestal
+                </span>
+                <p className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100 truncate mt-0.5">
+                  {proyectoSeleccionado.presupuesto !== null && proyectoSeleccionado.presupuesto !== undefined
+                    ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(Number(proyectoSeleccionado.presupuesto))
+                    : 'Sin dimensionar'}
+                </p>
+              </div>
+            </div>
+
+            {/* Fechas de Ejecución */}
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 sm:col-span-2 lg:col-span-1">
+              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 shadow-2xs">
+                <CalendarClock size={16} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Cronograma Estimado
+                </span>
+                <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate mt-0.5">
+                  {proyectoSeleccionado.fechaInicio || 'N/A'} &rarr; {proyectoSeleccionado.fechaFinEstimada || 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Descripción del Alcance */}
+          {proyectoSeleccionado.descripcion && (
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 text-xs">
+              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 shadow-2xs">
+                <AlignLeft size={16} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Descripción del Alcance y Objetivos
+                </span>
+                <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed mt-0.5">
+                  {proyectoSeleccionado.descripcion}
+                </p>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* 1. SECCIÓN: WBS Y PROYECTOS */}
       {activeTab === 'wbs' && (
@@ -1352,7 +1458,7 @@ export const LiderDashboard = () => {
                   </div>
                   <div>
                     <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
-                      Asignar Desarrollador a Proyecto (HU-12)
+                      Asignar Desarrollador al Proyecto
                     </h3>
                     <p className="text-xs text-zinc-500 font-medium">
                       Control de jornada semanal y regla legal máxima de 48 horas
@@ -1770,7 +1876,7 @@ export const LiderDashboard = () => {
                   </div>
                   <div>
                     <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
-                      Crear Nuevo Proyecto (HU-11)
+                      Crear Nuevo Proyecto
                     </h3>
                     <p className="text-xs text-zinc-500 font-medium">
                       Parametrización cronológica, cliente y presupuesto inicial
