@@ -6,7 +6,7 @@ import {
   Users, UserPlus, UserX, UserCheck, Search, Shield, CheckCircle2, 
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
-  Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag
+  Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -441,6 +441,72 @@ export const CoordinadorDashboard = () => {
     }
   };
 
+  const SkillsHoverDropdown = ({ skills, mainSpec }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+      <div className="space-y-1">
+        {mainSpec && (
+          <div className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+            {mainSpec}
+          </div>
+        )}
+
+        {skills && skills.length > 0 && (
+          <div 
+            className="relative inline-block"
+            onMouseEnter={() => setIsOpen(true)}
+            onMouseLeave={() => setIsOpen(false)}
+          >
+            {/* Botón Desplegable / Trigger */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setIsOpen(prev => !prev); }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 border border-blue-200/70 dark:border-blue-800/70 text-[0.68rem] font-mono font-bold transition-all cursor-pointer shadow-2xs"
+            >
+              <Code2 size={12} className="text-blue-500 shrink-0" />
+              <span>{skills.length} Competencias</span>
+              <ChevronDown size={11} className={`text-blue-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Menú Desplegable Flotante al pasar el cursor */}
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute left-0 top-full mt-1.5 w-72 p-3.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 backdrop-blur-2xl"
+                >
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100 dark:border-zinc-800 text-[0.68rem] font-bold text-zinc-600 dark:text-zinc-300">
+                    <span className="flex items-center gap-1.5">
+                      <Layers size={13} className="text-blue-500" /> Stack Técnico & Habilidades
+                    </span>
+                    <span className="font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded text-[0.62rem] font-bold">
+                      {skills.length}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
+                    {skills.map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80 text-[0.65rem] font-mono font-semibold"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderEspecialidadYSkills = (especialidadRaw) => {
     if (!especialidadRaw || !especialidadRaw.trim()) {
       return <span className="text-zinc-400 dark:text-zinc-500 text-xs">General / Sin definir</span>;
@@ -449,37 +515,12 @@ export const CoordinadorDashboard = () => {
     if (especialidadRaw.includes('• [')) {
       const [mainSpec, skillsPart] = especialidadRaw.split('• [');
       const skills = skillsPart ? skillsPart.replace(']', '').split(',').map(s => s.trim()).filter(Boolean) : [];
-      return (
-        <div className="space-y-1">
-          {mainSpec.trim() && (
-            <div className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-              {mainSpec.trim()}
-            </div>
-          )}
-          {skills.length > 0 && (
-            <div className="flex flex-wrap gap-1 pt-0.5">
-              {skills.map((sk, i) => (
-                <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 text-[0.62rem] font-mono font-bold">
-                  {sk}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      );
+      return <SkillsHoverDropdown skills={skills} mainSpec={mainSpec.trim()} />;
     }
 
     if (especialidadRaw.startsWith('[') && especialidadRaw.endsWith(']')) {
       const skills = especialidadRaw.slice(1, -1).split(',').map(s => s.trim()).filter(Boolean);
-      return (
-        <div className="flex flex-wrap gap-1">
-          {skills.map((sk, i) => (
-            <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 text-[0.62rem] font-mono font-bold">
-              {sk}
-            </span>
-          ))}
-        </div>
-      );
+      return <SkillsHoverDropdown skills={skills} mainSpec="" />;
     }
 
     return (
