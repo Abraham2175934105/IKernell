@@ -197,20 +197,20 @@ export const Hero = () => {
 
         {/* ── Indicador Guía de Telemetría con Alto Contraste ─────────────── */}
         <motion.div variants={itemVariants} className="flex justify-center mb-6">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-zinc-200/90 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-200 text-xs font-semibold shadow-sm tracking-wide">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-zinc-200/90 dark:border-zinc-700/80 text-zinc-900 font-bold dark:text-zinc-300 text-xs shadow-sm tracking-wide">
             <Layers size={14} className="text-blue-600 dark:text-blue-400" strokeWidth={2} />
             Pase el cursor sobre cada tarjeta para desplegar la telemetría
           </span>
         </motion.div>
 
         {/* ── TARJETAS APILADAS ────────────────────────────────────────── */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left pb-10">
+        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left pb-16 overflow-visible">
 
           {stacks.map((s) => (
             <div
               key={s.id}
-              className="relative group/stack"
-              style={{ minHeight: 280 }}
+              className="relative group/stack overflow-visible"
+              style={{ minHeight: 290 }}
               onMouseEnter={() => setActiveStack(s.id)}
               onMouseLeave={() => setActiveStack(null)}
               onClick={() => setActiveStack(activeStack === s.id ? null : s.id)}
@@ -219,16 +219,13 @@ export const Hero = () => {
               <div
                 className={`
                   absolute inset-0 rounded-2xl p-5
-                  bg-white/95 dark:bg-zinc-900/95
-                  backdrop-blur-xl border transition-all duration-300 ease-out
+                  bg-white/95 text-zinc-900 border-zinc-200 shadow-xl
+                  dark:bg-zinc-900/90 dark:border-zinc-700/60 dark:text-zinc-100
+                  border transition-all duration-300 ease-out
                   flex flex-col justify-between
-                  ${s.featured
-                    ? 'border-blue-300 dark:border-blue-500/50 shadow-xl shadow-blue-500/10'
-                    : 'border-zinc-200 dark:border-zinc-700/80 shadow-xl shadow-zinc-300/40 dark:shadow-none'
-                  }
                   ${activeStack === s.id
-                    ? 'translate-y-[4.5rem] scale-[1.02] opacity-100 blur-0 z-30'
-                    : 'translate-y-2.5 scale-[0.98] opacity-75 blur-[1.5px] z-0 group-hover/stack:translate-y-[4.5rem] group-hover/stack:scale-[1.02] group-hover/stack:opacity-100 group-hover/stack:blur-0 group-hover/stack:z-30'
+                    ? 'translate-y-[4.5rem] opacity-100 blur-0 backdrop-blur-none z-40'
+                    : 'translate-y-2 opacity-75 blur-[1.5px] backdrop-blur-sm z-0 group-hover/stack:translate-y-[4.5rem] group-hover/stack:opacity-100 group-hover/stack:blur-0 group-hover/stack:backdrop-blur-none group-hover/stack:z-40'
                   }
                 `}
               >
@@ -265,14 +262,14 @@ export const Hero = () => {
 
               {/* ── CAPA PRINCIPAL SUPERIOR (Frontal) ───────────────────────────── */}
               <div className={`
-                relative rounded-2xl p-6 backdrop-blur-xl
-                bg-white/95 dark:bg-zinc-900/95
-                border transition-all duration-300 z-10
+                relative rounded-2xl p-6
+                bg-white/95 text-zinc-900 border-zinc-200 shadow-xl
+                dark:bg-zinc-900/90 dark:border-zinc-700/60 dark:text-zinc-100
+                border transition-all duration-300 z-20
                 flex flex-col justify-between
-                shadow-lg shadow-zinc-200/50 dark:shadow-none
                 ${s.featured
-                  ? 'border-blue-500/60 dark:border-blue-500/50 shadow-blue-500/10 group-hover/stack:border-blue-500'
-                  : 'border-zinc-200/90 dark:border-zinc-800 group-hover/stack:border-zinc-400/60 dark:group-hover/stack:border-zinc-600/60'
+                  ? 'border-blue-500/60 dark:border-blue-500/50 group-hover/stack:border-blue-500'
+                  : 'border-zinc-200 dark:border-zinc-700 group-hover/stack:border-zinc-400 dark:group-hover/stack:border-zinc-500'
                 }
               `} style={{ minHeight: 240 }}>
 
