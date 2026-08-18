@@ -3,7 +3,8 @@ import {
   ShieldAlert, Activity, TrendingUp, AlertTriangle, CheckCircle2, 
   User, RefreshCw, Sparkles, Lock, Layers, Users,
   Briefcase, Check, Info, Search, X, HelpCircle, Download,
-  TrendingDown, Minus, Clock, Globe, FolderGit2, ChevronDown
+  TrendingDown, Minus, Clock, Globe, FolderGit2, ChevronDown,
+  ShieldCheck, FileText, Filter, DollarSign
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
@@ -26,6 +27,26 @@ const normalizarEstado = (estado) => {
   return 'BAJA';
 };
 
+const getEstadoBadgeClasses = (estado) => {
+  const est = estado ? estado.toUpperCase() : 'ACTIVO';
+  if (est === 'FINALIZADO' || est === 'COMPLETADO') {
+    return {
+      badge: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700',
+      dot: 'bg-zinc-400'
+    };
+  }
+  if (est === 'PAUSADO' || est === 'EN_ESPERA') {
+    return {
+      badge: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+      dot: 'bg-amber-500'
+    };
+  }
+  return {
+    badge: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    dot: 'bg-emerald-500 animate-pulse'
+  };
+};
+
 /**
  * Predictor de Desgaste y Burnout Histórico (RF-35).
  * Analítica basada en Series Temporales de 21 días (S1, S2, S3) bajo norma ISO/IEC 25010.
@@ -40,14 +61,15 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
   const [error, setError] = useState(null);
   const [selectedDev, setSelectedDev] = useState(null);
 
-  // Estados para selector interactivo de proyecto
+  // Estados para selector interactivo de proyecto (Modal Explorador Completo)
   const [proyectosList, setProyectosList] = useState([]);
   const [proyectoSeleccionadoLocal, setProyectoSeleccionadoLocal] = useState(
     proyecto && proyecto.idProyecto ? proyecto : { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' }
   );
   const [etapasLocal, setEtapasLocal] = useState(etapas || []);
-  const [menuProyectosOpen, setMenuProyectosOpen] = useState(false);
-  const menuProyectosRef = useRef(null);
+  const [modalProyectosOpen, setModalProyectosOpen] = useState(false);
+  const [busquedaProyectoModal, setBusquedaProyectoModal] = useState('');
+  const [filtroEstadoProyectoModal, setFiltroEstadoProyectoModal] = useState('TODOS');
 
   // Estados de filtrado y búsqueda interactiva (Panel único y limpio)
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,16 +123,46 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
     }
   }, [proyectoSeleccionadoLocal, etapas, proyecto, api]);
 
-  // Listener para cerrar el menú de proyectos al hacer clic fuera
+  // Cerrar modal con tecla Escape
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuProyectosRef.current && !menuProyectosRef.current.contains(e.target)) {
-        setMenuProyectosOpen(false);
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (modalProyectosOpen) setModalProyectosOpen(false);
+        if (showHelpModal) setShowHelpModal(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modalProyectosOpen, showHelpModal]);
+
+  // Proyectos filtrados para el menú emergente / explorador
+  const proyectosModalFiltrados = useMemo(() => {
+    if (!Array.isArray(proyectosList)) return [];
+    
+    return proyectosList.filter(p => {
+      if (filtroEstadoProyectoModal === 'ACTIVO' && p.estado !== 'ACTIVO') return false;
+      if (filtroEstadoProyectoModal === 'FINALIZADO' && p.estado !== 'FINALIZADO' && p.estado !== 'COMPLETADO') return false;
+
+      if (busquedaProyectoModal.trim()) {
+        const query = busquedaProyectoModal.toLowerCase().trim();
+        const matchNombre = p.nombre?.toLowerCase().includes(query);
+        const matchCliente = p.cliente?.toLowerCase().includes(query);
+        const matchId = String(p.idProyecto).includes(query) || `prj-00${p.idProyecto}`.toLowerCase().includes(query);
+        const matchDesc = p.descripcion?.toLowerCase().includes(query);
+        if (!matchNombre && !matchCliente && !matchId && !matchDesc) return false;
+      }
+
+      return true;
+    });
+  }, [proyectosList, busquedaProyectoModal, filtroEstadoProyectoModal]);
+
+  // Conteo de proyectos por estado para los botones de filtro rápido
+  const statsProyectos = useMemo(() => {
+    if (!Array.isArray(proyectosList)) return { total: 0, activos: 0, finalizados: 0 };
+    const activos = proyectosList.filter(p => p.estado === 'ACTIVO').length;
+    const finalizados = proyectosList.filter(p => p.estado === 'FINALIZADO' || p.estado === 'COMPLETADO').length;
+    return { total: proyectosList.length, activos, finalizados };
+  }, [proyectosList]);
 
   // Determina si estamos en alcance de un proyecto específico o en vista global
   const isProyectoEspecifico = Boolean(
@@ -382,124 +434,47 @@ Generado automáticamente por el motor analítico IKernell v2.0
               <Sparkles size={13} className="text-blue-600 dark:text-blue-400" /> Analítica Predictiva • RF-35
             </span>
             
-            {/* Contexto del Proyecto o Alcance Global con Selector Interactivo */}
-            <div className="relative" ref={menuProyectosRef}>
-              <button
-                type="button"
-                onClick={() => setMenuProyectosOpen(prev => !prev)}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold border border-zinc-200 dark:border-zinc-700 cursor-pointer transition-all shadow-2xs group"
-                title="Cambiar alcance de visualización (Proyecto específico o Global)"
-              >
-                {isProyectoEspecifico ? (
-                  <>
-                    <FolderGit2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span className="font-mono text-blue-600 dark:text-blue-400 font-extrabold text-[0.68rem]">
-                      [PRJ-00{proyectoSeleccionadoLocal.idProyecto}]
-                    </span>
-                    <span className="truncate max-w-[180px] sm:max-w-[240px] text-zinc-900 dark:text-zinc-100 font-extrabold">
-                      {proyectoSeleccionadoLocal.nombre}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Globe size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span className="text-blue-600 dark:text-blue-400 font-bold">
-                      Alcance Corporativo Global (Todos los Proyectos)
-                    </span>
-                  </>
-                )}
-                <ChevronDown size={13} className={`text-zinc-400 group-hover:text-blue-500 transition-transform ${menuProyectosOpen ? 'rotate-180 text-blue-500' : ''}`} />
-              </button>
-
-              {/* Menú Desplegable de Selección de Proyecto */}
-              <AnimatePresence>
-                {menuProyectosOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                    transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute left-0 top-full mt-2 w-[300px] sm:w-[360px] z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xl rounded-2xl p-2 space-y-1 max-h-72 overflow-y-auto"
-                  >
-                    <div className="px-2 pt-1 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400">
-                      Alcance del Predictor
-                    </div>
-
-                    {/* Opción Global */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProyectoSeleccionadoLocal({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
-                        setSelectedDev(null);
-                        setMenuProyectosOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        !isProyectoEspecifico
-                          ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
-                          : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Globe size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                        <div className="text-left truncate">
-                          <span className="block truncate text-xs font-extrabold">[Vista Global Corporativa]</span>
-                          <span className="block text-[0.65rem] text-zinc-400 font-medium">Todos los proyectos de la compañía</span>
-                        </div>
-                      </div>
-                      {!isProyectoEspecifico && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
-                    </button>
-
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
-
-                    <div className="px-2 pt-0.5 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
-                      <span>Proyectos</span>
-                      <span className="font-mono">{proyectosList?.length || 0}</span>
-                    </div>
-
-                    {proyectosList && proyectosList.length > 0 ? (
-                      proyectosList.map(p => {
-                        const isSelected = isProyectoEspecifico && proyectoSeleccionadoLocal.idProyecto === p.idProyecto;
-                        return (
-                          <button
-                            key={p.idProyecto}
-                            type="button"
-                            onClick={() => {
-                              setProyectoSeleccionadoLocal(p);
-                              setSelectedDev(null);
-                              setMenuProyectosOpen(false);
-                            }}
-                            className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                              isSelected
-                                ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
-                                : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <FolderGit2 size={13} className="text-zinc-500 shrink-0" />
-                              <div className="text-left min-w-0 flex-1 truncate">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-mono text-[0.65rem] font-extrabold text-blue-600 dark:text-blue-400 shrink-0">
-                                    [PRJ-00{p.idProyecto}]
-                                  </span>
-                                  <span className="font-extrabold text-xs truncate">
-                                    {p.nombre}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            {isSelected && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="p-3 text-center text-xs text-zinc-400">
-                        No hay proyectos disponibles
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Botón Ampliado: Selector de Proyectos y Alcance Global */}
+            <button
+              type="button"
+              onClick={() => {
+                setBusquedaProyectoModal('');
+                setFiltroEstadoProyectoModal('TODOS');
+                setModalProyectosOpen(true);
+              }}
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-zinc-100/80 dark:bg-zinc-800/80 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 text-zinc-800 dark:text-zinc-200 text-xs font-bold border border-zinc-200 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-all shadow-xs cursor-pointer group"
+              title="Abrir menú y explorador interactivo de proyectos"
+            >
+              {isProyectoEspecifico ? (
+                <>
+                  <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
+                    <FolderGit2 size={13} />
+                  </div>
+                  <span className="font-mono text-blue-600 dark:text-blue-400 font-black text-xs">
+                    [PRJ-00{proyectoSeleccionadoLocal.idProyecto}]
+                  </span>
+                  <span className="truncate max-w-[180px] sm:max-w-[280px] text-zinc-900 dark:text-zinc-100 font-extrabold">
+                    {proyectoSeleccionadoLocal.nombre}
+                  </span>
+                  <span className="text-[0.62rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
+                    {proyectoSeleccionadoLocal.estado || 'ACTIVO'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
+                    <Globe size={13} />
+                  </div>
+                  <span className="text-blue-700 dark:text-blue-300 font-black">
+                    Alcance Corporativo Global (Todos los Proyectos)
+                  </span>
+                  <span className="text-[0.62rem] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                    VISTA EMPRESARIAL
+                  </span>
+                </>
+              )}
+              <ChevronDown size={14} className="text-zinc-400 group-hover:text-blue-600 group-hover:translate-y-0.5 transition-all ml-1 shrink-0" />
+            </button>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
@@ -1098,87 +1073,439 @@ Generado automáticamente por el motor analítico IKernell v2.0
         </div>
       )}
 
-      {/* ─── Modal de Ayuda & Criterios del Algoritmo (ISO/IEC 25010) ─── */}
+      {/* ─── Modal 1: Explorador y Menú Emergente de Proyectos (Ampliación Avanzada) ─── */}
       <AnimatePresence>
-        {showHelpModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        {modalProyectosOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 w-full max-w-3xl shadow-2xl space-y-4 max-h-[90vh] flex flex-col"
             >
-              <div className="flex justify-between items-center pb-3 border-b border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
-                    <Sparkles size={16} />
+              {/* Encabezado del Modal */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-3.5 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
+                    <FolderGit2 size={20} />
                   </div>
-                  <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-zinc-100">
-                    Guía de 4 Niveles de Riesgo de Burnout (RF-35)
-                  </h3>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                      Explorador de Proyectos & Alcance
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                      Seleccione un proyecto específico o visualice la carga cognitiva global de toda la compañía
+                    </p>
+                  </div>
                 </div>
                 <button
-                  onClick={() => setShowHelpModal(false)}
-                  className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
+                  onClick={() => setModalProyectosOpen(false)}
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
               </div>
 
-              <div className="space-y-3.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60">
-                  <h4 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">
-                    1. Fundamentación del Algoritmo (ISO/IEC 25010)
-                  </h4>
-                  <p>
-                    El predictor analiza ventanas deslizantes de 21 días ponderando tareas activas en WBS, fallas críticas e interrupciones para estimar la carga cognitiva antes de que afecte la estabilidad del proyecto.
-                  </p>
+              {/* Buscador en tiempo real y Filtros Rápidos */}
+              <div className="space-y-2.5 shrink-0">
+                <div className="relative">
+                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  <input
+                    type="text"
+                    value={busquedaProyectoModal}
+                    onChange={(e) => setBusquedaProyectoModal(e.target.value)}
+                    placeholder="Buscar por código (ej. PRJ-001), título, cliente o descripción..."
+                    className="w-full bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-2xl pl-9 pr-9 py-2.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-2xs"
+                    autoFocus
+                  />
+                  {busquedaProyectoModal && (
+                    <button
+                      type="button"
+                      onClick={() => setBusquedaProyectoModal('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60">
-                  <h4 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">
-                    2. Convención Homologada de los 4 Niveles
-                  </h4>
-                  <div className="space-y-2.5 mt-2.5">
-                    <div className="flex items-start gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-600 shrink-0 mt-1" />
-                      <div>
-                        <strong className="text-red-700 dark:text-red-400">Nivel Crítico (Crítica):</strong> Carga &gt; 80% o sobrecarga sostenida &ge; 65% en las 3 semanas consecutivas. Bloqueo preventivo de asignaciones.
-                      </div>
-                    </div>
+                {/* Filtros de Estado */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setFiltroEstadoProyectoModal('TODOS')}
+                    className={`text-xs py-1 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoModal === 'TODOS'
+                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span>Todos</span>
+                    <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20 dark:bg-black/10">
+                      {statsProyectos.total}
+                    </span>
+                  </button>
 
-                    <div className="flex items-start gap-2">
-                      <span className="w-2 h-2 rounded-full bg-orange-500 shrink-0 mt-1" />
-                      <div>
-                        <strong className="text-orange-700 dark:text-orange-400">Nivel Alto (Alta):</strong> Carga entre 65% y 79% o aceleración de estrés en los últimos 7 días (S3 &ge; 75%).
-                      </div>
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => setFiltroEstadoProyectoModal('ACTIVO')}
+                    className={`text-xs py-1 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoModal === 'ACTIVO'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>Activos</span>
+                    <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                      {statsProyectos.activos}
+                    </span>
+                  </button>
 
-                    <div className="flex items-start gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 mt-1" />
-                      <div>
-                        <strong className="text-amber-700 dark:text-amber-400">Nivel Medio (Media):</strong> Carga entre 45% y 64% con contingencias recurrentes. Requiere seguimiento de entregas.
-                      </div>
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => setFiltroEstadoProyectoModal('FINALIZADO')}
+                    className={`text-xs py-1 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoModal === 'FINALIZADO'
+                        ? 'bg-zinc-700 text-white shadow-sm'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span>Finalizados</span>
+                    <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                      {statsProyectos.finalizados}
+                    </span>
+                  </button>
 
-                    <div className="flex items-start gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1" />
-                      <div>
-                        <strong className="text-emerald-700 dark:text-emerald-400">Nivel Bajo / Estable (Baja / Estable):</strong> Carga &lt; 45% y flujo balanceado de tareas con ritmo de trabajo óptimo.
-                      </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProyectoSeleccionadoLocal({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                      setSelectedDev(null);
+                      setModalProyectosOpen(false);
+                    }}
+                    className={`text-xs py-1 px-3 rounded-xl font-bold transition-all cursor-pointer ml-auto inline-flex items-center gap-1.5 ${
+                      !isProyectoEspecifico
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100'
+                    }`}
+                  >
+                    <Globe size={12} />
+                    <span>Vista Global</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Lista Scrollable de Proyectos */}
+              <div className="overflow-y-auto flex-1 pr-1 space-y-2.5 min-h-[220px] max-h-[380px]">
+                {/* Opción 1: Vista Global Corporativa Destacada */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProyectoSeleccionadoLocal({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                    setSelectedDev(null);
+                    setModalProyectosOpen(false);
+                  }}
+                  className={`w-full text-left p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                    !isProyectoEspecifico
+                      ? 'bg-blue-50/80 dark:bg-blue-950/50 border-blue-400 dark:border-blue-600 shadow-sm ring-1 ring-blue-400/40'
+                      : 'bg-zinc-50/60 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/70 hover:bg-blue-50/30 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                      <Globe size={18} />
                     </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100">
+                          Alcance Corporativo Global (Todos los Proyectos)
+                        </span>
+                        <span className="text-[0.6rem] font-bold px-2 py-0.2 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 uppercase">
+                          Vista Empresarial
+                        </span>
+                      </div>
+                      <p className="text-[0.7rem] text-zinc-500 font-medium truncate mt-0.5">
+                        Monitorea todos los desarrolladores asignados a través de todos los proyectos activos de la compañía.
+                      </p>
+                    </div>
+                  </div>
+                  {!isProyectoEspecifico && (
+                    <div className="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                      <Check size={16} /> <span>Activo</span>
+                    </div>
+                  )}
+                </button>
+
+                {/* Separador de Proyectos Individuales */}
+                <div className="flex items-center gap-2 pt-1 pb-0.5 text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-400">
+                  <FolderGit2 size={12} />
+                  <span>Proyectos Registrados ({proyectosModalFiltrados.length})</span>
+                </div>
+
+                {/* Grid 2 Columnas de Proyectos */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {proyectosModalFiltrados.map((p) => {
+                    const isSelected = isProyectoEspecifico && proyectoSeleccionadoLocal.idProyecto === p.idProyecto;
+                    const estadoClasses = getEstadoBadgeClasses(p.estado);
+
+                    return (
+                      <button
+                        key={p.idProyecto}
+                        type="button"
+                        onClick={() => {
+                          setProyectoSeleccionadoLocal(p);
+                          setSelectedDev(null);
+                          setModalProyectosOpen(false);
+                        }}
+                        className={`text-left p-3 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 relative group ${
+                          isSelected
+                            ? 'bg-blue-50/80 dark:bg-blue-950/50 border-blue-500 dark:border-blue-600 shadow-sm ring-1 ring-blue-500/40'
+                            : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-xs'
+                        }`}
+                      >
+                        <div className="space-y-1.5 w-full">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-[0.68rem] font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60 shrink-0">
+                              PRJ-00{p.idProyecto}
+                            </span>
+                            <span className={`inline-flex items-center gap-1 text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded-full border ${estadoClasses.badge}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${estadoClasses.dot}`} />
+                              <span>{p.estado || 'ACTIVO'}</span>
+                            </span>
+                          </div>
+
+                          <h4 className="text-xs font-black text-zinc-900 dark:text-zinc-100 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {p.nombre}
+                          </h4>
+
+                          {p.cliente && (
+                            <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 truncate">
+                              <Briefcase size={11} className="shrink-0 text-zinc-400" />
+                              <span className="truncate">{p.cliente}</span>
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 text-[0.68rem] w-full font-medium">
+                          <span className="text-zinc-500 truncate">
+                            {p.presupuesto ? `$${Number(p.presupuesto).toLocaleString('es-CO')}` : 'Sin presupuesto'}
+                          </span>
+                          {isSelected ? (
+                            <span className="font-bold text-blue-600 dark:text-blue-400 inline-flex items-center gap-1 shrink-0">
+                              <Check size={13} /> Seleccionado
+                            </span>
+                          ) : (
+                            <span className="text-zinc-400 group-hover:text-blue-500 inline-flex items-center gap-0.5 shrink-0 transition-colors">
+                              Seleccionar &rarr;
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {proyectosModalFiltrados.length === 0 && (
+                  <div className="py-10 text-center text-xs text-zinc-400 space-y-2">
+                    <p>No se encontraron proyectos que coincidan con los filtros.</p>
+                    <button
+                      type="button"
+                      onClick={() => { setBusquedaProyectoModal(''); setFiltroEstadoProyectoModal('TODOS'); }}
+                      className="text-blue-600 hover:underline font-bold"
+                    >
+                      Restablecer filtros
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Pie del Modal */}
+              <div className="flex justify-between items-center pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs shrink-0">
+                <span className="text-[0.7rem] text-zinc-400 font-medium">
+                  {statsProyectos.total} proyectos en el sistema
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setModalProyectosOpen(false)}
+                  className="outline-button text-xs py-1.5 px-4 font-bold cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Modal 2: Guía de 4 Pasos & Niveles de Riesgo de Burnout (RF-35 / ISO/IEC 25010) ─── */}
+      <AnimatePresence>
+        {showHelpModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-3xl shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
+            >
+              {/* Encabezado del Modal */}
+              <div className="flex justify-between items-start pb-3.5 border-b border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
+                    <ShieldCheck size={22} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60">
+                        RF-35 • ISO/IEC 25010
+                      </span>
+                      <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100">
+                        Guía de 4 Pasos: Niveles de Riesgo & Algoritmo Predictivo
+                      </h3>
+                    </div>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                      Protocolo homologado de evaluación de carga cognitiva y mitigación de desgaste en series temporales de 21 días
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowHelpModal(false)}
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Grid de 4 Pasos Homologados */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Paso 1: Nivel Crítico */}
+                <div className="p-4 rounded-2xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-800/70 space-y-2 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono font-black text-[0.68rem] text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/80 px-2 py-0.5 rounded-md">
+                        PASO 1
+                      </span>
+                      <span className="text-[0.65rem] font-black uppercase text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-red-900/40 border border-red-200 dark:border-red-800">
+                        Score &gt; 80% • CRÍTICA
+                      </span>
+                    </div>
+                    <h4 className="font-extrabold text-red-950 dark:text-red-200 text-sm">
+                      Nivel Crítico (Sobrecarga Extrema)
+                    </h4>
+                    <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] leading-relaxed">
+                      <strong>Diagnóstico:</strong> Carga sostenida extrema en las series S1, S2 y S3, concurrencia de más de 6 tareas críticas o acumulación severa de errores técnicos e interrupciones.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-red-200/80 dark:border-red-800/60 text-[0.7rem] text-red-800 dark:text-red-300 font-bold bg-white/60 dark:bg-red-950/40 p-2 rounded-xl">
+                    🚨 <strong>Protocolo Mandatorio:</strong> Bloqueo preventivo en WBS para nuevas asignaciones. Rebalanceo urgente de tareas hacia integrantes estables.
+                  </div>
+                </div>
+
+                {/* Paso 2: Nivel Alto */}
+                <div className="p-4 rounded-2xl bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/70 space-y-2 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono font-black text-[0.68rem] text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/80 px-2 py-0.5 rounded-md">
+                        PASO 2
+                      </span>
+                      <span className="text-[0.65rem] font-black uppercase text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-orange-900/40 border border-orange-200 dark:border-orange-800">
+                        Score 65% - 79% • ALTA
+                      </span>
+                    </div>
+                    <h4 className="font-extrabold text-orange-950 dark:text-orange-200 text-sm">
+                      Nivel Alto (Sobrecarga en Curso)
+                    </h4>
+                    <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] leading-relaxed">
+                      <strong>Diagnóstico:</strong> Aceleración de tensión operacional en los últimos 7 días (S3 &ge; 75%) o promedio sostenido entre 65% y 79% con tareas complejas simultáneas.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-orange-200/80 dark:border-orange-800/60 text-[0.7rem] text-orange-800 dark:text-orange-300 font-bold bg-white/60 dark:bg-orange-950/40 p-2 rounded-xl">
+                    ⚠️ <strong>Protocolo Mandatorio:</strong> Rebalanceo proactivo de subtareas complejas antes del cierre del sprint para prevenir la entrada a estado crítico.
+                  </div>
+                </div>
+
+                {/* Paso 3: Nivel Medio */}
+                <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/70 space-y-2 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono font-black text-[0.68rem] text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/80 px-2 py-0.5 rounded-md">
+                        PASO 3
+                      </span>
+                      <span className="text-[0.65rem] font-black uppercase text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800">
+                        Score 45% - 64% • MEDIA
+                      </span>
+                    </div>
+                    <h4 className="font-extrabold text-amber-950 dark:text-amber-200 text-sm">
+                      Nivel Medio (En Alerta Preventiva)
+                    </h4>
+                    <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] leading-relaxed">
+                      <strong>Diagnóstico:</strong> Desgaste asociado a contingencias imprevistas, bloqueos de ambiente, reuniones urgentes o soporte imprevisto de producción.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-amber-200/80 dark:border-amber-800/60 text-[0.7rem] text-amber-800 dark:text-amber-300 font-bold bg-white/60 dark:bg-amber-950/40 p-2 rounded-xl">
+                    ⏱️ <strong>Protocolo Mandatorio:</strong> Monitoreo continuo de cadencia en dailies y contención de interrupciones externas no planificadas.
+                  </div>
+                </div>
+
+                {/* Paso 4: Nivel Bajo / Estable */}
+                <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/70 space-y-2 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono font-black text-[0.68rem] text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/80 px-2 py-0.5 rounded-md">
+                        PASO 4
+                      </span>
+                      <span className="text-[0.65rem] font-black uppercase text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800">
+                        Score &lt; 45% • BAJA / ESTABLE
+                      </span>
+                    </div>
+                    <h4 className="font-extrabold text-emerald-950 dark:text-emerald-200 text-sm">
+                      Nivel Bajo / Estable (Rendimiento Óptimo)
+                    </h4>
+                    <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] leading-relaxed">
+                      <strong>Diagnóstico:</strong> Flujo de trabajo balanceado, cadencia sostenible y alta fiabilidad bajo la norma ISO/IEC 25010 sin fatiga acumulada.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-emerald-200/80 dark:border-emerald-800/60 text-[0.7rem] text-emerald-800 dark:text-emerald-300 font-bold bg-white/60 dark:bg-emerald-950/40 p-2 rounded-xl">
+                    ✅ <strong>Protocolo Mandatorio:</strong> Capacidad disponible para asumir nuevas actividades WBS o liderar iniciativas de arquitectura y mentoría.
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end">
+              {/* Cuadro Técnico: Fundamentación Matemática y Ventana de 21 Días */}
+              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2 text-xs">
+                <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-zinc-100 text-[0.75rem]">
+                  <Sparkles size={14} className="text-blue-500" />
+                  <span>Fundamentación del Motor Analítico (Series Temporales de 21 Días)</span>
+                </div>
+                <p className="text-zinc-600 dark:text-zinc-400 text-[0.72rem] leading-relaxed">
+                  El algoritmo divide el histórico en 3 series ponderadas: <strong>Semana 1</strong> (Días 15 a 21), <strong>Semana 2</strong> (Días 8 a 14) y <strong>Semana 3</strong> (Últimos 7 días). La ponderación multidimensional combina:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[0.7rem] pt-1">
+                  <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                    <strong className="text-blue-600 dark:text-blue-400 block font-mono">45% Ponderación</strong>
+                    <span>Tareas activas en WBS y horas estimadas vs consumidas</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                    <strong className="text-red-600 dark:text-red-400 block font-mono">35% Ponderación</strong>
+                    <span>Errores técnicos no resueltos y fallos de integración</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                    <strong className="text-amber-600 dark:text-amber-400 block font-mono">20% Ponderación</strong>
+                    <span>Minutos acumulados en interrupciones y contingencias</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón de Cierre */}
+              <div className="flex justify-end pt-2">
                 <button
                   type="button"
                   onClick={() => setShowHelpModal(false)}
-                  className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer"
+                  className="gradient-button text-xs py-2 px-6 font-bold cursor-pointer shadow-md"
                 >
-                  Entendido
+                  Entendido / Cerrar Guía
                 </button>
               </div>
             </motion.div>

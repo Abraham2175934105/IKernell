@@ -253,11 +253,58 @@ export const CoordinadorDashboard = () => {
     };
   };
 
+  /**
+   * Determina dinámicamente el texto, estilo e icono del botón de acción según el estado del caso:
+   * - ATENDIDA: 'Reabrir Caso' (morado suave)
+   * - REABIERTA: 'Gestionar Reapertura / Solucionar' (gradiente morado)
+   * - EN_PROCESO: 'Continuar Gestión / Finalizar Caso' (gradiente ámbar/naranja)
+   * - PENDIENTE: 'Atender Caso / Registrar Novedad' (gradiente azul corporativo)
+   */
+  const getBotonAccionSolicitud = (sol) => {
+    const est = sol.estado || (sol.atendido ? 'ATENDIDA' : 'PENDIENTE');
+
+    switch (est) {
+      case 'ATENDIDA':
+        return {
+          texto: 'Reabrir Caso',
+          subtexto: 'El caso ya fue atendido y solucionado',
+          icono: RotateCcw,
+          className: 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700 shadow-2xs',
+          targetEstadoDefault: 'REABIERTA'
+        };
+      case 'REABIERTA':
+        return {
+          texto: 'Gestionar Reapertura / Solucionar',
+          subtexto: 'Caso reabierto pendiente de nueva resolución',
+          icono: Edit3,
+          className: 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm border-transparent',
+          targetEstadoDefault: 'ATENDIDA'
+        };
+      case 'EN_PROCESO':
+        return {
+          texto: 'Continuar Gestión / Finalizar Caso',
+          subtexto: 'Caso en seguimiento y procesamiento comercial',
+          icono: Clock,
+          className: 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-sm border-transparent',
+          targetEstadoDefault: 'ATENDIDA'
+        };
+      case 'PENDIENTE':
+      default:
+        return {
+          texto: 'Atender Caso / Registrar Novedad',
+          subtexto: 'Nueva solicitud pendiente de atención',
+          icono: CheckCircle2,
+          className: 'gradient-button shadow-sm',
+          targetEstadoDefault: 'ATENDIDA'
+        };
+    }
+  };
+
   const handleOpenGestionModal = (sol) => {
     setSelectedSolicitudModal(sol);
-    const defaultEstado = (sol.estado === 'ATENDIDA' || sol.atendido) ? 'REABIERTA' : 'ATENDIDA';
+    const botonInfo = getBotonAccionSolicitud(sol);
     setSolicitudActionForm({
-      estado: defaultEstado,
+      estado: botonInfo.targetEstadoDefault,
       notasAtencion: sol.notasAtencion || '',
       motivoReapertura: ''
     });
@@ -749,16 +796,24 @@ export const CoordinadorDashboard = () => {
                       )}
                     </div>
 
-                    {/* Botones de Acción */}
-                    <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/80 mt-4 space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenGestionModal(sol)}
-                        className="gradient-button text-xs py-2 w-full font-bold cursor-pointer rounded-xl inline-flex items-center justify-center gap-1.5 shadow-sm"
-                      >
-                        <Edit3 size={13} />
-                        <span>Gestionar / Atender Caso</span>
-                      </button>
+                    {/* Botones de Acción Adaptados al Estado */}
+                    <div className="pt-3.5 border-t border-zinc-100 dark:border-zinc-800/80 mt-4">
+                      {(() => {
+                        const botonInfo = getBotonAccionSolicitud(sol);
+                        const IconComponent = botonInfo.icono;
+
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenGestionModal(sol)}
+                            className={`text-xs py-2 px-3 w-full font-bold cursor-pointer rounded-xl inline-flex items-center justify-center gap-2 transition-all ${botonInfo.className}`}
+                            title={botonInfo.subtexto}
+                          >
+                            <IconComponent size={14} className="shrink-0" />
+                            <span>{botonInfo.texto}</span>
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 );
