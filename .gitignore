@@ -8,6 +8,7 @@
 # Estas carpetas y archivos contienen información sensible y
 # BAJO NINGUNA CIRCUNSTANCIA deben ser rastreados por Git (RNF-11).
 # ==========================================
+/ARCHIVOS SISTEMA/
 ARCHIVOS SISTEMA/
 ARCHIVOS SISTEMA/**
 Documentos/
@@ -19,7 +20,6 @@ mis documentos/
 *.doc
 *.docx
 *.pdf
-!frontend/public/docs/*.pdf
 *.xls
 *.xlsx
 *.ppt
