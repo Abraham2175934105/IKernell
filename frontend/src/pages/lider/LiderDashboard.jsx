@@ -96,6 +96,15 @@ export const LiderDashboard = () => {
   const [nuevoProyectoErrors, setNuevoProyectoErrors] = useState({});
 
   const [showAsignarModal, setShowAsignarModal] = useState(false);
+  const [showAsignarDevModal, setShowAsignarDevModal] = useState(false);
+  const [submittingAsignarDev, setSubmittingAsignarDev] = useState(false);
+  const [asignarDevForm, setAsignarDevForm] = useState({
+    idDesarrollador: '',
+    horasSemanales: 20
+  });
+  const [asignarDevError, setAsignarDevError] = useState(null);
+  const [desarrolladoresCargas, setDesarrolladoresCargas] = useState([]);
+
   const [showNuevaEtapaModal, setShowNuevaEtapaModal] = useState(false);
   const [showReasignarModal, setShowReasignarModal] = useState(false);
   const [actividadAReasignar, setActividadAReasignar] = useState(null);
@@ -137,14 +146,16 @@ export const LiderDashboard = () => {
       setProyectoSeleccionado({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
       try {
         setLoadingDetalle(true);
-        const [erroresRes, interrupcionesRes, devsRes] = await Promise.all([
+        const [erroresRes, interrupcionesRes, devsRes, cargasRes] = await Promise.all([
           api.get('/lider/errores/global').catch(() => []),
           api.get('/lider/interrupciones/global').catch(() => []),
-          api.get('/lider/desarrolladores').catch(() => [])
+          api.get('/lider/desarrolladores').catch(() => []),
+          api.get('/lider/desarrolladores-cargas').catch(() => [])
         ]);
         setErrores(Array.isArray(erroresRes) ? erroresRes : []);
         setInterrupciones(Array.isArray(interrupcionesRes) ? interrupcionesRes : []);
         setDesarrolladores(Array.isArray(devsRes) ? devsRes : []);
+        setDesarrolladoresCargas(Array.isArray(cargasRes) ? cargasRes : []);
         setEtapas([]);
       } catch (err) {
         console.error('Error cargando vista global:', err);
@@ -158,17 +169,19 @@ export const LiderDashboard = () => {
 
     try {
       setLoadingDetalle(true);
-      const [etapasRes, erroresRes, interrupcionesRes, devsRes] = await Promise.all([
+      const [etapasRes, erroresRes, interrupcionesRes, devsRes, cargasRes] = await Promise.all([
         api.get(`/lider/proyectos/${proyecto.idProyecto}/etapas`).catch(() => []),
         api.get(`/lider/proyectos/${proyecto.idProyecto}/errores`).catch(() => []),
         api.get(`/lider/proyectos/${proyecto.idProyecto}/interrupciones`).catch(() => []),
-        api.get('/lider/desarrolladores').catch(() => [])
+        api.get('/lider/desarrolladores').catch(() => []),
+        api.get('/lider/desarrolladores-cargas').catch(() => [])
       ]);
 
       setEtapas(Array.isArray(etapasRes) ? etapasRes : []);
       setErrores(Array.isArray(erroresRes) ? erroresRes : []);
       setInterrupciones(Array.isArray(interrupcionesRes) ? interrupcionesRes : []);
       setDesarrolladores(Array.isArray(devsRes) ? devsRes : []);
+      setDesarrolladoresCargas(Array.isArray(cargasRes) ? cargasRes : []);
     } catch (err) {
       console.error('Error cargando detalles del proyecto:', err);
       toast.error('Error al cargar etapas y métricas del proyecto.');
@@ -240,6 +253,66 @@ export const LiderDashboard = () => {
       toast.error(err?.message || 'Error al asignar la actividad en el servidor.');
     } finally {
       setSubmittingActividad(false);
+    }
+  };
+
+  // Helper para renderizar Badge de carga semanal del desarrollador (HU-12)
+  const getDevCargaInfo = (idTrabajador) => {
+    return desarrolladoresCargas.find(d => d.idTrabajador === Number(idTrabajador));
+  };
+
+  // Asignación de desarrollador al proyecto con control estricto de 48h (HU-12 / RF-16)
+  const handleAsignarDesarrolladorAProyecto = async (e) => {
+    e.preventDefault();
+    setAsignarDevError(null);
+
+    if (!asignarDevForm.idDesarrollador) {
+      setAsignarDevError('Seleccione un desarrollador para vincular al proyecto.');
+      return;
+    }
+
+    const horas = parseInt(asignarDevForm.horasSemanales);
+    if (isNaN(horas) || horas <= 0) {
+      setAsignarDevError('Las horas semanales deben ser un número entero mayor a 0.');
+      return;
+    }
+
+    if (horas > 48) {
+      setAsignarDevError('La jornada semanal no puede exceder el límite legal de 48 horas.');
+      return;
+    }
+
+    if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') {
+      setAsignarDevError('Debe seleccionar un proyecto específico para realizar asignaciones.');
+      return;
+    }
+
+    try {
+      setSubmittingAsignarDev(true);
+      await api.post(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/asignar`, {
+        idDesarrollador: parseInt(asignarDevForm.idDesarrollador),
+        horasSemanales: horas
+      });
+
+      toast.success('Desarrollador asignado exitosamente al proyecto (HU-12).');
+      setShowAsignarDevModal(false);
+      setAsignarDevForm({ idDesarrollador: '', horasSemanales: 20 });
+      setAsignarDevError(null);
+
+      // Recargar balance de cargas y nómina
+      const [cargasRes, devsRes] = await Promise.all([
+        api.get('/lider/desarrolladores-cargas').catch(() => []),
+        api.get('/lider/desarrolladores').catch(() => [])
+      ]);
+      setDesarrolladoresCargas(Array.isArray(cargasRes) ? cargasRes : []);
+      setDesarrolladores(Array.isArray(devsRes) ? devsRes : []);
+    } catch (err) {
+      console.error('Error asignando desarrollador (HU-12):', err);
+      const errMsg = err?.response?.data?.message || err?.message || 'Error al procesar la asignación del desarrollador.';
+      setAsignarDevError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setSubmittingAsignarDev(false);
     }
   };
 
@@ -681,7 +754,20 @@ export const LiderDashboard = () => {
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAsignarDevForm({ idDesarrollador: '', horasSemanales: 20 });
+                    setAsignarDevError(null);
+                    setShowAsignarDevModal(true);
+                  }}
+                  disabled={!proyectoSeleccionado}
+                  className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  title="Vincular desarrollador y definir dedicación horaria semanal (HU-12 / RF-16)"
+                >
+                  <UserPlus size={14} /> Asignar Desarrollador
+                </button>
                 <button
                   type="button"
                   onClick={() => setShowNuevaEtapaModal(true)}
@@ -1179,13 +1265,38 @@ export const LiderDashboard = () => {
                     className={`input-field py-2 font-bold ${formErrors.idDesarrollador ? 'border-red-400 dark:border-red-600' : ''}`}
                   >
                     <option value="">— Seleccione un desarrollador —</option>
-                    {desarrolladores?.map(dev => (
-                      <option key={dev?.idTrabajador} value={dev?.idTrabajador}>
-                        {dev?.nombre} {dev?.apellido} ({dev?.especialidad || dev?.email})
-                      </option>
-                    ))}
+                    {desarrolladores?.map(dev => {
+                      const c = getDevCargaInfo(dev?.idTrabajador);
+                      const cargaTxt = c ? ` [Carga: ${c.horasAsignadas}/48h]` : '';
+                      return (
+                        <option key={dev?.idTrabajador} value={dev?.idTrabajador}>
+                          {dev?.nombre} {dev?.apellido} ({dev?.especialidad || dev?.email}){cargaTxt}
+                        </option>
+                      );
+                    })}
                   </select>
                   {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
+
+                  {nuevaActividad.idDesarrollador && (() => {
+                    const c = getDevCargaInfo(nuevaActividad.idDesarrollador);
+                    if (!c) return null;
+                    return (
+                      <div className="mt-2 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-between">
+                        <span className="text-[0.7rem] font-bold text-zinc-700 dark:text-zinc-300">
+                          Balance de Carga Semanal:
+                        </span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.65rem] font-bold border ${
+                          c.horasAsignadas >= 48 
+                            ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                            : c.horasAsignadas >= 36
+                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                        }`}>
+                          Carga: {c.horasAsignadas}/48h ({c.horasDisponibles}h disponibles)
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div>
@@ -1194,7 +1305,7 @@ export const LiderDashboard = () => {
                     rows={3}
                     value={nuevaActividad.descripcion}
                     onChange={(e) => { setNuevaActividad({ ...nuevaActividad, descripcion: e.target.value }); setFormErrors(p => ({ ...p, descripcion: undefined })); }}
-                    placeholder="Ej. Construir controladores REST y pruebas de estrés para módulo de facturación..."
+                    placeholder="Descripción de la tarea técnica a ejecutar"
                     className={`input-field py-2 ${formErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
                   />
                   {formErrors.descripcion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.descripcion}</p>}
@@ -1215,6 +1326,171 @@ export const LiderDashboard = () => {
                     className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
                   >
                     {submittingActividad ? <><Loader2 size={14} className="animate-spin" /> Asignando...</> : 'Guardar y Asignar'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Asignar Desarrollador a Proyecto con Control de Cargas (HU-12 / RF-16) */}
+      <AnimatePresence>
+        {showAsignarDevModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto space-y-4"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-sm">
+                    <UserPlus size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                      Asignar Desarrollador a Proyecto (HU-12)
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Control de jornada semanal y regla legal máxima de 48 horas
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => { setShowAsignarDevModal(false); setAsignarDevError(null); }} 
+                  className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Banner de error si backend rechaza por sobreasignación (HTTP 400) */}
+              {asignarDevError && (
+                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/80 text-xs text-red-700 dark:text-red-300 flex items-start gap-2.5">
+                  <AlertTriangle size={18} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="font-bold block mb-0.5">Rechazo por Sobreasignación (48h Máx):</strong>
+                    <span>{asignarDevError}</span>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleAsignarDesarrolladorAProyecto} className="space-y-4 text-xs" noValidate>
+                {/* Selector de Desarrollador */}
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                    Desarrollador a Vincular *
+                  </label>
+                  <select
+                    value={asignarDevForm.idDesarrollador}
+                    onChange={(e) => {
+                      setAsignarDevForm({ ...asignarDevForm, idDesarrollador: e.target.value });
+                      setAsignarDevError(null);
+                    }}
+                    className="input-field py-2 font-bold"
+                    required
+                  >
+                    <option value="">— Seleccione un desarrollador —</option>
+                    {desarrolladores?.map(dev => {
+                      const carga = getDevCargaInfo(dev.idTrabajador);
+                      const cargaTxt = carga ? ` [Carga: ${carga.horasAsignadas}/48h]` : '';
+                      return (
+                        <option key={dev.idTrabajador} value={dev.idTrabajador}>
+                          {dev.nombre} {dev.apellido} ({dev.especialidad || dev.profesion}){cargaTxt}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                {/* Previsualización de Carga del Desarrollador Seleccionado */}
+                {asignarDevForm.idDesarrollador && (() => {
+                  const carga = getDevCargaInfo(asignarDevForm.idDesarrollador);
+                  if (!carga) return null;
+                  const horasNuevas = parseInt(asignarDevForm.horasSemanales) || 0;
+                  const horasTotales = carga.horasAsignadas + horasNuevas;
+                  const esSobrecarga = horasTotales > 48;
+
+                  return (
+                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                      <div className="flex justify-between items-center text-[0.7rem]">
+                        <span className="font-bold text-zinc-600 dark:text-zinc-300">Carga Actual en la Empresa:</span>
+                        <span className={`px-2 py-0.5 rounded-full font-bold border ${
+                          carga.horasAsignadas >= 48 
+                            ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800'
+                            : carga.horasAsignadas >= 36
+                            ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800'
+                        }`}>
+                          Carga: {carga.horasAsignadas}/48h
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center text-[0.7rem]">
+                        <span className="font-bold text-zinc-600 dark:text-zinc-300">Horas Disponibles:</span>
+                        <span className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100">
+                          {carga.horasDisponibles} horas/semana
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center text-[0.7rem] pt-1.5 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                        <span className="font-bold text-zinc-700 dark:text-zinc-200">Total Proyectado:</span>
+                        <span className={`font-mono font-extrabold ${esSobrecarga ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                          {horasTotales} / 48h {esSobrecarga ? '(¡Excede Límite Máximo!)' : '(Capacidad Válida)'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Input de Horas Semanales Asignadas */}
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                    Horas Semanales Asignadas a Este Proyecto *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1"
+                      max="48"
+                      step="1"
+                      required
+                      value={asignarDevForm.horasSemanales}
+                      onChange={(e) => {
+                        setAsignarDevForm({ ...asignarDevForm, horasSemanales: e.target.value });
+                        setAsignarDevError(null);
+                      }}
+                      placeholder="20"
+                      className="input-field py-2 font-mono font-bold"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">
+                      h / semana
+                    </span>
+                  </div>
+                  <p className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium mt-1">
+                    Límite legal: 48 horas semanales sumando todas las asignaciones activas de la empresa.
+                  </p>
+                </div>
+
+                {/* Acciones */}
+                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => { setShowAsignarDevModal(false); setAsignarDevError(null); }}
+                    disabled={submittingAsignarDev}
+                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingAsignarDev}
+                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {submittingAsignarDev ? <><Loader2 size={14} className="animate-spin" /> Verificando y Guardando...</> : <><UserPlus size={14} /> Vincular al Proyecto</>}
                   </button>
                 </div>
               </form>

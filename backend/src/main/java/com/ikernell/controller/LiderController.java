@@ -94,12 +94,38 @@ public class LiderController {
         return ResponseEntity.ok(liderService.listarDesarrolladoresActivos());
     }
 
+    @GetMapping("/desarrolladores-cargas")
+    @Operation(summary = "Listar desarrolladores con balance de horas", description = "Devuelve los desarrolladores activos con sus horas semanales asignadas y límite de 48h (HU-12)")
+    public ResponseEntity<List<com.ikernell.dto.DesarrolladorCargaDTO>> listarDesarrolladoresConCarga() {
+        return ResponseEntity.ok(liderService.listarDesarrolladoresConCarga());
+    }
+
+    @GetMapping("/proyectos/{idProyecto}/desarrolladores")
+    @Operation(summary = "Listar desarrolladores asignados al proyecto", description = "Devuelve las asignaciones activas de un proyecto específico (HU-12)")
+    public ResponseEntity<List<ProyectoDesarrollador>> obtenerDesarrolladoresPorProyecto(@PathVariable Long idProyecto) {
+        return ResponseEntity.ok(liderService.obtenerDesarrolladoresPorProyecto(idProyecto));
+    }
+
+    @PostMapping("/proyectos/{idProyecto}/asignar")
+    @Operation(summary = "Asignar Desarrollador a Proyecto con Horas", description = "Asigna un desarrollador al proyecto validando el límite máximo legal de 48 horas semanales (HU-12 / RF-16)")
+    public ResponseEntity<ProyectoDesarrollador> asignarDesarrolladorConHoras(
+            @PathVariable Long idProyecto,
+            @RequestBody com.ikernell.dto.AsignarDesarrolladorRequest request) {
+        ProyectoDesarrollador asignacion = liderService.asignarDesarrollador(
+                idProyecto, 
+                request.getIdDesarrollador(), 
+                request.getHorasSemanales()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(asignacion);
+    }
+
     @PostMapping("/proyectos/{idProyecto}/desarrolladores/{idDesarrollador}")
-    @Operation(summary = "Asignar Desarrollador a Proyecto", description = "Vincula formalmente a un desarrollador al proyecto del líder (RF-16)")
+    @Operation(summary = "Asignar Desarrollador a Proyecto", description = "Vincula formalmente a un desarrollador al proyecto del líder con horas semanales opcionales (RF-16 / HU-12)")
     public ResponseEntity<ProyectoDesarrollador> asignarDesarrollador(
             @PathVariable Long idProyecto, 
-            @PathVariable Long idDesarrollador) {
-        ProyectoDesarrollador asignacion = liderService.asignarDesarrollador(idProyecto, idDesarrollador);
+            @PathVariable Long idDesarrollador,
+            @RequestParam(required = false, defaultValue = "40") Integer horasSemanales) {
+        ProyectoDesarrollador asignacion = liderService.asignarDesarrollador(idProyecto, idDesarrollador, horasSemanales);
         return ResponseEntity.status(HttpStatus.CREATED).body(asignacion);
     }
 

@@ -25,16 +25,20 @@ public class ProyectoDesarrollador {
     @JoinColumn(name = "desarrollador_id", nullable = false)
     private Trabajador desarrollador;
 
+    @Column(name = "horas_semanales", nullable = false)
+    private Integer horasSemanales = 40;
+
     @Column(name = "fecha_asignacion", nullable = false, updatable = false)
     private LocalDateTime fechaAsignacion = LocalDateTime.now();
 
     // Constructores
     public ProyectoDesarrollador() {}
 
-    public ProyectoDesarrollador(Long idAsignacion, Proyecto proyecto, Trabajador desarrollador, LocalDateTime fechaAsignacion) {
+    public ProyectoDesarrollador(Long idAsignacion, Proyecto proyecto, Trabajador desarrollador, Integer horasSemanales, LocalDateTime fechaAsignacion) {
         this.idAsignacion = idAsignacion;
         this.proyecto = proyecto;
         this.desarrollador = desarrollador;
+        this.horasSemanales = horasSemanales != null ? horasSemanales : 40;
         this.fechaAsignacion = fechaAsignacion != null ? fechaAsignacion : LocalDateTime.now();
     }
 
@@ -61,6 +65,14 @@ public class ProyectoDesarrollador {
 
     public void setDesarrollador(Trabajador desarrollador) {
         this.desarrollador = desarrollador;
+    }
+
+    public Integer getHorasSemanales() {
+        return horasSemanales;
+    }
+
+    public void setHorasSemanales(Integer horasSemanales) {
+        this.horasSemanales = horasSemanales;
     }
 
     public LocalDateTime getFechaAsignacion() {

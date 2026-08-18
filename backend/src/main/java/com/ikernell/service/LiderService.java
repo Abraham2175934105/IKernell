@@ -134,19 +134,46 @@ public class LiderService {
         etapaRepository.deleteById(idEtapa);
     }
 
-    // Asigna un desarrollador a la nómina de trabajo del proyecto
-    public ProyectoDesarrollador asignarDesarrollador(Long idProyecto, Long idDesarrollador) {
-        // Validaciones
+    // Asigna un desarrollador a la nómina de trabajo del proyecto con control de cargas de 48h (HU-12 / RF-16)
+    public ProyectoDesarrollador asignarDesarrollador(Long idProyecto, Long idDesarrollador, Integer horasSemanales) {
+        if (horasSemanales == null || horasSemanales <= 0) {
+            horasSemanales = 40;
+        }
+        if (horasSemanales > 48) {
+            throw new IllegalArgumentException("La asignación semanal (" + horasSemanales + "h) no puede exceder el límite legal máximo de 48 horas semanales.");
+        }
+
+        // Validaciones de existencia
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
         Trabajador desarrollador = trabajadorRepository.findById(idDesarrollador)
                 .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
 
-        // Persistencia
-        ProyectoDesarrollador asignacion = new ProyectoDesarrollador();
+        // Condición Crítica HU-12: Regla de las 48 horas semanales acumuladas
+        int horasOtrasAsignaciones = proyectoDesarrolladorRepository
+                .calcularHorasAsignadasExcluyendoProyecto(desarrollador, idProyecto);
+
+        int horasTotalesProyectadas = horasOtrasAsignaciones + horasSemanales;
+        if (horasTotalesProyectadas > 48) {
+            throw new IllegalArgumentException("Sobreasignación de capacidad: El desarrollador " + desarrollador.getNombre() 
+                    + " " + desarrollador.getApellido() + " ya tiene " + horasOtrasAsignaciones 
+                    + "h asignadas en otros proyectos activos. Asignar " + horasSemanales 
+                    + "h superaría el límite máximo de 48 horas semanales (Total: " + horasTotalesProyectadas + "h).");
+        }
+
+        // Persistencia (Actualizar asignación existente o registrar nueva)
+        ProyectoDesarrollador asignacion = proyectoDesarrolladorRepository
+                .findByProyectoAndDesarrollador(proyecto, desarrollador)
+                .orElse(new ProyectoDesarrollador());
+
         asignacion.setProyecto(proyecto);
         asignacion.setDesarrollador(desarrollador);
+        asignacion.setHorasSemanales(horasSemanales);
         return proyectoDesarrolladorRepository.save(asignacion);
+    }
+
+    public ProyectoDesarrollador asignarDesarrollador(Long idProyecto, Long idDesarrollador) {
+        return asignarDesarrollador(idProyecto, idDesarrollador, 40);
     }
 
     // Asigna una tarea a un desarrollador estableciendo PENDIENTE como estado inicial
@@ -221,6 +248,55 @@ public class LiderService {
     @Transactional(readOnly = true)
     public List<Trabajador> listarDesarrolladoresActivos() {
         return trabajadorRepository.findByRolAndEstado(Rol.DESARROLLADOR, true);
+    }
+
+    // Lista desarrolladores con su balance de horas semanales y estado de capacidad (HU-12 / RF-16)
+    @Transactional(readOnly = true)
+    public List<com.ikernell.dto.DesarrolladorCargaDTO> listarDesarrolladoresConCarga() {
+        List<Trabajador> devs = trabajadorRepository.findByRolAndEstado(Rol.DESARROLLADOR, true);
+        List<com.ikernell.dto.DesarrolladorCargaDTO> resultado = new ArrayList<>();
+
+        for (Trabajador dev : devs) {
+            int horasAsignadas = proyectoDesarrolladorRepository.calcularHorasTotalesAsignadas(dev);
+            int limiteMaximo = 48;
+            int horasDisponibles = Math.max(0, limiteMaximo - horasAsignadas);
+            double porcentaje = Math.round(((double) horasAsignadas / limiteMaximo) * 1000.0) / 10.0;
+
+            String nivel;
+            if (horasAsignadas >= 48) {
+                nivel = "COMPLETA";
+            } else if (horasAsignadas >= 36) {
+                nivel = "ALTA";
+            } else if (horasAsignadas >= 20) {
+                nivel = "MODERADA";
+            } else {
+                nivel = "DISPONIBLE";
+            }
+
+            resultado.add(new com.ikernell.dto.DesarrolladorCargaDTO(
+                dev.getIdTrabajador(),
+                dev.getNombre(),
+                dev.getApellido(),
+                dev.getEspecialidad(),
+                dev.getProfesion(),
+                dev.getEmail(),
+                horasAsignadas,
+                horasDisponibles,
+                limiteMaximo,
+                porcentaje,
+                nivel
+            ));
+        }
+
+        return resultado;
+    }
+
+    // Lista las asignaciones de desarrolladores vinculados a un proyecto específico
+    @Transactional(readOnly = true)
+    public List<ProyectoDesarrollador> obtenerDesarrolladoresPorProyecto(Long idProyecto) {
+        Proyecto proyecto = proyectoRepository.findById(idProyecto)
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+        return proyectoDesarrolladorRepository.findByProyectoWithDesarrollador(proyecto);
     }
 
     // Consulta errores técnicos reportados en las fases del proyecto en 1 sola consulta (Anti N+1)

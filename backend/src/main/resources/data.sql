@@ -61,13 +61,13 @@ SELECT setval('proyecto_id_proyecto_seq', (SELECT MAX(id_proyecto) FROM proyecto
 -- 4. ASIGNACIONES DE DESARROLLADORES A PROYECTOS
 DELETE FROM proyecto_desarrollador;
 
-INSERT INTO proyecto_desarrollador (proyecto_id, desarrollador_id)
+INSERT INTO proyecto_desarrollador (proyecto_id, desarrollador_id, horas_semanales)
 VALUES 
-  (1, 6), (1, 9), (1, 11), (1, 3),    -- Proyecto 1: Ana Gómez (🔴), David Valenzuela (🟠), Mateo Restrepo (🟡), Luis Pérez (🟢)
-  (2, 6), (2, 9), (2, 4), (2, 12), (2, 13), -- Proyecto 2: Ana Gómez (🔴), David Valenzuela (🟠), Marta López (🟡), Sofía Benítez (🟢), Javier Arboleda (🟢)
-  (3, 6), (3, 10), (3, 11),           -- Proyecto 3: Ana Gómez (🔴), Lucía Morales (🟢), Mateo Restrepo (🟡)
-  (4, 10), (4, 12), (4, 13), (4, 4),  -- Proyecto 4: Lucía Morales (🟢), Sofía Benítez (🟢), Javier Arboleda (🟢), Marta López (🟡)
-  (5, 9), (5, 11);                    -- Proyecto 5: David Valenzuela, Mateo Restrepo
+  (1, 6, 20), (1, 9, 20), (1, 11, 18), (1, 3, 30),    -- Proyecto 1
+  (2, 6, 15), (2, 9, 20), (2, 4, 24), (2, 12, 15), (2, 13, 20), -- Proyecto 2
+  (3, 10, 20), (3, 11, 10),                            -- Proyecto 3
+  (4, 10, 15), (4, 12, 15), (4, 13, 20), (4, 4, 20),  -- Proyecto 4
+  (5, 9, 8);                                           -- Proyecto 5
 
 -- 5. ETAPAS (WBS)
 DELETE FROM etapa;

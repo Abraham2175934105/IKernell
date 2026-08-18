@@ -17,4 +17,19 @@ public interface ProyectoDesarrolladorRepository extends JpaRepository<ProyectoD
     List<ProyectoDesarrollador> findByDesarrollador(Trabajador desarrollador);
     
     Optional<ProyectoDesarrollador> findByProyectoAndDesarrollador(Proyecto proyecto, Trabajador desarrollador);
+
+    @org.springframework.data.jpa.repository.Query("SELECT pd FROM ProyectoDesarrollador pd LEFT JOIN FETCH pd.proyecto WHERE pd.desarrollador = :desarrollador AND pd.proyecto.estado = 'ACTIVO'")
+    List<ProyectoDesarrollador> findAsignacionesActivasPorDesarrollador(@org.springframework.data.repository.query.Param("desarrollador") Trabajador desarrollador);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(pd.horasSemanales), 0) FROM ProyectoDesarrollador pd WHERE pd.desarrollador = :desarrollador AND pd.proyecto.estado = 'ACTIVO'")
+    Integer calcularHorasTotalesAsignadas(@org.springframework.data.repository.query.Param("desarrollador") Trabajador desarrollador);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(pd.horasSemanales), 0) FROM ProyectoDesarrollador pd WHERE pd.desarrollador = :desarrollador AND pd.proyecto.estado = 'ACTIVO' AND pd.proyecto.idProyecto != :idProyectoExcluir")
+    Integer calcularHorasAsignadasExcluyendoProyecto(
+        @org.springframework.data.repository.query.Param("desarrollador") Trabajador desarrollador, 
+        @org.springframework.data.repository.query.Param("idProyectoExcluir") Long idProyectoExcluir
+    );
+
+    @org.springframework.data.jpa.repository.Query("SELECT pd FROM ProyectoDesarrollador pd LEFT JOIN FETCH pd.desarrollador WHERE pd.proyecto = :proyecto ORDER BY pd.idAsignacion ASC")
+    List<ProyectoDesarrollador> findByProyectoWithDesarrollador(@org.springframework.data.repository.query.Param("proyecto") Proyecto proyecto);
 }
