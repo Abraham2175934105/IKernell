@@ -139,30 +139,77 @@ public class CoordinadorService {
         return solicitudContactoRepository.findAllByOrderByFechaEnvioDesc();
     }
 
-    // Alterna el estado de atención de la solicitud y asocia al coordinador responsable
-    public SolicitudContacto toggleEstadoSolicitud(Long idSolicitud, String emailCoordinador) {
-        // Validaciones
+    // Gestiona una solicitud con notas de atención detalladas o justificación de reapertura
+    public SolicitudContacto gestionarSolicitud(Long idSolicitud, com.ikernell.dto.GestionarSolicitudRequest request, String emailCoordinador) {
         SolicitudContacto solicitud = solicitudContactoRepository.findById(idSolicitud)
                 .orElseThrow(() -> new ResourceNotFoundException("Solicitud de contacto no encontrada con ID: " + idSolicitud));
 
-        boolean nuevoEstado = !Boolean.TRUE.equals(solicitud.getAtendido());
-        solicitud.setAtendido(nuevoEstado);
-
-        if (nuevoEstado && emailCoordinador != null) {
-            trabajadorRepository.findByEmail(emailCoordinador).ifPresent(solicitud::setCoordinador);
-        } else if (!nuevoEstado) {
-            solicitud.setCoordinador(null);
+        String nuevoEstado = request != null && request.getEstado() != null ? request.getEstado().toUpperCase() : "ATENDIDA";
+        String coordInfo = "Coordinador";
+        if (emailCoordinador != null) {
+            var coordOpt = trabajadorRepository.findByEmail(emailCoordinador);
+            if (coordOpt.isPresent()) {
+                solicitud.setCoordinador(coordOpt.get());
+                coordInfo = coordOpt.get().getNombre() + " " + coordOpt.get().getApellido();
+            }
         }
 
-        // Persistencia
+        LocalDateTime ahora = LocalDateTime.now();
+        StringBuilder auditLog = new StringBuilder();
+        if (solicitud.getHistorialAtencion() != null && !solicitud.getHistorialAtencion().isBlank()) {
+            auditLog.append(solicitud.getHistorialAtencion()).append("\n");
+        }
+
+        if ("ATENDIDA".equals(nuevoEstado)) {
+            solicitud.setAtendido(true);
+            solicitud.setEstado("ATENDIDA");
+            solicitud.setFechaAtencion(ahora);
+            if (request != null && request.getNotasAtencion() != null && !request.getNotasAtencion().isBlank()) {
+                solicitud.setNotasAtencion(request.getNotasAtencion().trim());
+            }
+            auditLog.append("[").append(ahora).append("] ATENDIDA por ").append(coordInfo)
+                    .append(" | Acciones/Notas: ").append(solicitud.getNotasAtencion() != null ? solicitud.getNotasAtencion() : "Sin observaciones adicionales");
+        } else if ("REABIERTA".equals(nuevoEstado) || "PENDIENTE".equals(nuevoEstado) || "EN_PROCESO".equals(nuevoEstado)) {
+            solicitud.setAtendido(false);
+            solicitud.setEstado(nuevoEstado);
+            solicitud.setFechaReapertura(ahora);
+            solicitud.setContadorReaperturas(solicitud.getContadorReaperturas() + 1);
+            if (request != null && request.getMotivoReapertura() != null && !request.getMotivoReapertura().isBlank()) {
+                solicitud.setMotivoReapertura(request.getMotivoReapertura().trim());
+            }
+            auditLog.append("[").append(ahora).append("] REABIERTA a estado ").append(nuevoEstado).append(" por ").append(coordInfo)
+                    .append(" (Reapertura #").append(solicitud.getContadorReaperturas()).append(")")
+                    .append(" | Motivo: ").append(solicitud.getMotivoReapertura() != null ? solicitud.getMotivoReapertura() : "Reapertura de caso para seguimiento comercial");
+        }
+
+        solicitud.setHistorialAtencion(auditLog.toString());
         return solicitudContactoRepository.save(solicitud);
+    }
+
+    // Alterna el estado de atención de la solicitud y asocia al coordinador responsable
+    public SolicitudContacto toggleEstadoSolicitud(Long idSolicitud, String emailCoordinador) {
+        SolicitudContacto solicitud = solicitudContactoRepository.findById(idSolicitud)
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitud de contacto no encontrada con ID: " + idSolicitud));
+
+        boolean esAtendida = "ATENDIDA".equalsIgnoreCase(solicitud.getEstado()) || Boolean.TRUE.equals(solicitud.getAtendido());
+        String targetEstado = esAtendida ? "REABIERTA" : "ATENDIDA";
+        com.ikernell.dto.GestionarSolicitudRequest req = new com.ikernell.dto.GestionarSolicitudRequest();
+        req.setEstado(targetEstado);
+        if (esAtendida) {
+            req.setMotivoReapertura("Reapertura rápida desde bandeja de solicitudes");
+        } else {
+            req.setNotasAtencion("Atención rápida registrada por Coordinador");
+        }
+        return gestionarSolicitud(idSolicitud, req, emailCoordinador);
     }
 
     // Registra una nueva solicitud proveniente del portal público
     public SolicitudContacto registrarSolicitudContacto(SolicitudContacto solicitud) {
-        // Persistencia
         solicitud.setFechaEnvio(LocalDateTime.now());
         solicitud.setAtendido(false);
+        solicitud.setEstado("PENDIENTE");
+        solicitud.setContadorReaperturas(0);
+        solicitud.setHistorialAtencion("[" + LocalDateTime.now() + "] Solicitud registrada desde el formulario web público.");
         return solicitudContactoRepository.save(solicitud);
     }
 }

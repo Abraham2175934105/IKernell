@@ -65,11 +65,11 @@ DELETE FROM proyecto_desarrollador;
 
 INSERT INTO proyecto_desarrollador (proyecto_id, desarrollador_id, horas_semanales)
 VALUES 
-  (1, 6, 20), (1, 9, 20), (1, 11, 18), (1, 3, 30),    -- Proyecto 1
+  (1, 6, 20), (1, 9, 20), (1, 11, 18), (1, 3, 30), (1, 15, 20), -- Proyecto 1
   (2, 6, 15), (2, 9, 20), (2, 4, 24), (2, 12, 15), (2, 13, 20), -- Proyecto 2
-  (3, 10, 20), (3, 11, 10),                            -- Proyecto 3
-  (4, 10, 15), (4, 12, 15), (4, 13, 20), (4, 4, 20),  -- Proyecto 4
-  (5, 9, 8);                                           -- Proyecto 5
+  (3, 10, 20), (3, 11, 10), (3, 15, 20),                         -- Proyecto 3
+  (4, 10, 15), (4, 12, 15), (4, 13, 20), (4, 4, 20), (4, 15, 15), -- Proyecto 4
+  (5, 9, 8);                                                    -- Proyecto 5
 
 -- 5. ETAPAS (WBS)
 DELETE FROM etapa;
@@ -164,7 +164,15 @@ VALUES
   (5004, 201, 12, 'Implementar pruebas unitarias con JUnit 5 y Mockito alcanzando 88% de cobertura', 'FINALIZADA'),
 
   -- Asignaciones para Luis Pérez (id: 3) - Contratista React -> BAJA / ESTABLE (🟢)
-  (7001, 102, 3, 'Implementar componentes visuales para previsualización de facturas electrónicas en PDF', 'EN_PROGRESO');
+  (7001, 102, 3, 'Implementar componentes visuales para previsualización de facturas electrónicas en PDF', 'EN_PROGRESO'),
+
+  -- Asignaciones para Diego Torres (id: 15) - Frontend & Mobile Lead -> ACTIVO (🔵)
+  (1009, 102, 15, 'Construir interfaz reactiva para el visor de facturas y certificados XAdES', 'EN_PROGRESO'),
+  (1010, 101, 15, 'Diseño de componentes UI y prototipo de consola web de facturación', 'FINALIZADA'),
+  (3007, 301, 15, 'Maquetación de pantallas principales del dashboard móvil y flujo de transferencias', 'FINALIZADA'),
+  (3008, 302, 15, 'Integración de animaciones de confirmación de pago y micro-interacciones hápticas', 'EN_PROGRESO'),
+  (3009, 303, 15, 'Desarrollo del componente de previsualización y copiado rápido de código snippet', 'PENDIENTE'),
+  (4006, 402, 15, 'Implementar controles de audio/video y chat interactivo en sala de telemedicina', 'EN_PROGRESO');
 
 SELECT setval('actividad_id_actividad_seq', 8000);
 
@@ -229,13 +237,22 @@ VALUES
   (103, 11, 'BLOQUEO_AMBIENTE', NOW() - INTERVAL '4 days', 30, 'Mantenimiento preventivo en servidor SFTP de pruebas', 'SOLUCIONADO');
 
 -- 5. Desarrolladores en Nivel Óptimo -> 🟢 BAJA / ESTABLE (4 desarrolladores, Score < 45%)
--- Lucía Morales (id: 10), Javier Arboleda (id: 13), Sofía Benítez (id: 12), Luis Pérez (id: 3)
-INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion)
+-- Lucía Morales (id: 10), Javier Arboleda (id: 13), Sofía Benítez (id: 12), Luis Pérez (id: 3), Diego Torres (id: 15)
+INSERT INTO error (etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion, resolucion_nota, fecha_resolucion)
 VALUES 
-  (301, 10, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '16 days', 'Warning menor de propTypes en componente botón', 'SOLUCIONADO'),
-  (204, 13, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '14 days', 'Comentario desactualizado en Dockerfile multi-stage', 'SOLUCIONADO'),
-  (204, 12, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '15 days', 'Aserción de prueba unitaria con mensaje incompleto', 'SOLUCIONADO'),
-  (102, 3, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '10 days', 'Etiqueta HTML no cerrada en plantilla de previsualización', 'SOLUCIONADO');
+  (301, 10, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '16 days', 'Warning menor de propTypes en componente botón', 'SOLUCIONADO', 'Corregido propTypes', NOW() - INTERVAL '15 days'),
+  (204, 13, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '14 days', 'Comentario desactualizado en Dockerfile multi-stage', 'SOLUCIONADO', 'Actualizado', NOW() - INTERVAL '13 days'),
+  (204, 12, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '15 days', 'Aserción de prueba unitaria con mensaje incompleto', 'SOLUCIONADO', 'Corregido', NOW() - INTERVAL '14 days'),
+  (102, 3, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '10 days', 'Etiqueta HTML no cerrada en plantilla de previsualización', 'SOLUCIONADO', 'Cerrada etiqueta', NOW() - INTERVAL '9 days'),
+  (102, 15, 'SINTAXIS', 'BAJA', NOW() - INTERVAL '6 days', 'Error de tipado en props de componente visor de PDF', 'SOLUCIONADO', 'Corregido con TypeScript interfaces', NOW() - INTERVAL '5 days'),
+  (302, 15, 'INTEGRACION_REST', 'MEDIA', NOW() - INTERVAL '3 days', 'Desincronización en webhook de confirmación de saldo en app móvil', 'EN_REVISION', NULL, NULL),
+  (402, 15, 'LOGICO', 'ALTA', NOW() - INTERVAL '1 days', 'Fallo al reconectar stream WebRTC tras pérdida intermitente de red', 'REGISTRADO', NULL, NULL);
+
+INSERT INTO interrupcion (etapa_id, desarrollador_id, tipo_interrupcion, fecha_ocurrencia, duracion_minutos, comentarios, estado_atencion, resolucion_nota, fecha_resolucion)
+VALUES
+  (102, 15, 'REUNION_NO_PLANIFICADA', NOW() - INTERVAL '5 days', 45, 'Sesión técnica de revisión de estilos con el equipo de diseño UI', 'SOLUCIONADO', 'Aprobado diseño mobile', NOW() - INTERVAL '5 days'),
+  (302, 15, 'BLOQUEO_AMBIENTE', NOW() - INTERVAL '2 days', 90, 'Bloqueo temporal por actualización del emulador Android SDK', 'SOLUCIONADO', 'SDK actualizado a v34', NOW() - INTERVAL '2 days'),
+  (402, 15, 'INCIDENCIA_PRODUCCION', NOW() - INTERVAL '1 days', 60, 'Revisión urgente de compatibilidad de cámara en Safari iOS', 'REGISTRADO', NULL, NULL);
 
 SELECT setval('error_id_error_seq', (SELECT MAX(id_error) FROM error));
 SELECT setval('interrupcion_id_interrupcion_seq', (SELECT MAX(id_interrupcion) FROM interrupcion));

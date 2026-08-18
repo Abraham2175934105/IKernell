@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   ShieldAlert, Activity, TrendingUp, AlertTriangle, CheckCircle2, 
   User, RefreshCw, Sparkles, Lock, Layers, Users,
   Briefcase, Check, Info, Search, X, HelpCircle, Download,
-  TrendingDown, Minus, Clock, Globe, FolderGit2
+  TrendingDown, Minus, Clock, Globe, FolderGit2, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
@@ -40,20 +40,90 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
   const [error, setError] = useState(null);
   const [selectedDev, setSelectedDev] = useState(null);
 
+  // Estados para selector interactivo de proyecto
+  const [proyectosList, setProyectosList] = useState([]);
+  const [proyectoSeleccionadoLocal, setProyectoSeleccionadoLocal] = useState(
+    proyecto && proyecto.idProyecto ? proyecto : { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' }
+  );
+  const [etapasLocal, setEtapasLocal] = useState(etapas || []);
+  const [menuProyectosOpen, setMenuProyectosOpen] = useState(false);
+  const menuProyectosRef = useRef(null);
+
   // Estados de filtrado y búsqueda interactiva (Panel único y limpio)
   const [searchQuery, setSearchQuery] = useState('');
   const [filtroSemaforo, setFiltroSemaforo] = useState('TODOS'); // 'TODOS' | 'CRITICA' | 'ALTA' | 'MEDIA' | 'BAJA'
   const [orden, setOrden] = useState('RIESGO_DESC'); // 'RIESGO_DESC' | 'RIESGO_ASC' | 'TAREAS_DESC' | 'NOMBRE_ASC'
   const [showHelpModal, setShowHelpModal] = useState(false);
 
+  // Carga lista de proyectos disponibles para el selector interactivo
+  useEffect(() => {
+    const fetchProyectos = async () => {
+      try {
+        const res = await api.get('/lider/proyectos');
+        if (Array.isArray(res)) {
+          setProyectosList(res);
+        }
+      } catch (e) {
+        console.error('Error cargando proyectos para predictor:', e);
+      }
+    };
+    fetchProyectos();
+  }, [api]);
+
+  // Si llega una prop proyecto actualizada desde el componente padre, sincronizar
+  useEffect(() => {
+    if (proyecto && proyecto.idProyecto) {
+      setProyectoSeleccionadoLocal(proyecto);
+    }
+  }, [proyecto]);
+
+  // Si llega una prop etapas actualizada, sincronizar
+  useEffect(() => {
+    if (etapas && Array.isArray(etapas)) {
+      setEtapasLocal(etapas);
+    }
+  }, [etapas]);
+
+  // Si se selecciona un proyecto específico que no tiene etapas cargadas, obtenerlas
+  useEffect(() => {
+    if (proyectoSeleccionadoLocal && proyectoSeleccionadoLocal.idProyecto && proyectoSeleccionadoLocal.idProyecto !== 'GLOBAL') {
+      if (!etapas || etapas.length === 0 || proyectoSeleccionadoLocal.idProyecto !== proyecto?.idProyecto) {
+        const fetchEtapas = async () => {
+          try {
+            const data = await api.get(`/lider/proyectos/${proyectoSeleccionadoLocal.idProyecto}/etapas`);
+            setEtapasLocal(Array.isArray(data) ? data : []);
+          } catch (e) {
+            console.error('Error cargando etapas para proyecto seleccionado:', e);
+          }
+        };
+        fetchEtapas();
+      }
+    }
+  }, [proyectoSeleccionadoLocal, etapas, proyecto, api]);
+
+  // Listener para cerrar el menú de proyectos al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuProyectosRef.current && !menuProyectosRef.current.contains(e.target)) {
+        setMenuProyectosOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Determina si estamos en alcance de un proyecto específico o en vista global
-  const isProyectoEspecifico = Boolean(proyecto && proyecto.idProyecto && proyecto.idProyecto !== 'GLOBAL');
+  const isProyectoEspecifico = Boolean(
+    proyectoSeleccionadoLocal && 
+    proyectoSeleccionadoLocal.idProyecto && 
+    proyectoSeleccionadoLocal.idProyecto !== 'GLOBAL'
+  );
 
   // Obtiene los IDs de los desarrolladores asignados al proyecto activo
   const devIdsEnProyecto = useMemo(() => {
-    if (!isProyectoEspecifico || !etapas || !Array.isArray(etapas)) return null;
+    if (!isProyectoEspecifico || !etapasLocal || !Array.isArray(etapasLocal)) return null;
     const ids = new Set();
-    etapas.forEach(etapa => {
+    etapasLocal.forEach(etapa => {
       if (Array.isArray(etapa?.actividades)) {
         etapa.actividades.forEach(act => {
           if (act?.desarrollador?.idTrabajador) {
@@ -63,7 +133,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
       }
     });
     return ids;
-  }, [isProyectoEspecifico, etapas]);
+  }, [isProyectoEspecifico, etapasLocal]);
 
   // Carga la matriz de burnout desde el backend
   const fetchBurnoutMetrics = useCallback(async () => {
@@ -312,20 +382,124 @@ Generado automáticamente por el motor analítico IKernell v2.0
               <Sparkles size={13} className="text-blue-600 dark:text-blue-400" /> Analítica Predictiva • RF-35
             </span>
             
-            {/* Contexto del Proyecto o Alcance Global */}
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold border border-zinc-200 dark:border-zinc-700">
-              {isProyectoEspecifico ? (
-                <>
-                  <FolderGit2 size={12} className="text-blue-600 dark:text-blue-400" />
-                  <span>Proyecto: <strong className="text-zinc-900 dark:text-zinc-100 truncate max-w-[220px]">{proyecto.nombre}</strong></span>
-                </>
-              ) : (
-                <>
-                  <Globe size={12} className="text-blue-600 dark:text-blue-400" />
-                  <span className="text-blue-600 dark:text-blue-400 font-semibold">Alcance Corporativo Global (Todos los Proyectos)</span>
-                </>
-              )}
-            </span>
+            {/* Contexto del Proyecto o Alcance Global con Selector Interactivo */}
+            <div className="relative" ref={menuProyectosRef}>
+              <button
+                type="button"
+                onClick={() => setMenuProyectosOpen(prev => !prev)}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold border border-zinc-200 dark:border-zinc-700 cursor-pointer transition-all shadow-2xs group"
+                title="Cambiar alcance de visualización (Proyecto específico o Global)"
+              >
+                {isProyectoEspecifico ? (
+                  <>
+                    <FolderGit2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span className="font-mono text-blue-600 dark:text-blue-400 font-extrabold text-[0.68rem]">
+                      [PRJ-00{proyectoSeleccionadoLocal.idProyecto}]
+                    </span>
+                    <span className="truncate max-w-[180px] sm:max-w-[240px] text-zinc-900 dark:text-zinc-100 font-extrabold">
+                      {proyectoSeleccionadoLocal.nombre}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Globe size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span className="text-blue-600 dark:text-blue-400 font-bold">
+                      Alcance Corporativo Global (Todos los Proyectos)
+                    </span>
+                  </>
+                )}
+                <ChevronDown size={13} className={`text-zinc-400 group-hover:text-blue-500 transition-transform ${menuProyectosOpen ? 'rotate-180 text-blue-500' : ''}`} />
+              </button>
+
+              {/* Menú Desplegable de Selección de Proyecto */}
+              <AnimatePresence>
+                {menuProyectosOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className="absolute left-0 top-full mt-2 w-[300px] sm:w-[360px] z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xl rounded-2xl p-2 space-y-1 max-h-72 overflow-y-auto"
+                  >
+                    <div className="px-2 pt-1 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400">
+                      Alcance del Predictor
+                    </div>
+
+                    {/* Opción Global */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProyectoSeleccionadoLocal({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                        setSelectedDev(null);
+                        setMenuProyectosOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        !isProyectoEspecifico
+                          ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                          : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Globe size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                        <div className="text-left truncate">
+                          <span className="block truncate text-xs font-extrabold">[Vista Global Corporativa]</span>
+                          <span className="block text-[0.65rem] text-zinc-400 font-medium">Todos los proyectos de la compañía</span>
+                        </div>
+                      </div>
+                      {!isProyectoEspecifico && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                    </button>
+
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+
+                    <div className="px-2 pt-0.5 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
+                      <span>Proyectos</span>
+                      <span className="font-mono">{proyectosList?.length || 0}</span>
+                    </div>
+
+                    {proyectosList && proyectosList.length > 0 ? (
+                      proyectosList.map(p => {
+                        const isSelected = isProyectoEspecifico && proyectoSeleccionadoLocal.idProyecto === p.idProyecto;
+                        return (
+                          <button
+                            key={p.idProyecto}
+                            type="button"
+                            onClick={() => {
+                              setProyectoSeleccionadoLocal(p);
+                              setSelectedDev(null);
+                              setMenuProyectosOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                                : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <FolderGit2 size={13} className="text-zinc-500 shrink-0" />
+                              <div className="text-left min-w-0 flex-1 truncate">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono text-[0.65rem] font-extrabold text-blue-600 dark:text-blue-400 shrink-0">
+                                    [PRJ-00{p.idProyecto}]
+                                  </span>
+                                  <span className="font-extrabold text-xs truncate">
+                                    {p.nombre}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            {isSelected && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="p-3 text-center text-xs text-zinc-400">
+                        No hay proyectos disponibles
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
@@ -388,20 +562,32 @@ Generado automáticamente por el motor analítico IKernell v2.0
             <Users size={30} />
           </div>
           <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-1">
-            Sin desarrolladores con tareas en "{proyecto.nombre}"
+            Sin desarrolladores con tareas en "{proyectoSeleccionadoLocal.nombre}"
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto mb-6 leading-relaxed">
             Actualmente no hay actividades WBS asignadas a desarrolladores en este proyecto para calcular la carga cognitiva y temporal.
           </p>
-          {onNavigateToWbs && (
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={onNavigateToWbs}
-              className="gradient-button text-xs py-2.5 px-5 font-bold cursor-pointer inline-flex items-center gap-2 shadow-md"
+              onClick={() => {
+                setProyectoSeleccionadoLocal({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                setSelectedDev(null);
+              }}
+              className="outline-button text-xs py-2 px-4 font-bold cursor-pointer inline-flex items-center gap-1.5"
             >
-              <Layers size={14} /> Asignar Tareas en WBS
+              <Globe size={13} /> Ver Alcance Global
             </button>
-          )}
+            {onNavigateToWbs && (
+              <button
+                type="button"
+                onClick={onNavigateToWbs}
+                className="gradient-button text-xs py-2 px-4 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+              >
+                <Layers size={13} /> Asignar Tareas en WBS
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         /* ─── Layout Split-View Master-Detail (2 Columnas Responsivas) ─── */

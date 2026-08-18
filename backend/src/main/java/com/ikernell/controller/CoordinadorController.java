@@ -101,12 +101,27 @@ public class CoordinadorController {
     }
 
     @PatchMapping("/solicitudes/{id}/atender")
-    @Operation(summary = "Alternar estado de atención de solicitud", description = "Marca una solicitud de contacto como ATENDIDA o PENDIENTE")
+    @Operation(summary = "Alternar o gestionar estado de atención de solicitud", description = "Marca una solicitud de contacto como ATENDIDA o PENDIENTE con notas opcionales")
     public ResponseEntity<SolicitudContacto> toggleEstadoSolicitud(
             @PathVariable Long id,
+            @RequestBody(required = false) com.ikernell.dto.GestionarSolicitudRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails != null ? userDetails.getUsername() : null;
+        if (request != null && request.getEstado() != null) {
+            return ResponseEntity.ok(coordinadorService.gestionarSolicitud(id, request, email));
+        }
         SolicitudContacto actualizada = coordinadorService.toggleEstadoSolicitud(id, email);
+        return ResponseEntity.ok(actualizada);
+    }
+
+    @PatchMapping("/solicitudes/{id}/gestionar")
+    @Operation(summary = "Gestionar Caso de Solicitud Web", description = "Registra notas de atención, cambio de estado formal o motivo de reapertura con auditoría histórica")
+    public ResponseEntity<SolicitudContacto> gestionarSolicitud(
+            @PathVariable Long id,
+            @RequestBody com.ikernell.dto.GestionarSolicitudRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        SolicitudContacto actualizada = coordinadorService.gestionarSolicitud(id, request, email);
         return ResponseEntity.ok(actualizada);
     }
 }

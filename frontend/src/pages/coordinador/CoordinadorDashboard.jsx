@@ -5,7 +5,7 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { 
   Users, UserPlus, UserX, UserCheck, Search, Shield, CheckCircle2, 
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
-  Loader2, RefreshCw, Inbox
+  Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -106,9 +106,17 @@ export const CoordinadorDashboard = () => {
   const [togglingSolicitudId, setTogglingSolicitudId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroSolicitudes, setFiltroSolicitudes] = useState('TODAS'); // 'TODAS' | 'PENDIENTE' | 'ATENDIDA' | 'REABIERTA' | 'EN_PROCESO'
   
   // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedSolicitudModal, setSelectedSolicitudModal] = useState(null);
+  const [solicitudActionForm, setSolicitudActionForm] = useState({
+    estado: 'ATENDIDA',
+    notasAtencion: '',
+    motivoReapertura: ''
+  });
+  const [submittingGestion, setSubmittingGestion] = useState(false);
 
   const [newTrabajador, setNewTrabajador] = useState({
     identificacion: '',
@@ -215,14 +223,81 @@ export const CoordinadorDashboard = () => {
     }
   };
 
+  const getEstadoSolicitudInfo = (sol) => {
+    const est = sol.estado || (sol.atendido ? 'ATENDIDA' : 'PENDIENTE');
+    if (est === 'ATENDIDA') {
+      return {
+        label: 'ATENDIDA',
+        badge: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800',
+        dot: 'bg-emerald-500'
+      };
+    }
+    if (est === 'REABIERTA') {
+      return {
+        label: `REABIERTA${sol.contadorReaperturas > 0 ? ` (x${sol.contadorReaperturas})` : ''}`,
+        badge: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800',
+        dot: 'bg-purple-500'
+      };
+    }
+    if (est === 'EN_PROCESO') {
+      return {
+        label: 'EN PROCESO',
+        badge: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800',
+        dot: 'bg-amber-500'
+      };
+    }
+    return {
+      label: 'PENDIENTE',
+      badge: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800',
+      dot: 'bg-blue-500'
+    };
+  };
+
+  const handleOpenGestionModal = (sol) => {
+    setSelectedSolicitudModal(sol);
+    const defaultEstado = (sol.estado === 'ATENDIDA' || sol.atendido) ? 'REABIERTA' : 'ATENDIDA';
+    setSolicitudActionForm({
+      estado: defaultEstado,
+      notasAtencion: sol.notasAtencion || '',
+      motivoReapertura: ''
+    });
+  };
+
+  const handleSubmitGestionSolicitud = async (e) => {
+    e?.preventDefault();
+    if (!selectedSolicitudModal) return;
+
+    if (solicitudActionForm.estado === 'REABIERTA' && !solicitudActionForm.motivoReapertura.trim()) {
+      toast.error('Debes indicar obligatoriamente el motivo por el cual se reabre el caso.');
+      return;
+    }
+
+    try {
+      setSubmittingGestion(true);
+      const updated = await api.patch(
+        `/coordinador/solicitudes/${selectedSolicitudModal.idSolicitud}/gestionar`,
+        solicitudActionForm
+      );
+
+      setSolicitudes(prev => prev.map(s => s.idSolicitud === selectedSolicitudModal.idSolicitud ? updated : s));
+      toast.success(`Caso [SOL-00${selectedSolicitudModal.idSolicitud}] actualizado a ${updated.estado || (updated.atendido ? 'ATENDIDA' : 'PENDIENTE')}`);
+      setSelectedSolicitudModal(null);
+    } catch (err) {
+      console.error('Error al gestionar caso:', err);
+      toast.error(err.message || 'Error al guardar la gestión del caso.');
+    } finally {
+      setSubmittingGestion(false);
+    }
+  };
+
   const handleToggleEstadoSolicitud = async (idSolicitud) => {
     try {
       setTogglingSolicitudId(idSolicitud);
       const updated = await api.patch(`/coordinador/solicitudes/${idSolicitud}/atender`);
       
       setSolicitudes(prev => prev.map(s => s.idSolicitud === idSolicitud ? updated : s));
-      const estadoTxt = updated.atendido ? 'ATENDIDA' : 'PENDIENTE';
-      toast.success(`Solicitud marcada como ${estadoTxt}.`);
+      const estadoTxt = updated.estado || (updated.atendido ? 'ATENDIDA' : 'PENDIENTE');
+      toast.success(`Solicitud actualizada a ${estadoTxt}.`);
     } catch (err) {
       console.error('Error actualizando solicitud:', err);
       toast.error(err.message || 'Error al actualizar el estado de la solicitud.');
@@ -450,102 +525,244 @@ export const CoordinadorDashboard = () => {
           
           <motion.div 
             variants={itemVariants}
-            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
+            className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
             <div>
               <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
-                Atención al Cliente Corporativo
+                Atención al Cliente & Leads Web
               </span>
               <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Bandeja de Solicitudes de Contacto Web
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                Consultas recibidas en tiempo real desde el formulario público — Persistencia en PostgreSQL
+                Gestión comercial, registro de notas de atención y trazabilidad con auditoría de reaperturas
               </p>
             </div>
 
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={cargarDatos}
+                disabled={loading}
+                className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+              >
+                <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Refrescar
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Filtros Rápidos por Estado de Solicitud */}
+          <motion.div variants={itemVariants} className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
-              onClick={cargarDatos}
-              disabled={loading}
-              className="outline-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+              onClick={() => setFiltroSolicitudes('TODAS')}
+              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                filtroSolicitudes === 'TODAS'
+                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+              }`}
             >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refrescar
+              <span>Todas</span>
+              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20 dark:bg-black/10">
+                {solicitudes.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFiltroSolicitudes('PENDIENTE')}
+              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                filtroSolicitudes === 'PENDIENTE'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span>Pendientes</span>
+              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                {solicitudes.filter(s => (s.estado === 'PENDIENTE' || (!s.estado && !s.atendido))).length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFiltroSolicitudes('EN_PROCESO')}
+              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                filtroSolicitudes === 'EN_PROCESO'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span>En Proceso</span>
+              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                {solicitudes.filter(s => s.estado === 'EN_PROCESO').length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFiltroSolicitudes('ATENDIDA')}
+              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                filtroSolicitudes === 'ATENDIDA'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>Atendidas</span>
+              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                {solicitudes.filter(s => s.estado === 'ATENDIDA' || (s.atendido && !s.estado)).length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFiltroSolicitudes('REABIERTA')}
+              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                filtroSolicitudes === 'REABIERTA'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'
+              }`}
+            >
+              <RotateCcw size={12} />
+              <span>Reabiertas</span>
+              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                {solicitudes.filter(s => s.estado === 'REABIERTA').length}
+              </span>
             </button>
           </motion.div>
 
           <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {loading && (
               <>
-                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-48" />
-                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-48" />
-                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-48" />
+                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-56" />
+                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-56" />
+                <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-pulse h-56" />
               </>
             )}
 
-            {!loading && solicitudes.length === 0 && (
+            {!loading && (solicitudes.length === 0 || (filtroSolicitudes !== 'TODAS' && solicitudes.filter(s => {
+              const est = s.estado || (s.atendido ? 'ATENDIDA' : 'PENDIENTE');
+              return est === filtroSolicitudes;
+            }).length === 0)) && (
               <div className="col-span-full">
                 <EmptyState
                   icon={Inbox}
-                  title="No hay solicitudes de contacto"
-                  description="Cuando los visitantes envíen consultas a través del portal público, aparecerán aquí para su gestión y seguimiento."
+                  title="No hay solicitudes en esta categoría"
+                  description="No se encontraron registros que coincidan con el filtro seleccionado."
                 />
               </div>
             )}
 
-            {!loading && solicitudes.map(sol => (
-              <div 
-                key={sol.idSolicitud} 
-                className={`bg-white dark:bg-zinc-900 p-6 rounded-3xl border flex flex-col justify-between shadow-sm hover:shadow-[0_0_15px_rgba(59,130,246,0.12)] hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-200 h-full ${
-                  sol.atendido 
-                    ? 'border-zinc-200 dark:border-zinc-800/80 opacity-90' 
-                    : 'border-blue-300 dark:border-blue-700/80 ring-1 ring-blue-100 dark:ring-blue-950/30'
-                }`}
-              >
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <span className={`text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full border ${
-                      !sol.atendido
-                        ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-                    }`}>
-                      {sol.atendido ? 'ATENDIDA' : 'PENDIENTE'}
-                    </span>
-                    <span className="text-[0.65rem] text-zinc-400 flex items-center gap-1 font-semibold">
-                      <Clock size={12} /> {sol.fechaEnvio ? new Date(sol.fechaEnvio).toLocaleString() : 'Reciente'}
-                    </span>
-                  </div>
+            {!loading && solicitudes
+              .filter(s => {
+                const est = s.estado || (s.atendido ? 'ATENDIDA' : 'PENDIENTE');
+                if (filtroSolicitudes === 'TODAS') return true;
+                return est === filtroSolicitudes;
+              })
+              .map(sol => {
+                const estInfo = getEstadoSolicitudInfo(sol);
+                const isReabierta = sol.estado === 'REABIERTA' || (sol.contadorReaperturas && sol.contadorReaperturas > 0);
 
-                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 mb-1">{sol.asunto}</h3>
-                  <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-3">{sol.nombreRemitente}</p>
-                  
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
-                    "{sol.mensaje}"
-                  </div>
+                return (
+                  <div 
+                    key={sol.idSolicitud} 
+                    className={`bg-white dark:bg-zinc-900 p-6 rounded-3xl border flex flex-col justify-between shadow-sm hover:shadow-[0_0_18px_rgba(59,130,246,0.14)] hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-200 h-full ${
+                      sol.atendido || sol.estado === 'ATENDIDA'
+                        ? 'border-zinc-200 dark:border-zinc-800/80' 
+                        : sol.estado === 'REABIERTA'
+                        ? 'border-purple-300 dark:border-purple-800 ring-1 ring-purple-100 dark:ring-purple-950/40'
+                        : 'border-blue-300 dark:border-blue-700/80 ring-1 ring-blue-100 dark:ring-blue-950/30'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      {/* Cabecera de la Tarjeta */}
+                      <div className="flex justify-between items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60">
+                            SOL-00{sol.idSolicitud}
+                          </span>
+                          <span className={`inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full border ${estInfo.badge}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
+                            <span>{estInfo.label}</span>
+                          </span>
+                        </div>
+                        <span className="text-[0.65rem] text-zinc-400 flex items-center gap-1 font-semibold shrink-0">
+                          <Clock size={11} /> {sol.fechaEnvio ? new Date(sol.fechaEnvio).toLocaleDateString() : 'Reciente'}
+                        </span>
+                      </div>
 
-                  <div className="flex flex-col gap-1 text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium mb-4">
-                    <div className="flex items-center gap-2"><Mail size={12} /> {sol.emailRemitente}</div>
-                    {sol.telefono && <div className="flex items-center gap-2"><Phone size={12} /> {sol.telefono}</div>}
-                  </div>
-                </div>
+                      {/* Asunto y Remitente */}
+                      <div>
+                        <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 mb-0.5 line-clamp-1" title={sol.asunto}>
+                          {sol.asunto}
+                        </h3>
+                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{sol.nombreRemitente}</p>
+                      </div>
+                      
+                      {/* Mensaje original */}
+                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed italic line-clamp-3">
+                        "{sol.mensaje}"
+                      </div>
 
-                <button
-                  type="button"
-                  disabled={togglingSolicitudId === sol.idSolicitud}
-                  onClick={() => handleToggleEstadoSolicitud(sol.idSolicitud)}
-                  className={`text-xs py-2 w-full font-bold cursor-pointer rounded-xl border transition-all inline-flex items-center justify-center gap-2 ${
-                    !sol.atendido
-                      ? 'gradient-button'
-                      : 'outline-button'
-                  }`}
-                >
-                  {togglingSolicitudId === sol.idSolicitud ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : null}
-                  {!sol.atendido ? 'Marcar como Atendida' : 'Reabrir Solicitud'}
-                </button>
-              </div>
-            ))}
+                      {/* Datos de contacto */}
+                      <div className="flex flex-col gap-1 text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                        <div className="flex items-center gap-1.5 truncate"><Mail size={12} className="shrink-0 text-zinc-400" /> <span className="truncate">{sol.emailRemitente}</span></div>
+                        {sol.telefono && <div className="flex items-center gap-1.5"><Phone size={12} className="shrink-0 text-zinc-400" /> <span>{sol.telefono}</span></div>}
+                      </div>
+
+                      {/* Bloque Informativo: Notas de Atención Registradas */}
+                      {sol.notasAtencion && (
+                        <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 text-xs space-y-1">
+                          <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-extrabold text-[0.7rem]">
+                            <FileText size={12} />
+                            <span>Acciones Realizadas / Contexto:</span>
+                          </div>
+                          <p className="text-[0.72rem] text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+                            {sol.notasAtencion}
+                          </p>
+                          {sol.fechaAtencion && (
+                            <p className="text-[0.62rem] text-emerald-700 dark:text-emerald-400 font-mono pt-0.5">
+                              Atendido {new Date(sol.fechaAtencion).toLocaleString()} {sol.coordinador ? `por ${sol.coordinador.nombre}` : ''}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Bloque Informativo: Motivo de Reapertura */}
+                      {sol.motivoReapertura && (
+                        <div className="p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 text-xs space-y-1">
+                          <div className="flex items-center gap-1.5 text-purple-800 dark:text-purple-300 font-extrabold text-[0.7rem]">
+                            <RotateCcw size={12} />
+                            <span>Motivo de Reapertura {sol.contadorReaperturas > 0 ? `(#${sol.contadorReaperturas})` : ''}:</span>
+                          </div>
+                          <p className="text-[0.72rem] text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+                            {sol.motivoReapertura}
+                          </p>
+                          {sol.fechaReapertura && (
+                            <p className="text-[0.62rem] text-purple-700 dark:text-purple-400 font-mono pt-0.5">
+                              Reabierto el {new Date(sol.fechaReapertura).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Botones de Acción */}
+                    <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/80 mt-4 space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenGestionModal(sol)}
+                        className="gradient-button text-xs py-2 w-full font-bold cursor-pointer rounded-xl inline-flex items-center justify-center gap-1.5 shadow-sm"
+                      >
+                        <Edit3 size={13} />
+                        <span>Gestionar / Atender Caso</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
           </motion.div>
 
         </motion.div>
@@ -690,6 +907,232 @@ export const CoordinadorDashboard = () => {
                     className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
                   >
                     {submitting ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : 'Guardar Trabajador'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Gestión Integral de Caso / Solicitud Web */}
+      <AnimatePresence>
+        {selectedSolicitudModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 max-w-2xl w-full shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
+            >
+              {/* Encabezado del Modal */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
+                    <MessageSquare size={22} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60">
+                        SOL-00{selectedSolicitudModal.idSolicitud}
+                      </span>
+                      <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                        Gestión Integral del Caso
+                      </h3>
+                    </div>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                      Remitente: <strong className="text-zinc-700 dark:text-zinc-300">{selectedSolicitudModal.nombreRemitente}</strong> ({selectedSolicitudModal.emailRemitente})
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setSelectedSolicitudModal(null)} 
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Consulta Original del Lead */}
+              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 space-y-1.5 text-xs">
+                <div className="flex justify-between items-center text-zinc-500 font-semibold text-[0.7rem]">
+                  <span>Asunto: <strong className="text-zinc-800 dark:text-zinc-200">{selectedSolicitudModal.asunto}</strong></span>
+                  <span className="flex items-center gap-1 font-mono"><Clock size={11} /> {new Date(selectedSolicitudModal.fechaEnvio).toLocaleString()}</span>
+                </div>
+                <p className="text-zinc-700 dark:text-zinc-300 italic bg-white dark:bg-zinc-900/60 p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
+                  "{selectedSolicitudModal.mensaje}"
+                </p>
+                {selectedSolicitudModal.telefono && (
+                  <p className="text-[0.7rem] text-zinc-500 flex items-center gap-1">
+                    <Phone size={11} /> Teléfono de contacto: <strong className="text-zinc-700 dark:text-zinc-300">{selectedSolicitudModal.telefono}</strong>
+                  </p>
+                )}
+              </div>
+
+              {/* Formulario de Gestión del Caso */}
+              <form onSubmit={handleSubmitGestionSolicitud} className="space-y-4 text-xs">
+                {/* Selector de Nuevo Estado */}
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-2">
+                    Actualizar Estado del Caso *
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSolicitudActionForm(prev => ({ ...prev, estado: 'ATENDIDA' }))}
+                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                        solicitudActionForm.estado === 'ATENDIDA'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-400 dark:border-emerald-600 shadow-sm ring-2 ring-emerald-500/20'
+                          : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-emerald-300'
+                      }`}
+                    >
+                      <CheckCircle2 size={16} />
+                      <span>Atendida</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSolicitudActionForm(prev => ({ ...prev, estado: 'REABIERTA' }))}
+                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                        solicitudActionForm.estado === 'REABIERTA'
+                          ? 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-400 dark:border-purple-600 shadow-sm ring-2 ring-purple-500/20'
+                          : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-purple-300'
+                      }`}
+                    >
+                      <RotateCcw size={16} />
+                      <span>Reabrir Caso</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSolicitudActionForm(prev => ({ ...prev, estado: 'EN_PROCESO' }))}
+                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                        solicitudActionForm.estado === 'EN_PROCESO'
+                          ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-400 dark:border-amber-600 shadow-sm ring-2 ring-amber-500/20'
+                          : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-amber-300'
+                      }`}
+                    >
+                      <Clock size={16} />
+                      <span>En Proceso</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSolicitudActionForm(prev => ({ ...prev, estado: 'PENDIENTE' }))}
+                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                        solicitudActionForm.estado === 'PENDIENTE'
+                          ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-400 dark:border-blue-600 shadow-sm ring-2 ring-blue-500/20'
+                          : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-300'
+                      }`}
+                    >
+                      <Inbox size={16} />
+                      <span>Pendiente</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Campo: Notas de Atención / Acciones Realizadas */}
+                {(solicitudActionForm.estado === 'ATENDIDA' || solicitudActionForm.estado === 'EN_PROCESO' || solicitudActionForm.estado === 'PENDIENTE') && (
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                      Notas de Atención y Acciones Realizadas {solicitudActionForm.estado === 'ATENDIDA' && <span className="text-emerald-600 font-extrabold">*</span>}
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={solicitudActionForm.notasAtencion}
+                      onChange={(e) => setSolicitudActionForm(prev => ({ ...prev, notasAtencion: e.target.value }))}
+                      placeholder="Detalla las acciones ejecutadas: llamada realizada con el cliente, cotización formal enviada por correo, reunión técnica acordada, etc."
+                      className="input-field py-2.5 leading-relaxed text-xs w-full"
+                    />
+                    <p className="text-[0.65rem] text-zinc-400 mt-1">
+                      Estas notas quedarán registradas en la bitácora inmutable de auditoría del caso.
+                    </p>
+                  </div>
+                )}
+
+                {/* Campo Obligatorio: Motivo de Reapertura del Caso */}
+                {solicitudActionForm.estado === 'REABIERTA' && (
+                  <div className="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/80 space-y-2">
+                    <div className="flex items-center gap-1.5 text-purple-900 dark:text-purple-200 font-extrabold">
+                      <RotateCcw size={14} className="text-purple-600" />
+                      <span>Justificación Obligatoria de Reapertura del Caso *</span>
+                    </div>
+                    <textarea
+                      rows={3}
+                      required
+                      value={solicitudActionForm.motivoReapertura}
+                      onChange={(e) => setSolicitudActionForm(prev => ({ ...prev, motivoReapertura: e.target.value }))}
+                      placeholder="Explica la razón por la cual se reabre el caso (ej. Cliente solicitó cotización adicional, nuevo requerimiento de alcance, reconsideración de propuesta)..."
+                      className="input-field py-2.5 leading-relaxed text-xs w-full bg-white dark:bg-zinc-900 border-purple-300 dark:border-purple-700 focus:ring-purple-500/30"
+                    />
+                    <p className="text-[0.65rem] text-purple-700 dark:text-purple-300 font-medium">
+                      ⚠️ Al reabrir, se incrementará el contador de reaperturas y se estampará la fecha y hora UTC de reapertura.
+                    </p>
+                  </div>
+                )}
+
+                {/* Trazabilidad Histórica y Auditoría */}
+                <div className="p-3.5 rounded-2xl bg-zinc-100/80 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 text-xs space-y-2">
+                  <div className="flex items-center gap-1.5 font-bold text-zinc-800 dark:text-zinc-200 text-[0.72rem]">
+                    <History size={13} className="text-blue-500" />
+                    <span>Línea de Tiempo y Trazabilidad del Caso:</span>
+                  </div>
+
+                  <div className="space-y-1.5 text-[0.68rem] text-zinc-600 dark:text-zinc-400">
+                    <div className="flex items-start gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 mt-1 shrink-0" />
+                      <div>
+                        <strong>1. Solicitud Recibida:</strong> {new Date(selectedSolicitudModal.fechaEnvio).toLocaleString()}
+                      </div>
+                    </div>
+
+                    {selectedSolicitudModal.fechaAtencion && (
+                      <div className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1 shrink-0" />
+                        <div>
+                          <strong>2. Atención Formal:</strong> {new Date(selectedSolicitudModal.fechaAtencion).toLocaleString()} {selectedSolicitudModal.coordinador ? `por ${selectedSolicitudModal.coordinador.nombre} ${selectedSolicitudModal.coordinador.apellido}` : ''}
+                          {selectedSolicitudModal.notasAtencion && <p className="italic text-zinc-500 dark:text-zinc-400">"{selectedSolicitudModal.notasAtencion}"</p>}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedSolicitudModal.fechaReapertura && (
+                      <div className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-purple-500 mt-1 shrink-0" />
+                        <div>
+                          <strong>3. Última Reapertura (#{selectedSolicitudModal.contadorReaperturas}):</strong> {new Date(selectedSolicitudModal.fechaReapertura).toLocaleString()}
+                          {selectedSolicitudModal.motivoReapertura && <p className="italic text-purple-600 dark:text-purple-400">"{selectedSolicitudModal.motivoReapertura}"</p>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Botones de Acción */}
+                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSolicitudModal(null)}
+                    disabled={submittingGestion}
+                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingGestion}
+                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 shadow-md"
+                  >
+                    {submittingGestion ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" /> Guardando Caso...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={14} /> Guardar Gestión del Caso
+                      </>
+                    )}
                   </button>
                 </div>
               </form>

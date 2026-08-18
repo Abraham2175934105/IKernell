@@ -42,6 +42,27 @@ public class SolicitudContacto {
     @Column(name = "atendido", nullable = false)
     private Boolean atendido = false;
 
+    @Column(name = "estado", length = 30)
+    private String estado = "PENDIENTE";
+
+    @Column(name = "notas_atencion", columnDefinition = "TEXT")
+    private String notasAtencion;
+
+    @Column(name = "fecha_atencion")
+    private LocalDateTime fechaAtencion;
+
+    @Column(name = "motivo_reapertura", columnDefinition = "TEXT")
+    private String motivoReapertura;
+
+    @Column(name = "fecha_reapertura")
+    private LocalDateTime fechaReapertura;
+
+    @Column(name = "contador_reaperturas")
+    private Integer contadorReaperturas = 0;
+
+    @Column(name = "historial_atencion", columnDefinition = "TEXT")
+    private String historialAtencion;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "coordinador_id")
     @JsonIgnoreProperties({"passwordHash", "proyectosLiderados", "actividades", "errores", "interrupciones"})
@@ -60,6 +81,7 @@ public class SolicitudContacto {
         this.mensaje = mensaje;
         this.fechaEnvio = fechaEnvio != null ? fechaEnvio : LocalDateTime.now();
         this.atendido = atendido != null ? atendido : false;
+        this.estado = (atendido != null && atendido) ? "ATENDIDA" : "PENDIENTE";
         this.coordinador = coordinador;
     }
 
@@ -85,7 +107,38 @@ public class SolicitudContacto {
     public void setFechaEnvio(LocalDateTime fechaEnvio) { this.fechaEnvio = fechaEnvio; }
 
     public Boolean getAtendido() { return atendido; }
-    public void setAtendido(Boolean atendido) { this.atendido = atendido; }
+    public void setAtendido(Boolean atendido) { 
+        this.atendido = atendido;
+        if (Boolean.TRUE.equals(atendido) && !"ATENDIDA".equals(this.estado)) {
+            this.estado = "ATENDIDA";
+        } else if (Boolean.FALSE.equals(atendido) && "ATENDIDA".equals(this.estado)) {
+            this.estado = "PENDIENTE";
+        }
+    }
+
+    public String getEstado() { return estado != null ? estado : (Boolean.TRUE.equals(atendido) ? "ATENDIDA" : "PENDIENTE"); }
+    public void setEstado(String estado) { 
+        this.estado = estado; 
+        this.atendido = "ATENDIDA".equalsIgnoreCase(estado);
+    }
+
+    public String getNotasAtencion() { return notasAtencion; }
+    public void setNotasAtencion(String notasAtencion) { this.notasAtencion = notasAtencion; }
+
+    public LocalDateTime getFechaAtencion() { return fechaAtencion; }
+    public void setFechaAtencion(LocalDateTime fechaAtencion) { this.fechaAtencion = fechaAtencion; }
+
+    public String getMotivoReapertura() { return motivoReapertura; }
+    public void setMotivoReapertura(String motivoReapertura) { this.motivoReapertura = motivoReapertura; }
+
+    public LocalDateTime getFechaReapertura() { return fechaReapertura; }
+    public void setFechaReapertura(LocalDateTime fechaReapertura) { this.fechaReapertura = fechaReapertura; }
+
+    public Integer getContadorReaperturas() { return contadorReaperturas != null ? contadorReaperturas : 0; }
+    public void setContadorReaperturas(Integer contadorReaperturas) { this.contadorReaperturas = contadorReaperturas; }
+
+    public String getHistorialAtencion() { return historialAtencion; }
+    public void setHistorialAtencion(String historialAtencion) { this.historialAtencion = historialAtencion; }
 
     public Trabajador getCoordinador() { return coordinador; }
     public void setCoordinador(Trabajador coordinador) { this.coordinador = coordinador; }
