@@ -9,7 +9,8 @@ import {
   Briefcase, Layers, Plus, Activity, Sparkles, Download, 
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, X,
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
-  Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2
+  Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
+  FolderPlus, DollarSign
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -81,6 +82,18 @@ export const LiderDashboard = () => {
   
   const [loadingProyectos, setLoadingProyectos] = useState(true);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
+
+  const [showNuevoProyectoModal, setShowNuevoProyectoModal] = useState(false);
+  const [submittingProyecto, setSubmittingProyecto] = useState(false);
+  const [nuevoProyectoForm, setNuevoProyectoForm] = useState({
+    nombre: '',
+    cliente: '',
+    descripcion: '',
+    fechaInicio: new Date().toISOString().split('T')[0],
+    fechaFinEstimada: '',
+    presupuesto: ''
+  });
+  const [nuevoProyectoErrors, setNuevoProyectoErrors] = useState({});
 
   const [showAsignarModal, setShowAsignarModal] = useState(false);
   const [showNuevaEtapaModal, setShowNuevaEtapaModal] = useState(false);
@@ -227,6 +240,74 @@ export const LiderDashboard = () => {
       toast.error(err?.message || 'Error al asignar la actividad en el servidor.');
     } finally {
       setSubmittingActividad(false);
+    }
+  };
+
+  // Creación de nuevo proyecto con validación cronológica y presupuesto (HU-11 / RF-13 / RF-14)
+  const handleCrearProyecto = async (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!nuevoProyectoForm.nombre?.trim()) errors.nombre = 'El nombre del proyecto es obligatorio.';
+    if (!nuevoProyectoForm.cliente?.trim()) errors.cliente = 'El cliente u organización es obligatorio.';
+    if (!nuevoProyectoForm.fechaInicio) errors.fechaInicio = 'La fecha de inicio es obligatoria.';
+    if (!nuevoProyectoForm.fechaFinEstimada) errors.fechaFinEstimada = 'La fecha de finalización estimada es obligatoria.';
+    
+    // Condición 02 de la HU-11: Validar que fechaFinEstimada >= fechaInicio
+    if (nuevoProyectoForm.fechaInicio && nuevoProyectoForm.fechaFinEstimada) {
+      if (new Date(nuevoProyectoForm.fechaFinEstimada) < new Date(nuevoProyectoForm.fechaInicio)) {
+        errors.fechaFinEstimada = 'La fecha de entrega estimada no puede ser anterior a la fecha de inicio.';
+      }
+    }
+
+    if (nuevoProyectoForm.presupuesto !== '' && Number(nuevoProyectoForm.presupuesto) < 0) {
+      errors.presupuesto = 'El presupuesto no puede ser negativo.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setNuevoProyectoErrors(errors);
+      return;
+    }
+
+    try {
+      setSubmittingProyecto(true);
+      const payload = {
+        nombre: nuevoProyectoForm.nombre.trim(),
+        cliente: nuevoProyectoForm.cliente.trim(),
+        descripcion: nuevoProyectoForm.descripcion?.trim() || '',
+        fechaInicio: nuevoProyectoForm.fechaInicio,
+        fechaFinEstimada: nuevoProyectoForm.fechaFinEstimada,
+        presupuesto: nuevoProyectoForm.presupuesto !== '' ? Number(nuevoProyectoForm.presupuesto) : 0,
+        estado: 'ACTIVO'
+      };
+
+      const liderIdParam = user?.idTrabajador ? `?idLider=${user.idTrabajador}` : '';
+      const response = await api.post(`/lider/proyectos${liderIdParam}`, payload);
+
+      toast.success(`Proyecto "${response?.nombre || payload.nombre}" creado exitosamente.`);
+      setShowNuevoProyectoModal(false);
+      setNuevoProyectoForm({
+        nombre: '',
+        cliente: '',
+        descripcion: '',
+        fechaInicio: new Date().toISOString().split('T')[0],
+        fechaFinEstimada: '',
+        presupuesto: ''
+      });
+      setNuevoProyectoErrors({});
+
+      // Recargar lista y seleccionar automáticamente el nuevo proyecto creado
+      const listaProyectos = await api.get('/lider/proyectos');
+      setProyectos(Array.isArray(listaProyectos) ? listaProyectos : []);
+      if (response && response.idProyecto) {
+        seleccionarProyecto(response);
+      } else if (Array.isArray(listaProyectos) && listaProyectos.length > 0) {
+        seleccionarProyecto(listaProyectos[listaProyectos.length - 1]);
+      }
+    } catch (err) {
+      console.error('Error creando proyecto:', err);
+      toast.error(err?.message || 'Error al registrar el proyecto en el servidor.');
+    } finally {
+      setSubmittingProyecto(false);
     }
   };
 
@@ -448,6 +529,27 @@ export const LiderDashboard = () => {
 
           <button
             type="button"
+            onClick={() => {
+              setNuevoProyectoForm({
+                nombre: '',
+                cliente: '',
+                descripcion: '',
+                fechaInicio: new Date().toISOString().split('T')[0],
+                fechaFinEstimada: '',
+                presupuesto: ''
+              });
+              setNuevoProyectoErrors({});
+              setShowNuevoProyectoModal(true);
+            }}
+            className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+            title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11 / RF-13)"
+          >
+            <FolderPlus size={14} />
+            <span>Nuevo Proyecto</span>
+          </button>
+
+          <button
+            type="button"
             onClick={cargarProyectos}
             disabled={loadingProyectos}
             className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
@@ -480,6 +582,25 @@ export const LiderDashboard = () => {
                 La estructura de desglose de trabajo (fases, etapas y asignación de tareas a desarrolladores) requiere el contexto de un proyecto individual y no puede operarse en la vista global corporativa.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNuevoProyectoForm({
+                      nombre: '',
+                      cliente: '',
+                      descripcion: '',
+                      fechaInicio: new Date().toISOString().split('T')[0],
+                      fechaFinEstimada: '',
+                      presupuesto: ''
+                    });
+                    setNuevoProyectoErrors({});
+                    setShowNuevoProyectoModal(true);
+                  }}
+                  className="gradient-button text-xs py-2 px-4 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+                >
+                  <FolderPlus size={14} />
+                  <span>Crear Nuevo Proyecto</span>
+                </button>
                 {proyectos?.map(p => (
                   <button
                     key={p.idProyecto}
@@ -1340,6 +1461,179 @@ export const LiderDashboard = () => {
                     className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
                   >
                     {submittingAtencion ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : 'Guardar Resolución'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Crear Nuevo Proyecto (HU-11 / RF-13 / RF-14) */}
+      <AnimatePresence>
+        {showNuevoProyectoModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto space-y-4"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-sm">
+                    <FolderPlus size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                      Crear Nuevo Proyecto (HU-11)
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Parametrización cronológica, cliente y presupuesto inicial
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => { setShowNuevoProyectoModal(false); setNuevoProyectoErrors({}); }} 
+                  className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCrearProyecto} className="space-y-4 text-xs" noValidate>
+                {/* Nombre del Proyecto */}
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Nombre del Proyecto *</label>
+                  <input
+                    type="text"
+                    required
+                    value={nuevoProyectoForm.nombre}
+                    onChange={(e) => {
+                      setNuevoProyectoForm({ ...nuevoProyectoForm, nombre: e.target.value });
+                      setNuevoProyectoErrors(prev => ({ ...prev, nombre: undefined }));
+                    }}
+                    placeholder="Ej. Sistema Facturación Cloud & ETL Brasil"
+                    className={`input-field py-2.5 font-bold ${nuevoProyectoErrors.nombre ? 'border-red-400 dark:border-red-600' : ''}`}
+                  />
+                  {nuevoProyectoErrors.nombre && (
+                    <p className="text-[0.65rem] text-red-500 font-bold mt-1">{nuevoProyectoErrors.nombre}</p>
+                  )}
+                </div>
+
+                {/* Cliente / Organización */}
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Cliente u Organización *</label>
+                  <input
+                    type="text"
+                    required
+                    value={nuevoProyectoForm.cliente}
+                    onChange={(e) => {
+                      setNuevoProyectoForm({ ...nuevoProyectoForm, cliente: e.target.value });
+                      setNuevoProyectoErrors(prev => ({ ...prev, cliente: undefined }));
+                    }}
+                    placeholder="Ej. Banco Santander Brasil S.A."
+                    className={`input-field py-2.5 ${nuevoProyectoErrors.cliente ? 'border-red-400 dark:border-red-600' : ''}`}
+                  />
+                  {nuevoProyectoErrors.cliente && (
+                    <p className="text-[0.65rem] text-red-500 font-bold mt-1">{nuevoProyectoErrors.cliente}</p>
+                  )}
+                </div>
+
+                {/* Grid: Fechas Inicio y Fin Estimada */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Fecha de Inicio *</label>
+                    <input
+                      type="date"
+                      required
+                      value={nuevoProyectoForm.fechaInicio}
+                      onChange={(e) => {
+                        setNuevoProyectoForm({ ...nuevoProyectoForm, fechaInicio: e.target.value });
+                        setNuevoProyectoErrors(prev => ({ ...prev, fechaInicio: undefined, fechaFinEstimada: undefined }));
+                      }}
+                      className={`input-field py-2 font-bold ${nuevoProyectoErrors.fechaInicio ? 'border-red-400 dark:border-red-600' : ''}`}
+                    />
+                    {nuevoProyectoErrors.fechaInicio && (
+                      <p className="text-[0.65rem] text-red-500 font-bold mt-1">{nuevoProyectoErrors.fechaInicio}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Fecha Fin Estimada *</label>
+                    <input
+                      type="date"
+                      required
+                      value={nuevoProyectoForm.fechaFinEstimada}
+                      onChange={(e) => {
+                        setNuevoProyectoForm({ ...nuevoProyectoForm, fechaFinEstimada: e.target.value });
+                        setNuevoProyectoErrors(prev => ({ ...prev, fechaFinEstimada: undefined }));
+                      }}
+                      className={`input-field py-2 font-bold ${nuevoProyectoErrors.fechaFinEstimada ? 'border-red-400 dark:border-red-600' : ''}`}
+                    />
+                    {nuevoProyectoErrors.fechaFinEstimada && (
+                      <p className="text-[0.65rem] text-red-500 font-bold mt-1">{nuevoProyectoErrors.fechaFinEstimada}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Presupuesto Inicial (Formato Moneda) */}
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Presupuesto Inicial ($ USD)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={nuevoProyectoForm.presupuesto}
+                      onChange={(e) => {
+                        setNuevoProyectoForm({ ...nuevoProyectoForm, presupuesto: e.target.value });
+                        setNuevoProyectoErrors(prev => ({ ...prev, presupuesto: undefined }));
+                      }}
+                      placeholder="45000.00"
+                      className={`input-field pl-7 py-2.5 font-mono font-bold ${nuevoProyectoErrors.presupuesto ? 'border-red-400 dark:border-red-600' : ''}`}
+                    />
+                  </div>
+                  {nuevoProyectoErrors.presupuesto && (
+                    <p className="text-[0.65rem] text-red-500 font-bold mt-1">{nuevoProyectoErrors.presupuesto}</p>
+                  )}
+                  {nuevoProyectoForm.presupuesto !== '' && Number(nuevoProyectoForm.presupuesto) > 0 && (
+                    <span className="text-[0.65rem] text-emerald-600 dark:text-emerald-400 font-bold mt-1 block">
+                      Dimensión presupuestal: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(Number(nuevoProyectoForm.presupuesto))}
+                    </span>
+                  )}
+                </div>
+
+                {/* Descripción Técnica */}
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción del Alcance y Objetivos</label>
+                  <textarea
+                    rows={3}
+                    value={nuevoProyectoForm.descripcion}
+                    onChange={(e) => setNuevoProyectoForm({ ...nuevoProyectoForm, descripcion: e.target.value })}
+                    placeholder="Detalla el alcance del proyecto, arquitectura de microservicios y requisitos de integración..."
+                    className="input-field py-2"
+                  />
+                </div>
+
+                {/* Acciones del Modal */}
+                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => { setShowNuevoProyectoModal(false); setNuevoProyectoErrors({}); }}
+                    disabled={submittingProyecto}
+                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingProyecto}
+                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {submittingProyecto ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : <><Plus size={14} /> Guardar Proyecto</>}
                   </button>
                 </div>
               </form>

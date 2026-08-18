@@ -42,8 +42,8 @@ public class LiderController {
     }
 
     @PostMapping("/proyectos")
-    @Operation(summary = "Crear un Proyecto", description = "Crea un nuevo proyecto en estado activo vinculándolo al líder responsable (RF-14)")
-    public ResponseEntity<Proyecto> crearProyecto(@Valid @RequestBody Proyecto proyecto, @RequestParam Long idLider) {
+    @Operation(summary = "Crear un Proyecto", description = "Crea un nuevo proyecto en estado activo vinculándolo al líder responsable (HU-11 / RF-13 / RF-14)")
+    public ResponseEntity<Proyecto> crearProyecto(@RequestBody Proyecto proyecto, @RequestParam(required = false) Long idLider) {
         Proyecto nuevo = liderService.crearProyecto(proyecto, idLider);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
     }

@@ -40,15 +40,46 @@ public class LiderService {
         this.proyectoDesarrolladorRepository = proyectoDesarrolladorRepository;
     }
 
-    // Registra un nuevo proyecto en estado ACTIVO y lo vincula con el líder asignado
+    // Registra un nuevo proyecto en estado ACTIVO y lo vincula con el líder asignado (HU-11 / RF-13 / RF-14)
     public Proyecto crearProyecto(Proyecto proyecto, Long idLider) {
-        // Validaciones
-        Trabajador lider = trabajadorRepository.findById(idLider)
-                .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + idLider));
+        // Validación Condición 02 de la HU-11: Validar campos obligatorios y coherencia de fechas
+        if (proyecto.getNombre() == null || proyecto.getNombre().trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del proyecto es obligatorio.");
+        }
+        if (proyecto.getFechaInicio() == null) {
+            throw new IllegalArgumentException("La fecha de inicio del proyecto es obligatoria.");
+        }
+        if (proyecto.getFechaFinEstimada() == null) {
+            throw new IllegalArgumentException("La fecha de finalización estimada del proyecto es obligatoria.");
+        }
+        if (proyecto.getFechaFinEstimada().isBefore(proyecto.getFechaInicio())) {
+            throw new IllegalArgumentException("La fecha de finalización estimada (" + proyecto.getFechaFinEstimada() 
+                    + ") no puede ser anterior a la fecha de inicio (" + proyecto.getFechaInicio() + ").");
+        }
+        if (proyecto.getPresupuesto() != null && proyecto.getPresupuesto().compareTo(java.math.BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("El presupuesto del proyecto no puede ser un valor negativo.");
+        }
+
+        // Resolución del líder responsable
+        Trabajador lider = null;
+        if (idLider != null) {
+            lider = trabajadorRepository.findById(idLider)
+                    .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + idLider));
+        } else if (proyecto.getLider() != null && proyecto.getLider().getIdTrabajador() != null) {
+            lider = trabajadorRepository.findById(proyecto.getLider().getIdTrabajador())
+                    .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + proyecto.getLider().getIdTrabajador()));
+        } else {
+            lider = trabajadorRepository.findAll().stream()
+                    .filter(t -> t.getRol() == Rol.LIDER || t.getRol() == Rol.COORDINADOR)
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException("No se encontró ningún Líder o Coordinador activo para asociar al proyecto."));
+        }
         
         // Persistencia
         proyecto.setLider(lider);
-        proyecto.setEstado("ACTIVO");
+        if (proyecto.getEstado() == null || proyecto.getEstado().isBlank()) {
+            proyecto.setEstado("ACTIVO");
+        }
         return proyectoRepository.save(proyecto);
     }
 
@@ -58,12 +89,20 @@ public class LiderService {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
         
+        if (datos.getFechaFinEstimada() != null && datos.getFechaInicio() != null) {
+            if (datos.getFechaFinEstimada().isBefore(datos.getFechaInicio())) {
+                throw new IllegalArgumentException("La fecha de finalización estimada no puede ser anterior a la fecha de inicio.");
+            }
+        }
+        
         // Persistencia
-        proyecto.setNombre(datos.getNombre());
-        proyecto.setDescripcion(datos.getDescripcion());
-        proyecto.setFechaInicio(datos.getFechaInicio());
-        proyecto.setFechaFinEstimada(datos.getFechaFinEstimada());
-        proyecto.setEstado(datos.getEstado());
+        if (datos.getNombre() != null) proyecto.setNombre(datos.getNombre());
+        if (datos.getCliente() != null) proyecto.setCliente(datos.getCliente());
+        if (datos.getDescripcion() != null) proyecto.setDescripcion(datos.getDescripcion());
+        if (datos.getPresupuesto() != null) proyecto.setPresupuesto(datos.getPresupuesto());
+        if (datos.getFechaInicio() != null) proyecto.setFechaInicio(datos.getFechaInicio());
+        if (datos.getFechaFinEstimada() != null) proyecto.setFechaFinEstimada(datos.getFechaFinEstimada());
+        if (datos.getEstado() != null) proyecto.setEstado(datos.getEstado());
         return proyectoRepository.save(proyecto);
     }
 

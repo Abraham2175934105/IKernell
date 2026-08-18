@@ -20,8 +20,14 @@ public class Proyecto {
     @Column(name = "nombre", nullable = false, length = 150)
     private String nombre;
 
+    @Column(name = "cliente", length = 150)
+    private String cliente;
+
     @Column(name = "descripcion", columnDefinition = "TEXT")
     private String descripcion;
+
+    @Column(name = "presupuesto")
+    private java.math.BigDecimal presupuesto;
 
     @Column(name = "fecha_inicio", nullable = false)
     private LocalDate fechaInicio;
@@ -89,6 +95,22 @@ public class Proyecto {
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+
+    public String getCliente() {
+        return cliente;
+    }
+
+    public void setCliente(String cliente) {
+        this.cliente = cliente;
+    }
+
+    public java.math.BigDecimal getPresupuesto() {
+        return presupuesto;
+    }
+
+    public void setPresupuesto(java.math.BigDecimal presupuesto) {
+        this.presupuesto = presupuesto;
     }
 
     public LocalDate getFechaInicio() {
