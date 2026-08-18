@@ -576,7 +576,7 @@ export const LiderDashboard = () => {
                 <FolderGit2 size={32} />
               </div>
               <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
-                Selecciona un proyecto específico para gestionar WBS
+                Seleccione un proyecto específico en el menú superior para gestionar su estructura WBS y asignar tareas.
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
                 La estructura de desglose de trabajo (fases, etapas y asignación de tareas a desarrolladores) requiere el contexto de un proyecto individual y no puede operarse en la vista global corporativa.
@@ -597,9 +597,10 @@ export const LiderDashboard = () => {
                     setShowNuevoProyectoModal(true);
                   }}
                   className="gradient-button text-xs py-2 px-4 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+                  title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11 / RF-13)"
                 >
                   <FolderPlus size={14} />
-                  <span>Crear Nuevo Proyecto</span>
+                  <span>Nuevo Proyecto</span>
                 </button>
                 {proyectos?.map(p => (
                   <button
@@ -607,6 +608,7 @@ export const LiderDashboard = () => {
                     type="button"
                     onClick={() => seleccionarProyecto(p)}
                     className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+                    title={`Seleccionar proyecto [PRJ-00${p.idProyecto}] ${p.nombre}`}
                   >
                     <FolderGit2 size={13} className="text-blue-500" />
                     <span>{p.nombre}</span>
@@ -672,10 +674,10 @@ export const LiderDashboard = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
                 <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Layers size={18} /> Estructura de Desglose de Trabajo (WBS)
+                  <Layers size={18} className="text-blue-600 dark:text-blue-400" /> Estructura de Desglose de Trabajo (WBS)
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                  Fases, tareas asignadas, desarrolladores responsables y trazabilidad de reasignación
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                  Desglose estructurado del proyecto en fases, etapas y actividades asignadas a desarrolladores.
                 </p>
               </div>
 
@@ -846,11 +848,12 @@ export const LiderDashboard = () => {
               <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
                 Supervisión y Control de Calidad (RF-22 a RF-24)
               </span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                <ShieldAlert size={22} className="text-blue-600 dark:text-blue-400" />
                 Consola Centralizada de Incidencias de Equipo
               </h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                Gestión, seguimiento y resolución de errores técnicos y contingencias reportadas por los desarrolladores
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                Monitoreo, clasificación y resolución de errores de código e interrupciones reportadas por el equipo.
               </p>
             </div>
 
@@ -860,8 +863,9 @@ export const LiderDashboard = () => {
                 onClick={() => seleccionarProyecto(proyectoSeleccionado)}
                 disabled={loadingDetalle}
                 className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                title="Sincronizar incidencias y tiempos de interrupción en tiempo real"
               >
-                <RefreshCw size={13} className={loadingDetalle ? 'animate-spin' : ''} /> Refrescar Incidencias
+                <RefreshCw size={13} className={loadingDetalle ? 'animate-spin text-blue-500' : ''} /> Refrescar Incidencias
               </button>
             </div>
           </motion.div>
@@ -1082,10 +1086,10 @@ export const LiderDashboard = () => {
                 <FileText size={32} />
               </div>
               <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
-                Selecciona un proyecto para exportar el lote ETL Brasil
+                Seleccione un proyecto específico en el menú superior para exportar el lote ETL Brasil.
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
-                La exportación bajo norma ISO 8601 UTC para la Alianza Estratégica Brasil requiere empaquetar los registros operativos de un proyecto individual.
+                La exportación bajo norma ISO 8601 UTC para la Alianza Estratégica Brasil requiere empaquetar los registros operativos de un proyecto individual y no está disponible en la vista global.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {proyectos?.map(p => (
@@ -1144,8 +1148,11 @@ export const LiderDashboard = () => {
                 </button>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-[0.7rem] text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
-                ℹ️ <strong>Nota Informativa:</strong> La actividad se creará en estado <strong>PENDIENTE</strong> y se vinculará directamente a la cuenta del desarrollador en PostgreSQL, apareciendo de inmediato en su tablero de trabajo.
+              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-[0.7rem] text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4 flex items-start gap-2">
+                <Info size={15} className="text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <strong>Nota Informativa:</strong> La actividad se creará en estado <strong>PENDIENTE</strong> y se vinculará directamente a la cuenta del desarrollador en PostgreSQL, apareciendo de inmediato en su tablero de trabajo.
+                </div>
               </div>
 
               <form onSubmit={handleAsignarActividad} className="space-y-4 text-xs" noValidate>

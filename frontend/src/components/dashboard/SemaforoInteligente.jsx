@@ -106,41 +106,41 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
   const totalErrores = metrics?.totalErrores ?? 0;
   const totalInterrupciones = metrics?.totalInterrupciones ?? 0;
 
-  // Configuración de estilos, puntos SVG y badges sin emojis
+  // Configuración de estilos, puntos SVG y badges ejecutivos sin emojis
   const nivelConfig = {
     ROJO: {
       dotColor: 'bg-red-500',
       badge: 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800 animate-pulse',
       iconBg: 'bg-red-100 text-red-600 dark:bg-red-950/80 dark:text-red-400 border border-red-200 dark:border-red-900',
-      label: 'Nivel Crítico (Alerta Roja)',
+      label: isGlobal ? 'Riesgo Organizacional Crítico' : 'Riesgo Crítico de Proyecto',
       Icon: ShieldAlert
     },
     NARANJA: {
       dotColor: 'bg-orange-500',
       badge: 'bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border-orange-200 dark:border-orange-800',
       iconBg: 'bg-orange-100 text-orange-600 dark:bg-orange-950/80 dark:text-orange-400 border border-orange-200 dark:border-orange-900',
-      label: 'Nivel Alto (Riesgo Moderado)',
+      label: 'Riesgo Alto (Alerta Preventiva)',
       Icon: AlertTriangle
     },
     AMARILLO: {
       dotColor: 'bg-amber-500',
       badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
       iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-200 dark:border-amber-900',
-      label: 'Nivel Medio (En Alerta)',
+      label: 'Riesgo Medio (En Supervisión)',
       Icon: AlertTriangle
     },
     VERDE: {
       dotColor: 'bg-emerald-500',
       badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
       iconBg: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/80 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900',
-      label: 'Nivel Bajo (Operación Estable)',
+      label: 'Operación Estable (Riesgo Bajo)',
       Icon: CheckCircle2
     }
   }[currentLevel] || {
     dotColor: 'bg-zinc-400',
     badge: 'bg-zinc-100 text-zinc-700 border-zinc-200',
     iconBg: 'bg-zinc-100 text-zinc-700',
-    label: 'Estado Desconocido',
+    label: 'Estado en Evaluación',
     Icon: Zap
   };
 
@@ -179,11 +179,8 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
               </div>
             </div>
           </div>
-          <p className="text-zinc-600 dark:text-zinc-400 mt-2 text-xs font-medium max-w-2xl leading-relaxed">
-            {isGlobal 
-              ? 'Evaluación continua del nivel de riesgo operacional en toda la compañía en base a la totalidad de contingencias e incidencias reales registradas.'
-              : `Monitoreo en tiempo real de severidad de errores, horas de interrupción y calidad de entregas para "${proyectoNombre || metrics?.nombreProyecto}".`
-            }
+          <p className="text-zinc-500 dark:text-zinc-400 mt-2 text-xs font-medium max-w-2xl leading-relaxed">
+            Evalúa horas de interrupción y severidad de incidencias para predecir el riesgo operacional en tiempo real.
           </p>
         </div>
 
