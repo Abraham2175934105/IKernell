@@ -66,6 +66,38 @@ const EstadoAtencionBadge = ({ estado }) => {
   );
 };
 
+/* ─── Funciones Auxiliares de Formateo y Cronograma ─── */
+const formatearFechaHumana = (fechaStr) => {
+  if (!fechaStr) return 'Fecha no definida';
+  try {
+    const [y, m, d] = fechaStr.split('-').map(Number);
+    const date = y && m && d ? new Date(y, m - 1, d, 12, 0, 0) : new Date(fechaStr);
+    return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+  } catch {
+    return fechaStr;
+  }
+};
+
+const calcularDuracionProyecto = (inicioStr, finStr) => {
+  if (!inicioStr || !finStr) return null;
+  try {
+    const [y1, m1, d1] = inicioStr.split('-').map(Number);
+    const [y2, m2, d2] = finStr.split('-').map(Number);
+    const date1 = y1 && m1 && d1 ? new Date(y1, m1 - 1, d1) : new Date(inicioStr);
+    const date2 = y2 && m2 && d2 ? new Date(y2, m2 - 1, d2) : new Date(finStr);
+    const diffMs = date2.getTime() - date1.getTime();
+    if (isNaN(diffMs) || diffMs <= 0) return null;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const diffMonths = Math.round(diffDays / 30.4375);
+    if (diffMonths >= 1) {
+      return `${diffMonths} ${diffMonths === 1 ? 'mes' : 'meses'}`;
+    }
+    return `${diffDays} ${diffDays === 1 ? 'día' : 'días'}`;
+  } catch {
+    return null;
+  }
+};
+
 
 export const LiderDashboard = () => {
   const { user } = useAuth();
@@ -678,110 +710,128 @@ export const LiderDashboard = () => {
       </motion.div>
 
       {/* Tarjeta de Detalles del Proyecto Seleccionado */}
-      {proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="mb-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 shadow-sm space-y-4 min-w-0"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80 pb-4 min-w-0">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-sm">
-                <FolderGit2 size={20} />
+      {proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (() => {
+        const fechaInicioFormateada = formatearFechaHumana(proyectoSeleccionado.fechaInicio);
+        const fechaFinFormateada = formatearFechaHumana(proyectoSeleccionado.fechaFinEstimada);
+        const duracionEstimada = calcularDuracionProyecto(proyectoSeleccionado.fechaInicio, proyectoSeleccionado.fechaFinEstimada);
+
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="mb-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 shadow-sm space-y-4 min-w-0"
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80 pb-4 min-w-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-sm">
+                  <FolderGit2 size={20} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight truncate max-w-full sm:max-w-md lg:max-w-xl" title={proyectoSeleccionado.nombre}>
+                      {proyectoSeleccionado.nombre}
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 shrink-0">
+                      {proyectoSeleccionado.estado || 'ACTIVO'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                    Identificador del Proyecto: <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">PRJ-00{proyectoSeleccionado.idProyecto}</span>
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap min-w-0">
-                  <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight truncate max-w-full sm:max-w-md lg:max-w-xl" title={proyectoSeleccionado.nombre}>
-                    {proyectoSeleccionado.nombre}
-                  </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 shrink-0">
-                    {proyectoSeleccionado.estado || 'ACTIVO'}
+
+              {proyectoSeleccionado.lider && (
+                <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
+                  <User size={14} className="text-blue-600 dark:text-blue-400" />
+                  <span>
+                    Líder: <strong className="text-zinc-900 dark:text-zinc-100">{proyectoSeleccionado.lider.nombre} {proyectoSeleccionado.lider.apellido}</strong>
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                  Identificador del Proyecto: <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">PRJ-00{proyectoSeleccionado.idProyecto}</span>
-                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+              {/* 1. Cliente u Organización */}
+              <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+                  <Building2 size={16} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
+                    Cliente / Organización
+                  </span>
+                  <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate" title={proyectoSeleccionado.cliente || 'Organización Interna IKernell'}>
+                    {proyectoSeleccionado.cliente || 'Organización Interna IKernell'}
+                  </p>
+                </div>
+              </div>
+
+              {/* 2. Dimensión Presupuestal */}
+              <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
+                  <CircleDollarSign size={16} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
+                    Dimensión Presupuestal
+                  </span>
+                  <p className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                    {proyectoSeleccionado.presupuesto !== null && proyectoSeleccionado.presupuesto !== undefined
+                      ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(Number(proyectoSeleccionado.presupuesto))
+                      : 'Sin dimensionar'}
+                  </p>
+                </div>
+              </div>
+
+              {/* 3. Cronograma Estimado con Fechas Humanizadas y Micro-Badge */}
+              <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 sm:col-span-2 lg:col-span-1 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 shadow-2xs">
+                  <CalendarClock size={16} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1.5 flex-wrap mb-1">
+                    <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                      Cronograma Estimado
+                    </span>
+                    {duracionEstimada && (
+                      <span 
+                        className="inline-flex items-center gap-1 text-[0.65rem] font-extrabold px-2 py-0.5 rounded-md bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 font-mono"
+                        title="Duración total calculada entre la fecha de inicio y la fecha estimada de finalización"
+                      >
+                        <Clock size={10} /> Duración: {duracionEstimada}
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate text-xs" title={`${fechaInicioFormateada} → ${fechaFinFormateada}`}>
+                    {fechaInicioFormateada} <span className="text-zinc-400 font-normal mx-0.5">&rarr;</span> {fechaFinFormateada}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {proyectoSeleccionado.lider && (
-              <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
-                <User size={14} className="text-blue-600 dark:text-blue-400" />
-                <span>
-                  Líder: <strong className="text-zinc-900 dark:text-zinc-100">{proyectoSeleccionado.lider.nombre} {proyectoSeleccionado.lider.apellido}</strong>
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-            {/* 1. Cliente u Organización */}
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
-                <Building2 size={16} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
-                  Cliente / Organización
-                </span>
-                <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate" title={proyectoSeleccionado.cliente || 'Organización Interna IKernell'}>
-                  {proyectoSeleccionado.cliente || 'Organización Interna IKernell'}
-                </p>
-              </div>
-            </div>
-
-            {/* 2. Dimensión Presupuestal */}
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
-                <CircleDollarSign size={16} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
-                  Dimensión Presupuestal
-                </span>
-                <p className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
-                  {proyectoSeleccionado.presupuesto !== null && proyectoSeleccionado.presupuesto !== undefined
-                    ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(Number(proyectoSeleccionado.presupuesto))
-                    : 'Sin dimensionar'}
-                </p>
-              </div>
-            </div>
-
-            {/* 3. Cronograma Estimado */}
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 sm:col-span-2 lg:col-span-1 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 shadow-2xs">
-                <CalendarClock size={16} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
-                  Cronograma Estimado
-                </span>
-                <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                  {proyectoSeleccionado.fechaInicio || 'N/A'} &rarr; {proyectoSeleccionado.fechaFinEstimada || 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 4. Descripción del Alcance */}
-          {proyectoSeleccionado.descripcion && (
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 text-xs min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-2xs">
-                <AlignLeft size={16} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
+            {/* 4. Descripción del Alcance */}
+            <div className="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/60 border-l-4 border-indigo-500 text-xs min-w-0 shadow-2xs space-y-1">
+              <div className="flex items-center gap-2">
+                <AlignLeft size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                   Descripción del Alcance y Objetivos
                 </span>
-                <p className="text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed">
+              </div>
+              {proyectoSeleccionado.descripcion?.trim() ? (
+                <p className="text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed pt-0.5">
                   {proyectoSeleccionado.descripcion}
                 </p>
-              </div>
+              ) : (
+                <p className="text-zinc-400 dark:text-zinc-500 italic font-medium leading-relaxed pt-0.5">
+                  Sin descripción detallada del alcance para este proyecto. Contacte al Coordinador para mayor información.
+                </p>
+              )}
             </div>
-          )}
-        </motion.div>
-      )}
+          </motion.div>
+        );
+      })()}
 
       {/* 1. SECCIÓN: WBS Y PROYECTOS */}
       {activeTab === 'wbs' && (
