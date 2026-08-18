@@ -10,7 +10,7 @@ import {
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, ChevronDown, X,
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
-  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock
+  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -141,8 +141,9 @@ export const LiderDashboard = () => {
   const [activeTab, setActiveTab] = useState('wbs');
   const [proyectos, setProyectos] = useState([]);
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
-  const [dropdownProyectosOpen, setDropdownProyectosOpen] = useState(false);
-  const dropdownProyectosRef = useRef(null);
+  const [modalProyectosOpen, setModalProyectosOpen] = useState(false);
+  const [busquedaProyectoModal, setBusquedaProyectoModal] = useState('');
+  const [filtroEstadoProyectoModal, setFiltroEstadoProyectoModal] = useState('TODOS');
   const [etapas, setEtapas] = useState([]);
   const [desarrolladores, setDesarrolladores] = useState([]);
   const [errores, setErrores] = useState([]);
@@ -261,16 +262,16 @@ export const LiderDashboard = () => {
     }
   }, [api]);
 
-  // Cerrar dropdown al hacer click fuera
+  // Cerrar modal al presionar tecla Escape
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownProyectosRef.current && !dropdownProyectosRef.current.contains(event.target)) {
-        setDropdownProyectosOpen(false);
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && modalProyectosOpen) {
+        setModalProyectosOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modalProyectosOpen]);
 
   // Cargar proyectos asignados al líder
   const cargarProyectos = useCallback(async () => {
@@ -742,6 +743,37 @@ export const LiderDashboard = () => {
     };
   }, [etapas]);
 
+  // Proyectos filtrados para el menú emergente / explorador
+  const proyectosModalFiltrados = useMemo(() => {
+    if (!Array.isArray(proyectos)) return [];
+    
+    return proyectos.filter(p => {
+      // Filtro de Estado
+      if (filtroEstadoProyectoModal === 'ACTIVO' && p.estado !== 'ACTIVO') return false;
+      if (filtroEstadoProyectoModal === 'FINALIZADO' && p.estado !== 'FINALIZADO' && p.estado !== 'COMPLETADO') return false;
+
+      // Filtro de Búsqueda
+      if (busquedaProyectoModal.trim()) {
+        const query = busquedaProyectoModal.toLowerCase().trim();
+        const matchNombre = p.nombre?.toLowerCase().includes(query);
+        const matchCliente = p.cliente?.toLowerCase().includes(query);
+        const matchId = String(p.idProyecto).includes(query) || `prj-00${p.idProyecto}`.toLowerCase().includes(query);
+        const matchDesc = p.descripcion?.toLowerCase().includes(query);
+        if (!matchNombre && !matchCliente && !matchId && !matchDesc) return false;
+      }
+
+      return true;
+    });
+  }, [proyectos, busquedaProyectoModal, filtroEstadoProyectoModal]);
+
+  // Conteo de proyectos por estado para los botones de filtro rápido
+  const statsProyectos = useMemo(() => {
+    if (!Array.isArray(proyectos)) return { total: 0, activos: 0, finalizados: 0 };
+    const activos = proyectos.filter(p => p.estado === 'ACTIVO').length;
+    const finalizados = proyectos.filter(p => p.estado === 'FINALIZADO' || p.estado === 'COMPLETADO').length;
+    return { total: proyectos.length, activos, finalizados };
+  }, [proyectos]);
+
   return (
     <DashboardLayout
       activeTab={activeTab}
@@ -784,186 +816,75 @@ export const LiderDashboard = () => {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap shrink-0 min-w-0 max-w-full">
-          {/* Custom Dropdown Selector de Proyectos */}
-          <div className="relative" ref={dropdownProyectosRef}>
-            <button
-              type="button"
-              onClick={() => setDropdownProyectosOpen(prev => !prev)}
-              disabled={loadingProyectos}
-              className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200/90 dark:border-zinc-700/80 rounded-2xl px-4 py-2.5 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer min-w-[270px] sm:min-w-[340px] max-w-full disabled:opacity-60"
-              title="Selecciona el proyecto activo o la vista global corporativa"
-            >
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                {loadingProyectos ? (
-                  <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate">
-                    <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />
-                    <span>Sincronizando proyectos...</span>
+          {/* Botón Trigger para Menú Emergente / Explorador de Proyectos */}
+          <button
+            type="button"
+            onClick={() => setModalProyectosOpen(true)}
+            disabled={loadingProyectos}
+            className="group flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200/90 dark:border-zinc-700/80 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl px-4 py-2.5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[270px] sm:min-w-[340px] max-w-full disabled:opacity-60 text-left"
+            title="Abrir menú emergente de selección y búsqueda de proyectos"
+          >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              {loadingProyectos ? (
+                <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate">
+                  <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />
+                  <span>Sincronizando proyectos...</span>
+                </div>
+              ) : (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="w-7 h-7 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                    <Globe size={14} />
                   </div>
-                ) : (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
-                      <Globe size={13} />
-                    </div>
-                    <div className="text-left truncate">
-                      <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 block truncate">
-                        [Vista Global Corporativa]
+                  <div className="text-left truncate">
+                    <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 block truncate">
+                      [Vista Global Corporativa]
+                    </span>
+                    <span className="text-[0.65rem] text-zinc-400 font-medium block truncate">
+                      Todos los proyectos ({proyectos?.length || 0})
+                    </span>
+                  </div>
+                  <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 ml-auto shrink-0">
+                    GLOBAL
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                    <FolderGit2 size={14} />
+                  </div>
+                  <div className="text-left min-w-0 flex-1 truncate">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 shrink-0">
+                        [PRJ-00{proyectoSeleccionado.idProyecto}]
+                      </span>
+                      <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate max-w-[130px] sm:max-w-[170px]" title={proyectoSeleccionado.nombre}>
+                        {proyectoSeleccionado.nombre}
                       </span>
                     </div>
-                    <span className="text-[0.6rem] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 ml-auto shrink-0">
-                      GLOBAL
-                    </span>
+                    {proyectoSeleccionado.cliente && (
+                      <span className="text-[0.65rem] text-zinc-400 dark:text-zinc-500 block truncate">
+                        {proyectoSeleccionado.cliente}
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div className="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-2xs">
-                      <FolderGit2 size={13} />
-                    </div>
-                    <span className="font-mono text-[0.7rem] font-extrabold text-zinc-500 dark:text-zinc-400 shrink-0">
-                      [PRJ-00{proyectoSeleccionado.idProyecto}]
-                    </span>
-                    <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate max-w-[120px] sm:max-w-[160px]" title={proyectoSeleccionado.nombre}>
-                      {proyectoSeleccionado.nombre}
-                    </span>
-                    {(() => {
-                      const estInfo = getEstadoBadgeClasses(proyectoSeleccionado.estado);
-                      return (
-                        <span className={`hidden sm:inline-flex items-center gap-1 text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-full border shrink-0 ${estInfo.badge}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
-                          <span>{proyectoSeleccionado.estado || 'ACTIVO'}</span>
-                        </span>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
-
-              <ChevronDown 
-                size={15} 
-                className={`text-zinc-400 dark:text-zinc-500 shrink-0 transition-transform duration-200 ${dropdownProyectosOpen ? 'rotate-180 text-blue-500' : ''}`} 
-              />
-            </button>
-
-            {/* Menú Desplegable Flotante */}
-            <AnimatePresence>
-              {dropdownProyectosOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                  transition={{ duration: 0.15, ease: 'easeOut' }}
-                  className="absolute right-0 top-full mt-2 w-full min-w-[320px] sm:min-w-[400px] max-w-lg z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xl rounded-2xl max-h-84 overflow-y-auto p-2 space-y-1.5"
-                >
-                  {/* Opción 1: Vista Global Corporativa (Solo disponible en módulos analíticos globales: Semáforo e Incidencias) */}
-                  {(activeTab === 'semaforo' || activeTab === 'incidencias') && (
-                    <>
-                      <div className="px-2 pt-1 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400">
-                        Vistas Consolidadas
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
-                          setDropdownProyectosOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL')
-                            ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
-                            : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                            <Globe size={14} />
-                          </div>
-                          <div className="text-left truncate">
-                            <span className="block truncate font-extrabold text-xs">[Vista Global Corporativa] Todos los Proyectos</span>
-                            <span className="block text-[0.65rem] text-zinc-500 font-medium truncate">Consolidado general de métricas e incidencias</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                            GLOBAL
-                          </span>
-                          {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') && (
-                            <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                          )}
-                        </div>
-                      </button>
-
-                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1.5"></div>
-                    </>
-                  )}
-
-                  {/* Encabezado Categoría 2 */}
-                  <div className="px-2 pt-0.5 pb-0.5 text-[0.6rem] font-extrabold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
-                    <span>Proyectos Asignados</span>
-                    <span className="font-mono">{proyectos?.length || 0}</span>
-                  </div>
-
-                  {/* Mapeo de Proyectos */}
-                  {proyectos && proyectos.length > 0 ? (
-                    proyectos.map(p => {
-                      const isSelected = proyectoSeleccionado?.idProyecto === p?.idProyecto;
-                      const estInfo = getEstadoBadgeClasses(p?.estado);
-
-                      return (
-                        <button
-                          key={p?.idProyecto}
-                          type="button"
-                          onClick={() => {
-                            seleccionarProyecto(p);
-                            setDropdownProyectosOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
-                              : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center justify-center shrink-0">
-                              <FolderGit2 size={14} />
-                            </div>
-                            <div className="text-left min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="font-mono text-[0.65rem] font-extrabold text-zinc-500 dark:text-zinc-400 shrink-0">
-                                  [PRJ-00{p?.idProyecto}]
-                                </span>
-                                <span className="font-extrabold text-xs truncate max-w-[150px] sm:max-w-[200px]" title={p?.nombre}>
-                                  {p?.nombre}
-                                </span>
-                              </div>
-                              {p?.cliente && (
-                                <span className="text-[0.65rem] text-zinc-400 block truncate">
-                                  {p.cliente}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Micro-badge de Estado y Check */}
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className={`inline-flex items-center gap-1.5 text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-full border ${estInfo.badge}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
-                              <span>{p?.estado || 'ACTIVO'}</span>
-                            </span>
-                            {isSelected && (
-                              <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <div className="p-3 text-center text-xs text-zinc-400">
-                      No hay proyectos disponibles
-                    </div>
-                  )}
-                </motion.div>
+                  {(() => {
+                    const estInfo = getEstadoBadgeClasses(proyectoSeleccionado.estado);
+                    return (
+                      <span className={`hidden sm:inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full border shrink-0 ${estInfo.badge}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
+                        <span>{proyectoSeleccionado.estado || 'ACTIVO'}</span>
+                      </span>
+                    );
+                  })()}
+                </div>
               )}
-            </AnimatePresence>
-          </div>
+            </div>
+
+            <div className="flex items-center gap-1 text-zinc-400 group-hover:text-blue-500 shrink-0 transition-colors">
+              <span className="text-[0.65rem] font-bold hidden xl:inline">Cambiar</span>
+              <ChevronDown size={15} className="group-hover:translate-y-0.5 transition-transform" />
+            </div>
+          </button>
 
           <button
             type="button"
@@ -2669,6 +2590,265 @@ export const LiderDashboard = () => {
                       <CheckCircle2 size={14} /> Confirmar Cierre Formal
                     </>
                   )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Menú Emergente y Explorador Avanzado de Proyectos */}
+      <AnimatePresence>
+        {modalProyectosOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 max-w-3xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col"
+            >
+              {/* Encabezado del Menú */}
+              <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-inner">
+                    <FolderGit2 size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <span>Explorador de Proyectos</span>
+                      <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-mono">
+                        {proyectos?.length || 0} proyectos
+                      </span>
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                      Filtra, busca y cambia rápidamente el proyecto activo del panel
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalProyectosOpen(false)}
+                  className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  title="Cerrar (Esc)"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Barra de Búsqueda y Filtros Rápidos */}
+              <div className="space-y-2.5 shrink-0">
+                <div className="relative">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  <input
+                    type="text"
+                    value={busquedaProyectoModal}
+                    onChange={(e) => setBusquedaProyectoModal(e.target.value)}
+                    placeholder="Buscar proyecto por nombre, cliente, código PRJ..."
+                    className="input-field pl-10 pr-9 py-2.5 text-xs font-medium w-full"
+                    autoFocus
+                  />
+                  {busquedaProyectoModal && (
+                    <button
+                      type="button"
+                      onClick={() => setBusquedaProyectoModal('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filtros Rápidos de Estado */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setFiltroEstadoProyectoModal('TODOS')}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoModal === 'TODOS'
+                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span>Todos</span>
+                    <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20 dark:bg-black/10">
+                      {statsProyectos.total}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltroEstadoProyectoModal('ACTIVO')}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoModal === 'ACTIVO'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>Activos</span>
+                    <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                      {statsProyectos.activos}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltroEstadoProyectoModal('FINALIZADO')}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoModal === 'FINALIZADO'
+                        ? 'bg-zinc-700 text-white shadow-sm'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span>Finalizados</span>
+                    <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                      {statsProyectos.finalizados}
+                    </span>
+                  </button>
+
+                  {(activeTab === 'semaforo' || activeTab === 'incidencias') && (
+                    <button
+                      type="button"
+                      onClick={() => setFiltroEstadoProyectoModal('GLOBAL')}
+                      className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                        filtroEstadoProyectoModal === 'GLOBAL'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 hover:bg-blue-100'
+                      }`}
+                    >
+                      <Globe size={12} />
+                      <span>Vista Global</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Lista / Grid de Proyectos */}
+              <div className="overflow-y-auto flex-1 pr-1 space-y-2.5 max-h-[380px]">
+                {/* Opción Especial: Vista Global Corporativa (Solo en Semáforo e Incidencias) */}
+                {(activeTab === 'semaforo' || activeTab === 'incidencias') && (filtroEstadoProyectoModal === 'TODOS' || filtroEstadoProyectoModal === 'GLOBAL') && !busquedaProyectoModal && (
+                  <div
+                    onClick={() => {
+                      seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                      setModalProyectosOpen(false);
+                    }}
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+                      (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL')
+                        ? 'bg-blue-50/80 dark:bg-blue-950/50 border-blue-300 dark:border-blue-700 shadow-md ring-2 ring-blue-500/20'
+                        : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/80 hover:border-blue-400 hover:bg-blue-50/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm">
+                        <Globe size={18} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
+                            [Vista Global Corporativa] Todos los Proyectos
+                          </span>
+                          <span className="text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            GLOBAL
+                          </span>
+                        </div>
+                        <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                          Consolida las métricas predictivas de riesgo y la totalidad de incidencias de la compañía.
+                        </p>
+                      </div>
+                    </div>
+                    {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                        <CheckCircle2 size={16} /> Activo
+                      </span>
+                    ) : (
+                      <span className="text-xs font-bold text-zinc-400 hover:text-blue-600 shrink-0">
+                        Seleccionar →
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Grid de Proyectos */}
+                {proyectosModalFiltrados.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {proyectosModalFiltrados.map(p => {
+                      const isSelected = proyectoSeleccionado?.idProyecto === p.idProyecto;
+                      const estInfo = getEstadoBadgeClasses(p.estado);
+
+                      return (
+                        <div
+                          key={p.idProyecto}
+                          onClick={() => {
+                            seleccionarProyecto(p);
+                            setModalProyectosOpen(false);
+                          }}
+                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
+                            isSelected
+                              ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 shadow-md ring-2 ring-blue-500/20'
+                              : 'bg-zinc-50/60 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/70 hover:border-blue-400 hover:bg-white dark:hover:bg-zinc-800 hover:shadow-sm'
+                          }`}
+                        >
+                          <div>
+                            {/* Cabecera de la tarjeta */}
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60">
+                                PRJ-00{p.idProyecto}
+                              </span>
+                              <span className={`inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full border ${estInfo.badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
+                                <span>{p.estado || 'ACTIVO'}</span>
+                              </span>
+                            </div>
+
+                            {/* Nombre del Proyecto */}
+                            <h4 className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 line-clamp-1" title={p.nombre}>
+                              {p.nombre}
+                            </h4>
+
+                            {/* Cliente o Descripción */}
+                            <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">
+                              {p.cliente ? `Cliente: ${p.cliente}` : (p.descripcion || 'Sin descripción')}
+                            </p>
+                          </div>
+
+                          {/* Footer de la tarjeta con presupuesto y estado de selección */}
+                          <div className="pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 flex items-center justify-between text-xs">
+                            <span className="text-[0.68rem] font-bold text-zinc-600 dark:text-zinc-400 font-mono">
+                              {p.presupuesto ? `$${Number(p.presupuesto).toLocaleString()}` : '$0.00'}
+                            </span>
+                            {isSelected ? (
+                              <span className="inline-flex items-center gap-1 text-[0.68rem] font-bold text-blue-600 dark:text-blue-400">
+                                <Check size={13} /> Activo
+                              </span>
+                            ) : (
+                              <span className="text-[0.68rem] font-bold text-zinc-400 hover:text-blue-600">
+                                Seleccionar →
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-zinc-400 text-xs flex flex-col items-center justify-center space-y-2 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                    <FolderGit2 size={24} className="text-zinc-400" />
+                    <p className="font-bold text-zinc-700 dark:text-zinc-300">No se encontraron proyectos</p>
+                    <p className="text-[0.7rem]">Intenta con otro término de búsqueda o cambia el filtro de estado.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Pie del Modal */}
+              <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800 shrink-0 text-xs text-zinc-400">
+                <span>Mostrando <strong>{proyectosModalFiltrados.length}</strong> de <strong>{proyectos?.length || 0}</strong> proyectos</span>
+                <button
+                  type="button"
+                  onClick={() => setModalProyectosOpen(false)}
+                  className="outline-button text-xs py-1.5 px-4 font-bold cursor-pointer"
+                >
+                  Cerrar
                 </button>
               </div>
             </motion.div>
