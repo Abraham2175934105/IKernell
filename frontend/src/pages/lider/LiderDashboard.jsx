@@ -1298,16 +1298,27 @@ export const LiderDashboard = () => {
                                 {act.estado}
                               </span>
 
-                              {/* Botón Reasignar Actividad (Solo si no está finalizado) */}
+                              {/* Botón Reasignar Actividad (HU-25: Solo permitido para tareas en progreso o pendientes) */}
                               {proyectoSeleccionado?.estado !== 'FINALIZADO' && proyectoSeleccionado?.estado !== 'COMPLETADO' && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleAbrirReasignar(act)}
-                                  className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                  title="Transferir esta tarea a otro desarrollador con justificación histórica"
-                                >
-                                  <RotateCcw size={12} /> Reasignar
-                                </button>
+                                (act.estado === 'FINALIZADA' || act.estado === 'COMPLETADA') ? (
+                                  <button
+                                    type="button"
+                                    disabled
+                                    className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 opacity-50 cursor-not-allowed text-zinc-400 dark:text-zinc-500 border-zinc-200 dark:border-zinc-800"
+                                    title="Las tareas finalizadas no pueden ser reasignadas por motivos de auditoría."
+                                  >
+                                    <RotateCcw size={12} /> Reasignar
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAbrirReasignar(act)}
+                                    className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                    title="Transferir esta tarea a otro desarrollador con justificación histórica (HU-25)"
+                                  >
+                                    <RotateCcw size={12} /> Reasignar
+                                  </button>
+                                )
                               )}
                             </div>
                           </div>

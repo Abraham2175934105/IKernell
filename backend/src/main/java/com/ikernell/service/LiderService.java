@@ -249,11 +249,22 @@ public class LiderService {
         return actividadRepository.save(actividad);
     }
 
-    // Reasigna la actividad a otro desarrollador registrando el motivo en la descripción
+    // Reasigna la actividad a otro desarrollador registrando el motivo en la descripción (HU-25)
     public Actividad reasignarActividad(Long idActividad, Long nuevoDesarrolladorId, String motivo) {
         // Validaciones
         Actividad actividad = actividadRepository.findById(idActividad)
                 .orElseThrow(() -> new ResourceNotFoundException("Actividad no encontrada con ID: " + idActividad));
+
+        // Validación Defensiva HU-25: Proteger trazabilidad histórica y cálculo de horas reales
+        if ("FINALIZADA".equalsIgnoreCase(actividad.getEstado()) || "COMPLETADA".equalsIgnoreCase(actividad.getEstado())) {
+            throw new IllegalStateException("No se puede reasignar una actividad que ya ha sido finalizada.");
+        }
+
+        if (actividad.getEtapa() != null && actividad.getEtapa().getProyecto() != null &&
+            ("FINALIZADO".equalsIgnoreCase(actividad.getEtapa().getProyecto().getEstado()) || "COMPLETADO".equalsIgnoreCase(actividad.getEtapa().getProyecto().getEstado()))) {
+            throw new IllegalStateException("No se puede reasignar actividades en un proyecto finalizado.");
+        }
+
         Trabajador nuevoDesarrollador = trabajadorRepository.findById(nuevoDesarrolladorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + nuevoDesarrolladorId));
 
