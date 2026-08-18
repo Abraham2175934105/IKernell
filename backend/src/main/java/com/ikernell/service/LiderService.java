@@ -106,6 +106,44 @@ public class LiderService {
         return proyectoRepository.save(proyecto);
     }
 
+    // Finaliza formalmente un proyecto de software, congela su estructura WBS y libera la carga horaria de los desarrolladores asignados (RF-20)
+    @Transactional
+    public Proyecto finalizarProyecto(Long idProyecto) {
+        Proyecto proyecto = proyectoRepository.findById(idProyecto)
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+            throw new IllegalStateException("El proyecto ya se encuentra finalizado.");
+        }
+
+        // 1. Marcar estado del proyecto como FINALIZADO
+        proyecto.setEstado("FINALIZADO");
+
+        // 2. Marcar todas las fases WBS y sus actividades como FINALIZADA (Congelamiento WBS)
+        List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
+        for (Etapa etapa : etapas) {
+            etapa.setEstado("FINALIZADA");
+            if (etapa.getActividades() != null) {
+                for (Actividad act : etapa.getActividades()) {
+                    if (!"FINALIZADA".equalsIgnoreCase(act.getEstado()) && !"COMPLETADA".equalsIgnoreCase(act.getEstado())) {
+                        act.setEstado("FINALIZADA");
+                        actividadRepository.save(act);
+                    }
+                }
+            }
+            etapaRepository.save(etapa);
+        }
+
+        // 3. Liberar carga de los desarrolladores asignados eliminando las relaciones en proyecto_desarrollador
+        List<ProyectoDesarrollador> asignaciones = proyectoDesarrolladorRepository.findByProyecto(proyecto);
+        if (!asignaciones.isEmpty()) {
+            proyectoDesarrolladorRepository.deleteAll(asignaciones);
+        }
+
+        // 4. Guardar y retornar proyecto finalizado (datos históricos preservados para auditoría y ETL Brasil)
+        return proyectoRepository.save(proyecto);
+    }
+
     // Deshabilita el proyecto para pausar o cerrar su ejecución
     public void inhabilitarProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
@@ -120,6 +158,10 @@ public class LiderService {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
         
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+            throw new IllegalStateException("El proyecto se encuentra finalizado. No se pueden registrar nuevas etapas en un proyecto cerrado.");
+        }
+        
         // Persistencia
         etapa.setProyecto(proyecto);
         etapa.setEstado("PENDIENTE");
@@ -130,6 +172,11 @@ public class LiderService {
     public void eliminarEtapa(Long idEtapa) {
         if (!etapaRepository.existsById(idEtapa)) {
             throw new ResourceNotFoundException("Etapa no encontrada con ID: " + idEtapa);
+        }
+        Etapa etapa = etapaRepository.findById(idEtapa).get();
+        if (etapa.getProyecto() != null && 
+            ("FINALIZADO".equalsIgnoreCase(etapa.getProyecto().getEstado()) || "COMPLETADO".equalsIgnoreCase(etapa.getProyecto().getEstado()))) {
+            throw new IllegalStateException("El proyecto se encuentra finalizado. No se pueden alterar fases de un proyecto cerrado.");
         }
         etapaRepository.deleteById(idEtapa);
     }
@@ -146,6 +193,10 @@ public class LiderService {
         // Validaciones de existencia
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+        
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+            throw new IllegalStateException("El proyecto se encuentra finalizado. No se pueden asignar desarrolladores a un proyecto cerrado.");
+        }
         Trabajador desarrollador = trabajadorRepository.findById(idDesarrollador)
                 .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
 
@@ -181,6 +232,11 @@ public class LiderService {
         // Validaciones
         Etapa etapa = etapaRepository.findById(idEtapa)
                 .orElseThrow(() -> new ResourceNotFoundException("Etapa no encontrada con ID: " + idEtapa));
+        
+        if (etapa.getProyecto() != null && 
+            ("FINALIZADO".equalsIgnoreCase(etapa.getProyecto().getEstado()) || "COMPLETADO".equalsIgnoreCase(etapa.getProyecto().getEstado()))) {
+            throw new IllegalStateException("El proyecto se encuentra finalizado. No se pueden registrar actividades en un proyecto cerrado.");
+        }
         Trabajador desarrollador = trabajadorRepository.findById(idDesarrollador)
                 .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
 

@@ -10,7 +10,7 @@ import {
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, X,
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
-  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft
+  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -143,6 +143,8 @@ export const LiderDashboard = () => {
   const [actividadAReasignar, setActividadAReasignar] = useState(null);
 
   const [showAtenderModal, setShowAtenderModal] = useState(false);
+  const [showFinalizarModal, setShowFinalizarModal] = useState(false);
+  const [submittingFinalizar, setSubmittingFinalizar] = useState(false);
   const [incidenciaAAtender, setIncidenciaAAtender] = useState(null);
   const [atencionForm, setAtencionForm] = useState({
     estadoAtencion: 'EN_REVISION',
@@ -551,6 +553,33 @@ export const LiderDashboard = () => {
     }
   };
 
+  // Manejador para finalizar formalmente el proyecto y liberar desarrolladores (RF-20)
+  const handleFinalizarProyecto = async () => {
+    if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') return;
+
+    try {
+      setSubmittingFinalizar(true);
+      const res = await api.patch(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/finalizar`);
+      toast.success('Proyecto finalizado exitosamente. Su WBS ha sido congelada y los desarrolladores han sido liberados.');
+      setShowFinalizarModal(false);
+
+      const proyectoActualizado = {
+        ...proyectoSeleccionado,
+        ...(res || {}),
+        estado: 'FINALIZADO'
+      };
+      setProyectoSeleccionado(proyectoActualizado);
+
+      await cargarProyectos();
+      await seleccionarProyecto(proyectoActualizado);
+    } catch (err) {
+      console.error('Error al finalizar el proyecto:', err);
+      toast.error(err.message || 'Error al finalizar el proyecto.');
+    } finally {
+      setSubmittingFinalizar(false);
+    }
+  };
+
   // Cálculo y filtrado reactivo de incidencias unificadas (errores + interrupciones)
   const incidenciasFiltradas = useMemo(() => {
     const errs = (errores || []).map(e => ({
@@ -711,6 +740,7 @@ export const LiderDashboard = () => {
 
       {/* Tarjeta de Detalles del Proyecto Seleccionado */}
       {proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (() => {
+        const isProyectoFinalizado = proyectoSeleccionado.estado === 'FINALIZADO' || proyectoSeleccionado.estado === 'COMPLETADO';
         const fechaInicioFormateada = formatearFechaHumana(proyectoSeleccionado.fechaInicio);
         const fechaFinFormateada = formatearFechaHumana(proyectoSeleccionado.fechaFinEstimada);
         const duracionEstimada = calcularDuracionProyecto(proyectoSeleccionado.fechaInicio, proyectoSeleccionado.fechaFinEstimada);
@@ -732,8 +762,12 @@ export const LiderDashboard = () => {
                     <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight truncate max-w-full sm:max-w-md lg:max-w-xl" title={proyectoSeleccionado.nombre}>
                       {proyectoSeleccionado.nombre}
                     </h3>
-                    <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 shrink-0">
-                      {proyectoSeleccionado.estado || 'ACTIVO'}
+                    <span className={`px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase border shrink-0 ${
+                      isProyectoFinalizado
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800'
+                        : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800'
+                    }`}>
+                      {isProyectoFinalizado ? 'FINALIZADO (Solo Lectura)' : (proyectoSeleccionado.estado || 'ACTIVO')}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -742,14 +776,28 @@ export const LiderDashboard = () => {
                 </div>
               </div>
 
-              {proyectoSeleccionado.lider && (
-                <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
-                  <User size={14} className="text-blue-600 dark:text-blue-400" />
-                  <span>
-                    Líder: <strong className="text-zinc-900 dark:text-zinc-100">{proyectoSeleccionado.lider.nombre} {proyectoSeleccionado.lider.apellido}</strong>
-                  </span>
-                </div>
-              )}
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
+                {proyectoSeleccionado.lider && (
+                  <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
+                    <User size={14} className="text-blue-600 dark:text-blue-400" />
+                    <span>
+                      Líder: <strong className="text-zinc-900 dark:text-zinc-100">{proyectoSeleccionado.lider.nombre} {proyectoSeleccionado.lider.apellido}</strong>
+                    </span>
+                  </div>
+                )}
+
+                {!isProyectoFinalizado && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFinalizarModal(true)}
+                    className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer shadow-2xs"
+                    title="Cerrar formalmente el ciclo de vida del proyecto, congelar su WBS y liberar la carga de desarrolladores (RF-20)"
+                  >
+                    <CheckCircle2 size={13} className="text-red-500" />
+                    <span>Finalizar Proyecto</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
@@ -953,39 +1001,46 @@ export const LiderDashboard = () => {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAsignarDevForm({ idDesarrollador: '', horasSemanales: 20 });
-                    setAsignarDevError(null);
-                    setShowAsignarDevModal(true);
-                  }}
-                  disabled={!proyectoSeleccionado}
-                  className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                  title="Vincular desarrollador y definir dedicación horaria semanal (HU-12 / RF-16)"
-                >
-                  <UserPlus size={14} /> Asignar Desarrollador
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowNuevaEtapaModal(true)}
-                  disabled={!proyectoSeleccionado}
-                  className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                  title="Crear una nueva fase o etapa en el desglose WBS (inicia en PENDIENTE)"
-                >
-                  <Plus size={14} /> Nueva Etapa
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAsignarModal(true)}
-                  disabled={!proyectoSeleccionado}
-                  className="gradient-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
-                  title="Crear y asignar una nueva tarea técnica a un desarrollador en PostgreSQL"
-                >
-                  <UserCheck size={14} /> Asignar Actividad
-                </button>
-              </div>
+              {(proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO') ? (
+                <div className="p-2.5 px-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2 font-medium">
+                  <Lock size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>WBS Congelada (Modo Solo Lectura)</span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAsignarDevForm({ idDesarrollador: '', horasSemanales: 20 });
+                      setAsignarDevError(null);
+                      setShowAsignarDevModal(true);
+                    }}
+                    disabled={!proyectoSeleccionado}
+                    className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    title="Vincular desarrollador y definir dedicación horaria semanal (HU-12 / RF-16)"
+                  >
+                    <UserPlus size={14} /> Asignar Desarrollador
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowNuevaEtapaModal(true)}
+                    disabled={!proyectoSeleccionado}
+                    className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    title="Crear una nueva fase o etapa en el desglose WBS (inicia en PENDIENTE)"
+                  >
+                    <Plus size={14} /> Nueva Etapa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAsignarModal(true)}
+                    disabled={!proyectoSeleccionado}
+                    className="gradient-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                    title="Crear y asignar una nueva tarea técnica a un desarrollador en PostgreSQL"
+                  >
+                    <UserCheck size={14} /> Asignar Actividad
+                  </button>
+                </div>
+              )}
             </div>
 
             {loadingDetalle && (
@@ -1074,15 +1129,17 @@ export const LiderDashboard = () => {
                                 {act.estado}
                               </span>
 
-                              {/* Botón Reasignar Actividad */}
-                              <button
-                                type="button"
-                                onClick={() => handleAbrirReasignar(act)}
-                                className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                title="Transferir esta tarea a otro desarrollador con justificación histórica"
-                              >
-                                <RotateCcw size={12} /> Reasignar
-                              </button>
+                              {/* Botón Reasignar Actividad (Solo si no está finalizado) */}
+                              {proyectoSeleccionado?.estado !== 'FINALIZADO' && proyectoSeleccionado?.estado !== 'COMPLETADO' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleAbrirReasignar(act)}
+                                  className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                  title="Transferir esta tarea a otro desarrollador con justificación histórica"
+                                >
+                                  <RotateCcw size={12} /> Reasignar
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -2218,6 +2275,65 @@ export const LiderDashboard = () => {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Confirmación de Seguridad para Finalizar Proyecto */}
+      <AnimatePresence>
+        {showFinalizarModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4"
+            >
+              <div className="flex items-center gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 flex items-center justify-center shrink-0">
+                  <AlertTriangle size={22} />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">
+                    ¿Finalizar Proyecto Formalmente?
+                  </h3>
+                  <span className="text-xs text-zinc-500 font-medium">
+                    [PRJ-00{proyectoSeleccionado?.idProyecto}] {proyectoSeleccionado?.nombre}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-red-50/60 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 text-xs text-red-900 dark:text-red-300 leading-relaxed font-medium space-y-2">
+                <p>
+                  Al finalizar el proyecto, se congelará su WBS y se liberará la carga de los desarrolladores. Esta acción no se puede deshacer.
+                </p>
+                <ul className="list-disc list-inside text-[0.7rem] text-zinc-600 dark:text-zinc-400 space-y-0.5 pt-1 font-sans">
+                  <li>Todas las fases y actividades pasarán a estado <strong>FINALIZADA</strong>.</li>
+                  <li>Se desasignará la nómina de desarrolladores liberando sus horas de trabajo.</li>
+                  <li>El Semáforo Predictivo y ETL Brasil continuarán disponibles para auditoría.</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFinalizarModal(false)}
+                  disabled={submittingFinalizar}
+                  className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFinalizarProyecto}
+                  disabled={submittingFinalizar}
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs py-2 px-4 rounded-xl font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 transition-colors"
+                >
+                  {submittingFinalizar ? <><Loader2 size={13} className="animate-spin" /> Finalizando...</> : <><CheckCircle2 size={14} /> Confirmar Cierre</>}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

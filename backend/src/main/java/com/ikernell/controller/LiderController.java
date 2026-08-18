@@ -62,6 +62,16 @@ public class LiderController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/proyectos/{id}/finalizar")
+    @Operation(
+        summary = "Finalizar Proyecto Formalmente", 
+        description = "Cierra el ciclo de vida del proyecto, congela sus fases WBS en estado FINALIZADA y libera la asignación horaria de los desarrolladores para regular el Burnout (RF-20)"
+    )
+    public ResponseEntity<Proyecto> finalizarProyecto(@PathVariable Long id) {
+        Proyecto finalizado = liderService.finalizarProyecto(id);
+        return ResponseEntity.ok(finalizado);
+    }
+
     @GetMapping("/lideres/{idLider}/proyectos")
     @Operation(summary = "Proyectos por Líder", description = "Obtiene los proyectos que se encuentran bajo supervisión de un líder")
     public ResponseEntity<List<Proyecto>> listarProyectosPorLider(@PathVariable Long idLider) {
