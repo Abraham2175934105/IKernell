@@ -17,67 +17,109 @@ Documents/
 documents/
 Mis Documentos/
 mis documentos/
+Documentacion/
+documentacion/
+Doc/
+doc/
+Docs/
+docs/
+
+# Archivos ofimáticos y temporales de Office
 *.doc
 *.docx
+*.DOC
+*.DOCX
 *.pdf
+*.PDF
 *.xls
 *.xlsx
+*.XLS
+*.XLSX
 *.ppt
 *.pptx
+*.PPT
+*.PPTX
 *.odt
 *.rtf
-
+*.csv
+~$*
+~$*.docx
+~$*.doc
+~$*.xlsx
+~$*.pptx
 
 # ==========================================
 # BACKEND — Spring Boot / Java
 # ==========================================
 backend/target/
+target/
+build/
 backend/build/
 backend/.gradle/
 backend/bin/
 backend/*.jar
 backend/*.war
 backend/*.class
+*.class
+*.jar
+*.war
 
 # Archivos de IDE (IntelliJ / Eclipse / VS Code)
 .idea/
 backend/.idea/
+frontend/.idea/
+*.iml
 backend/*.iml
 backend/.classpath
 backend/.project
 backend/.settings/
 backend/.vscode/
+.vscode/
 
 # Logs del servidor
 backend/logs/
 backend/*.log
+logs/
+*.log
 
 # ==========================================
 # FRONTEND — React / Node.js
 # ==========================================
 frontend/node_modules/
+node_modules/
 frontend/dist/
+dist/
 frontend/build/
 frontend/.cache/
 frontend/.vscode/
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Variables de entorno (nunca exponer secretos)
 frontend/.env
 frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
 frontend/.env.production
+.env
+.env.local
 
 # ==========================================
-# SISTEMA OPERATIVO
+# SISTEMA OPERATIVO Y TEMPORALES
 # ==========================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 *.swp
 *.swo
 *~
-
-# ==========================================
-# MISCELÁNEOS
-# ==========================================
 *.bak
 *.tmp
 *.temp
