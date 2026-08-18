@@ -1521,7 +1521,7 @@ export const LiderDashboard = () => {
                       setNuevoProyectoForm({ ...nuevoProyectoForm, nombre: e.target.value });
                       setNuevoProyectoErrors(prev => ({ ...prev, nombre: undefined }));
                     }}
-                    placeholder="Ej. Sistema Facturación Cloud & ETL Brasil"
+                    placeholder="Nombre del Proyecto"
                     className={`input-field py-2.5 font-bold ${nuevoProyectoErrors.nombre ? 'border-red-400 dark:border-red-600' : ''}`}
                   />
                   {nuevoProyectoErrors.nombre && (
@@ -1540,7 +1540,7 @@ export const LiderDashboard = () => {
                       setNuevoProyectoForm({ ...nuevoProyectoForm, cliente: e.target.value });
                       setNuevoProyectoErrors(prev => ({ ...prev, cliente: undefined }));
                     }}
-                    placeholder="Ej. Banco Santander Brasil S.A."
+                    placeholder="Cliente u Organización"
                     className={`input-field py-2.5 ${nuevoProyectoErrors.cliente ? 'border-red-400 dark:border-red-600' : ''}`}
                   />
                   {nuevoProyectoErrors.cliente && (
@@ -1599,7 +1599,7 @@ export const LiderDashboard = () => {
                         setNuevoProyectoForm({ ...nuevoProyectoForm, presupuesto: e.target.value });
                         setNuevoProyectoErrors(prev => ({ ...prev, presupuesto: undefined }));
                       }}
-                      placeholder="45000.00"
+                      placeholder="0.00"
                       className={`input-field pl-7 py-2.5 font-mono font-bold ${nuevoProyectoErrors.presupuesto ? 'border-red-400 dark:border-red-600' : ''}`}
                     />
                   </div>
@@ -1620,7 +1620,7 @@ export const LiderDashboard = () => {
                     rows={3}
                     value={nuevoProyectoForm.descripcion}
                     onChange={(e) => setNuevoProyectoForm({ ...nuevoProyectoForm, descripcion: e.target.value })}
-                    placeholder="Detalla el alcance del proyecto, arquitectura de microservicios y requisitos de integración..."
+                    placeholder="Descripción del alcance y objetivos"
                     className="input-field py-2"
                   />
                 </div>
