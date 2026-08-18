@@ -1664,7 +1664,7 @@ export const LiderDashboard = () => {
                     required
                     value={nuevaEtapa.nombreEtapa}
                     onChange={(e) => setNuevaEtapa({ ...nuevaEtapa, nombreEtapa: e.target.value })}
-                    placeholder="Ej. Fase 3: Pruebas de Estrés y Despliegue Cloud"
+                    placeholder="Nombre de la fase o etapa"
                     className="input-field py-2.5 font-bold"
                   />
                 </div>
@@ -1752,7 +1752,7 @@ export const LiderDashboard = () => {
                     rows={2}
                     value={datosReasignacion.motivo}
                     onChange={(e) => setDatosReasignacion({ ...datosReasignacion, motivo: e.target.value })}
-                    placeholder="Ej. Ajuste de carga de trabajo / Cambio por especialidad en backend..."
+                    placeholder="Motivo o justificación técnica de la reasignación"
                     className="input-field py-2"
                   />
                 </div>
