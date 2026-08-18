@@ -32,10 +32,10 @@ public class Trabajador {
     @Column(name = "direccion", length = 150)
     private String direccion;
 
-    @Column(name = "profesion", length = 100)
+    @Column(name = "profesion", length = 150)
     private String profesion;
 
-    @Column(name = "especialidad", length = 100)
+    @Column(name = "especialidad", length = 255)
     private String especialidad;
 
     @Column(name = "foto_url", length = 255)

@@ -12,12 +12,56 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
 
-const SUGGESTED_SKILLS = [
-  'Java 17', 'Spring Boot 3', 'React.js', 'PostgreSQL', 'Docker',
-  'TypeScript', 'Tailwind CSS', 'AWS', 'Python', 'Git & GitHub',
-  'REST APIs', 'Microservicios', 'Next.js', 'Linux', 'Scrum / Agile',
-  'UI/UX Design', 'CI/CD Pipelines', 'GraphQL', 'Redis', 'Kubernetes', 'Node.js'
-];
+const ROLE_SKILL_PROFILES = {
+  DESARROLLADOR: {
+    label: 'Desarrollador (Operatividad WBS)',
+    tituloModulo: '3. Habilidades Técnicas & Stack de Desarrollo (WBS)',
+    subtitulo: 'Tecnologías y lenguajes clave para la asignación y ejecución de actividades WBS',
+    sugerencias: [
+      'Java 17', 'Spring Boot 3', 'React.js', 'PostgreSQL', 'Docker',
+      'TypeScript', 'Tailwind CSS', 'AWS', 'Python', 'Git & GitHub',
+      'REST APIs', 'Microservicios', 'Next.js', 'Linux', 'GraphQL',
+      'CI/CD Pipelines', 'Redis', 'Kubernetes', 'Node.js', 'Jest / Testing'
+    ],
+    placeholderProfesion: 'Profesión o disciplina técnica (ej. Ingeniero de Software, Desarrollador Full Stack)',
+    placeholderEspecialidad: 'Especialidad técnica principal (ej. Backend Java, Frontend React, Cloud DevOps)',
+    badgeTag: 'Recomendado para asignación WBS',
+    badgeTagStyle: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    iconName: 'Code2'
+  },
+  LIDER: {
+    label: 'Líder de Proyecto (Gestión & Asignación)',
+    tituloModulo: '3. Competencias de Liderazgo, Gestión Ágil & Arquitectura',
+    subtitulo: 'Habilidades de gestión de proyectos, metodologías ágiles y supervisión técnica de entregables',
+    sugerencias: [
+      'Gestión de Proyectos', 'Scrum Master', 'Metodologías Ágiles', 'Planificación WBS',
+      'Liderazgo de Equipos', 'Gestión de Riesgos', 'Estimación de Esfuerzo', 'Arquitectura de Software',
+      'Code Review', 'Jira / Confluence', 'Java / Spring Boot', 'React / Frontend',
+      'CI/CD & DevOps', 'Negociación Técnica', 'Garantía de Calidad'
+    ],
+    placeholderProfesion: 'Profesión o disciplina académica (ej. Tech Lead, Scrum Master, Project Manager)',
+    placeholderEspecialidad: 'Enfoque de liderazgo o arquitectura (ej. Gestión de Proyectos Ágiles, Arquitectura Distribuida)',
+    badgeTag: 'Perfil de Liderazgo (Opcional)',
+    badgeTagStyle: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    iconName: 'Briefcase'
+  },
+  COORDINADOR: {
+    label: 'Coordinador (Administración Global)',
+    tituloModulo: '3. Competencias de Coordinación, Operaciones & Talento',
+    subtitulo: 'Habilidades en gestión de talento humano, administración operativa, presupuestos y gobernanza TI',
+    sugerencias: [
+      'Gestión de Talento Humano', 'Coordinación Operativa', 'Administración de Personal',
+      'Atención de Casos Web', 'Presupuestos & Costos', 'Planificación Estratégica',
+      'Métricas de Productividad', 'Gobernanza TI', 'Cumplimiento Normativo',
+      'Resolución de Conflictos', 'Negociación con Clientes', 'Auditoría de Procesos'
+    ],
+    placeholderProfesion: 'Profesión o titulación directiva (ej. Director de Operaciones, MBA, Administrador)',
+    placeholderEspecialidad: 'Área de coordinación (ej. Dirección de Operaciones & Talento, Gobernanza TI)',
+    badgeTag: 'Perfil Administrativo (Opcional)',
+    badgeTagStyle: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800',
+    iconName: 'Shield'
+  }
+};
 
 // Variantes de animación de alto rendimiento y ultra rápidas (0.25s)
 const containerVariants = {
@@ -929,286 +973,313 @@ export const CoordinadorDashboard = () => {
 
       {/* Modal Registrar Trabajador Ampliado & Avanzado */}
       <AnimatePresence>
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto space-y-5"
-            >
-              {/* Encabezado del Modal */}
-              <div className="flex justify-between items-start pb-3.5 border-b border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
-                    <UserPlus size={22} />
-                  </div>
-                  <div>
-                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                      Registrar Nuevo Colaborador
-                    </h3>
-                    <p className="text-xs text-zinc-500 font-medium mt-0.5">
-                      Alta corporativa en PostgreSQL, asignación de rol de seguridad y stack de habilidades técnicas
-                    </p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => { 
-                    setShowCreateModal(false); 
-                    setFormErrors({}); 
-                    setSelectedSkills([]); 
-                    setCustomSkillInput(''); 
-                  }} 
-                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+        {showCreateModal && (() => {
+          const currentSkillProfile = ROLE_SKILL_PROFILES[newTrabajador.rol] || ROLE_SKILL_PROFILES.DESARROLLADOR;
+          const RoleIconComponent = newTrabajador.rol === 'DESARROLLADOR' 
+            ? Code2 
+            : newTrabajador.rol === 'LIDER' 
+              ? Briefcase 
+              : Shield;
 
-              <form onSubmit={handleCrearTrabajador} className="space-y-4 text-xs" noValidate>
-                {/* 1. Información Personal & Identificación */}
-                <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
-                    <Shield size={14} className="text-blue-500" />
-                    <span>1. Identificación & Credenciales de Acceso</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          return (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-9 w-[96%] sm:w-full max-w-3xl shadow-2xl max-h-[92vh] overflow-y-auto space-y-6"
+              >
+                {/* Encabezado del Modal */}
+                <div className="flex justify-between items-start pb-4 border-b border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
+                      <UserPlus size={24} />
+                    </div>
                     <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                        Número de Identificación / Cédula *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={newTrabajador.identificacion}
-                        onChange={(e) => { setNewTrabajador({ ...newTrabajador, identificacion: e.target.value }); setFormErrors(p => ({ ...p, identificacion: undefined })); }}
-                        placeholder="Número de documento o cédula de identidad"
-                        className={`input-field py-2 text-xs font-mono ${formErrors.identificacion ? 'border-red-400 dark:border-red-600' : ''}`}
-                      />
-                      {formErrors.identificacion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.identificacion}</p>}
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                        Rol de Seguridad en el Sistema *
-                      </label>
-                      <select
-                        value={newTrabajador.rol}
-                        onChange={(e) => setNewTrabajador({ ...newTrabajador, rol: e.target.value })}
-                        className="input-field py-2 text-xs font-bold uppercase"
-                      >
-                        <option value="DESARROLLADOR">Desarrollador (Operatividad WBS)</option>
-                        <option value="LIDER">Líder de Proyecto (Gestión & Asignación)</option>
-                        <option value="COORDINADOR">Coordinador (Administración Global)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                        Nombres del Colaborador *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={newTrabajador.nombre}
-                        onChange={(e) => { setNewTrabajador({ ...newTrabajador, nombre: e.target.value }); setFormErrors(p => ({ ...p, nombre: undefined })); }}
-                        placeholder="Nombres del colaborador"
-                        className={`input-field py-2 text-xs ${formErrors.nombre ? 'border-red-400 dark:border-red-600' : ''}`}
-                      />
-                      {formErrors.nombre && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.nombre}</p>}
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                        Apellidos del Colaborador *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={newTrabajador.apellido}
-                        onChange={(e) => { setNewTrabajador({ ...newTrabajador, apellido: e.target.value }); setFormErrors(p => ({ ...p, apellido: undefined })); }}
-                        placeholder="Apellidos del colaborador"
-                        className={`input-field py-2 text-xs ${formErrors.apellido ? 'border-red-400 dark:border-red-600' : ''}`}
-                      />
-                      {formErrors.apellido && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.apellido}</p>}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                      Correo Electrónico Corporativo *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={newTrabajador.email}
-                      onChange={(e) => { setNewTrabajador({ ...newTrabajador, email: e.target.value }); setFormErrors(p => ({ ...p, email: undefined })); }}
-                      placeholder="correo.corporativo@ikernell.org"
-                      className={`input-field py-2 text-xs font-mono ${formErrors.email ? 'border-red-400 dark:border-red-600' : ''}`}
-                    />
-                    {formErrors.email && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.email}</p>}
-                  </div>
-                </div>
-
-                {/* 2. Perfil Profesional & Especialidad Principal */}
-                <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
-                    <GraduationCap size={14} className="text-indigo-500" />
-                    <span>2. Perfil Académico & Especialidad Técnica Principal</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                        Profesión / Titulación
-                      </label>
-                      <input
-                        type="text"
-                        value={newTrabajador.profesion}
-                        onChange={(e) => setNewTrabajador({ ...newTrabajador, profesion: e.target.value })}
-                        placeholder="Profesión o titulación (ej. Ingeniero de Sistemas)"
-                        className="input-field py-2 text-xs"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                        Especialidad Principal
-                      </label>
-                      <input
-                        type="text"
-                        value={newTrabajador.especialidad}
-                        onChange={(e) => setNewTrabajador({ ...newTrabajador, especialidad: e.target.value })}
-                        placeholder="Especialidad técnica (ej. Backend Java, Frontend React)"
-                        className="input-field py-2 text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Habilidades Técnicas & Stack Tecnológico */}
-                <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-black text-blue-950 dark:text-blue-200">
-                      <Code2 size={14} className="text-blue-600 dark:text-blue-400" />
-                      <span>3. Habilidades Técnicas & Stack de Skills del Trabajador</span>
-                    </div>
-                    <span className="text-[0.65rem] font-bold font-mono text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-md">
-                      {selectedSkills.length} Habilidades
-                    </span>
-                  </div>
-
-                  {/* Input para agregar habilidad personalizada */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={customSkillInput}
-                      onChange={(e) => setCustomSkillInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddCustomSkill();
-                        }
-                      }}
-                      placeholder="Escriba una habilidad técnica y presione Enter o Agregar..."
-                      className="input-field py-2 text-xs flex-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomSkill}
-                      disabled={!customSkillInput.trim()}
-                      className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1 shrink-0 disabled:opacity-40"
-                    >
-                      <Plus size={14} />
-                      <span>Agregar</span>
-                    </button>
-                  </div>
-
-                  {/* Chips de Habilidades Seleccionadas */}
-                  <div className="min-h-[42px] p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/60 flex flex-wrap gap-1.5 items-center">
-                    {selectedSkills.length === 0 ? (
-                      <span className="text-[0.7rem] text-zinc-400 dark:text-zinc-500 italic">
-                        Ninguna habilidad agregada aún. Selecciona de las sugerencias rápidas abajo o escribe una personalizada.
-                      </span>
-                    ) : (
-                      selectedSkills.map((skill, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-mono font-bold shadow-2xs group"
-                        >
-                          <span>{skill}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSkill(skill)}
-                            className="text-blue-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
-                            title="Eliminar habilidad"
-                          >
-                            <X size={12} />
-                          </button>
+                      <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                        <span>Registrar Nuevo Colaborador</span>
+                        <span className={`text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-full border ${currentSkillProfile.badgeTagStyle}`}>
+                          {newTrabajador.rol}
                         </span>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Píldoras Sugeridas Rápidas */}
-                  <div className="space-y-1.5 pt-1">
-                    <span className="text-[0.68rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
-                      Sugerencias Rápidas de Stack Tecnológico (clic para activar/desactivar):
-                    </span>
-                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-                      {SUGGESTED_SKILLS.map((skill) => {
-                        const isSelected = selectedSkills.includes(skill);
-                        return (
-                          <button
-                            key={skill}
-                            type="button"
-                            onClick={() => handleToggleSkill(skill)}
-                            className={`text-[0.68rem] px-2.5 py-1 rounded-lg font-mono font-semibold transition-all cursor-pointer inline-flex items-center gap-1 ${
-                              isSelected
-                                ? 'bg-blue-600 text-white shadow-xs'
-                                : 'bg-white dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/50'
-                            }`}
-                          >
-                            {isSelected ? <Check size={11} className="stroke-[3]" /> : <Plus size={11} />}
-                            <span>{skill}</span>
-                          </button>
-                        );
-                      })}
+                      </h3>
+                      <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                        Alta corporativa en PostgreSQL, asignación de rol de seguridad y configuración de perfil profesional
+                      </p>
                     </div>
                   </div>
-                </div>
-
-                {/* Botones de Acción */}
-                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <button
-                    type="button"
+                  <button 
                     onClick={() => { 
                       setShowCreateModal(false); 
                       setFormErrors({}); 
                       setSelectedSkills([]); 
                       setCustomSkillInput(''); 
-                    }}
-                    disabled={submitting}
-                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                    }} 
+                    className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="gradient-button text-xs py-2 px-6 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 shadow-md"
-                  >
-                    {submitting ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : 'Guardar Colaborador'}
+                    <X size={20} />
                   </button>
                 </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
+
+                <form onSubmit={handleCrearTrabajador} className="space-y-4 text-xs" noValidate>
+                  {/* 1. Información Personal & Identificación */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3.5">
+                    <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
+                      <Shield size={14} className="text-blue-500" />
+                      <span>1. Identificación & Credenciales de Acceso</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                          Número de Identificación / Cédula *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={newTrabajador.identificacion}
+                          onChange={(e) => { setNewTrabajador({ ...newTrabajador, identificacion: e.target.value }); setFormErrors(p => ({ ...p, identificacion: undefined })); }}
+                          placeholder="Número de documento o cédula de identidad"
+                          className={`input-field py-2 text-xs font-mono ${formErrors.identificacion ? 'border-red-400 dark:border-red-600' : ''}`}
+                        />
+                        {formErrors.identificacion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.identificacion}</p>}
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                          Rol de Seguridad en el Sistema *
+                        </label>
+                        <select
+                          value={newTrabajador.rol}
+                          onChange={(e) => {
+                            const selectedRol = e.target.value;
+                            setNewTrabajador({ ...newTrabajador, rol: selectedRol });
+                          }}
+                          className="input-field py-2 text-xs font-bold uppercase"
+                        >
+                          <option value="DESARROLLADOR">Desarrollador (Operatividad WBS)</option>
+                          <option value="LIDER">Líder de Proyecto (Gestión & Asignación)</option>
+                          <option value="COORDINADOR">Coordinador (Administración Global)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                          Nombres del Colaborador *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={newTrabajador.nombre}
+                          onChange={(e) => { setNewTrabajador({ ...newTrabajador, nombre: e.target.value }); setFormErrors(p => ({ ...p, nombre: undefined })); }}
+                          placeholder="Nombres del colaborador"
+                          className={`input-field py-2 text-xs ${formErrors.nombre ? 'border-red-400 dark:border-red-600' : ''}`}
+                        />
+                        {formErrors.nombre && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.nombre}</p>}
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                          Apellidos del Colaborador *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={newTrabajador.apellido}
+                          onChange={(e) => { setNewTrabajador({ ...newTrabajador, apellido: e.target.value }); setFormErrors(p => ({ ...p, apellido: undefined })); }}
+                          placeholder="Apellidos del colaborador"
+                          className={`input-field py-2 text-xs ${formErrors.apellido ? 'border-red-400 dark:border-red-600' : ''}`}
+                        />
+                        {formErrors.apellido && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.apellido}</p>}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                        Correo Electrónico Corporativo *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={newTrabajador.email}
+                        onChange={(e) => { setNewTrabajador({ ...newTrabajador, email: e.target.value }); setFormErrors(p => ({ ...p, email: undefined })); }}
+                        placeholder="correo.corporativo@ikernell.org"
+                        className={`input-field py-2 text-xs font-mono ${formErrors.email ? 'border-red-400 dark:border-red-600' : ''}`}
+                      />
+                      {formErrors.email && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.email}</p>}
+                    </div>
+                  </div>
+
+                  {/* 2. Perfil Profesional & Especialidad Principal (Adaptado al Rol) */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
+                        <GraduationCap size={14} className="text-indigo-500" />
+                        <span>2. Perfil Profesional & Especialidad Principal</span>
+                      </div>
+                      <span className={`text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md border ${currentSkillProfile.badgeTagStyle}`}>
+                        {currentSkillProfile.badgeTag}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                          Profesión / Titulación
+                        </label>
+                        <input
+                          type="text"
+                          value={newTrabajador.profesion}
+                          onChange={(e) => setNewTrabajador({ ...newTrabajador, profesion: e.target.value })}
+                          placeholder={currentSkillProfile.placeholderProfesion}
+                          className="input-field py-2 text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                          Especialidad Principal
+                        </label>
+                        <input
+                          type="text"
+                          value={newTrabajador.especialidad}
+                          onChange={(e) => setNewTrabajador({ ...newTrabajador, especialidad: e.target.value })}
+                          placeholder={currentSkillProfile.placeholderEspecialidad}
+                          className="input-field py-2 text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Habilidades Técnicas & Competencias por Rol */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/40 space-y-3.5">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2 text-xs font-black text-blue-950 dark:text-blue-200">
+                        <RoleIconComponent size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span>{currentSkillProfile.tituloModulo}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[0.65rem] font-bold font-mono text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-md">
+                          {selectedSkills.length} Habilidades
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                      {currentSkillProfile.subtitulo}
+                    </p>
+
+                    {/* Input para agregar habilidad personalizada */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={customSkillInput}
+                        onChange={(e) => setCustomSkillInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomSkill();
+                          }
+                        }}
+                        placeholder="Escriba una habilidad o competencia y presione Enter o Agregar..."
+                        className="input-field py-2 text-xs flex-1"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCustomSkill}
+                        disabled={!customSkillInput.trim()}
+                        className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1 shrink-0 disabled:opacity-40"
+                      >
+                        <Plus size={14} />
+                        <span>Agregar</span>
+                      </button>
+                    </div>
+
+                    {/* Chips de Habilidades Seleccionadas */}
+                    <div className="min-h-[42px] p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/60 flex flex-wrap gap-1.5 items-center">
+                      {selectedSkills.length === 0 ? (
+                        <span className="text-[0.7rem] text-zinc-400 dark:text-zinc-500 italic">
+                          {newTrabajador.rol === 'DESARROLLADOR' 
+                            ? 'Ninguna habilidad agregada aún. Selecciona de las sugerencias recomendadas para desarrollo o escribe una personalizada.'
+                            : 'Habilidades opcionales para este rol. Puedes seleccionar sugerencias de gestión o escribir competencias personalizadas.'}
+                        </span>
+                      ) : (
+                        selectedSkills.map((skill, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-mono font-bold shadow-2xs group"
+                          >
+                            <span>{skill}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSkill(skill)}
+                              className="text-blue-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
+                              title="Eliminar habilidad"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Píldoras Sugeridas Rápidas Adaptadas al Rol */}
+                    <div className="space-y-1.5 pt-1">
+                      <span className="text-[0.68rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
+                        Sugerencias Rápidas para {currentSkillProfile.label} (clic para activar/desactivar):
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                        {currentSkillProfile.sugerencias.map((skill) => {
+                          const isSelected = selectedSkills.includes(skill);
+                          return (
+                            <button
+                              key={skill}
+                              type="button"
+                              onClick={() => handleToggleSkill(skill)}
+                              className={`text-[0.68rem] px-2.5 py-1 rounded-lg font-mono font-semibold transition-all cursor-pointer inline-flex items-center gap-1 ${
+                                isSelected
+                                  ? 'bg-blue-600 text-white shadow-xs'
+                                  : 'bg-white dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/50'
+                              }`}
+                            >
+                              {isSelected ? <Check size={11} className="stroke-[3]" /> : <Plus size={11} />}
+                              <span>{skill}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Botones de Acción */}
+                  <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => { 
+                        setShowCreateModal(false); 
+                        setFormErrors({}); 
+                        setSelectedSkills([]); 
+                        setCustomSkillInput(''); 
+                      }}
+                      disabled={submitting}
+                      className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="gradient-button text-xs py-2 px-6 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 shadow-md"
+                    >
+                      {submitting ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : 'Guardar Colaborador'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          );
+        })()}
       </AnimatePresence>
 
       {/* Modal: Gestión Integral de Caso / Solicitud Web */}
