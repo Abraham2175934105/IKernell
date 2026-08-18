@@ -960,8 +960,8 @@ export const LiderDashboard = () => {
         </div>
       </motion.div>
 
-      {/* Tarjeta de Detalles del Proyecto Seleccionado */}
-      {proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (() => {
+      {/* Tarjeta de Detalles del Proyecto Seleccionado (Exclusiva de la sección WBS) */}
+      {activeTab === 'wbs' && proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (() => {
         const isProyectoFinalizado = proyectoSeleccionado.estado === 'FINALIZADO' || proyectoSeleccionado.estado === 'COMPLETADO';
         const fechaInicioFormateada = formatearFechaHumana(proyectoSeleccionado.fechaInicio);
         const fechaFinFormateada = formatearFechaHumana(proyectoSeleccionado.fechaFinEstimada);
