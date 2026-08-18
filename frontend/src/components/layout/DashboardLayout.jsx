@@ -442,7 +442,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         </header>
 
         {/* 3. AREA DE CONTENIDO DEL DASHBOARD CON ESPACIADO ESTANDARIZADO RESPONSIVO */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-5 lg:p-7 max-w-[1600px] w-full mx-auto min-w-0">
           {currentTool ? (
             <div>
               <div className="mb-6 flex justify-between items-center">

@@ -1610,23 +1610,23 @@ export const LiderDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Tabla Corporativa de Incidencias e Interrupciones (Optimizada para pantalla completa en PC/Tablet) */}
+          {/* Tabla Corporativa de Incidencias e Interrupciones (Optimizada para pantalla completa en PC y Responsive en Móvil/Tablet) */}
           <motion.div 
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm w-full"
           >
-            <div className="overflow-x-auto md:overflow-x-visible w-full">
+            <div className="overflow-x-auto w-full">
               <table className="w-full text-left text-xs table-auto">
-                <thead className="bg-zinc-50/90 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-[0.7rem] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <thead className="bg-zinc-50/90 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-[0.68rem] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   <tr>
-                    <th className="py-3.5 px-3.5 whitespace-nowrap" title="Tipo de registro: Error técnico en código o Contingencia/interrupción operativa">Tipo</th>
-                    <th className="py-3.5 px-3.5 whitespace-nowrap" title="Nivel de gravedad del fallo o duración en minutos">Severidad / Duración</th>
-                    <th className="py-3.5 px-3.5" title="Proyecto y fase WBS asociada al reporte en PostgreSQL">Proyecto & Fase</th>
-                    <th className="py-3.5 px-3.5" title="Descripción detallada del hallazgo técnico o causa de la interrupción">Descripción</th>
-                    <th className="py-3.5 px-3.5 whitespace-nowrap" title="Desarrollador asignado responsable del reporte">Desarrollador</th>
-                    <th className="py-3.5 px-3.5 whitespace-nowrap" title="Fecha y hora exacta en que se registró la incidencia">Fecha</th>
-                    <th className="py-3.5 px-3.5 whitespace-nowrap text-center" title="Estado actual del flujo de atención del reporte">Estado</th>
-                    <th className="py-3.5 px-3.5 text-right whitespace-nowrap" title="Gestionar estado, registrar acción correctiva y asignar resolución técnica">Acción</th>
+                    <th className="py-3 px-3 whitespace-nowrap" title="Tipo de registro: Error técnico en código o Contingencia/interrupción operativa">Tipo</th>
+                    <th className="py-3 px-2.5 whitespace-nowrap text-center" title="Nivel de gravedad del fallo o duración en minutos">Severidad / Duración</th>
+                    <th className="py-3 px-2.5" title="Proyecto y fase WBS asociada al reporte en PostgreSQL">Proyecto & Fase</th>
+                    <th className="py-3 px-2.5" title="Descripción detallada del hallazgo técnico o causa de la interrupción">Descripción</th>
+                    <th className="py-3 px-2.5 whitespace-nowrap" title="Desarrollador asignado responsable del reporte">Desarrollador</th>
+                    <th className="py-3 px-2.5 whitespace-nowrap" title="Fecha y hora exacta en que se registró la incidencia">Fecha</th>
+                    <th className="py-3 px-2.5 whitespace-nowrap text-center" title="Estado actual del flujo de atención del reporte">Estado</th>
+                    <th className="py-3 px-3 text-right whitespace-nowrap sticky right-0 bg-zinc-50/90 dark:bg-zinc-800/50 md:static" title="Gestionar estado, registrar acción correctiva y asignar resolución técnica">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/80 dark:divide-zinc-800/80 font-medium">
@@ -1676,25 +1676,25 @@ export const LiderDashboard = () => {
                         className="transition-colors duration-150 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group"
                       >
                         {/* Tipo */}
-                        <td className="py-3.5 px-3.5 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
                               isError ? 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400'
                             }`}>
-                              {isError ? <Bug size={14} /> : <AlertTriangle size={14} />}
+                              {isError ? <Bug size={13} /> : <AlertTriangle size={13} />}
                             </div>
-                            <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                            <span className="font-bold text-[0.72rem] text-zinc-900 dark:text-zinc-100 truncate max-w-[130px]" title={isError ? (item.tipoError || 'Error') : (item.tipoInterrupcion?.replace(/_/g, ' ') || 'Interrupción')}>
                               {isError ? (item.tipoError || 'Error') : (item.tipoInterrupcion?.replace(/_/g, ' ') || 'Interrupción')}
                             </span>
                           </div>
                         </td>
 
                         {/* Severidad / Duración */}
-                        <td className="py-3.5 px-3.5 whitespace-nowrap">
+                        <td className="py-3 px-2.5 whitespace-nowrap text-center">
                           {isError ? (
                             <span 
                               title="Nivel de gravedad del fallo que afecta al Semáforo Predictivo"
-                              className={`text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-md border font-mono inline-block ${
+                              className={`text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-md border font-mono inline-block ${
                                 item.severidad === 'CRITICA' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800' :
                                 item.severidad === 'ALTA' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/60 dark:text-orange-400 dark:border-orange-800' :
                                 item.severidad === 'MEDIA' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800' :
@@ -1706,7 +1706,7 @@ export const LiderDashboard = () => {
                           ) : (
                             <span 
                               title="Tiempo de interrupción en minutos contabilizado para métricas de contingencia"
-                              className="text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800 font-mono inline-block"
+                              className="text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800 font-mono inline-block"
                             >
                               {item.duracionMinutos || 0} min
                             </span>
@@ -1714,26 +1714,26 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Proyecto & Fase */}
-                        <td className="py-3.5 px-3.5">
-                          <div className="max-w-[130px] lg:max-w-[160px] truncate">
-                            <span className="font-bold text-blue-600 dark:text-blue-400 block truncate text-xs" title={projName}>
+                        <td className="py-3 px-2.5">
+                          <div className="max-w-[130px] xl:max-w-[170px] truncate leading-tight">
+                            <span className="font-bold text-blue-600 dark:text-blue-400 block truncate text-[0.72rem]" title={projName}>
                               {projId ? `[PRJ-00${projId}] ` : ''}{projName}
                             </span>
-                            <span className="text-[0.65rem] text-zinc-400 dark:text-zinc-500 block truncate" title={etapaNombre}>
+                            <span className="text-[0.62rem] text-zinc-400 dark:text-zinc-500 block truncate" title={etapaNombre}>
                               {etapaNombre}
                             </span>
                           </div>
                         </td>
 
                         {/* Descripción */}
-                        <td className="py-3.5 px-3.5">
-                          <div className="max-w-[180px] lg:max-w-xs space-y-0.5">
-                            <p className="text-zinc-700 dark:text-zinc-300 truncate text-xs leading-relaxed" title={item.descripcion || item.comentarios}>
+                        <td className="py-3 px-2.5">
+                          <div className="max-w-[150px] lg:max-w-[200px] xl:max-w-[260px] space-y-0.5 leading-tight">
+                            <p className="text-zinc-700 dark:text-zinc-300 truncate text-[0.72rem]" title={item.descripcion || item.comentarios}>
                               {item.descripcion || item.comentarios || 'Sin descripción detallada'}
                             </p>
                             {item.resolucionNota && (
-                              <div className="text-[0.65rem] text-blue-600 dark:text-blue-400 font-medium italic flex items-center gap-1">
-                                <Info size={10} className="shrink-0" />
+                              <div className="text-[0.62rem] text-blue-600 dark:text-blue-400 font-medium italic flex items-center gap-1">
+                                <Info size={9} className="shrink-0" />
                                 <span className="truncate" title={`Resolución: ${item.resolucionNota}`}>
                                   Res: {item.resolucionNota}
                                 </span>
@@ -1743,44 +1743,44 @@ export const LiderDashboard = () => {
                         </td>
 
                         {/* Desarrollador */}
-                        <td className="py-3.5 px-3.5 whitespace-nowrap">
+                        <td className="py-3 px-2.5 whitespace-nowrap">
                           <span 
                             title="Desarrollador asignado responsable del reporte"
                             className="inline-flex items-center text-[0.65rem] font-bold px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
                           >
-                            <User size={11} className="mr-1 text-zinc-500 shrink-0" />
-                            <span className="truncate max-w-[100px] lg:max-w-[130px]">{devName}</span>
+                            <User size={10} className="mr-1 text-zinc-500 shrink-0" />
+                            <span className="truncate max-w-[90px] xl:max-w-[120px]">{devName}</span>
                           </span>
                         </td>
 
                         {/* Fecha */}
-                        <td className="py-3.5 px-3.5 font-mono text-[0.7rem] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                        <td className="py-3 px-2.5 font-mono text-[0.68rem] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                           {fechaStr}
                         </td>
 
                         {/* Estado */}
-                        <td className="py-3.5 px-3.5 whitespace-nowrap text-center">
+                        <td className="py-3 px-2.5 whitespace-nowrap text-center">
                           <EstadoAtencionBadge estado={item.estadoAtencion} />
                         </td>
 
                         {/* Acción */}
-                        <td className="py-3.5 px-3.5 text-right whitespace-nowrap">
+                        <td className="py-3 px-3 text-right whitespace-nowrap sticky right-0 bg-white/95 dark:bg-zinc-900/95 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] md:shadow-none md:static">
                           {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
                             <span 
-                              className="inline-flex items-center gap-1.5 text-[0.65rem] font-extrabold uppercase px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
+                              className="inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
                               title="Incidencia resuelta y congelada para auditoría y trazabilidad histórica (RF-24)"
                             >
-                              <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                               <span>Resuelto</span>
                             </span>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleAbrirAtenderIncidencia(item)}
-                              className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                              className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors"
                               title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
                             >
-                              <Edit3 size={12} />
+                              <Edit3 size={11} />
                               <span>Atender / Editar</span>
                             </button>
                           )}
