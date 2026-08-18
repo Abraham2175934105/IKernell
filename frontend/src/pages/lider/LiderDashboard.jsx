@@ -517,7 +517,8 @@ export const LiderDashboard = () => {
     }
   };
 
-  const listaIncidenciasUnificada = useMemo(() => {
+  // Cálculo y filtrado reactivo de incidencias unificadas (errores + interrupciones)
+  const incidenciasFiltradas = useMemo(() => {
     const errs = (errores || []).map(e => ({
       ...e,
       _tipo: 'ERROR',
@@ -532,6 +533,16 @@ export const LiderDashboard = () => {
     }));
     let combined = [...errs, ...ints].sort((a, b) => b._fecha - a._fecha);
 
+    // Si idProyecto es 'GLOBAL', null, o 'TODOS', retorna el historial completo de la compañía.
+    // Solo filtra si hay un ID numérico específico de proyecto.
+    const idProjActual = proyectoSeleccionado?.idProyecto;
+    if (idProjActual && idProjActual !== 'GLOBAL' && idProjActual !== 'TODOS') {
+      combined = combined.filter(item => {
+        const idProjItem = item.etapa?.proyecto?.idProyecto;
+        return !idProjItem || String(idProjItem) === String(idProjActual);
+      });
+    }
+
     if (filtroTipoInc === 'ERRORES') combined = combined.filter(c => c._tipo === 'ERROR');
     if (filtroTipoInc === 'INTERRUPCIONES') combined = combined.filter(c => c._tipo === 'INTERRUPCION');
 
@@ -544,7 +555,10 @@ export const LiderDashboard = () => {
     }
 
     return combined;
-  }, [errores, interrupciones, filtroTipoInc, filtroEstadoInc, filtroDevInc]);
+  }, [errores, interrupciones, filtroTipoInc, filtroEstadoInc, filtroDevInc, proyectoSeleccionado]);
+
+  // Alias para retrocompatibilidad
+  const listaIncidenciasUnificada = incidenciasFiltradas;
 
   // Cálculo seguro y defensivo de horas de contingencia
   const totalHorasContingencia = useMemo(() => {
@@ -1069,7 +1083,7 @@ export const LiderDashboard = () => {
                 Consola Centralizada de Incidencias de Equipo
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
-                Monitoreo, clasificación y resolución de errores de código e interrupciones reportadas por el equipo.
+                Monitoreo consolidado de errores técnicos y contingencias. En vista global, muestra el historial completo de la compañía.
               </p>
             </div>
 
@@ -1079,37 +1093,49 @@ export const LiderDashboard = () => {
                 onClick={() => seleccionarProyecto(proyectoSeleccionado)}
                 disabled={loadingDetalle}
                 className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
-                title="Sincronizar incidencias y tiempos de interrupción en tiempo real"
+                title="Sincronizar incidencias y tiempos de interrupción en tiempo real con PostgreSQL"
               >
                 <RefreshCw size={13} className={loadingDetalle ? 'animate-spin text-blue-500' : ''} /> Refrescar Incidencias
               </button>
             </div>
           </motion.div>
 
-          {/* Tarjetas Resumen */}
+          {/* Tarjetas Resumen con Tooltips Interactivos */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
+            <div 
+              className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200"
+              title="Suma total de incidencias técnicas e interrupciones operativas registradas en la base de datos"
+            >
               <span className="text-[0.65rem] font-bold text-zinc-400 uppercase block mb-1">Total Reportes</span>
               <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
                 {(errores?.length || 0) + (interrupciones?.length || 0)}
               </div>
             </div>
 
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-red-400 dark:hover:border-red-500/40 transition-all duration-200">
+            <div 
+              className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-red-400 dark:hover:border-red-500/40 transition-all duration-200"
+              title="Fallas de código, bugs y vulnerabilidades reportadas que afectan el Semáforo Predictivo"
+            >
               <span className="text-[0.65rem] font-bold text-red-500 uppercase block mb-1">Errores Técnicos</span>
               <div className="text-2xl font-black text-red-600 dark:text-red-400">
                 {errores?.length || 0}
               </div>
             </div>
 
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-amber-400 dark:hover:border-amber-500/40 transition-all duration-200">
+            <div 
+              className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-amber-400 dark:hover:border-amber-500/40 transition-all duration-200"
+              title="Horas acumuladas de interrupción externa que impactan el cronograma WBS"
+            >
               <span className="text-[0.65rem] font-bold text-amber-500 uppercase block mb-1">Contingencias (Horas)</span>
               <div className="text-2xl font-black text-amber-600 dark:text-amber-400">
                 {totalHorasContingencia}h
               </div>
             </div>
 
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-emerald-400 dark:hover:border-emerald-500/40 transition-all duration-200">
+            <div 
+              className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-emerald-400 dark:hover:border-emerald-500/40 transition-all duration-200"
+              title="Incidencias que han recibido resolución técnica y están cerradas"
+            >
               <span className="text-[0.65rem] font-bold text-emerald-500 uppercase block mb-1">Solucionados</span>
               <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                 {[...(errores || []), ...(interrupciones || [])].filter(i => i.estadoAtencion === 'SOLUCIONADO').length}
@@ -1120,9 +1146,11 @@ export const LiderDashboard = () => {
           {/* Filtros Combinados */}
           <motion.div variants={itemVariants} className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-wrap gap-3 items-center justify-between">
             {/* Filtro Tipo */}
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 flex-wrap">
               <button
+                type="button"
                 onClick={() => setFiltroTipoInc('TODOS')}
+                title="Mostrar tanto errores de código como interrupciones operativas"
                 className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer ${
                   filtroTipoInc === 'TODOS'
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
@@ -1132,7 +1160,9 @@ export const LiderDashboard = () => {
                 Todos ({(errores?.length || 0) + (interrupciones?.length || 0)})
               </button>
               <button
+                type="button"
                 onClick={() => setFiltroTipoInc('ERRORES')}
+                title="Filtrar exclusivamente errores técnicos de software"
                 className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${
                   filtroTipoInc === 'ERRORES'
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
@@ -1142,7 +1172,9 @@ export const LiderDashboard = () => {
                 <Bug size={12} /> Errores ({errores?.length || 0})
               </button>
               <button
+                type="button"
                 onClick={() => setFiltroTipoInc('INTERRUPCIONES')}
+                title="Filtrar exclusivamente contingencias e interrupciones de tiempo"
                 className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${
                   filtroTipoInc === 'INTERRUPCIONES'
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
@@ -1153,40 +1185,45 @@ export const LiderDashboard = () => {
               </button>
             </div>
 
-            {/* Filtro Estado */}
-            <div className="flex items-center gap-2">
-              <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Estado:</span>
-              <select
-                value={filtroEstadoInc}
-                onChange={(e) => setFiltroEstadoInc(e.target.value)}
-                className="input-field py-1 px-2.5 text-xs"
-              >
-                <option value="TODOS">Todos los Estados</option>
-                <option value="REGISTRADO">Registrado</option>
-                <option value="EN_REVISION">En Revisión</option>
-                <option value="SOLUCIONADO">Solucionado</option>
-              </select>
-            </div>
+            {/* Filtros Dropdown */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Filtro Estado */}
+              <div className="flex items-center gap-2">
+                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Estado:</span>
+                <select
+                  value={filtroEstadoInc}
+                  onChange={(e) => setFiltroEstadoInc(e.target.value)}
+                  title="Filtrar por estado del flujo de atención"
+                  className="input-field py-1 px-2.5 text-xs font-bold"
+                >
+                  <option value="TODOS">Todos los Estados</option>
+                  <option value="REGISTRADO">Registrado</option>
+                  <option value="EN_REVISION">En Revisión</option>
+                  <option value="SOLUCIONADO">Solucionado</option>
+                </select>
+              </div>
 
-            {/* Filtro Desarrollador */}
-            <div className="flex items-center gap-2">
-              <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Desarrollador:</span>
-              <select
-                value={filtroDevInc}
-                onChange={(e) => setFiltroDevInc(e.target.value)}
-                className="input-field py-1 px-2.5 text-xs"
-              >
-                <option value="TODOS">Todos los Desarrolladores</option>
-                {desarrolladores.map(d => (
-                  <option key={d.idTrabajador} value={d.idTrabajador}>
-                    {d.nombre} {d.apellido} ({d.especialidad})
-                  </option>
-                ))}
-              </select>
+              {/* Filtro Desarrollador */}
+              <div className="flex items-center gap-2">
+                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Desarrollador:</span>
+                <select
+                  value={filtroDevInc}
+                  onChange={(e) => setFiltroDevInc(e.target.value)}
+                  title="Filtrar reportes emitidos por un desarrollador específico"
+                  className="input-field py-1 px-2.5 text-xs font-bold"
+                >
+                  <option value="TODOS">Todos los Desarrolladores</option>
+                  {desarrolladores.map(d => (
+                    <option key={d.idTrabajador} value={d.idTrabajador}>
+                      {d.nombre} {d.apellido} ({d.especialidad || d.profesion})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </motion.div>
 
-          {/* Listado Unificado */}
+          {/* Listado Unificado de Incidencias con Tooltips y Micro-Badges */}
           <motion.div variants={itemVariants} className="space-y-3">
             {loadingDetalle && (
               <div className="space-y-3">
@@ -1195,13 +1232,21 @@ export const LiderDashboard = () => {
               </div>
             )}
 
-            {!loadingDetalle && listaIncidenciasUnificada.length === 0 && (
-              <div className="text-center py-12 text-zinc-400 text-xs font-medium border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
-                No hay incidencias reportadas con los filtros seleccionados.
+            {!loadingDetalle && incidenciasFiltradas.length === 0 && (
+              <div className="text-center py-14 px-6 text-zinc-500 dark:text-zinc-400 text-xs font-medium border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl bg-zinc-50/50 dark:bg-zinc-800/20 max-w-lg mx-auto my-4 space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
+                  <CheckCircle2 size={28} />
+                </div>
+                <h4 className="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+                  Excelente trabajo. No hay incidencias registradas en este alcance.
+                </h4>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto leading-relaxed">
+                  El código y los tiempos operativos del proyecto se encuentran completamente estables sin errores ni interrupciones pendientes.
+                </p>
               </div>
             )}
 
-            {!loadingDetalle && listaIncidenciasUnificada.map(item => {
+            {!loadingDetalle && incidenciasFiltradas.map(item => {
               const isError = item._tipo === 'ERROR';
               const devName = item.desarrollador ? `${item.desarrollador.nombre} ${item.desarrollador.apellido}` : 'Sin Asignar';
               const fechaStr = new Date(item._fecha).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
@@ -1224,15 +1269,29 @@ export const LiderDashboard = () => {
                             {isError ? `Error: ${item.tipoError}` : `Interrupción: ${item.tipoInterrupcion?.replace(/_/g, ' ')}`}
                           </h4>
                           {isError ? (
-                            <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
+                            <span 
+                              title="Nivel de gravedad del fallo que afecta al Semáforo Predictivo"
+                              className={`text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-md border font-mono ${
+                                item.severidad === 'CRITICA' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800' :
+                                item.severidad === 'ALTA' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/60 dark:text-orange-400 dark:border-orange-800' :
+                                item.severidad === 'MEDIA' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800' :
+                                'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800'
+                              }`}
+                            >
                               {item.severidad}
                             </span>
                           ) : (
-                            <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
+                            <span 
+                              title="Tiempo de interrupción en minutos contabilizado para métricas de contingencia"
+                              className="text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800 font-mono"
+                            >
                               {item.duracionMinutos} min
                             </span>
                           )}
-                          <span className="inline-flex items-center text-[0.65rem] font-bold px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                          <span 
+                            title="Desarrollador asignado responsable del reporte"
+                            className="inline-flex items-center text-[0.65rem] font-bold px-2.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
+                          >
                             <User size={11} className="mr-1 text-zinc-500" />
                             {devName}
                           </span>
@@ -1254,7 +1313,7 @@ export const LiderDashboard = () => {
                         type="button"
                         onClick={() => handleAbrirAtenderIncidencia(item)}
                         className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                        title="Gestionar estado o ingresar acción correctiva"
+                        title="Gestionar estado, asignar solución técnica o ingresar nota correctiva"
                       >
                         <Edit3 size={12} /> Atender
                       </button>
