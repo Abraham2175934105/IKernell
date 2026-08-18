@@ -22,5 +22,8 @@ public interface ActividadRepository extends JpaRepository<Actividad, Long> {
     List<Actividad> findByEstado(String estado);
 
     Page<Actividad> findByEstado(String estado, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM Actividad a LEFT JOIN FETCH a.desarrollador LEFT JOIN FETCH a.etapa e LEFT JOIN FETCH e.proyecto WHERE a.desarrollador = :desarrollador ORDER BY a.idActividad ASC")
+    List<Actividad> findByDesarrolladorWithDetalles(@org.springframework.data.repository.query.Param("desarrollador") Trabajador desarrollador);
 }
 

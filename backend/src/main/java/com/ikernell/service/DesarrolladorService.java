@@ -85,7 +85,7 @@ public class DesarrolladorService {
     public List<Actividad> obtenerMisActividades(String emailDesarrollador) {
         Trabajador desarrollador = trabajadorRepository.findByEmail(emailDesarrollador)
                 .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con email: " + emailDesarrollador));
-        return actividadRepository.findByDesarrollador(desarrollador);
+        return actividadRepository.findByDesarrolladorWithDetalles(desarrollador);
     }
 
     // Consulta paginada de actividades para vistas extensas

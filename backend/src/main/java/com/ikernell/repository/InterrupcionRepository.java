@@ -24,9 +24,9 @@ public interface InterrupcionRepository extends JpaRepository<Interrupcion, Long
     /** Paginación de interrupciones por etapa para el Semáforo Inteligente. */
     Page<Interrupcion> findByEtapa(Etapa etapa, Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT i FROM Interrupcion i LEFT JOIN FETCH i.desarrollador LEFT JOIN FETCH i.etapa e WHERE e.proyecto = :proyecto ORDER BY i.idInterrupcion DESC")
+    @org.springframework.data.jpa.repository.Query("SELECT i FROM Interrupcion i LEFT JOIN FETCH i.desarrollador LEFT JOIN FETCH i.etapa e LEFT JOIN FETCH e.proyecto WHERE e.proyecto = :proyecto ORDER BY i.idInterrupcion DESC")
     List<Interrupcion> findByProyectoWithDetails(@org.springframework.data.repository.query.Param("proyecto") com.ikernell.model.Proyecto proyecto);
 
-    @org.springframework.data.jpa.repository.Query("SELECT i FROM Interrupcion i LEFT JOIN FETCH i.desarrollador LEFT JOIN FETCH i.etapa e ORDER BY i.idInterrupcion DESC")
+    @org.springframework.data.jpa.repository.Query("SELECT i FROM Interrupcion i LEFT JOIN FETCH i.desarrollador LEFT JOIN FETCH i.etapa e LEFT JOIN FETCH e.proyecto ORDER BY i.idInterrupcion DESC")
     List<Interrupcion> findAllWithDetails();
 }
