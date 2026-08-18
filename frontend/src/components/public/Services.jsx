@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { Code2, Database, ShieldAlert, Cpu, Layers, Workflow, ArrowRight, ShieldCheck, Lock, KeyRound } from 'lucide-react';
+import { 
+  Code2, Database, Activity, Cpu, Layers, ArrowRight, 
+  ShieldCheck, Lock, KeyRound, ArrowLeftRight, DatabaseZap,
+  Server, Boxes, LockKeyhole, Terminal, Gauge
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const containerVariants = {
@@ -33,7 +37,7 @@ const ServiceCardImage = ({ src, alt, fallbackIcon }) => {
       <div className="w-full h-full bg-gradient-to-br from-zinc-900 via-blue-950 to-zinc-950 flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
         <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] opacity-25" />
         <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center shadow-xl shadow-blue-500/20 backdrop-blur-sm z-10">
-          {fallbackIcon || <ShieldCheck size={32} className="text-blue-400" />}
+          {fallbackIcon || <ShieldCheck size={28} className="text-blue-400" />}
         </div>
       </div>
     );
@@ -52,42 +56,42 @@ const ServiceCardImage = ({ src, alt, fallbackIcon }) => {
 
 const servicesList = [
   {
-    icon: <Code2 size={28} />,
+    icon: <Code2 size={24} strokeWidth={2} />,
     title: "Desarrollo de Software a Medida",
     description: "Construcción de aplicaciones empresariales escalables con Java Spring Boot y React.js, optimizadas para alta concurrencia y despliegues modulares.",
     image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     featured: false
   },
   {
-    icon: <ShieldAlert size={28} />,
+    icon: <Gauge size={24} strokeWidth={2} />,
     title: "Semáforo Predictivo de Riesgos",
     description: "Algoritmos lógicos de monitoreo en tiempo real que evalúan errores severos e interrupciones para prevenir retrasos en el cronograma.",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     featured: true
   },
   {
-    icon: <Workflow size={28} />,
+    icon: <DatabaseZap size={24} strokeWidth={2} />,
     title: "Automatización ETL Internacional",
     description: "Integración batch estandarizada bajo ISO 8601 UTC y envío seguro vía SFTP/Email para reportes con la alianza estratégica en Brasil.",
     image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     featured: false
   },
   {
-    icon: <Database size={28} />,
+    icon: <Database size={24} strokeWidth={2} />,
     title: "Diseño & Administración de PostgreSQL",
     description: "Estructuras relacionales optimizadas con índices B-Tree, restricciones CHECK de integridad y modelos WBS de alta concurrencia.",
     image: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     featured: false
   },
   {
-    icon: <Layers size={28} />,
+    icon: <Boxes size={24} strokeWidth={2} />,
     title: "Gestión de Proyectos WBS",
     description: "Desglose estructural del trabajo por etapas y asignación granular de actividades para equipos multidisciplinarios.",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     featured: false
   },
   {
-    icon: <Cpu size={28} />,
+    icon: <ShieldCheck size={24} strokeWidth={2} />,
     title: "Arquitectura de Seguridad RBAC & JWT",
     description: "Protección perimetral con tokens encriptados sin cookies, encriptación unidireccional BCrypt y perfiles unificados de trabajo.",
     image: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -100,17 +104,17 @@ const servicesList = [
 ──────────────────────────────────────────────────────────────────────── */
 const securityFeatures = [
   {
-    icon: <ShieldCheck size={22} strokeWidth={1.8} />,
+    icon: <ShieldCheck size={22} strokeWidth={2} />,
     title: 'RBAC — Control Basado en Roles',
     description: 'Tres perfiles segregados: Coordinador, Líder y Desarrollador. Cada rol accede estrictamente a los recursos y endpoints autorizados por Spring Security.',
   },
   {
-    icon: <KeyRound size={22} strokeWidth={1.8} />,
+    icon: <KeyRound size={22} strokeWidth={2} />,
     title: 'JWT Stateless (HMAC-SHA256)',
     description: 'Sesiones tokenizadas sin cookies ni almacenamiento en memoria de servidor. Cada solicitud HTTP se valida atómicamente con firma criptográfica.',
   },
   {
-    icon: <Lock size={22} strokeWidth={1.8} />,
+    icon: <LockKeyhole size={22} strokeWidth={2} />,
     title: 'BCrypt — Cifrado Unidireccional',
     description: 'Almacenamiento irreversible de credenciales con factor de costo 10 y salt aleatorio, blindando el acceso contra ataques de fuerza bruta.',
   },
@@ -167,10 +171,10 @@ export const Services = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-white via-white/30 to-transparent dark:from-zinc-900 dark:via-zinc-900/30 dark:to-transparent" />
                 
                 {/* Floating icon badge */}
-                <div className={`absolute bottom-4 left-6 w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-colors duration-300 ${
+                <div className={`absolute bottom-4 left-6 w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover:scale-110 group-hover:-rotate-2 ${
                   srv.featured
-                    ? 'bg-blue-600 text-white shadow-blue-600/30'
-                    : 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 group-hover:shadow-blue-600/20'
+                    ? 'bg-gradient-to-tr from-blue-700 to-indigo-600 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
+                    : 'bg-white/95 dark:bg-zinc-800/95 text-zinc-800 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700/90 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-blue-500 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-blue-500/25'
                 }`}>
                   {srv.icon}
                 </div>
@@ -208,7 +212,7 @@ export const Services = () => {
           {/* Section Header */}
           <div className="text-center mb-10 md:mb-14">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold uppercase tracking-wider mb-5 shadow-md">
-              <ShieldCheck size={14} /> Seguridad Corporativa de Nivel Bancario
+              <ShieldCheck size={14} className="text-blue-400 dark:text-blue-600" /> Seguridad Corporativa de Nivel Bancario
             </span>
             <h3 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-4">
               Arquitectura de Seguridad RBAC & JWT
@@ -228,7 +232,7 @@ export const Services = () => {
                 transition={{ type: "spring", stiffness: 300, damping: 22 }}
                 className="group relative rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-7 flex flex-col hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300"
               >
-                <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 flex items-center justify-center mb-5 shadow-sm group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors duration-300">
+                <div className="w-13 h-13 rounded-2xl bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 flex items-center justify-center mb-5 shadow-sm group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-indigo-500 group-hover:text-white group-hover:border-blue-500 group-hover:scale-105 transition-all duration-300">
                   {feat.icon}
                 </div>
                 <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2.5 leading-snug">{feat.title}</h4>

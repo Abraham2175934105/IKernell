@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Tag, Cpu, ShieldCheck, CheckCircle2, ArrowRight, UserCheck } from 'lucide-react';
+import { X, Calendar, Tag, Cpu, ShieldCheck, CheckCircle2, ArrowRight, UserCheck, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const NewsModal = ({ isOpen, onClose, news }) => {
@@ -81,9 +81,10 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
             
             {/* Subtitle / Key Takeaway */}
             {news.subtitle && (
-              <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40">
+              <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40 flex items-start gap-2.5">
+                <Info size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <p className="text-sm sm:text-base font-bold text-blue-900 dark:text-blue-300 leading-relaxed">
-                  💡 {news.subtitle}
+                  {news.subtitle}
                 </p>
               </div>
             )}

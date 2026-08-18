@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, ArrowRight, Newspaper, Sparkles, User, Tag } from 'lucide-react';
+import { Calendar, ArrowRight, Newspaper, Award, User, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { NewsModal } from './NewsModal';
 
@@ -164,8 +164,8 @@ export const News = () => {
                 </div>
 
                 {news.featured && (
-                  <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[0.65rem] font-bold uppercase tracking-wider bg-amber-500 text-zinc-950 flex items-center gap-1 shadow-md">
-                    <Sparkles size={11} /> Destacado
+                  <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[0.65rem] font-black uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 flex items-center gap-1 shadow-md">
+                    <Award size={12} strokeWidth={2.5} /> Destacado
                   </div>
                 )}
               </div>

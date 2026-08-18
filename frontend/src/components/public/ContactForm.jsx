@@ -279,7 +279,7 @@ export const ContactForm = () => {
       setTimeout(() => setIsShaking(false), 500);
       setToast({
         type: 'warning',
-        message: '⚠️ Falta completar o corregir algunos campos obligatorios antes de continuar.',
+        message: 'Falta completar o corregir algunos campos obligatorios antes de continuar.',
       });
       return;
     }
@@ -343,8 +343,8 @@ export const ContactForm = () => {
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white flex items-center justify-center shadow-sm">
-          <MessageSquare size={18} strokeWidth={1.8} />
+        <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner">
+          <MessageSquare size={20} strokeWidth={2} />
         </div>
         <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">Formulario de Contacto</h3>
       </div>

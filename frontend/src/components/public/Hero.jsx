@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, ShieldCheck, Zap, Activity, ChevronDown, Globe2, Terminal, Layers, Cpu, Info } from 'lucide-react';
+import { 
+  ArrowRight, ShieldCheck, Activity, ChevronDown, Globe2, 
+  Terminal, Layers, Cpu, Info, Server, Gauge, DatabaseZap,
+  KeyRound, GitBranch, Binary, Network
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -63,7 +67,7 @@ const MetricTooltip = ({ text }) => {
 const stacks = [
   {
     id: 1,
-    icon: <Zap size={22} strokeWidth={1.8} />,
+    icon: <Server size={22} strokeWidth={2} />,
     badge: 'RNF-01 · Stateless REST',
     title: 'N-Capas & JWT Security',
     description: 'Desacoplamiento total entre React 18 SPA y Spring Boot 3 con sesiones tokenizadas sin estado ni cookies.',
@@ -71,14 +75,14 @@ const stacks = [
     featured: false,
     headerTelemetria: 'Telemetría de Red & Sesión',
     metrics: [
-      { icon: <Terminal size={14} strokeWidth={1.8} />, label: 'Latencia Media API', value: '< 38 ms', help: 'Rapidez de respuesta del sistema ante cada petición.' },
-      { icon: <ShieldCheck size={14} strokeWidth={1.8} />, label: 'Autenticación', value: 'JWT · BCrypt', help: 'Sesiones tokenizadas seguras sin almacenamiento de cookies.' },
-      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'HikariCP Pool', value: '10 Conn · Leak 20s', help: 'Gestor de conexiones de alta concurrencia para evitar caídas.' },
+      { icon: <Terminal size={14} strokeWidth={2} />, label: 'Latencia Media API', value: '< 38 ms', help: 'Rapidez de respuesta del sistema ante cada petición.' },
+      { icon: <ShieldCheck size={14} strokeWidth={2} />, label: 'Autenticación', value: 'JWT · BCrypt', help: 'Sesiones tokenizadas seguras sin almacenamiento de cookies.' },
+      { icon: <Layers size={14} strokeWidth={2} />, label: 'HikariCP Pool', value: '10 Conn · Leak 20s', help: 'Gestor de conexiones de alta concurrencia para evitar caídas.' },
     ]
   },
   {
     id: 2,
-    icon: <Activity size={22} strokeWidth={1.8} />,
+    icon: <Gauge size={22} strokeWidth={2} />,
     badge: 'RF-25 · capacity.pulse',
     title: 'Semáforo Predictivo Live',
     description: 'Algoritmo en tiempo real que evalúa errores e interrupciones en ventanas de 21 días para anticipar riesgos.',
@@ -86,14 +90,14 @@ const stacks = [
     featured: true,
     headerTelemetria: 'Motor capacity.pulse Live',
     metrics: [
-      { icon: <Cpu size={14} strokeWidth={1.8} />, label: 'capacity.pulse Score', value: '18 — Estable', help: 'Índice de fatiga operativa que previene el síndrome de burnout.' },
-      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'Ventana Analítica', value: '7 CTEs · 21 Días', help: 'Análisis temporal retrospectivo para detectar cuellos de botella.' },
-      { icon: <Activity size={14} strokeWidth={1.8} />, label: 'Rebalanceo WBS', value: '0 Bloqueos', help: 'Flujo de trabajo continuo sin dependencias que frenen el sprint.' },
+      { icon: <Cpu size={14} strokeWidth={2} />, label: 'capacity.pulse Score', value: '18 — Estable', help: 'Índice de fatiga operativa que previene el síndrome de burnout.' },
+      { icon: <Layers size={14} strokeWidth={2} />, label: 'Ventana Analítica', value: '7 CTEs · 21 Días', help: 'Análisis temporal retrospectivo para detectar cuellos de botella.' },
+      { icon: <Activity size={14} strokeWidth={2} />, label: 'Rebalanceo WBS', value: '0 Bloqueos', help: 'Flujo de trabajo continuo sin dependencias que frenen el sprint.' },
     ]
   },
   {
     id: 3,
-    icon: <Globe2 size={22} strokeWidth={1.8} />,
+    icon: <DatabaseZap size={22} strokeWidth={2} />,
     badge: 'RF-28 · Alianza Brasil',
     title: 'ETL Brasil & pg_trgm',
     description: 'Pipeline batch desatendido con exportaciones ISO 8601 UTC y motor Snippet.inject por trigramas en PostgreSQL.',
@@ -101,9 +105,9 @@ const stacks = [
     featured: false,
     headerTelemetria: 'Integración Internacional & Trigrams',
     metrics: [
-      { icon: <Terminal size={14} strokeWidth={1.8} />, label: 'Formato Global', value: 'ISO 8601 UTC', help: 'Estandarización de fechas para intercambio seguro con Brasil.' },
-      { icon: <ShieldCheck size={14} strokeWidth={1.8} />, label: 'Integridad', value: 'Firma SHA-256', help: 'Sello criptográfico que certifica que los datos no fueron alterados.' },
-      { icon: <Layers size={14} strokeWidth={1.8} />, label: 'Búsqueda GIN', value: 'pg_trgm < 50 ms', help: 'Búsqueda difusa de fragmentos de código a velocidad ultrarrápida.' },
+      { icon: <Globe2 size={14} strokeWidth={2} />, label: 'Formato Global', value: 'ISO 8601 UTC', help: 'Estandarización de fechas para intercambio seguro con Brasil.' },
+      { icon: <ShieldCheck size={14} strokeWidth={2} />, label: 'Integridad', value: 'Firma SHA-256', help: 'Sello criptográfico que certifica que los datos no fueron alterados.' },
+      { icon: <Binary size={14} strokeWidth={2} />, label: 'Búsqueda GIN', value: 'pg_trgm < 50 ms', help: 'Búsqueda difusa de fragmentos de código a velocidad ultrarrápida.' },
     ]
   }
 ];
@@ -147,10 +151,10 @@ export const Hero = () => {
         {/* Badge corporativo */}
         <motion.div
           variants={itemVariants}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md border border-zinc-200 dark:border-white/15 text-zinc-900 dark:text-zinc-100 text-xs md:text-sm font-semibold mb-7 shadow-md transition-colors duration-300"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md border border-zinc-200 dark:border-white/15 text-zinc-900 dark:text-zinc-100 text-xs md:text-sm font-bold mb-7 shadow-md transition-colors duration-300"
         >
-          <Sparkles size={15} className="text-blue-600 dark:text-blue-400" />
-          Ingeniería de Software de Alto Nivel & Control Predictivo
+          <Terminal size={14} className="text-blue-600 dark:text-blue-400" />
+          <span>Ingeniería de Software de Alto Nivel & Control Predictivo</span>
         </motion.div>
 
         {/* H1 */}
@@ -276,10 +280,10 @@ export const Hero = () => {
                 {/* Top row */}
                 <div>
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-colors
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover/stack:scale-110 group-hover/stack:rotate-2
                       ${s.featured
-                        ? 'bg-blue-600 text-white shadow-blue-600/30'
-                        : 'bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 group-hover/stack:bg-blue-600 group-hover/stack:text-white group-hover/stack:border-blue-600'
+                        ? 'bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-500 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
+                        : 'bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-200 group-hover/stack:bg-gradient-to-tr group-hover/stack:from-blue-600 group-hover/stack:to-blue-500 group-hover/stack:text-white group-hover/stack:border-blue-500 group-hover/stack:shadow-blue-500/20'
                       }`}>
                       {s.icon}
                     </div>

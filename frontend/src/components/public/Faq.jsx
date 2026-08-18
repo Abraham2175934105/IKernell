@@ -79,8 +79,8 @@ export const Faq = () => {
         {/* Header FAQs */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white flex items-center justify-center shadow-sm">
-              <HelpCircle size={22} />
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner">
+              <HelpCircle size={20} strokeWidth={2} />
             </div>
             <div>
               <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">Preguntas Frecuentes</h3>

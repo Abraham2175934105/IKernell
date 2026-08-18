@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Eye, Globe2, ArrowUpRight } from 'lucide-react';
+import { Target, Eye, Globe2, Compass, TrendingUp, Building2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const containerVariants = {
@@ -24,21 +24,21 @@ const itemVariants = {
 
 const strategies = [
   {
-    icon: <Target size={26} />,
+    icon: <Compass size={24} strokeWidth={2} />,
     title: 'Misión',
     description: 'Proveer productos de software robustos y seguros que resuelvan desafíos operativos complejos mediante metodologías ágiles, estándares de desarrollo de grado empresarial y algoritmos de mitigación proactiva de riesgos.',
     image: "https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     accent: false
   },
   {
-    icon: <Eye size={26} />,
+    icon: <TrendingUp size={24} strokeWidth={2} />,
     title: 'Visión',
     description: 'Ser reconocidos internacionalmente como el referente tecnológico líder en ingeniería de software predictiva, expandiendo nuestras alianzas en Latinoamérica y consolidando la integración de procesos automatizados ETL.',
     image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     accent: false
   },
   {
-    icon: <Globe2 size={26} />,
+    icon: <Globe2 size={24} strokeWidth={2} />,
     title: 'Alianza Brasil',
     description: 'Convenio de cooperación tecnológica que unifica métricas operativas y formatos internacionales de fechas/monedas mediante transferencia segura de datos automatizados (RF-28 a RF-30).',
     image: "https://images.unsplash.com/photo-1483478550801-ceba5fe50e8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -62,8 +62,8 @@ export const Strategy = () => {
           variants={itemVariants}
           className="text-center mb-14 md:mb-20"
         >
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-5">
-            Corporativo
+          <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-5">
+            <Target size={13} /> Corporativo
           </span>
           <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-4">
             Lineamientos Estratégicos
@@ -98,10 +98,10 @@ export const Strategy = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent dark:from-zinc-900 dark:via-zinc-900/40 dark:to-transparent" />
                 
                 {/* Icon Badge */}
-                <div className={`absolute bottom-4 left-6 w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-colors duration-300 ${
+                <div className={`absolute bottom-4 left-6 w-13 h-13 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-3 ${
                   item.accent 
-                    ? 'bg-blue-600 text-white shadow-blue-600/30'
-                    : 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600'
+                    ? 'bg-gradient-to-tr from-blue-700 to-indigo-600 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
+                    : 'bg-white/95 dark:bg-zinc-800/95 text-zinc-800 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700/90 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-blue-500 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-blue-500/25'
                 }`}>
                   {item.icon}
                 </div>
