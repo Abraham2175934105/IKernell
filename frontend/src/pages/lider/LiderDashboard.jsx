@@ -1102,17 +1102,17 @@ export const LiderDashboard = () => {
           className="space-y-6"
         >
           {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-            <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-10 sm:p-14 text-center max-w-2xl mx-auto shadow-sm my-4">
-              <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
-                <Layers size={32} />
+            <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-10 sm:p-14 text-center max-w-2xl mx-auto shadow-sm my-4 space-y-2">
+              <div className="w-16 h-16 rounded-3xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mx-auto mb-4 border border-zinc-200 dark:border-zinc-700 shadow-inner">
+                <FolderGit2 size={32} className="text-zinc-800 dark:text-zinc-200" />
               </div>
-              <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
+              <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2 tracking-tight">
                 Vista Global Activa. Seleccione un proyecto específico en el menú superior para gestionar su Estructura de Desglose de Trabajo (WBS) y asignar actividades.
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto font-medium">
                 La estructura de desglose de trabajo (fases, etapas y asignación de tareas a desarrolladores) requiere el contexto de un proyecto individual y no puede operarse en la vista global corporativa.
               </p>
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -1127,7 +1127,7 @@ export const LiderDashboard = () => {
                     setNuevoProyectoErrors({});
                     setShowNuevoProyectoModal(true);
                   }}
-                  className="gradient-button text-xs py-2 px-4 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+                  className="gradient-button text-xs py-2.5 px-4 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md"
                   title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11 / RF-13)"
                 >
                   <FolderPlus size={14} />
@@ -1138,11 +1138,11 @@ export const LiderDashboard = () => {
                     key={p.idProyecto}
                     type="button"
                     onClick={() => seleccionarProyecto(p)}
-                    className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+                    className="outline-button text-xs py-2.5 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:border-zinc-400 dark:hover:border-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                     title={`Seleccionar proyecto [PRJ-00${p.idProyecto}] ${p.nombre}`}
                   >
-                    <FolderGit2 size={13} className="text-blue-500" />
-                    <span>{p.nombre}</span>
+                    <FolderGit2 size={13} className="text-zinc-600 dark:text-zinc-400" />
+                    <span>[PRJ-00{p.idProyecto}] {p.nombre}</span>
                   </button>
                 ))}
               </div>
