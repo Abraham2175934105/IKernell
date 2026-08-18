@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
@@ -7,7 +7,7 @@ import { EtlBrasil } from '../../components/dashboard/EtlBrasil';
 import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
 import { 
   Briefcase, Layers, Plus, Activity, Sparkles, Download, 
-  Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, X,
+  Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, ChevronDown, X,
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
   FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock
@@ -66,7 +66,41 @@ const EstadoAtencionBadge = ({ estado }) => {
   );
 };
 
-/* ─── Funciones Auxiliares de Formateo y Cronograma ─── */
+/* ─── Funciones Auxiliares de Formateo, Cronograma y Estados ─── */
+const getEstadoBadgeClasses = (estado) => {
+  const est = (estado || 'ACTIVO').toUpperCase();
+  switch (est) {
+    case 'ACTIVO':
+      return {
+        badge: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
+        dot: 'bg-emerald-500'
+      };
+    case 'EN_PLANIFICACION':
+    case 'PLANIFICACION':
+      return {
+        badge: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800',
+        dot: 'bg-blue-500'
+      };
+    case 'FINALIZADO':
+    case 'COMPLETADO':
+      return {
+        badge: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/60 dark:text-violet-300 dark:border-violet-800',
+        dot: 'bg-violet-500'
+      };
+    case 'INHABILITADO':
+    case 'PAUSADO':
+      return {
+        badge: 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700',
+        dot: 'bg-zinc-400'
+      };
+    default:
+      return {
+        badge: 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700',
+        dot: 'bg-zinc-400'
+      };
+  }
+};
+
 const formatearFechaHumana = (fechaStr) => {
   if (!fechaStr) return 'Fecha no definida';
   try {
@@ -107,6 +141,8 @@ export const LiderDashboard = () => {
   const [activeTab, setActiveTab] = useState('wbs');
   const [proyectos, setProyectos] = useState([]);
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
+  const [dropdownProyectosOpen, setDropdownProyectosOpen] = useState(false);
+  const dropdownProyectosRef = useRef(null);
   const [etapas, setEtapas] = useState([]);
   const [desarrolladores, setDesarrolladores] = useState([]);
   const [errores, setErrores] = useState([]);
@@ -143,7 +179,7 @@ export const LiderDashboard = () => {
   const [actividadAReasignar, setActividadAReasignar] = useState(null);
 
   const [showAtenderModal, setShowAtenderModal] = useState(false);
-  const [showFinalizarModal, setShowFinalizarModal] = useState(false);
+  const [showConfirmFinalizar, setShowConfirmFinalizar] = useState(false);
   const [submittingFinalizar, setSubmittingFinalizar] = useState(false);
   const [incidenciaAAtender, setIncidenciaAAtender] = useState(null);
   const [atencionForm, setAtencionForm] = useState({
@@ -225,7 +261,18 @@ export const LiderDashboard = () => {
     }
   }, [api]);
 
-  // Consulta la lista de proyectos asignados al líder
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownProyectosRef.current && !dropdownProyectosRef.current.contains(event.target)) {
+        setDropdownProyectosOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Cargar proyectos asignados al líder
   const cargarProyectos = useCallback(async () => {
     try {
       setLoadingProyectos(true);
@@ -561,7 +608,7 @@ export const LiderDashboard = () => {
       setSubmittingFinalizar(true);
       const res = await api.patch(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/finalizar`);
       toast.success('Proyecto finalizado exitosamente. Su WBS ha sido congelada y los desarrolladores han sido liberados.');
-      setShowFinalizarModal(false);
+      setShowConfirmFinalizar(false);
 
       const proyectoActualizado = {
         ...proyectoSeleccionado,
@@ -664,44 +711,166 @@ export const LiderDashboard = () => {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap shrink-0 min-w-0 max-w-full">
-          <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all max-w-full sm:max-w-xs md:max-w-sm">
-            {proyectoSeleccionado?.idProyecto === 'GLOBAL' ? (
-              <Globe size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />
-            ) : (
-              <FolderGit2 size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-            )}
-            
-            <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 shrink-0">Proyecto:</span>
-            
-            {loadingProyectos ? (
-              <div className="text-xs flex items-center gap-1.5 text-zinc-400 font-medium pr-2">
-                <Loader2 size={12} className="animate-spin text-blue-500" /> Sincronizando...
+          {/* Custom Dropdown Selector de Proyectos */}
+          <div className="relative" ref={dropdownProyectosRef}>
+            <button
+              type="button"
+              onClick={() => setDropdownProyectosOpen(prev => !prev)}
+              disabled={loadingProyectos}
+              className="flex items-center justify-between gap-2.5 bg-zinc-50 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl px-3.5 py-2 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer min-w-[260px] sm:min-w-[320px] max-w-full disabled:opacity-60"
+              title="Selecciona el proyecto activo o la vista global corporativa"
+            >
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {loadingProyectos ? (
+                  <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate">
+                    <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />
+                    <span>Sincronizando proyectos...</span>
+                  </div>
+                ) : (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                      <Globe size={13} />
+                    </div>
+                    <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                      [Vista Global Corporativa]
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                      <FolderGit2 size={13} />
+                    </div>
+                    <span className="font-mono text-[0.7rem] font-extrabold text-zinc-500 dark:text-zinc-400 shrink-0">
+                      [PRJ-00{proyectoSeleccionado.idProyecto}]
+                    </span>
+                    <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate max-w-[120px] sm:max-w-[160px]" title={proyectoSeleccionado.nombre}>
+                      {proyectoSeleccionado.nombre}
+                    </span>
+                    {(() => {
+                      const estInfo = getEstadoBadgeClasses(proyectoSeleccionado.estado);
+                      return (
+                        <span className={`hidden sm:inline-flex items-center gap-1 text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-full border shrink-0 ${estInfo.badge}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
+                          <span>{proyectoSeleccionado.estado || 'ACTIVO'}</span>
+                        </span>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
-            ) : (
-              <select
-                value={proyectoSeleccionado?.idProyecto || 'GLOBAL'}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'GLOBAL') {
-                    seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
-                  } else {
-                    const proj = proyectos?.find(p => p?.idProyecto === parseInt(val));
-                    if (proj) seleccionarProyecto(proj);
-                  }
-                }}
-                className="bg-transparent border-0 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:ring-0 focus:outline-none cursor-pointer pr-4 py-0.5 max-w-[170px] sm:max-w-[220px] md:max-w-[260px] truncate"
-                title="Selecciona el proyecto activo o la vista global corporativa"
-              >
-                <option value="GLOBAL" className="dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
-                  [Vista Global Corporativa] Todos los Proyectos
-                </option>
-                {proyectos?.map(p => (
-                  <option key={p?.idProyecto} value={p?.idProyecto} className="dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
-                    [PRJ-00{p?.idProyecto}] {p?.nombre}
-                  </option>
-                ))}
-              </select>
-            )}
+
+              <ChevronDown 
+                size={15} 
+                className={`text-zinc-400 dark:text-zinc-500 shrink-0 transition-transform duration-200 ${dropdownProyectosOpen ? 'rotate-180 text-blue-500' : ''}`} 
+              />
+            </button>
+
+            {/* Menú Desplegable Flotante */}
+            <AnimatePresence>
+              {dropdownProyectosOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute right-0 top-full mt-2 w-full min-w-[300px] sm:min-w-[380px] max-w-lg z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-xl rounded-xl max-h-80 overflow-y-auto p-1.5 space-y-1"
+                >
+                  {/* Opción 1: Vista Global Corporativa */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                      setDropdownProyectosOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL')
+                        ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                        : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                        <Globe size={13} />
+                      </div>
+                      <div className="text-left truncate">
+                        <span className="block truncate font-extrabold">[Vista Global Corporativa] Todos los Proyectos</span>
+                        <span className="block text-[0.65rem] text-zinc-500 font-medium truncate">Consolidado general de métricas e incidencias</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        GLOBAL
+                      </span>
+                      {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') && (
+                        <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                      )}
+                    </div>
+                  </button>
+
+                  <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+
+                  {/* Mapeo de Proyectos */}
+                  {proyectos && proyectos.length > 0 ? (
+                    proyectos.map(p => {
+                      const isSelected = proyectoSeleccionado?.idProyecto === p?.idProyecto;
+                      const estInfo = getEstadoBadgeClasses(p?.estado);
+
+                      return (
+                        <button
+                          key={p?.idProyecto}
+                          type="button"
+                          onClick={() => {
+                            seleccionarProyecto(p);
+                            setDropdownProyectosOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                              : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center justify-center shrink-0">
+                              <FolderGit2 size={13} />
+                            </div>
+                            <div className="text-left min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="font-mono text-[0.65rem] font-extrabold text-zinc-500 dark:text-zinc-400 shrink-0">
+                                  [PRJ-00{p?.idProyecto}]
+                                </span>
+                                <span className="font-extrabold text-xs truncate max-w-[150px] sm:max-w-[200px]" title={p?.nombre}>
+                                  {p?.nombre}
+                                </span>
+                              </div>
+                              {p?.cliente && (
+                                <span className="text-[0.65rem] text-zinc-400 block truncate">
+                                  {p.cliente}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Micro-badge de Estado y Check */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`inline-flex items-center gap-1.5 text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-full border ${estInfo.badge}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
+                              <span>{p?.estado || 'ACTIVO'}</span>
+                            </span>
+                            {isSelected && (
+                              <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="p-3 text-center text-xs text-zinc-400">
+                      No hay proyectos disponibles
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <button
@@ -789,7 +958,7 @@ export const LiderDashboard = () => {
                 {!isProyectoFinalizado && (
                   <button
                     type="button"
-                    onClick={() => setShowFinalizarModal(true)}
+                    onClick={() => setShowConfirmFinalizar(true)}
                     className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer shadow-2xs"
                     title="Cerrar formalmente el ciclo de vida del proyecto, congelar su WBS y liberar la carga de desarrolladores (RF-20)"
                   >
@@ -2280,9 +2449,9 @@ export const LiderDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal: Confirmación de Seguridad para Finalizar Proyecto */}
+      {/* Modal: Doble Confirmación Defensiva para Finalizar Proyecto */}
       <AnimatePresence>
-        {showFinalizarModal && (
+        {showConfirmFinalizar && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -2292,12 +2461,12 @@ export const LiderDashboard = () => {
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4"
             >
               <div className="flex items-center gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 flex items-center justify-center shrink-0 shadow-inner">
                   <AlertTriangle size={22} />
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">
-                    ¿Finalizar Proyecto Formalmente?
+                    Confirmar Finalización del Proyecto
                   </h3>
                   <span className="text-xs text-zinc-500 font-medium">
                     [PRJ-00{proyectoSeleccionado?.idProyecto}] {proyectoSeleccionado?.nombre}
@@ -2307,19 +2476,14 @@ export const LiderDashboard = () => {
 
               <div className="p-4 rounded-2xl bg-red-50/60 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 text-xs text-red-900 dark:text-red-300 leading-relaxed font-medium space-y-2">
                 <p>
-                  Al finalizar el proyecto, se congelará su WBS y se liberará la carga de los desarrolladores. Esta acción no se puede deshacer.
+                  ¿Estás absolutamente seguro de que deseas dar por finalizado este proyecto? Esta acción cambiará el estado a COMPLETADO, congelará permanentemente el WBS y liberará la carga operativa de todos los desarrolladores asignados. Esta acción NO se puede deshacer.
                 </p>
-                <ul className="list-disc list-inside text-[0.7rem] text-zinc-600 dark:text-zinc-400 space-y-0.5 pt-1 font-sans">
-                  <li>Todas las fases y actividades pasarán a estado <strong>FINALIZADA</strong>.</li>
-                  <li>Se desasignará la nómina de desarrolladores liberando sus horas de trabajo.</li>
-                  <li>El Semáforo Predictivo y ETL Brasil continuarán disponibles para auditoría.</li>
-                </ul>
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2">
+              <div className="flex justify-end gap-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                 <button
                   type="button"
-                  onClick={() => setShowFinalizarModal(false)}
+                  onClick={() => setShowConfirmFinalizar(false)}
                   disabled={submittingFinalizar}
                   className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
                 >
@@ -2331,7 +2495,15 @@ export const LiderDashboard = () => {
                   disabled={submittingFinalizar}
                   className="bg-red-600 hover:bg-red-700 text-white text-xs py-2 px-4 rounded-xl font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 transition-colors"
                 >
-                  {submittingFinalizar ? <><Loader2 size={13} className="animate-spin" /> Finalizando...</> : <><CheckCircle2 size={14} /> Confirmar Cierre</>}
+                  {submittingFinalizar ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" /> Finalizando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={14} /> Sí, Finalizar Proyecto
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>
