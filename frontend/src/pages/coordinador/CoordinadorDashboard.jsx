@@ -590,9 +590,12 @@ export const CoordinadorDashboard = () => {
   const liderPct = totalCount > 0 ? Math.round((lideresCount / totalCount) * 100) : 0;
   const coordPct = totalCount > 0 ? Math.round((coordCount / totalCount) * 100) : 0;
 
-  const getTopSkills = (list) => {
+  const getTopSkillsByRole = (list, selectedRoles) => {
     const counts = {};
     (list || []).forEach(t => {
+      if (selectedRoles.length > 0 && !selectedRoles.includes(t.rol)) {
+        return;
+      }
       const spec = t.especialidad || '';
       let skills = [];
       if (spec.includes('• [')) {
@@ -611,10 +614,40 @@ export const CoordinadorDashboard = () => {
     });
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
+      .slice(0, 10);
   };
 
-  const topSkills = getTopSkills(trabajadores);
+  const topSkills = getTopSkillsByRole(trabajadores, rolesSeleccionados);
+
+  const getFilterExplanationText = () => {
+    if (activeFiltersCount === 0) {
+      return `Mostrando todo el personal registrado (${totalCount} trabajadores en total).`;
+    }
+
+    const parts = [];
+    if (rolesSeleccionados.length > 0) {
+      const roleNames = rolesSeleccionados.map(r => 
+        r === 'DESARROLLADOR' ? 'Desarrolladores' : r === 'LIDER' ? 'Líderes de Proyecto' : 'Coordinadores'
+      ).join(', ');
+      parts.push(roleNames);
+    } else {
+      parts.push('Personal general');
+    }
+
+    if (estadoSeleccionado !== 'TODOS') {
+      parts.push(estadoSeleccionado === 'ACTIVO' ? 'Habilitados' : 'Inhabilitados');
+    }
+
+    if (techsSeleccionadas.length > 0) {
+      parts.push(`con especialidad en [${techsSeleccionadas.join(', ')}]`);
+    }
+
+    if (searchQuery) {
+      parts.push(`coincidiendo con "${searchQuery}"`);
+    }
+
+    return `Viendo ${filteredTrabajadores.length} ${parts.join(' ')}.`;
+  };
 
   const getInitials = (nombre, apellido) => {
     const n = (nombre || '').trim().charAt(0);
@@ -631,7 +664,7 @@ export const CoordinadorDashboard = () => {
         metric2: loading ? '...' : `Solicitudes: ${solicitudesPendientes} Pendientes`
       }}
     >
-      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (Consola de Filtrado Avanzado Multi-Selección) */}
+      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (Consola de Filtrado Organizada y Adaptativa) */}
       {activeTab === 'personal' && (
         <motion.div 
           key="personal"
@@ -677,12 +710,12 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Consola Única de Filtrado Avanzado & Gestión (Multi-Select Control) */}
+          {/* Consola Única de Filtrado Didáctico & Adaptativo (Foolproof Control Console) */}
           <motion.div 
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5"
           >
-            {/* 1. Fila de Encabezado de Consola & Acciones Principal */}
+            {/* 1. Encabezado Didáctico & Banner Explicativo en Lenguaje Sencillo */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
               
               <div className="flex items-center gap-3">
@@ -691,18 +724,18 @@ export const CoordinadorDashboard = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
-                    Consola de Personal & Filtros Combinados
+                    Panel de Búsqueda y Filtrado Inteligente
                     <span className="text-xs font-mono font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
-                      {filteredTrabajadores.length} / {totalCount} Mostrando
+                      {filteredTrabajadores.length} / {totalCount} Encontrados
                     </span>
                   </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                    Combina libremente múltiples roles, tecnologías y estados sin duplicidad de controles
+                  <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1.5 mt-0.5">
+                    <Sparkles size={13} /> {getFilterExplanationText()}
                   </p>
                 </div>
               </div>
 
-              {/* Resumen de Filtros Activos & Botón Limpiar */}
+              {/* Botón de Reseteo Rápido */}
               <div className="flex items-center gap-2 shrink-0">
                 {activeFiltersCount > 0 && (
                   <button
@@ -710,10 +743,9 @@ export const CoordinadorDashboard = () => {
                     onClick={handleClearAllFilters}
                     className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 border border-red-200 dark:border-red-800 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                   >
-                    <X size={14} /> Limpiar Filtros ({activeFiltersCount})
+                    <RotateCcw size={13} /> Ver Todo el Personal ({activeFiltersCount} activo)
                   </button>
                 )}
-
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(true)}
@@ -726,50 +758,55 @@ export const CoordinadorDashboard = () => {
 
             </div>
 
-            {/* 2. Buscador por Texto Libre */}
-            <div className="relative w-full">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Escribe para buscar por nombre, apellido, número de cédula, correo o título profesional..."
-                className="input-field pl-11 pr-10 py-3 text-sm bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              )}
+            {/* 2. Paso 1: Buscador Directo por Nombre / Cédula */}
+            <div className="space-y-1.5">
+              <label className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                <Search size={13} className="text-blue-500" /> Búsqueda Directa por Texto Libre:
+              </label>
+              <div className="relative w-full">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Escribe el nombre, apellido, cédula o correo del trabajador..."
+                  className="input-field pl-11 pr-10 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* 3. Bloque de Selección Múltiple: Roles & Estado */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1">
+            {/* 3. Paso 2: Selección de Roles y Estado Lógico */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
               
-              {/* A. Selección Múltiple de Roles (Check Chips) */}
+              {/* A. Selección de Roles (Contextual) */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <Briefcase size={13} className="text-amber-500" /> Filtrar por Roles (Selección Múltiple):
+                    <Briefcase size={13} className="text-amber-500" /> Paso 1: Selecciona los Roles a consultar:
                   </span>
                   {rolesSeleccionados.length > 0 && (
                     <button 
                       onClick={() => setRolesSeleccionados([])}
                       className="text-[0.65rem] font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
                     >
-                      Desmarcar todos
+                      Ver Todos los Roles
                     </button>
                   )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { key: 'DESARROLLADOR', label: `Desarrolladores (${devsCount})`, icon: Code2 },
-                    { key: 'LIDER', label: `Líderes de Proyecto (${lideresCount})`, icon: Briefcase },
-                    { key: 'COORDINADOR', label: `Coordinadores (${coordCount})`, icon: Shield }
+                    { key: 'DESARROLLADOR', label: `Desarrolladores (${devsCount})`, icon: Code2, badge: 'Desarrollo WBS' },
+                    { key: 'LIDER', label: `Líderes (${lideresCount})`, icon: Briefcase, badge: 'Gestión Ágil' },
+                    { key: 'COORDINADOR', label: `Coordinadores (${coordCount})`, icon: Shield, badge: 'Administrativos' }
                   ].map(r => {
                     const isSelected = rolesSeleccionados.includes(r.key);
                     const IconComponent = r.icon;
@@ -778,9 +815,9 @@ export const CoordinadorDashboard = () => {
                         key={r.key}
                         type="button"
                         onClick={() => handleToggleRoleFilter(r.key)}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                           isSelected
-                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-xs ring-2 ring-zinc-500/20'
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-xs ring-2 ring-zinc-500/20 font-bold'
                             : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
                         }`}
                       >
@@ -789,7 +826,7 @@ export const CoordinadorDashboard = () => {
                         }`}>
                           {isSelected ? <Check size={11} /> : '+'}
                         </div>
-                        <IconComponent size={13} className="shrink-0" />
+                        <IconComponent size={14} className="shrink-0" />
                         <span>{r.label}</span>
                       </button>
                     );
@@ -797,19 +834,19 @@ export const CoordinadorDashboard = () => {
                 </div>
               </div>
 
-              {/* B. Selección de Estado Lógico */}
+              {/* B. Estado Lógico del Acceso */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <BadgeCheck size={13} className="text-emerald-500" /> Filtrar por Estado Lógico:
+                    <BadgeCheck size={13} className="text-emerald-500" /> Paso 2: Estado de Permiso de Acceso:
                   </span>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { key: 'TODOS', label: `Todos (${totalCount})` },
-                    { key: 'ACTIVO', label: `Habilitados (${activosCount})` },
-                    { key: 'INHABILITADO', label: `Inhabilitados (${inactivosCount})` }
+                    { key: 'TODOS', label: `Todos los Estados (${totalCount})` },
+                    { key: 'ACTIVO', label: `Solo Habilitados (${activosCount})` },
+                    { key: 'INHABILITADO', label: `Solo Inhabilitados (${inactivosCount})` }
                   ].map(s => {
                     const isSelected = estadoSeleccionado === s.key;
                     return (
@@ -817,9 +854,9 @@ export const CoordinadorDashboard = () => {
                         key={s.key}
                         type="button"
                         onClick={() => setEstadoSeleccionado(s.key)}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                           isSelected
-                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30'
+                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
                             : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
                         }`}
                       >
@@ -832,19 +869,22 @@ export const CoordinadorDashboard = () => {
 
             </div>
 
-            {/* 4. Selección Múltiple de Tecnologías & Stack Técnico */}
+            {/* 4. Paso 3: Habilidades Adaptativas según el Rol Seleccionado */}
             {topSkills.length > 0 && (
               <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <Cpu size={13} className="text-blue-500" /> Filtrar por Tecnologías & Habilidades (Selección Múltiple):
+                    <Cpu size={13} className="text-blue-500" />
+                    Paso 3: Habilidades de {rolesSeleccionados.length === 1 
+                      ? (rolesSeleccionados[0] === 'DESARROLLADOR' ? 'Desarrollo WBS' : rolesSeleccionados[0] === 'LIDER' ? 'Gestión Ágil' : 'Administración Operativa')
+                      : 'Personal Seleccionado'}:
                   </span>
                   {techsSeleccionadas.length > 0 && (
                     <button 
                       onClick={() => setTechsSeleccionadas([])}
                       className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                     >
-                      Limpiar tecnologías seleccionadas ({techsSeleccionadas.length})
+                      Limpiar habilidades ({techsSeleccionadas.length})
                     </button>
                   )}
                 </div>
@@ -859,7 +899,7 @@ export const CoordinadorDashboard = () => {
                         onClick={() => handleToggleTechFilter(skillName)}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all cursor-pointer border ${
                           isSelected
-                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30'
+                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
                             : 'bg-zinc-50 hover:bg-blue-50/80 dark:bg-zinc-800/60 dark:hover:bg-blue-950/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700/80'
                         }`}
                       >
@@ -880,7 +920,6 @@ export const CoordinadorDashboard = () => {
                 </div>
               </div>
             )}
-
 
           </motion.div>
 
