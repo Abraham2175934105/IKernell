@@ -225,14 +225,11 @@ export const LiderDashboard = () => {
   const [filtroDevInc, setFiltroDevInc] = useState('TODOS');
   const [filtroFechaTipo, setFiltroFechaTipo] = useState('TODAS');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
-  const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
-
-  const [submittingActividad, setSubmittingActividad] = useState(false);
-  const [submittingEtapa, setSubmittingEtapa] = useState(false);
-  const [submittingReasignacion, setSubmittingReasignacion] = useState(false);
-  const [submittingAtencion, setSubmittingAtencion] = useState(false);
-
   const [showGuiaUsuarioIncidencias, setShowGuiaUsuarioIncidencias] = useState(true);
+
+  const [showFiltroFechasModal, setShowFiltroFechasModal] = useState(false);
+  const [tempFechaDesde, setTempFechaDesde] = useState('');
+  const [tempFechaHasta, setTempFechaHasta] = useState('');
 
   const [nuevaActividad, setNuevaActividad] = useState({
     idEtapa: '',
@@ -1048,86 +1045,7 @@ export const LiderDashboard = () => {
         </div>
       </motion.div>
 
-      {/* Asistente Reactivo y Diagnóstico Proactivo del Sistema */}
-      {(cantErroresActivos > 0 || cantContingenciasPendientes > 0 || cantDevsAltaCarga > 0) && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 dark:from-amber-950/40 dark:via-orange-950/40 dark:to-amber-950/40 border border-amber-300 dark:border-amber-700/80 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-950 dark:text-amber-200 font-extrabold text-xs">
-              <Sparkles size={16} className="text-amber-600 dark:text-amber-400 shrink-0 animate-pulse" />
-              <span>Asistente Reactivo: Diagnóstico Dinámico de Rendimiento y Salud Operativa</span>
-            </div>
-            <span className="text-[0.62rem] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-900/80 text-amber-900 dark:text-amber-100 shadow-2xs">
-              Sugerencias en Tiempo Real
-            </span>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-            {cantErroresActivos > 0 && (
-              <div className="p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200 dark:border-amber-900/60 shadow-2xs space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[0.7rem] font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
-                    <Bug size={13} />
-                    <span>{cantErroresActivos} Errores Activos</span>
-                  </span>
-                  <button 
-                    onClick={() => setActiveTab('incidencias')} 
-                    className="text-[0.65rem] font-extrabold text-blue-600 hover:underline cursor-pointer"
-                  >
-                    Atender ➔
-                  </button>
-                </div>
-                <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
-                  Hay fallos técnicos en espera. Dirígete a la Consola de Incidencias para investigarlos o marcarlos como resueltos.
-                </p>
-              </div>
-            )}
-
-            {cantContingenciasPendientes > 0 && (
-              <div className="p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200 dark:border-amber-900/60 shadow-2xs space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[0.7rem] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                    <Clock size={13} />
-                    <span>{cantContingenciasPendientes} Contingencias Pendientes</span>
-                  </span>
-                  <button 
-                    onClick={() => setActiveTab('incidencias')} 
-                    className="text-[0.65rem] font-extrabold text-blue-600 hover:underline cursor-pointer"
-                  >
-                    Revisar ➔
-                  </button>
-                </div>
-                <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
-                  Tiempos de interrupción externa registrados por el equipo. Revisa el expediente para validar el impacto en el sprint.
-                </p>
-              </div>
-            )}
-
-            {cantDevsAltaCarga > 0 && (
-              <div className="p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200 dark:border-amber-900/60 shadow-2xs space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[0.7rem] font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
-                    <Activity size={13} />
-                    <span>{cantDevsAltaCarga} Desarrollador(es) Carga Alta</span>
-                  </span>
-                  <button 
-                    onClick={() => setActiveTab('burnout')} 
-                    className="text-[0.65rem] font-extrabold text-blue-600 hover:underline cursor-pointer"
-                  >
-                    Analizar ➔
-                  </button>
-                </div>
-                <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
-                  Integrantes del equipo superan el 80% de ocupación. Usa el Predictor de Burnout para balancear tareas WBS.
-                </p>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      )}
 
       {/* Tarjeta de Detalles del Proyecto Seleccionado (Exclusiva de la sección WBS) */}
       {activeTab === 'wbs' && proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (() => {
@@ -1795,7 +1713,15 @@ export const LiderDashboard = () => {
                 </span>
                 <select
                   value={filtroFechaTipo}
-                  onChange={(e) => setFiltroFechaTipo(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFiltroFechaTipo(val);
+                    if (val === 'RANGO') {
+                      setTempFechaDesde(filtroFechaDesde);
+                      setTempFechaHasta(filtroFechaHasta);
+                      setShowFiltroFechasModal(true);
+                    }
+                  }}
                   title="Filtrar incidencias por período o rango de fechas"
                   className="input-field py-1 px-2.5 text-xs font-bold"
                 >
@@ -1808,37 +1734,39 @@ export const LiderDashboard = () => {
                 </select>
               </div>
 
-              {/* Rango Personalizado de Fechas (Si se selecciona 'RANGO') */}
-              {filtroFechaTipo === 'RANGO' && (
-                <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/80 p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                  <div className="flex items-center gap-1">
-                    <span className="text-[0.6rem] font-bold text-zinc-500">Desde:</span>
-                    <input
-                      type="date"
-                      value={filtroFechaDesde}
-                      onChange={(e) => setFiltroFechaDesde(e.target.value)}
-                      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-0.5 text-[0.7rem] font-mono font-bold text-zinc-800 dark:text-zinc-200"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[0.6rem] font-bold text-zinc-500">Hasta:</span>
-                    <input
-                      type="date"
-                      value={filtroFechaHasta}
-                      onChange={(e) => setFiltroFechaHasta(e.target.value)}
-                      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-0.5 text-[0.7rem] font-mono font-bold text-zinc-800 dark:text-zinc-200"
-                    />
-                  </div>
-                  {(filtroFechaDesde || filtroFechaHasta) && (
-                    <button
-                      type="button"
-                      onClick={() => { setFiltroFechaDesde(''); setFiltroFechaHasta(''); }}
-                      className="text-[0.62rem] font-bold text-red-500 hover:underline px-1 cursor-pointer"
-                      title="Limpiar fechas"
-                    >
-                      Limpiar
-                    </button>
-                  )}
+              {/* Botón de Cambiar / Ajustar Fechas en Ventana Emergente */}
+              {(filtroFechaTipo === 'RANGO' || filtroFechaDesde || filtroFechaHasta) && (
+                <div className="flex items-center gap-2 bg-blue-50/80 dark:bg-blue-950/40 p-1 px-2.5 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempFechaDesde(filtroFechaDesde);
+                      setTempFechaHasta(filtroFechaHasta);
+                      setShowFiltroFechasModal(true);
+                    }}
+                    className="text-xs font-bold text-blue-700 dark:text-blue-300 inline-flex items-center gap-1.5 cursor-pointer hover:underline"
+                    title="Abrir ventana emergente para modificar las fechas seleccionadas"
+                  >
+                    <Calendar size={12} className="text-blue-600 dark:text-blue-400" />
+                    <span>
+                      {filtroFechaDesde && filtroFechaHasta 
+                        ? `${filtroFechaDesde} ➔ ${filtroFechaHasta}` 
+                        : 'Ingresar Rango de Fechas'}
+                    </span>
+                    <Edit3 size={11} className="text-blue-500 opacity-80" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFiltroFechaDesde('');
+                      setFiltroFechaHasta('');
+                      setFiltroFechaTipo('TODAS');
+                    }}
+                    className="p-1 text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
+                    title="Quitar filtro de fechas"
+                  >
+                    <X size={13} />
+                  </button>
                 </div>
               )}
             </div>
@@ -3573,6 +3501,162 @@ export const LiderDashboard = () => {
                 >
                   Cerrar
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Ventana Emergente (Modal): Selección de Rango de Fechas */}
+      <AnimatePresence>
+        {showFiltroFechasModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5"
+            >
+              <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800 shrink-0 shadow-2xs">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">
+                      Filtrar por Rango de Fechas
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Seleccione el período exacto de incidencias
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowFiltroFechasModal(false)}
+                  className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Preajustes Rápidos */}
+              <div>
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-400 block mb-2">Selección Rápida de Período:</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const hoy = new Date().toISOString().split('T')[0];
+                      setTempFechaDesde(hoy);
+                      setTempFechaHasta(hoy);
+                    }}
+                    className="py-1.5 px-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-[0.68rem] font-bold text-zinc-700 dark:text-zinc-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                  >
+                    Hoy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const hoy = new Date();
+                      const hace7 = new Date();
+                      hace7.setDate(hoy.getDate() - 7);
+                      setTempFechaDesde(hace7.toISOString().split('T')[0]);
+                      setTempFechaHasta(hoy.toISOString().split('T')[0]);
+                    }}
+                    className="py-1.5 px-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-[0.68rem] font-bold text-zinc-700 dark:text-zinc-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                  >
+                    7 Días
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const hoy = new Date();
+                      const hace30 = new Date();
+                      hace30.setDate(hoy.getDate() - 30);
+                      setTempFechaDesde(hace30.toISOString().split('T')[0]);
+                      setTempFechaHasta(hoy.toISOString().split('T')[0]);
+                    }}
+                    className="py-1.5 px-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-[0.68rem] font-bold text-zinc-700 dark:text-zinc-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                  >
+                    30 Días
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const hoy = new Date();
+                      const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+                      setTempFechaDesde(inicioMes.toISOString().split('T')[0]);
+                      setTempFechaHasta(hoy.toISOString().split('T')[0]);
+                    }}
+                    className="py-1.5 px-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-[0.68rem] font-bold text-zinc-700 dark:text-zinc-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                  >
+                    Este Mes
+                  </button>
+                </div>
+              </div>
+
+              {/* Entradas de Fechas */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">Fecha Inicial (Desde)</label>
+                  <input
+                    type="date"
+                    value={tempFechaDesde}
+                    onChange={(e) => setTempFechaDesde(e.target.value)}
+                    className="input-field py-2 font-mono font-bold text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">Fecha Final (Hasta)</label>
+                  <input
+                    type="date"
+                    value={tempFechaHasta}
+                    onChange={(e) => setTempFechaHasta(e.target.value)}
+                    className="input-field py-2 font-mono font-bold text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div className="flex justify-between items-center pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiltroFechaDesde('');
+                    setFiltroFechaHasta('');
+                    setTempFechaDesde('');
+                    setTempFechaHasta('');
+                    setFiltroFechaTipo('TODAS');
+                    setShowFiltroFechasModal(false);
+                  }}
+                  className="text-xs text-red-600 dark:text-red-400 font-bold hover:underline cursor-pointer"
+                >
+                  Limpiar Filtro
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowFiltroFechasModal(false)}
+                    className="outline-button text-xs py-2 px-3 font-bold cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFiltroFechaDesde(tempFechaDesde);
+                      setFiltroFechaHasta(tempFechaHasta);
+                      setFiltroFechaTipo('RANGO');
+                      setShowFiltroFechasModal(false);
+                      toast.success('Rango de fechas aplicado a la tabla.');
+                    }}
+                    className="gradient-button text-xs py-2 px-4 font-bold cursor-pointer shadow-sm"
+                  >
+                    Aplicar Fechas
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>
