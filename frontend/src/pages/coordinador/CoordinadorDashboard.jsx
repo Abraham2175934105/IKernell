@@ -157,10 +157,30 @@ export const CoordinadorDashboard = () => {
   const [togglingId, setTogglingId] = useState(null);
   const [togglingSolicitudId, setTogglingSolicitudId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filtroRol, setFiltroRol] = useState('TODOS'); // 'TODOS' | 'DESARROLLADOR' | 'LIDER' | 'COORDINADOR'
-  const [filtroEstado, setFiltroEstado] = useState('TODOS'); // 'TODOS' | 'ACTIVO' | 'INHABILITADO'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [rolesSeleccionados, setRolesSeleccionados] = useState([]); // [] = Todos
+  const [techsSeleccionadas, setTechsSeleccionadas] = useState([]); // [] = Todas
+  const [estadoSeleccionado, setEstadoSeleccionado] = useState('TODOS'); // 'TODOS' | 'ACTIVO' | 'INHABILITADO'
   const [filtroSolicitudes, setFiltroSolicitudes] = useState('TODAS'); // 'TODAS' | 'PENDIENTE' | 'ATENDIDA' | 'REABIERTA' | 'EN_PROCESO'
+
+  const handleToggleRoleFilter = (rolKey) => {
+    setRolesSeleccionados(prev =>
+      prev.includes(rolKey) ? prev.filter(r => r !== rolKey) : [...prev, rolKey]
+    );
+  };
+
+  const handleToggleTechFilter = (techName) => {
+    setTechsSeleccionadas(prev =>
+      prev.includes(techName) ? prev.filter(t => t !== techName) : [...prev, techName]
+    );
+  };
+
+  const handleClearAllFilters = () => {
+    setSearchQuery('');
+    setRolesSeleccionados([]);
+    setTechsSeleccionadas([]);
+    setEstadoSeleccionado('TODOS');
+  };
   
   // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -533,22 +553,30 @@ export const CoordinadorDashboard = () => {
   };
 
   const filteredTrabajadores = trabajadores.filter(t => {
-    const matchesSearch = 
-      (t.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (t.apellido || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (t.identificacion || '').includes(searchTerm) ||
-      (t.profesion || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (t.especialidad || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (t.rol || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (t.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query || 
+      (t.nombre || '').toLowerCase().includes(query) ||
+      (t.apellido || '').toLowerCase().includes(query) ||
+      (t.identificacion || '').includes(query) ||
+      (t.email || '').toLowerCase().includes(query) ||
+      (t.profesion || '').toLowerCase().includes(query);
 
-    const matchesRol = filtroRol === 'TODOS' || t.rol === filtroRol;
-    const matchesEstado = filtroEstado === 'TODOS' || 
-      (filtroEstado === 'ACTIVO' && t.estado) || 
-      (filtroEstado === 'INHABILITADO' && !t.estado);
+    const matchesRol = rolesSeleccionados.length === 0 || rolesSeleccionados.includes(t.rol);
 
-    return matchesSearch && matchesRol && matchesEstado;
+    let matchesTech = true;
+    if (techsSeleccionadas.length > 0) {
+      const spec = (t.especialidad || '').toLowerCase();
+      matchesTech = techsSeleccionadas.some(tech => spec.includes(tech.toLowerCase()));
+    }
+
+    const matchesEstado = estadoSeleccionado === 'TODOS' || 
+      (estadoSeleccionado === 'ACTIVO' && t.estado) || 
+      (estadoSeleccionado === 'INHABILITADO' && !t.estado);
+
+    return matchesSearch && matchesRol && matchesTech && matchesEstado;
   });
+
+  const activeFiltersCount = (searchQuery ? 1 : 0) + rolesSeleccionados.length + techsSeleccionadas.length + (estadoSeleccionado !== 'TODOS' ? 1 : 0);
 
   const totalCount = (trabajadores || []).length;
   const activosCount = (trabajadores || []).filter(t => t.estado).length;
@@ -603,7 +631,7 @@ export const CoordinadorDashboard = () => {
         metric2: loading ? '...' : `Solicitudes: ${solicitudesPendientes} Pendientes`
       }}
     >
-      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (Vista Centro de Comando Enterprise) */}
+      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (Consola de Filtrado Avanzado Multi-Selección) */}
       {activeTab === 'personal' && (
         <motion.div 
           key="personal"
@@ -649,46 +677,47 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Centro de Comando Integrado de Talento y Tecnologías (Command Hub) */}
+          {/* Consola Única de Filtrado Avanzado & Gestión (Multi-Select Control) */}
           <motion.div 
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5"
           >
-            {/* 1. Fila de Control Superior: Buscador Universal + Acciones Rápidas */}
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            {/* 1. Fila de Encabezado de Consola & Acciones Principal */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
               
-              {/* Buscador Universal Inteligente */}
-              <div className="relative flex-1">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por nombre, cédula, correo, profesión o tecnología clave (ej. React, Java)..."
-                  className="input-field pl-11 pr-24 py-3 text-sm bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                  {searchTerm && (
-                    <button 
-                      onClick={() => setSearchTerm('')}
-                      className="p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
-                      title="Limpiar búsqueda"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                  <kbd className="hidden sm:inline-block text-[0.62rem] font-mono font-bold px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-600">
-                    FILTRAR
-                  </kbd>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                  <Filter size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                    Consola de Personal & Filtros Combinados
+                    <span className="text-xs font-mono font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                      {filteredTrabajadores.length} / {totalCount} Mostrando
+                    </span>
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                    Combina libremente múltiples roles, tecnologías y estados sin duplicidad de controles
+                  </p>
                 </div>
               </div>
 
-              {/* Acciones Rápidas del Comando */}
+              {/* Resumen de Filtros Activos & Botón Limpiar */}
               <div className="flex items-center gap-2 shrink-0">
+                {activeFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAllFilters}
+                    className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 border border-red-200 dark:border-red-800 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <X size={14} /> Limpiar Filtros ({activeFiltersCount})
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(true)}
-                  className="gradient-button text-xs py-3 px-5 font-bold inline-flex items-center gap-2 shadow-md cursor-pointer"
+                  className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 shadow-md cursor-pointer"
                 >
                   <UserPlus size={15} />
                   <span>Nuevo Trabajador</span>
@@ -697,38 +726,148 @@ export const CoordinadorDashboard = () => {
 
             </div>
 
-            {/* 2. Matriz de Tecnologías & Stack del Equipo (Chips Interactivos) */}
-            {topSkills.length > 0 && (
-              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-center justify-between mb-2.5">
+            {/* 2. Buscador por Texto Libre */}
+            <div className="relative w-full">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Escribe para buscar por nombre, apellido, número de cédula, correo o título profesional..."
+                className="input-field pl-11 pr-10 py-3 text-sm bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* 3. Bloque de Selección Múltiple: Roles & Estado */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1">
+              
+              {/* A. Selección Múltiple de Roles (Check Chips) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
                   <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <Cpu size={13} className="text-blue-500" /> Stack Técnico en la Nómina (Filtro por Habilidad):
+                    <Briefcase size={13} className="text-amber-500" /> Filtrar por Roles (Selección Múltiple):
                   </span>
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  {rolesSeleccionados.length > 0 && (
+                    <button 
+                      onClick={() => setRolesSeleccionados([])}
+                      className="text-[0.65rem] font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
                     >
-                      <RotateCcw size={10} /> Restablecer filtros
+                      Desmarcar todos
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: 'DESARROLLADOR', label: `Desarrolladores (${devsCount})`, icon: Code2 },
+                    { key: 'LIDER', label: `Líderes de Proyecto (${lideresCount})`, icon: Briefcase },
+                    { key: 'COORDINADOR', label: `Coordinadores (${coordCount})`, icon: Shield }
+                  ].map(r => {
+                    const isSelected = rolesSeleccionados.includes(r.key);
+                    const IconComponent = r.icon;
+                    return (
+                      <button
+                        key={r.key}
+                        type="button"
+                        onClick={() => handleToggleRoleFilter(r.key)}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                          isSelected
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-xs ring-2 ring-zinc-500/20'
+                            : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded flex items-center justify-center text-[0.65rem] font-bold ${
+                          isSelected ? 'bg-white/20 dark:bg-zinc-900/20 text-current' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
+                        }`}>
+                          {isSelected ? <Check size={11} /> : '+'}
+                        </div>
+                        <IconComponent size={13} className="shrink-0" />
+                        <span>{r.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* B. Selección de Estado Lógico */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                    <BadgeCheck size={13} className="text-emerald-500" /> Filtrar por Estado Lógico:
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: 'TODOS', label: `Todos (${totalCount})` },
+                    { key: 'ACTIVO', label: `Habilitados (${activosCount})` },
+                    { key: 'INHABILITADO', label: `Inhabilitados (${inactivosCount})` }
+                  ].map(s => {
+                    const isSelected = estadoSeleccionado === s.key;
+                    return (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => setEstadoSeleccionado(s.key)}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                          isSelected
+                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30'
+                            : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                        }`}
+                      >
+                        <span>{s.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+
+            {/* 4. Selección Múltiple de Tecnologías & Stack Técnico */}
+            {topSkills.length > 0 && (
+              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                    <Cpu size={13} className="text-blue-500" /> Filtrar por Tecnologías & Habilidades (Selección Múltiple):
+                  </span>
+                  {techsSeleccionadas.length > 0 && (
+                    <button 
+                      onClick={() => setTechsSeleccionadas([])}
+                      className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    >
+                      Limpiar tecnologías seleccionadas ({techsSeleccionadas.length})
                     </button>
                   )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   {topSkills.map(([skillName, count]) => {
-                    const isSelected = searchTerm.toLowerCase() === skillName.toLowerCase();
+                    const isSelected = techsSeleccionadas.includes(skillName);
                     return (
                       <button
                         key={skillName}
                         type="button"
-                        onClick={() => setSearchTerm(isSelected ? '' : skillName)}
+                        onClick={() => handleToggleTechFilter(skillName)}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all cursor-pointer border ${
                           isSelected
                             ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30'
                             : 'bg-zinc-50 hover:bg-blue-50/80 dark:bg-zinc-800/60 dark:hover:bg-blue-950/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700/80'
                         }`}
                       >
-                        <Code2 size={13} className={isSelected ? 'text-white' : 'text-blue-500'} />
+                        <div className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[0.6rem] font-bold ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300'
+                        }`}>
+                          {isSelected ? <Check size={10} /> : '+'}
+                        </div>
                         <span>{skillName}</span>
                         <span className={`text-[0.65rem] px-1.5 py-0.2 rounded-md font-bold ${
                           isSelected ? 'bg-blue-700 text-white' : 'bg-zinc-200/80 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300'
@@ -742,61 +881,6 @@ export const CoordinadorDashboard = () => {
               </div>
             )}
 
-            {/* 3. Barra de Control de Estado y Roles (Pills de Navegación) */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs">
-              
-              {/* Filtro por Rol */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mr-1 flex items-center gap-1">
-                  <Filter size={12} /> Rol:
-                </span>
-                {[
-                  { key: 'TODOS', label: `Todos (${totalCount})` },
-                  { key: 'DESARROLLADOR', label: `Devs (${devsCount})` },
-                  { key: 'LIDER', label: `Líderes (${lideresCount})` },
-                  { key: 'COORDINADOR', label: `Coordinadores (${coordCount})` }
-                ].map(r => (
-                  <button
-                    key={r.key}
-                    type="button"
-                    onClick={() => setFiltroRol(r.key)}
-                    className={`px-3 py-1 rounded-xl font-semibold transition-all cursor-pointer ${
-                      filtroRol === r.key
-                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-2xs font-bold'
-                        : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
-                    }`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Filtro por Estado Lógico */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mr-1">
-                  Estado:
-                </span>
-                {[
-                  { key: 'TODOS', label: 'Todos' },
-                  { key: 'ACTIVO', label: `Habilitados (${activosCount})` },
-                  { key: 'INHABILITADO', label: `Inhabilitados (${inactivosCount})` }
-                ].map(s => (
-                  <button
-                    key={s.key}
-                    type="button"
-                    onClick={() => setFiltroEstado(s.key)}
-                    className={`px-3 py-1 rounded-xl font-semibold transition-all cursor-pointer ${
-                      filtroEstado === s.key
-                        ? 'bg-blue-600 text-white shadow-2xs font-bold'
-                        : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-
-            </div>
 
           </motion.div>
 
@@ -835,17 +919,17 @@ export const CoordinadorDashboard = () => {
                           icon={Inbox}
                           title="No se encontraron trabajadores"
                           description={
-                            searchTerm || filtroRol !== 'TODOS' || filtroEstado !== 'TODOS'
-                              ? "No hay personal que coincida con los filtros y la búsqueda seleccionada."
+                            activeFiltersCount > 0
+                              ? "No hay personal que coincida exactamente con la combinación de filtros seleccionados."
                               : "Aún no hay personal registrado en la base de datos."
                           }
                           action={
                             <button
                               type="button"
-                              onClick={() => { setSearchTerm(''); setFiltroRol('TODOS'); setFiltroEstado('TODOS'); }}
-                              className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5"
+                              onClick={handleClearAllFilters}
+                              className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer"
                             >
-                              <RotateCcw size={14} /> Limpiar Filtros
+                              <RotateCcw size={14} /> Restablecer Todos los Filtros
                             </button>
                           }
                         />
