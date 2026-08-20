@@ -619,87 +619,190 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Tarjetas Métricas KPI de Resumen (Métricas Rápidas) */}
-          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            {/* Total Personal */}
-            <motion.div 
-              whileHover={{ y: -2 }}
-              className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center justify-between"
-            >
-              <div>
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 block mb-1">Total Personal</span>
-                <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono tracking-tight">
-                  {loading ? '...' : totalCount}
+          {/* Barra de Distribución de Talento Humano (Estilo Linear / Vercel Enterprise) */}
+          <motion.div 
+            variants={itemVariants} 
+            className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5"
+          >
+            {/* Cabecera y Leyenda de Distribución */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/60 shrink-0">
+                  <Sparkles size={16} />
                 </div>
-                <div className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> {activosCount} Activos
-                  <span className="text-zinc-300 dark:text-zinc-700 mx-0.5">•</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 inline-block" /> {inactivosCount} Inactivos
+                <div>
+                  <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                    Distribución de Talento Humano
+                    <span className="text-[0.68rem] font-mono font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700">
+                      {totalCount} Registrados
+                    </span>
+                  </h3>
+                  <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400">
+                    Haz clic en cualquier segmento o cápsula para filtrar instantáneamente el equipo en la tabla
+                  </p>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900">
-                <Users size={22} />
-              </div>
-            </motion.div>
 
-            {/* Desarrolladores */}
-            <motion.div 
-              whileHover={{ y: -2 }}
-              className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center justify-between"
-            >
-              <div>
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 block mb-1">Desarrolladores</span>
-                <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono tracking-tight">
-                  {loading ? '...' : devsCount}
-                </div>
-                <div className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
-                  Ejecución de actividades WBS
-                </div>
+              {/* Resumen Global de Operatividad */}
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {activosCount} Habilitados ({totalCount > 0 ? Math.round((activosCount / totalCount) * 100) : 0}%)
+                </span>
+                {inactivosCount > 0 && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                    {inactivosCount} Inactivos
+                  </span>
+                )}
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-100 dark:border-emerald-900">
-                <Code2 size={22} />
-              </div>
-            </motion.div>
+            </div>
 
-            {/* Líderes de Proyecto */}
-            <motion.div 
-              whileHover={{ y: -2 }}
-              className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center justify-between"
-            >
-              <div>
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 block mb-1">Líderes de Proyecto</span>
-                <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono tracking-tight">
-                  {loading ? '...' : lideresCount}
-                </div>
-                <div className="text-[0.68rem] text-amber-600 dark:text-amber-400 font-medium mt-1">
-                  Gestión y asignación ágil
-                </div>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-100 dark:border-amber-900">
-                <Briefcase size={22} />
-              </div>
-            </motion.div>
+            {/* Barra de Distribución Multi-Segmento Interactiva */}
+            <div className="space-y-2">
+              <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden flex shadow-inner p-0.5 border border-zinc-200/60 dark:border-zinc-800">
+                
+                {/* Segmento Desarrolladores */}
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${devPct}%` }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  onClick={() => setFiltroRol(filtroRol === 'DESARROLLADOR' ? 'TODOS' : 'DESARROLLADOR')}
+                  className={`h-full rounded-l-full bg-emerald-500 hover:bg-emerald-400 cursor-pointer transition-all relative group ${
+                    filtroRol === 'DESARROLLADOR' ? 'ring-2 ring-emerald-500 ring-offset-1 dark:ring-offset-zinc-900 z-10' : 'opacity-90 hover:opacity-100'
+                  }`}
+                  title={`Desarrolladores: ${devsCount} (${devPct}%) - Haz clic para filtrar`}
+                />
 
-            {/* Coordinación */}
-            <motion.div 
-              whileHover={{ y: -2 }}
-              className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center justify-between"
-            >
-              <div>
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 block mb-1">Coordinadores</span>
-                <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono tracking-tight">
-                  {loading ? '...' : coordCount}
-                </div>
-                <div className="text-[0.68rem] text-purple-600 dark:text-purple-400 font-medium mt-1">
-                  Administración TI global
-                </div>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-100 dark:border-purple-900">
-                <Shield size={22} />
-              </div>
-            </motion.div>
+                {/* Segmento Líderes */}
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${liderPct}%` }}
+                  transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
+                  onClick={() => setFiltroRol(filtroRol === 'LIDER' ? 'TODOS' : 'LIDER')}
+                  className={`h-full bg-amber-500 hover:bg-amber-400 cursor-pointer transition-all relative group ${
+                    filtroRol === 'LIDER' ? 'ring-2 ring-amber-500 ring-offset-1 dark:ring-offset-zinc-900 z-10' : 'opacity-90 hover:opacity-100'
+                  }`}
+                  title={`Líderes de Proyecto: ${lideresCount} (${liderPct}%) - Haz clic para filtrar`}
+                />
 
+                {/* Segmento Coordinadores */}
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${coordPct}%` }}
+                  transition={{ duration: 0.5, ease: 'easeOut', delay: 0.2 }}
+                  onClick={() => setFiltroRol(filtroRol === 'COORDINADOR' ? 'TODOS' : 'COORDINADOR')}
+                  className={`h-full rounded-r-full bg-purple-500 hover:bg-purple-400 cursor-pointer transition-all relative group ${
+                    filtroRol === 'COORDINADOR' ? 'ring-2 ring-purple-500 ring-offset-1 dark:ring-offset-zinc-900 z-10' : 'opacity-90 hover:opacity-100'
+                  }`}
+                  title={`Coordinadores: ${coordCount} (${coordPct}%) - Haz clic para filtrar`}
+                />
+
+              </div>
+            </div>
+
+            {/* Cápsulas Métricas Interactivas (Pills de Roles) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              
+              {/* Pill Desarrolladores */}
+              <button
+                type="button"
+                onClick={() => setFiltroRol(filtroRol === 'DESARROLLADOR' ? 'TODOS' : 'DESARROLLADOR')}
+                className={`flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  filtroRol === 'DESARROLLADOR'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 shadow-xs ring-2 ring-emerald-500/20'
+                    : 'bg-zinc-50/70 hover:bg-emerald-50/50 dark:bg-zinc-800/40 dark:hover:bg-emerald-950/30 border-zinc-200/80 dark:border-zinc-800'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                    <Code2 size={16} />
+                  </div>
+                  <div>
+                    <span className="text-[0.7rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
+                      Desarrolladores
+                    </span>
+                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      Operatividad WBS
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right font-mono">
+                  <span className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 block leading-none">
+                    {devsCount}
+                  </span>
+                  <span className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400">
+                    {devPct}%
+                  </span>
+                </div>
+              </button>
+
+              {/* Pill Líderes */}
+              <button
+                type="button"
+                onClick={() => setFiltroRol(filtroRol === 'LIDER' ? 'TODOS' : 'LIDER')}
+                className={`flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  filtroRol === 'LIDER'
+                    ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 shadow-xs ring-2 ring-amber-500/20'
+                    : 'bg-zinc-50/70 hover:bg-amber-50/50 dark:bg-zinc-800/40 dark:hover:bg-amber-950/30 border-zinc-200/80 dark:border-zinc-800'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+                    <Briefcase size={16} />
+                  </div>
+                  <div>
+                    <span className="text-[0.7rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
+                      Líderes de Proyecto
+                    </span>
+                    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                      Gestión Ágil
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right font-mono">
+                  <span className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 block leading-none">
+                    {lideresCount}
+                  </span>
+                  <span className="text-[0.65rem] font-bold text-amber-600 dark:text-amber-400">
+                    {liderPct}%
+                  </span>
+                </div>
+              </button>
+
+              {/* Pill Coordinadores */}
+              <button
+                type="button"
+                onClick={() => setFiltroRol(filtroRol === 'COORDINADOR' ? 'TODOS' : 'COORDINADOR')}
+                className={`flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  filtroRol === 'COORDINADOR'
+                    ? 'bg-purple-50 dark:bg-purple-950/60 border-purple-300 dark:border-purple-700 shadow-xs ring-2 ring-purple-500/20'
+                    : 'bg-zinc-50/70 hover:bg-purple-50/50 dark:bg-zinc-800/40 dark:hover:bg-purple-950/30 border-zinc-200/80 dark:border-zinc-800'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0">
+                    <Shield size={16} />
+                  </div>
+                  <div>
+                    <span className="text-[0.7rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
+                      Coordinadores
+                    </span>
+                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                      Administración Global
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right font-mono">
+                  <span className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 block leading-none">
+                    {coordCount}
+                  </span>
+                  <span className="text-[0.65rem] font-bold text-purple-600 dark:text-purple-400">
+                    {coordPct}%
+                  </span>
+                </div>
+              </button>
+
+            </div>
           </motion.div>
 
           {/* Barra de Filtros Interactivos & Búsqueda */}
