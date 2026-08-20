@@ -40,6 +40,20 @@ const itemVariants = {
   }
 };
 
+/* ─── Helper para limpiar y simplificar títulos de especialidad en Selects ─── */
+const getCleanEspecialidad = (especialidadRaw, profesionFallback = '') => {
+  if (!especialidadRaw || !especialidadRaw.trim()) return profesionFallback || 'Desarrollador';
+  let mainSpec = especialidadRaw;
+  if (mainSpec.includes('• [')) {
+    mainSpec = mainSpec.split('• [')[0].trim();
+  } else if (mainSpec.includes(' • ')) {
+    mainSpec = mainSpec.split(' • ')[0].trim();
+  } else if (mainSpec.startsWith('[') && mainSpec.endsWith(']')) {
+    mainSpec = profesionFallback || 'Desarrollador';
+  }
+  return mainSpec || profesionFallback || 'Desarrollador';
+};
+
 /* ─── Badge de Estado de Atención (RF-22 a RF-24) ─── */
 const EstadoAtencionBadge = ({ estado }) => {
   const styles = {
@@ -1557,7 +1571,7 @@ export const LiderDashboard = () => {
                   <option value="TODOS">Todos los Desarrolladores</option>
                   {desarrolladores.map(d => (
                     <option key={d.idTrabajador} value={d.idTrabajador}>
-                      {d.nombre} {d.apellido} ({d.especialidad || d.profesion})
+                      {d.nombre} {d.apellido} — {getCleanEspecialidad(d.especialidad, d.profesion)}
                     </option>
                   ))}
                 </select>
@@ -1863,7 +1877,7 @@ export const LiderDashboard = () => {
                       const cargaTxt = c ? ` [Carga: ${c.horasAsignadas}/48h]` : '';
                       return (
                         <option key={dev?.idTrabajador} value={dev?.idTrabajador}>
-                          {dev?.nombre} {dev?.apellido} ({dev?.especialidad || dev?.email}){cargaTxt}
+                          {dev?.nombre} {dev?.apellido} — {getCleanEspecialidad(dev?.especialidad, dev?.profesion)}{cargaTxt}
                         </option>
                       );
                     })}
@@ -1992,7 +2006,7 @@ export const LiderDashboard = () => {
                       const cargaTxt = carga ? ` [Carga: ${carga.horasAsignadas}/48h]` : '';
                       return (
                         <option key={dev.idTrabajador} value={dev.idTrabajador}>
-                          {dev.nombre} {dev.apellido} ({dev.especialidad || dev.profesion}){cargaTxt}
+                          {dev.nombre} {dev.apellido} — {getCleanEspecialidad(dev.especialidad, dev.profesion)}{cargaTxt}
                         </option>
                       );
                     })}
@@ -2203,7 +2217,7 @@ export const LiderDashboard = () => {
                     <option value="">— Seleccione nuevo desarrollador —</option>
                     {desarrolladores?.map(dev => (
                       <option key={dev?.idTrabajador} value={dev?.idTrabajador}>
-                        {dev?.nombre} {dev?.apellido} ({dev?.especialidad || dev?.email})
+                        {dev?.nombre} {dev?.apellido} — {getCleanEspecialidad(dev?.especialidad, dev?.profesion)}
                       </option>
                     ))}
                   </select>
