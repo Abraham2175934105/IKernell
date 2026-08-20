@@ -6,7 +6,8 @@ import {
   Users, UserPlus, UserX, UserCheck, Search, Shield, CheckCircle2, 
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
-  Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown
+  Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -162,6 +163,14 @@ export const CoordinadorDashboard = () => {
   const [techsSeleccionadas, setTechsSeleccionadas] = useState([]); // [] = Todas
   const [estadoSeleccionado, setEstadoSeleccionado] = useState('TODOS'); // 'TODOS' | 'ACTIVO' | 'INHABILITADO'
   const [filtroSolicitudes, setFiltroSolicitudes] = useState('TODAS'); // 'TODAS' | 'PENDIENTE' | 'ATENDIDA' | 'REABIERTA' | 'EN_PROCESO'
+
+  // Estados de Paginación Inteligente (Por cantidad y por hojas)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5); // 5, 10, 25, 50 por página
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, rolSeleccionado, techsSeleccionadas, estadoSeleccionado, itemsPerPage]);
 
   const handleSelectRole = (rolKey) => {
     // Selección Única Estricta de Rol
@@ -580,6 +589,15 @@ export const CoordinadorDashboard = () => {
 
   const activeFiltersCount = (searchQuery ? 1 : 0) + (rolSeleccionado !== 'TODOS' ? 1 : 0) + techsSeleccionadas.length + (estadoSeleccionado !== 'TODOS' ? 1 : 0);
 
+  // Cálculos de Paginación Inteligente
+  const totalFilteredCount = filteredTrabajadores.length;
+  const totalPages = Math.ceil(totalFilteredCount / itemsPerPage) || 1;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  
+  const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalFilteredCount);
+  const paginatedTrabajadores = filteredTrabajadores.slice(startIndex, endIndex);
+
   const totalCount = (trabajadores || []).length;
   const activosCount = (trabajadores || []).filter(t => t.estado).length;
   const inactivosCount = (trabajadores || []).filter(t => !t.estado).length;
@@ -979,7 +997,7 @@ export const CoordinadorDashboard = () => {
                     </tr>
                   )}
 
-                  {!loading && filteredTrabajadores.map(t => (
+                  {!loading && paginatedTrabajadores.map(t => (
                     <tr 
                       key={t.idTrabajador} 
                       className="transition-colors duration-150 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group"
@@ -1073,6 +1091,100 @@ export const CoordinadorDashboard = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Barra de Paginación Inteligente (Por Cantidad de Registros y Hojas) */}
+            {!loading && totalFilteredCount > 0 && (
+              <div className="bg-zinc-50/80 dark:bg-zinc-800/40 px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold">
+                
+                {/* 1. Selector de Cantidad de Registros por Página */}
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">Mostrar por página:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className="px-2.5 py-1 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs"
+                  >
+                    <option value={5}>5 personas</option>
+                    <option value={10}>10 personas</option>
+                    <option value={25}>25 personas</option>
+                    <option value={50}>50 personas</option>
+                  </select>
+
+                  <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[0.72rem] ml-1">
+                    ({startIndex + 1}–{endIndex} de {totalFilteredCount} en total)
+                  </span>
+                </div>
+
+                {/* 2. Navegación por Hojas (Páginas Numeradas + Controles) */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  
+                  {/* Botón Primera Hoja */}
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage === 1}
+                    onClick={() => setCurrentPage(1)}
+                    className="px-2 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+                    title="Primera hoja"
+                  >
+                    «
+                  </button>
+
+                  {/* Botón Hoja Anterior */}
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage === 1}
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    className="px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold inline-flex items-center gap-1"
+                  >
+                    <ChevronLeft size={14} /> Anterior
+                  </button>
+
+                  {/* Hojas Numeradas */}
+                  <div className="flex items-center gap-1 px-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => {
+                      const isCurrent = pageNumber === safeCurrentPage;
+                      return (
+                        <button
+                          key={pageNumber}
+                          type="button"
+                          onClick={() => setCurrentPage(pageNumber)}
+                          className={`w-7 h-7 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+                            isCurrent
+                              ? 'bg-blue-600 text-white border border-blue-700 shadow-2xs font-extrabold'
+                              : 'bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Botón Hoja Siguiente */}
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage === totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    className="px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold inline-flex items-center gap-1"
+                  >
+                    Siguiente <ChevronRight size={14} />
+                  </button>
+
+                  {/* Botón Última Hoja */}
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage === totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="px-2 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all font-bold"
+                    title="Última hoja"
+                  >
+                    »
+                  </button>
+
+                </div>
+
+              </div>
+            )}
           </motion.div>
 
         </motion.div>
