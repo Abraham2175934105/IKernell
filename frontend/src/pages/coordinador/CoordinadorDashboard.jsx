@@ -562,6 +562,32 @@ export const CoordinadorDashboard = () => {
   const liderPct = totalCount > 0 ? Math.round((lideresCount / totalCount) * 100) : 0;
   const coordPct = totalCount > 0 ? Math.round((coordCount / totalCount) * 100) : 0;
 
+  const getTopSkills = (list) => {
+    const counts = {};
+    (list || []).forEach(t => {
+      const spec = t.especialidad || '';
+      let skills = [];
+      if (spec.includes('• [')) {
+        const parts = spec.split('• [')[1];
+        if (parts) {
+          skills = parts.replace(']', '').split(',').map(s => s.trim()).filter(Boolean);
+        }
+      } else if (spec.startsWith('[') && spec.endsWith(']')) {
+        skills = spec.slice(1, -1).split(',').map(s => s.trim()).filter(Boolean);
+      } else if (spec && spec !== 'General / Sin definir') {
+        skills = [spec.trim()];
+      }
+      skills.forEach(s => {
+        counts[s] = (counts[s] || 0) + 1;
+      });
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+  };
+
+  const topSkills = getTopSkills(trabajadores);
+
   const getInitials = (nombre, apellido) => {
     const n = (nombre || '').trim().charAt(0);
     const a = (apellido || '').trim().charAt(0);
@@ -577,7 +603,7 @@ export const CoordinadorDashboard = () => {
         metric2: loading ? '...' : `Solicitudes: ${solicitudesPendientes} Pendientes`
       }}
     >
-      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (Vista Ejecutiva Enterprise) */}
+      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (Vista Centro de Comando Enterprise) */}
       {activeTab === 'personal' && (
         <motion.div 
           key="personal"
@@ -623,224 +649,107 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Barra de Distribución de Talento Humano (Estilo Linear / Vercel Enterprise) */}
+          {/* Centro de Comando Integrado de Talento y Tecnologías (Command Hub) */}
           <motion.div 
-            variants={itemVariants} 
+            variants={itemVariants}
             className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5"
           >
-            {/* Cabecera y Leyenda de Distribución */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/60 shrink-0">
-                  <Sparkles size={16} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
-                    Distribución de Talento Humano
-                    <span className="text-[0.68rem] font-mono font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700">
-                      {totalCount} Registrados
-                    </span>
-                  </h3>
-                  <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400">
-                    Haz clic en cualquier segmento o cápsula para filtrar instantáneamente el equipo en la tabla
-                  </p>
-                </div>
-              </div>
-
-              {/* Resumen Global de Operatividad */}
-              <div className="flex items-center gap-2 text-xs font-semibold">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  {activosCount} Habilitados ({totalCount > 0 ? Math.round((activosCount / totalCount) * 100) : 0}%)
-                </span>
-                {inactivosCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-                    {inactivosCount} Inactivos
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Barra de Distribución Multi-Segmento Interactiva */}
-            <div className="space-y-2">
-              <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden flex shadow-inner p-0.5 border border-zinc-200/60 dark:border-zinc-800">
-                
-                {/* Segmento Desarrolladores */}
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${devPct}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  onClick={() => setFiltroRol(filtroRol === 'DESARROLLADOR' ? 'TODOS' : 'DESARROLLADOR')}
-                  className={`h-full rounded-l-full bg-emerald-500 hover:bg-emerald-400 cursor-pointer transition-all relative group ${
-                    filtroRol === 'DESARROLLADOR' ? 'ring-2 ring-emerald-500 ring-offset-1 dark:ring-offset-zinc-900 z-10' : 'opacity-90 hover:opacity-100'
-                  }`}
-                  title={`Desarrolladores: ${devsCount} (${devPct}%) - Haz clic para filtrar`}
-                />
-
-                {/* Segmento Líderes */}
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${liderPct}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
-                  onClick={() => setFiltroRol(filtroRol === 'LIDER' ? 'TODOS' : 'LIDER')}
-                  className={`h-full bg-amber-500 hover:bg-amber-400 cursor-pointer transition-all relative group ${
-                    filtroRol === 'LIDER' ? 'ring-2 ring-amber-500 ring-offset-1 dark:ring-offset-zinc-900 z-10' : 'opacity-90 hover:opacity-100'
-                  }`}
-                  title={`Líderes de Proyecto: ${lideresCount} (${liderPct}%) - Haz clic para filtrar`}
-                />
-
-                {/* Segmento Coordinadores */}
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${coordPct}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut', delay: 0.2 }}
-                  onClick={() => setFiltroRol(filtroRol === 'COORDINADOR' ? 'TODOS' : 'COORDINADOR')}
-                  className={`h-full rounded-r-full bg-purple-500 hover:bg-purple-400 cursor-pointer transition-all relative group ${
-                    filtroRol === 'COORDINADOR' ? 'ring-2 ring-purple-500 ring-offset-1 dark:ring-offset-zinc-900 z-10' : 'opacity-90 hover:opacity-100'
-                  }`}
-                  title={`Coordinadores: ${coordCount} (${coordPct}%) - Haz clic para filtrar`}
-                />
-
-              </div>
-            </div>
-
-            {/* Cápsulas Métricas Interactivas (Pills de Roles) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            {/* 1. Fila de Control Superior: Buscador Universal + Acciones Rápidas */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
               
-              {/* Pill Desarrolladores */}
-              <button
-                type="button"
-                onClick={() => setFiltroRol(filtroRol === 'DESARROLLADOR' ? 'TODOS' : 'DESARROLLADOR')}
-                className={`flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
-                  filtroRol === 'DESARROLLADOR'
-                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 shadow-xs ring-2 ring-emerald-500/20'
-                    : 'bg-zinc-50/70 hover:bg-emerald-50/50 dark:bg-zinc-800/40 dark:hover:bg-emerald-950/30 border-zinc-200/80 dark:border-zinc-800'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
-                    <Code2 size={16} />
-                  </div>
-                  <div>
-                    <span className="text-[0.7rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
-                      Desarrolladores
-                    </span>
-                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                      Operatividad WBS
-                    </span>
-                  </div>
+              {/* Buscador Universal Inteligente */}
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar por nombre, cédula, correo, profesión o tecnología clave (ej. React, Java)..."
+                  className="input-field pl-11 pr-24 py-3 text-sm bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                  {searchTerm && (
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      className="p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
+                      title="Limpiar búsqueda"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                  <kbd className="hidden sm:inline-block text-[0.62rem] font-mono font-bold px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-600">
+                    FILTRAR
+                  </kbd>
                 </div>
-                <div className="text-right font-mono">
-                  <span className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 block leading-none">
-                    {devsCount}
-                  </span>
-                  <span className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400">
-                    {devPct}%
-                  </span>
-                </div>
-              </button>
+              </div>
 
-              {/* Pill Líderes */}
-              <button
-                type="button"
-                onClick={() => setFiltroRol(filtroRol === 'LIDER' ? 'TODOS' : 'LIDER')}
-                className={`flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
-                  filtroRol === 'LIDER'
-                    ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 shadow-xs ring-2 ring-amber-500/20'
-                    : 'bg-zinc-50/70 hover:bg-amber-50/50 dark:bg-zinc-800/40 dark:hover:bg-amber-950/30 border-zinc-200/80 dark:border-zinc-800'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
-                    <Briefcase size={16} />
-                  </div>
-                  <div>
-                    <span className="text-[0.7rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
-                      Líderes de Proyecto
-                    </span>
-                    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                      Gestión Ágil
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right font-mono">
-                  <span className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 block leading-none">
-                    {lideresCount}
-                  </span>
-                  <span className="text-[0.65rem] font-bold text-amber-600 dark:text-amber-400">
-                    {liderPct}%
-                  </span>
-                </div>
-              </button>
-
-              {/* Pill Coordinadores */}
-              <button
-                type="button"
-                onClick={() => setFiltroRol(filtroRol === 'COORDINADOR' ? 'TODOS' : 'COORDINADOR')}
-                className={`flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
-                  filtroRol === 'COORDINADOR'
-                    ? 'bg-purple-50 dark:bg-purple-950/60 border-purple-300 dark:border-purple-700 shadow-xs ring-2 ring-purple-500/20'
-                    : 'bg-zinc-50/70 hover:bg-purple-50/50 dark:bg-zinc-800/40 dark:hover:bg-purple-950/30 border-zinc-200/80 dark:border-zinc-800'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0">
-                    <Shield size={16} />
-                  </div>
-                  <div>
-                    <span className="text-[0.7rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
-                      Coordinadores
-                    </span>
-                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
-                      Administración Global
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right font-mono">
-                  <span className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 block leading-none">
-                    {coordCount}
-                  </span>
-                  <span className="text-[0.65rem] font-bold text-purple-600 dark:text-purple-400">
-                    {coordPct}%
-                  </span>
-                </div>
-              </button>
-
-            </div>
-          </motion.div>
-
-          {/* Barra de Filtros Interactivos & Búsqueda */}
-          <motion.div variants={itemVariants} className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-            
-            {/* Buscador General */}
-            <div className="relative w-full">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar trabajador por nombre, cédula, correo, profesión o tecnología..."
-                className="input-field pl-11 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
-              />
-              {searchTerm && (
-                <button 
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400"
+              {/* Acciones Rápidas del Comando */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(true)}
+                  className="gradient-button text-xs py-3 px-5 font-bold inline-flex items-center gap-2 shadow-md cursor-pointer"
                 >
-                  <X size={14} />
+                  <UserPlus size={15} />
+                  <span>Nuevo Trabajador</span>
                 </button>
-              )}
+              </div>
+
             </div>
 
-            {/* Controles de Filtros Rápidos (Por Rol y Estado) */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+            {/* 2. Matriz de Tecnologías & Stack del Equipo (Chips Interactivos) */}
+            {topSkills.length > 0 && (
+              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                    <Cpu size={13} className="text-blue-500" /> Stack Técnico en la Nómina (Filtro por Habilidad):
+                  </span>
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw size={10} /> Restablecer filtros
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {topSkills.map(([skillName, count]) => {
+                    const isSelected = searchTerm.toLowerCase() === skillName.toLowerCase();
+                    return (
+                      <button
+                        key={skillName}
+                        type="button"
+                        onClick={() => setSearchTerm(isSelected ? '' : skillName)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all cursor-pointer border ${
+                          isSelected
+                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30'
+                            : 'bg-zinc-50 hover:bg-blue-50/80 dark:bg-zinc-800/60 dark:hover:bg-blue-950/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700/80'
+                        }`}
+                      >
+                        <Code2 size={13} className={isSelected ? 'text-white' : 'text-blue-500'} />
+                        <span>{skillName}</span>
+                        <span className={`text-[0.65rem] px-1.5 py-0.2 rounded-md font-bold ${
+                          isSelected ? 'bg-blue-700 text-white' : 'bg-zinc-200/80 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300'
+                        }`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Barra de Control de Estado y Roles (Pills de Navegación) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs">
               
-              {/* Filtro de Rol (Pills) */}
+              {/* Filtro por Rol */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[0.68rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mr-1 flex items-center gap-1">
+                <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mr-1 flex items-center gap-1">
                   <Filter size={12} /> Rol:
                 </span>
-                
                 {[
                   { key: 'TODOS', label: `Todos (${totalCount})` },
                   { key: 'DESARROLLADOR', label: `Devs (${devsCount})` },
@@ -853,7 +762,7 @@ export const CoordinadorDashboard = () => {
                     onClick={() => setFiltroRol(r.key)}
                     className={`px-3 py-1 rounded-xl font-semibold transition-all cursor-pointer ${
                       filtroRol === r.key
-                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-2xs'
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-2xs font-bold'
                         : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
                     }`}
                   >
@@ -862,12 +771,11 @@ export const CoordinadorDashboard = () => {
                 ))}
               </div>
 
-              {/* Filtro de Estado (Pills) */}
+              {/* Filtro por Estado Lógico */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[0.68rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mr-1">
+                <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mr-1">
                   Estado:
                 </span>
-                
                 {[
                   { key: 'TODOS', label: 'Todos' },
                   { key: 'ACTIVO', label: `Habilitados (${activosCount})` },
@@ -879,7 +787,7 @@ export const CoordinadorDashboard = () => {
                     onClick={() => setFiltroEstado(s.key)}
                     className={`px-3 py-1 rounded-xl font-semibold transition-all cursor-pointer ${
                       filtroEstado === s.key
-                        ? 'bg-blue-600 text-white shadow-2xs'
+                        ? 'bg-blue-600 text-white shadow-2xs font-bold'
                         : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
                     }`}
                   >
