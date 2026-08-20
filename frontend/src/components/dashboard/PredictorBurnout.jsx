@@ -4,7 +4,7 @@ import {
   User, RefreshCw, Sparkles, Lock, Layers, Users,
   Briefcase, Check, Info, Search, X, HelpCircle, Download,
   TrendingDown, Minus, Clock, Globe, FolderGit2, ChevronDown,
-  ShieldCheck, FileText, Filter, DollarSign
+  ShieldCheck, FileText, Filter, DollarSign, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
@@ -1081,7 +1081,10 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       </div>
 
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                        <strong className="text-blue-300 block mb-0.5">🗓️ Semana 1 (Hace 21 días)</strong>
+                        <div className="font-bold text-blue-300 flex items-center gap-1 mb-0.5">
+                          <Calendar size={11} className="text-blue-400 shrink-0" />
+                          <span>Semana 1 (Hace 21 días)</span>
+                        </div>
                         <span>Nivel de carga de {Math.round(selectedDev.scoreSemana1 || 0)}% registrado al inicio del ciclo de analítica.</span>
                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
                       </div>
@@ -1103,7 +1106,10 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       </div>
 
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                        <strong className="text-blue-300 block mb-0.5">🗓️ Semana 2 (Días 8-14)</strong>
+                        <div className="font-bold text-blue-300 flex items-center gap-1 mb-0.5">
+                          <Clock size={11} className="text-blue-400 shrink-0" />
+                          <span>Semana 2 (Días 8-14)</span>
+                        </div>
                         <span>Carga acumulada de {Math.round(selectedDev.scoreSemana2 || 0)}% a mitad de la ventana de análisis.</span>
                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
                       </div>
@@ -1129,7 +1135,10 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       </div>
 
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                        <strong className="text-emerald-300 block mb-0.5">🗓️ Semana 3 (Últimos 7 días)</strong>
+                        <div className="font-bold text-emerald-300 flex items-center gap-1 mb-0.5">
+                          <Activity size={11} className="text-emerald-400 shrink-0" />
+                          <span>Semana 3 (Últimos 7 días)</span>
+                        </div>
                         <span>Carga reciente de {Math.round(selectedDev.scoreSemana3 || 0)}%. Determina la tendencia actual del semáforo.</span>
                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
                       </div>
