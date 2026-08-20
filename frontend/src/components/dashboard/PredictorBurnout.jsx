@@ -18,6 +18,20 @@ import { SkeletonCard } from '../ui/Skeleton';
  * - MEDIA   (Nivel Medio / En Alerta)
  * - BAJA    (Nivel Bajo / Estable)
  */
+/* ─── Helper para limpiar y simplificar títulos de especialidad en Tarjetas ─── */
+const getCleanEspecialidad = (especialidadRaw, profesionFallback = '') => {
+  if (!especialidadRaw || !especialidadRaw.trim()) return profesionFallback || 'Desarrollador';
+  let mainSpec = especialidadRaw;
+  if (mainSpec.includes('• [')) {
+    mainSpec = mainSpec.split('• [')[0].trim();
+  } else if (mainSpec.includes(' • ')) {
+    mainSpec = mainSpec.split(' • ')[0].trim();
+  } else if (mainSpec.startsWith('[') && mainSpec.endsWith(']')) {
+    mainSpec = profesionFallback || 'Desarrollador';
+  }
+  return mainSpec || profesionFallback || 'Desarrollador';
+};
+
 const normalizarEstado = (estado) => {
   if (!estado) return 'BAJA';
   const est = estado.toString().toUpperCase().trim();
@@ -565,8 +579,17 @@ Generado automáticamente por el motor analítico IKernell v2.0
           </div>
         </div>
       ) : (
-        /* ─── Layout Split-View Master-Detail (2 Columnas Responsivas) ─── */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <>
+          {/* Banner de Orientación Didáctica al Usuario */}
+          <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 flex items-start gap-3 text-xs shadow-2xs mb-5">
+            <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+            <div className="leading-relaxed text-indigo-950 dark:text-indigo-200 font-medium">
+              <strong>Motor Predictivo de Salud del Equipo & Burnout (RF-25 / ISO/IEC 25010):</strong> Selecciona un desarrollador en la columna izquierda para evaluar el desglose de su carga entre proyectos, analizar la fatiga en 21 días (S1, S2, S3) y ejecutar rebalanceos preventivos en el WBS para evitar sobrecargas.
+            </div>
+          </div>
+
+          {/* ─── Layout Split-View Master-Detail (2 Columnas Responsivas) ─── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* ═════════════════════════════════════════════════════════════════════
               COLUMNA IZQUIERDA (~40%): Panel Único de Búsqueda, Filtros y Selección
@@ -680,7 +703,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
             </div>
 
             {/* 4. Listado de Tarjetas Interactivas de Desarrolladores */}
-            <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[580px] overflow-y-auto pr-1">
               {metricasFiltradas.length === 0 ? (
                 <div className="p-8 text-center bg-white dark:bg-zinc-900 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800">
                   <User size={24} className="mx-auto text-zinc-400 mb-2 opacity-60" />
@@ -734,7 +757,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                             <p className={`text-[0.68rem] truncate max-w-[170px] ${
                               isSelected ? 'text-blue-100' : 'text-zinc-500 dark:text-zinc-400'
                             }`}>
-                              {dev.especialidad || 'Desarrollador'}
+                              {getCleanEspecialidad(dev.especialidad)}
                             </p>
                           </div>
                         </div>
@@ -814,7 +837,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                         {getBadgeEstado(selectedDev.estadoAlerta)}
                       </div>
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                        {selectedDev.especialidad} • <span className="font-mono">{selectedDev.email}</span>
+                        {getCleanEspecialidad(selectedDev.especialidad)} • <span className="font-mono">{selectedDev.email}</span>
                       </p>
                     </div>
                   </div>
@@ -841,7 +864,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     <div className="p-4.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/70 space-y-3">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <span className="text-[0.68rem] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                          <Layers size={14} className="text-blue-600 dark:text-blue-400" />
+                          <Briefcase size={14} className="text-blue-600 dark:text-blue-400" />
                           Desglose de Carga: Proyecto Actual vs Global Corporativa
                         </span>
                         <span className="text-[0.62rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
@@ -953,7 +976,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                      <Clock size={13} className="text-blue-600 dark:text-blue-400" />
+                      <Activity size={14} className="text-indigo-600 dark:text-indigo-400" />
                       Series Temporales de Carga Cognitiva (21 Días)
                     </h4>
                     <span className="text-[0.65rem] text-zinc-400 font-mono">
@@ -1019,7 +1042,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 {/* 5. Dictamen y Recomendación del Motor Predictivo */}
                 <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 space-y-1.5">
                   <div className="flex items-center gap-2 font-bold text-xs text-blue-900 dark:text-blue-300">
-                    <ShieldAlert size={15} className="text-blue-600 dark:text-blue-400" />
+                    <ShieldCheck size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
                     <span>Dictamen del Motor Predictivo (RF-35):</span>
                   </div>
                   <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
@@ -1071,6 +1094,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
           </div>
 
         </div>
+      </>
       )}
 
       {/* ─── Modal 1: Explorador y Menú Emergente de Proyectos (Ampliación Avanzada) ─── */}

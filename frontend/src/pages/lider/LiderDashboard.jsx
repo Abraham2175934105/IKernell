@@ -40,6 +40,14 @@ const itemVariants = {
   }
 };
 
+/* ─── Helper para extraer iniciales de nombre y apellido ─── */
+const getInitials = (nombre = '', apellido = '') => {
+  const n = (nombre || '').trim().charAt(0);
+  const a = (apellido || '').trim().charAt(0);
+  const res = `${n}${a}`.toUpperCase();
+  return res || 'DEV';
+};
+
 /* ─── Helper para limpiar y simplificar títulos de especialidad en Selects ─── */
 const getCleanEspecialidad = (especialidadRaw, profesionFallback = '') => {
   if (!especialidadRaw || !especialidadRaw.trim()) return profesionFallback || 'Desarrollador';
