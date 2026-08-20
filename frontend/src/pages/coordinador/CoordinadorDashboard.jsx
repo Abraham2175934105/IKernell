@@ -550,13 +550,17 @@ export const CoordinadorDashboard = () => {
     return matchesSearch && matchesRol && matchesEstado;
   });
 
-  const totalCount = trabajadores.length;
-  const activosCount = trabajadores.filter(t => t.estado).length;
-  const inactivosCount = trabajadores.filter(t => !t.estado).length;
-  const devsCount = trabajadores.filter(t => t.rol === 'DESARROLLADOR').length;
-  const lideresCount = trabajadores.filter(t => t.rol === 'LIDER').length;
-  const coordCount = trabajadores.filter(t => t.rol === 'COORDINADOR').length;
-  const solicitudesPendientes = solicitudes.filter(s => !s.atendido).length;
+  const totalCount = (trabajadores || []).length;
+  const activosCount = (trabajadores || []).filter(t => t.estado).length;
+  const inactivosCount = (trabajadores || []).filter(t => !t.estado).length;
+  const devsCount = (trabajadores || []).filter(t => t.rol === 'DESARROLLADOR').length;
+  const lideresCount = (trabajadores || []).filter(t => t.rol === 'LIDER').length;
+  const coordCount = (trabajadores || []).filter(t => t.rol === 'COORDINADOR').length;
+  const solicitudesPendientes = (solicitudes || []).filter(s => !s.atendido).length;
+
+  const devPct = totalCount > 0 ? Math.round((devsCount / totalCount) * 100) : 0;
+  const liderPct = totalCount > 0 ? Math.round((lideresCount / totalCount) * 100) : 0;
+  const coordPct = totalCount > 0 ? Math.round((coordCount / totalCount) * 100) : 0;
 
   const getInitials = (nombre, apellido) => {
     const n = (nombre || '').trim().charAt(0);
