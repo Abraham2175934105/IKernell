@@ -182,6 +182,9 @@ export const LiderDashboard = () => {
   const [showAtenderModal, setShowAtenderModal] = useState(false);
   const [showConfirmFinalizar, setShowConfirmFinalizar] = useState(false);
   const [submittingFinalizar, setSubmittingFinalizar] = useState(false);
+  const [motivoCancelacion, setMotivoCancelacion] = useState('CANCELACION_CLIENTE');
+  const [justificacionCancelacion, setJustificacionCancelacion] = useState('');
+  const [cancelacionError, setCancelacionError] = useState('');
   const [incidenciaAAtender, setIncidenciaAAtender] = useState(null);
   const [atencionForm, setAtencionForm] = useState({
     estadoAtencion: 'EN_REVISION',
@@ -624,12 +627,35 @@ export const LiderDashboard = () => {
   // Manejador para finalizar formalmente el proyecto y liberar desarrolladores (RF-20)
   const handleFinalizarProyecto = async () => {
     if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') return;
+    setCancelacionError('');
+
+    // Validación para proyectos vacíos sin estructura WBS
+    if (evidenciaWbsFinalizacion.esProyectoVacio) {
+      if (!justificacionCancelacion || justificacionCancelacion.trim().length < 10) {
+        setCancelacionError('Debe ingresar un motivo o justificación detallada de al menos 10 caracteres explicando la causa del cierre sin ejecución.');
+        toast.error('Justificación obligatoria para cerrar proyectos sin estructura WBS.');
+        return;
+      }
+    }
 
     try {
       setSubmittingFinalizar(true);
-      const res = await api.patch(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/finalizar`);
-      toast.success('Proyecto finalizado exitosamente. Su WBS ha sido congelada y los desarrolladores han sido liberados.');
+      const payload = evidenciaWbsFinalizacion.esProyectoVacio ? {
+        motivoCancelacion,
+        justificacionCancelacion: justificacionCancelacion.trim()
+      } : {};
+
+      const res = await api.patch(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/finalizar`, payload);
+      
+      if (evidenciaWbsFinalizacion.esProyectoVacio) {
+        toast.success('Proyecto cancelado/cerrado prematuramente. Se registró la justificación en la auditoría corporativa.');
+      } else {
+        toast.success('Proyecto finalizado exitosamente. Su WBS ha sido congelada y los desarrolladores han sido liberados.');
+      }
+      
       setShowConfirmFinalizar(false);
+      setJustificacionCancelacion('');
+      setCancelacionError('');
 
       const proyectoActualizado = {
         ...proyectoSeleccionado,
@@ -707,8 +733,15 @@ export const LiderDashboard = () => {
 
   // Evidencia de auditoría para finalización de proyecto (RF-20)
   const evidenciaWbsFinalizacion = useMemo(() => {
-    if (!etapas || !Array.isArray(etapas)) {
-      return { etapasIncompletas: [], actividadesIncompletas: [], todasCompletadas: true, totalEtapas: 0, totalActividades: 0 };
+    if (!etapas || !Array.isArray(etapas) || etapas.length === 0) {
+      return { 
+        etapasIncompletas: [], 
+        actividadesIncompletas: [], 
+        todasCompletadas: false, 
+        esProyectoVacio: true, 
+        totalEtapas: 0, 
+        totalActividades: 0 
+      };
     }
 
     const etapasIncompletas = [];
@@ -738,6 +771,7 @@ export const LiderDashboard = () => {
       etapasIncompletas,
       actividadesIncompletas,
       todasCompletadas: etapasIncompletas.length === 0 && actividadesIncompletas.length === 0,
+      esProyectoVacio: false,
       totalEtapas: etapas.length,
       totalActividades
     };
@@ -2530,124 +2564,199 @@ export const LiderDashboard = () => {
               </div>
 
               {/* Cuerpo Organizado en 2 Columnas (Grid Responsivo) */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                {/* Columna Izquierda (7 cols): Estado de Auditoría WBS */}
-                <div className="lg:col-span-7 space-y-4">
-                  {!evidenciaWbsFinalizacion.todasCompletadas ? (
-                    <div className="p-5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 space-y-3.5 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 font-extrabold text-amber-900 dark:text-amber-300 text-xs uppercase tracking-wider">
-                          <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                          <span>Alerta de Auditoría: Fases Pendientes</span>
-                        </div>
-                        <span className="px-2.5 py-1 rounded-lg bg-amber-200/70 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-[0.68rem] font-bold font-mono">
-                          {evidenciaWbsFinalizacion.etapasIncompletas.length} Etapas | {evidenciaWbsFinalizacion.actividadesIncompletas.length} Tareas
-                        </span>
+              {evidenciaWbsFinalizacion.esProyectoVacio ? (
+                /* CASO A: PROYECTO VACÍO (0 ETAPAS / 0 TAREAS WBS) */
+                <div className="space-y-5">
+                  <div className="p-5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 space-y-3 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-extrabold text-amber-900 dark:text-amber-300 text-xs uppercase tracking-wider">
+                        <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>Cierre Prematuro: Proyecto Sin Estructura Ni Avances WBS</span>
                       </div>
-
-                      <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed font-medium">
-                        Se detectaron elementos sin marcar como completados en el cronograma WBS. Al confirmar, el sistema forzará automáticamente la finalización histórica de todas estas fases para cumplir con la norma de auditoría <strong>RF-20</strong>.
-                      </p>
-
-                      {/* Contenedor Adaptativo de Evidencia WBS */}
-                      <div className="max-h-56 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                        {evidenciaWbsFinalizacion.etapasIncompletas.map(et => (
-                          <div 
-                            key={et.idEtapa} 
-                            className="p-3 rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200/80 dark:border-amber-800/60 space-y-2 shadow-2xs"
-                          >
-                            <div className="flex items-center justify-between text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                              <span className="flex items-center gap-1.5 truncate max-w-[280px]">
-                                <Layers size={14} className="text-amber-500 shrink-0" />
-                                <span>Etapa: {et.nombreEtapa}</span>
-                              </span>
-                              <span className="text-[0.65rem] uppercase px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-extrabold border border-amber-200 dark:border-amber-800">
-                                {et.estado}
-                              </span>
-                            </div>
-
-                            {et.actividadesIncompletas && et.actividadesIncompletas.length > 0 && (
-                              <div className="pl-4 border-l-2 border-amber-200 dark:border-amber-800/60 space-y-1 mt-1 text-[0.72rem]">
-                                {et.actividadesIncompletas.map(act => (
-                                  <div key={act.idActividad} className="flex items-center justify-between text-zinc-700 dark:text-zinc-300 font-medium">
-                                    <span className="truncate max-w-[240px] flex items-center gap-1">
-                                      <Clock size={11} className="text-amber-500 shrink-0" />
-                                      <span>{act.descripcion}</span>
-                                    </span>
-                                    <span className="text-[0.62rem] font-mono text-zinc-500 font-semibold">{act.estado}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-amber-100/60 dark:bg-amber-900/30 text-[0.68rem] text-amber-900 dark:text-amber-300 font-semibold flex items-center gap-2">
-                        <Info size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                        <span>Todas las actividades incompletas serán archivadas con estado de auditoría forzada.</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-5 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-xs text-emerald-900 dark:text-emerald-300 space-y-3 shadow-xs">
-                      <div className="flex items-center gap-2 font-extrabold uppercase tracking-wider text-xs text-emerald-700 dark:text-emerald-400">
-                        <CheckCircle2 size={18} className="shrink-0" />
-                        <span>Verificación WBS Cumplida (100%)</span>
-                      </div>
-                      <p className="leading-relaxed font-medium">
-                        Todas las etapas y actividades del cronograma WBS han sido marcadas como finalizadas satisfactoriamente. El proyecto cumple íntegramente con los requisitos de liberación formal.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Columna Derecha (5 cols): Consecuencias & Reglas de Gobernanza */}
-                <div className="lg:col-span-5 space-y-4">
-                  <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-4 shadow-2xs">
-                    <div className="flex items-center gap-2 font-extrabold text-zinc-900 dark:text-zinc-100 text-xs uppercase tracking-wider">
-                      <Lock size={15} className="text-zinc-600 dark:text-zinc-400 shrink-0" />
-                      <span>Impacto & Consecuencias del Cierre:</span>
+                      <span className="px-2.5 py-1 rounded-lg bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-[0.68rem] font-bold font-mono">
+                        0 Etapas | 0 Actividades
+                      </span>
                     </div>
 
-                    <div className="space-y-3 text-xs">
-                      {/* Item 1 */}
-                      <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
-                        <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 font-bold">
-                          1
-                        </div>
-                        <div>
-                          <strong className="block text-zinc-900 dark:text-zinc-100 font-bold text-[0.75rem]">Cambio de Estado a FINALIZADO</strong>
-                          <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">El proyecto quedará oficialmente clausurado en el portal corporativo.</span>
-                        </div>
+                    <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed font-medium">
+                      Este proyecto no contiene fases ni tareas WBS registradas. No se puede catalogar como <strong>"Culminación Exitosa"</strong> dado que no tuvo ejecución técnica real. Para proceder con su clausura o cancelación, es obligatorio justificar la causa del cierre en la trazabilidad de auditoría.
+                    </p>
+                  </div>
+
+                  {/* Formulario de Justificación de Cierre Prematuro */}
+                  <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-4">
+                    <div className="flex items-center gap-2 text-xs font-extrabold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+                      <FileText size={15} className="text-blue-500 shrink-0" />
+                      <span>Registro Obligatorio de Auditoría de Cierre Prematuro</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Motivo de Cancelación */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                          Motivo Principal de Cierre:
+                        </label>
+                        <select
+                          value={motivoCancelacion}
+                          onChange={(e) => setMotivoCancelacion(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs"
+                        >
+                          <option value="CANCELACION_CLIENTE">1. Cancelación o desestimación por el cliente</option>
+                          <option value="REESTRUCTURACION_PROYECTO">2. Reestructurado o migrado a otro código de proyecto</option>
+                          <option value="RECHAZO_PRESUPUESTO">3. Insuficiencia presupuestaria o de recursos</option>
+                          <option value="INVIABILIDAD_TECNICA">4. Inviabilidad técnica o cambio de alcance</option>
+                          <option value="OTRO_MOTIVO">5. Otro motivo (especificar en la justificación)</option>
+                        </select>
                       </div>
 
-                      {/* Item 2 */}
-                      <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
-                        <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 font-bold">
-                          2
-                        </div>
-                        <div>
-                          <strong className="block text-zinc-900 dark:text-zinc-100 font-bold text-[0.75rem]">Congelamiento Total de WBS</strong>
-                          <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">Toda la estructura de tareas y tiempos pasa a modo de lectura inmutable.</span>
-                        </div>
-                      </div>
-
-                      {/* Item 3 */}
-                      <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
-                        <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 font-bold">
-                          3
-                        </div>
-                        <div>
-                          <strong className="block text-zinc-900 dark:text-zinc-100 font-bold text-[0.75rem]">Liberación en Predictor Burnout</strong>
-                          <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">Se libera la carga horaria y dedicación asignada a todos los desarrolladores.</span>
-                        </div>
+                      {/* Explicación / Justificación */}
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
+                          <span>Justificación Detallada (Mínimo 10 caracteres): *</span>
+                          <span className="text-[0.68rem] text-zinc-400 font-mono">
+                            {justificacionCancelacion.length} caracteres
+                          </span>
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={justificacionCancelacion}
+                          onChange={(e) => {
+                            setJustificacionCancelacion(e.target.value);
+                            if (cancelacionError) setCancelacionError('');
+                          }}
+                          placeholder="Ej: El proyecto se cierra prematuramente debido a reestructuración de prioridades comerciales por parte de la gerencia del cliente..."
+                          className="w-full p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed font-medium"
+                        />
+                        {cancelacionError && (
+                          <span className="text-[0.72rem] text-red-600 dark:text-red-400 font-bold block mt-1">
+                            ⚠️ {cancelacionError}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
+              ) : (
+                /* CASO B: PROYECTO CON FASES / WBS CONFIGURADO */
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-              </div>
+                  {/* Columna Izquierda (7 cols): Estado de Auditoría WBS */}
+                  <div className="lg:col-span-7 space-y-4">
+                    {!evidenciaWbsFinalizacion.todasCompletadas ? (
+                      <div className="p-5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 space-y-3.5 shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 font-extrabold text-amber-900 dark:text-amber-300 text-xs uppercase tracking-wider">
+                            <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            <span>Alerta de Auditoría: Fases Pendientes</span>
+                          </div>
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-200/70 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-[0.68rem] font-bold font-mono">
+                            {evidenciaWbsFinalizacion.etapasIncompletas.length} Etapas | {evidenciaWbsFinalizacion.actividadesIncompletas.length} Tareas
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed font-medium">
+                          Se detectaron elementos sin marcar como completados en el cronograma WBS. Al confirmar, el sistema forzará automáticamente la finalización histórica de todas estas fases para cumplir con la norma de auditoría <strong>RF-20</strong>.
+                        </p>
+
+                        {/* Contenedor Adaptativo de Evidencia WBS */}
+                        <div className="max-h-56 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                          {evidenciaWbsFinalizacion.etapasIncompletas.map(et => (
+                            <div 
+                              key={et.idEtapa} 
+                              className="p-3 rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200/80 dark:border-amber-800/60 space-y-2 shadow-2xs"
+                            >
+                              <div className="flex items-center justify-between text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                                <span className="flex items-center gap-1.5 truncate max-w-[280px]">
+                                  <Layers size={14} className="text-amber-500 shrink-0" />
+                                  <span>Etapa: {et.nombreEtapa}</span>
+                                </span>
+                                <span className="text-[0.65rem] uppercase px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-extrabold border border-amber-200 dark:border-amber-800">
+                                  {et.estado}
+                                </span>
+                              </div>
+
+                              {et.actividadesIncompletas && et.actividadesIncompletas.length > 0 && (
+                                <div className="pl-4 border-l-2 border-amber-200 dark:border-amber-800/60 space-y-1 mt-1 text-[0.72rem]">
+                                  {et.actividadesIncompletas.map(act => (
+                                    <div key={act.idActividad} className="flex items-center justify-between text-zinc-700 dark:text-zinc-300 font-medium">
+                                      <span className="truncate max-w-[240px] flex items-center gap-1">
+                                        <Clock size={11} className="text-amber-500 shrink-0" />
+                                        <span>{act.descripcion}</span>
+                                      </span>
+                                      <span className="text-[0.62rem] font-mono text-zinc-500 font-semibold">{act.estado}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-amber-100/60 dark:bg-amber-900/30 text-[0.68rem] text-amber-900 dark:text-amber-300 font-semibold flex items-center gap-2">
+                          <Info size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                          <span>Todas las actividades incompletas serán archivadas con estado de auditoría forzada.</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-5 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-xs text-emerald-900 dark:text-emerald-300 space-y-3 shadow-xs">
+                        <div className="flex items-center gap-2 font-extrabold uppercase tracking-wider text-xs text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle2 size={18} className="shrink-0" />
+                          <span>Verificación WBS Cumplida (100%)</span>
+                        </div>
+                        <p className="leading-relaxed font-medium">
+                          Todas las etapas y actividades del cronograma WBS han sido marcadas como finalizadas satisfactoriamente. El proyecto cumple íntegramente con los requisitos de liberación formal.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Columna Derecha (5 cols): Consecuencias & Reglas de Gobernanza */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-4 shadow-2xs">
+                      <div className="flex items-center gap-2 font-extrabold text-zinc-900 dark:text-zinc-100 text-xs uppercase tracking-wider">
+                        <Lock size={15} className="text-zinc-600 dark:text-zinc-400 shrink-0" />
+                        <span>Impacto & Consecuencias del Cierre:</span>
+                      </div>
+
+                      <div className="space-y-3 text-xs">
+                        {/* Item 1 */}
+                        <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
+                          <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 font-bold">
+                            1
+                          </div>
+                          <div>
+                            <strong className="block text-zinc-900 dark:text-zinc-100 font-bold text-[0.75rem]">Cambio de Estado a FINALIZADO</strong>
+                            <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">El proyecto quedará oficialmente clausurado en el portal corporativo.</span>
+                          </div>
+                        </div>
+
+                        {/* Item 2 */}
+                        <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
+                          <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 font-bold">
+                            2
+                          </div>
+                          <div>
+                            <strong className="block text-zinc-900 dark:text-zinc-100 font-bold text-[0.75rem]">Congelamiento Total de WBS</strong>
+                            <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">Toda la estructura de tareas y tiempos pasa a modo de lectura inmutable.</span>
+                          </div>
+                        </div>
+
+                        {/* Item 3 */}
+                        <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
+                          <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 font-bold">
+                            3
+                          </div>
+                          <div>
+                            <strong className="block text-zinc-900 dark:text-zinc-100 font-bold text-[0.75rem]">Liberación en Predictor Burnout</strong>
+                            <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">Se libera la carga horaria y dedicación asignada a todos los desarrolladores.</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
 
               {/* Pie del Modal con Botones de Acción */}
               <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
