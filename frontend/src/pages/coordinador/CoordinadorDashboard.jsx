@@ -158,6 +158,8 @@ export const CoordinadorDashboard = () => {
   const [togglingSolicitudId, setTogglingSolicitudId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroRol, setFiltroRol] = useState('TODOS'); // 'TODOS' | 'DESARROLLADOR' | 'LIDER' | 'COORDINADOR'
+  const [filtroEstado, setFiltroEstado] = useState('TODOS'); // 'TODOS' | 'ACTIVO' | 'INHABILITADO'
   const [filtroSolicitudes, setFiltroSolicitudes] = useState('TODAS'); // 'TODAS' | 'PENDIENTE' | 'ATENDIDA' | 'REABIERTA' | 'EN_PROCESO'
   
   // Modales
@@ -530,18 +532,37 @@ export const CoordinadorDashboard = () => {
     );
   };
 
-  const filteredTrabajadores = trabajadores.filter(t => 
-    (t.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (t.apellido || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (t.identificacion || '').includes(searchTerm) ||
-    (t.profesion || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (t.especialidad || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (t.rol || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (t.email || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTrabajadores = trabajadores.filter(t => {
+    const matchesSearch = 
+      (t.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (t.apellido || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.identificacion || '').includes(searchTerm) ||
+      (t.profesion || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.especialidad || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.rol || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.email || '').toLowerCase().includes(searchTerm.toLowerCase());
 
+    const matchesRol = filtroRol === 'TODOS' || t.rol === filtroRol;
+    const matchesEstado = filtroEstado === 'TODOS' || 
+      (filtroEstado === 'ACTIVO' && t.estado) || 
+      (filtroEstado === 'INHABILITADO' && !t.estado);
+
+    return matchesSearch && matchesRol && matchesEstado;
+  });
+
+  const totalCount = trabajadores.length;
   const activosCount = trabajadores.filter(t => t.estado).length;
+  const inactivosCount = trabajadores.filter(t => !t.estado).length;
+  const devsCount = trabajadores.filter(t => t.rol === 'DESARROLLADOR').length;
+  const lideresCount = trabajadores.filter(t => t.rol === 'LIDER').length;
+  const coordCount = trabajadores.filter(t => t.rol === 'COORDINADOR').length;
   const solicitudesPendientes = solicitudes.filter(s => !s.atendido).length;
+
+  const getInitials = (nombre, apellido) => {
+    const n = (nombre || '').trim().charAt(0);
+    const a = (apellido || '').trim().charAt(0);
+    return (n + a).toUpperCase() || 'U';
+  };
 
   return (
     <DashboardLayout 
@@ -552,7 +573,7 @@ export const CoordinadorDashboard = () => {
         metric2: loading ? '...' : `Solicitudes: ${solicitudesPendientes} Pendientes`
       }}
     >
-      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (Estilo Stripe / Vercel Enterprise) */}
+      {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (Vista Ejecutiva Enterprise) */}
       {activeTab === 'personal' && (
         <motion.div 
           key="personal"
@@ -575,7 +596,7 @@ export const CoordinadorDashboard = () => {
                 Gestión Centralizada de Personal
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                Alta y control de acceso lógico para Líderes y Desarrolladores — Persistencia directa en PostgreSQL
+                Alta, control de acceso lógico y organización por roles para la nómina de desarrollo
               </p>
             </div>
 
@@ -598,34 +619,188 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Barra de Búsqueda y Filtro */}
-          <motion.div variants={itemVariants} className="relative">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Filtrar por nombre, correo, identificación, especialidad o rol..."
-              className="input-field pl-11 py-3 text-sm bg-white dark:bg-zinc-900 shadow-sm"
-            />
+          {/* Tarjetas Métricas KPI de Resumen (Métricas Rápidas) */}
+          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {/* Total Personal */}
+            <motion.div 
+              whileHover={{ y: -2 }}
+              className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center justify-between"
+            >
+              <div>
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 block mb-1">Total Personal</span>
+                <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono tracking-tight">
+                  {loading ? '...' : totalCount}
+                </div>
+                <div className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> {activosCount} Activos
+                  <span className="text-zinc-300 dark:text-zinc-700 mx-0.5">•</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 inline-block" /> {inactivosCount} Inactivos
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900">
+                <Users size={22} />
+              </div>
+            </motion.div>
+
+            {/* Desarrolladores */}
+            <motion.div 
+              whileHover={{ y: -2 }}
+              className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center justify-between"
+            >
+              <div>
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 block mb-1">Desarrolladores</span>
+                <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono tracking-tight">
+                  {loading ? '...' : devsCount}
+                </div>
+                <div className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
+                  Ejecución de actividades WBS
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-100 dark:border-emerald-900">
+                <Code2 size={22} />
+              </div>
+            </motion.div>
+
+            {/* Líderes de Proyecto */}
+            <motion.div 
+              whileHover={{ y: -2 }}
+              className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center justify-between"
+            >
+              <div>
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 block mb-1">Líderes de Proyecto</span>
+                <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono tracking-tight">
+                  {loading ? '...' : lideresCount}
+                </div>
+                <div className="text-[0.68rem] text-amber-600 dark:text-amber-400 font-medium mt-1">
+                  Gestión y asignación ágil
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-100 dark:border-amber-900">
+                <Briefcase size={22} />
+              </div>
+            </motion.div>
+
+            {/* Coordinación */}
+            <motion.div 
+              whileHover={{ y: -2 }}
+              className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center justify-between"
+            >
+              <div>
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 block mb-1">Coordinadores</span>
+                <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono tracking-tight">
+                  {loading ? '...' : coordCount}
+                </div>
+                <div className="text-[0.68rem] text-purple-600 dark:text-purple-400 font-medium mt-1">
+                  Administración TI global
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-100 dark:border-purple-900">
+                <Shield size={22} />
+              </div>
+            </motion.div>
+
           </motion.div>
 
-          {/* Tabla de Personal Rediseñada (Sin Avatares y con Acción Exclusiva de Estado) */}
+          {/* Barra de Filtros Interactivos & Búsqueda */}
+          <motion.div variants={itemVariants} className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+            
+            {/* Buscador General */}
+            <div className="relative w-full">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar trabajador por nombre, cédula, correo, profesión o tecnología..."
+                className="input-field pl-11 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
+              />
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Controles de Filtros Rápidos (Por Rol y Estado) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+              
+              {/* Filtro de Rol (Pills) */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[0.68rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mr-1 flex items-center gap-1">
+                  <Filter size={12} /> Rol:
+                </span>
+                
+                {[
+                  { key: 'TODOS', label: `Todos (${totalCount})` },
+                  { key: 'DESARROLLADOR', label: `Devs (${devsCount})` },
+                  { key: 'LIDER', label: `Líderes (${lideresCount})` },
+                  { key: 'COORDINADOR', label: `Coordinadores (${coordCount})` }
+                ].map(r => (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={() => setFiltroRol(r.key)}
+                    className={`px-3 py-1 rounded-xl font-semibold transition-all cursor-pointer ${
+                      filtroRol === r.key
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-2xs'
+                        : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Filtro de Estado (Pills) */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[0.68rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mr-1">
+                  Estado:
+                </span>
+                
+                {[
+                  { key: 'TODOS', label: 'Todos' },
+                  { key: 'ACTIVO', label: `Habilitados (${activosCount})` },
+                  { key: 'INHABILITADO', label: `Inhabilitados (${inactivosCount})` }
+                ].map(s => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setFiltroEstado(s.key)}
+                    className={`px-3 py-1 rounded-xl font-semibold transition-all cursor-pointer ${
+                      filtroEstado === s.key
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
+            </div>
+
+          </motion.div>
+
+          {/* Tabla de Personal Reorganizada (Vista Ejecutiva Elegante) */}
           <motion.div 
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm"
           >
             <div className="overflow-x-auto w-full">
-              <table className="w-full text-left text-xs min-w-[780px]">
-                {/* 1. Contenedor y Encabezados Modernos */}
-                <thead className="bg-zinc-50/90 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <table className="w-full text-left text-xs min-w-[850px]">
+                {/* Encabezados de la Tabla */}
+                <thead className="bg-zinc-50/90 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-[0.68rem] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   <tr>
                     <th className="py-4 px-6">Identificación</th>
-                    <th className="py-4 px-6">Trabajador</th>
-                    <th className="py-4 px-6">Profesión / Especialidad</th>
+                    <th className="py-4 px-6">Trabajador & Contacto</th>
+                    <th className="py-4 px-6">Profesión / Stack Técnico</th>
                     <th className="py-4 px-6">Rol Asignado</th>
-                    <th className="py-4 px-6">Estado</th>
-                    <th className="py-4 px-6 text-right">Acción</th>
+                    <th className="py-4 px-6">Estado Lógico</th>
+                    <th className="py-4 px-6 text-right">Acción de Acceso</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/80 dark:divide-zinc-800/80 font-medium">
@@ -643,15 +818,19 @@ export const CoordinadorDashboard = () => {
                       <td colSpan={6}>
                         <EmptyState
                           icon={Inbox}
-                          title="No se encontraron empleados"
-                          description={searchTerm ? "No hay trabajadores que coincidan con los criterios de búsqueda." : "Aún no hay personal registrado en la base de datos."}
+                          title="No se encontraron trabajadores"
+                          description={
+                            searchTerm || filtroRol !== 'TODOS' || filtroEstado !== 'TODOS'
+                              ? "No hay personal que coincida con los filtros y la búsqueda seleccionada."
+                              : "Aún no hay personal registrado en la base de datos."
+                          }
                           action={
                             <button
                               type="button"
-                              onClick={() => setShowCreateModal(true)}
-                              className="gradient-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5"
+                              onClick={() => { setSearchTerm(''); setFiltroRol('TODOS'); setFiltroEstado('TODOS'); }}
+                              className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5"
                             >
-                              <UserPlus size={14} /> Registrar primer empleado
+                              <RotateCcw size={14} /> Limpiar Filtros
                             </button>
                           }
                         />
@@ -664,37 +843,54 @@ export const CoordinadorDashboard = () => {
                       key={t.idTrabajador} 
                       className="transition-colors duration-150 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group"
                     >
-                      {/* Identificación */}
-                      <td className="py-4 px-6 font-mono font-bold text-zinc-700 dark:text-zinc-300">
-                        {t.identificacion}
-                      </td>
-
-                      {/* 1. Trabajador (Exclusivamente texto, sin avatares) */}
+                      {/* Identificación (Badge Monospaciado) */}
                       <td className="py-4 px-6">
-                        <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          {t.nombre} {t.apellido}
-                        </div>
-                        <div className="text-zinc-500 dark:text-zinc-400 text-xs">
-                          {t.email}
+                        <span className="inline-block px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[0.72rem] font-bold border border-zinc-200 dark:border-zinc-700">
+                          #{t.identificacion}
+                        </span>
+                      </td>
+
+                      {/* Trabajador con Avatar de Iniciales e Indicador Pulsante */}
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar Circular con Iniciales */}
+                          <div className="relative shrink-0">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-700 text-zinc-800 dark:text-zinc-200 font-extrabold text-xs flex items-center justify-center border border-zinc-200 dark:border-zinc-700 shadow-2xs">
+                              {getInitials(t.nombre, t.apellido)}
+                            </div>
+                            <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-zinc-900 ${t.estado ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
+                          </div>
+
+                          {/* Nombre y Correo */}
+                          <div>
+                            <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              {t.nombre} {t.apellido}
+                            </div>
+                            <div className="text-zinc-500 dark:text-zinc-400 text-xs flex items-center gap-1 mt-0.5">
+                              <Mail size={11} className="text-zinc-400 shrink-0" />
+                              <span>{t.email}</span>
+                            </div>
+                          </div>
                         </div>
                       </td>
 
-                      {/* Profesión y Especialidad con Skills */}
+                      {/* Profesión y Stack de Habilidades Técnicas */}
                       <td className="py-4 px-6 max-w-[280px]">
-                        <div className="font-bold text-zinc-900 dark:text-zinc-100 text-xs mb-1">
-                          {t.profesion || 'Ingeniero de Software'}
+                        <div className="font-bold text-zinc-900 dark:text-zinc-100 text-xs mb-1 flex items-center gap-1">
+                          <GraduationCap size={13} className="text-blue-500 shrink-0" />
+                          <span>{t.profesion || 'Ingeniero de Software'}</span>
                         </div>
                         {renderEspecialidadYSkills(t.especialidad)}
                       </td>
 
-                      {/* Insignias Dinámicas para los Roles */}
+                      {/* Insignia Dinámica del Rol */}
                       <td className="py-4 px-6">
                         <RoleBadge rol={t.rol} />
                       </td>
 
-                      {/* Estado con punto animado */}
+                      {/* Estado Lógico con Punto Animado */}
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border shadow-sm ${
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border shadow-2xs ${
                           t.estado 
                             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' 
                             : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'
@@ -704,25 +900,30 @@ export const CoordinadorDashboard = () => {
                         </span>
                       </td>
 
-                      {/* 2 y 3. Acción Exclusiva de Habilitar / Inhabilitar (Soft Delete) */}
+                      {/* Botón de Acción Explicativo */}
                       <td className="py-4 px-6 text-right">
                         <button
                           type="button"
                           disabled={togglingId === t.idTrabajador}
                           onClick={() => handleInhabilitar(t.idTrabajador)}
-                          title={t.estado ? "Inhabilitar usuario" : "Reactivar usuario"}
-                          className={`p-2 rounded-xl border transition-all cursor-pointer inline-flex items-center justify-center disabled:opacity-50 ${
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs disabled:opacity-50 ${
                             t.estado
-                              ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border-transparent hover:border-red-200 dark:hover:border-red-800'
-                              : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-transparent hover:border-emerald-200 dark:hover:border-emerald-800'
+                              ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-300 border-red-200 dark:border-red-800'
+                              : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                           }`}
                         >
                           {togglingId === t.idTrabajador ? (
-                            <Loader2 size={16} className="animate-spin" />
+                            <>
+                              <Loader2 size={13} className="animate-spin" /> Procesando...
+                            </>
                           ) : t.estado ? (
-                            <UserX size={16} />
+                            <>
+                              <UserX size={13} /> Inhabilitar
+                            </>
                           ) : (
-                            <UserCheck size={16} />
+                            <>
+                              <UserCheck size={13} /> Reactivar
+                            </>
                           )}
                         </button>
                       </td>
