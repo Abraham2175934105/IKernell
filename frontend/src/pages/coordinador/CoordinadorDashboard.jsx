@@ -158,15 +158,17 @@ export const CoordinadorDashboard = () => {
   const [togglingSolicitudId, setTogglingSolicitudId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [rolesSeleccionados, setRolesSeleccionados] = useState([]); // [] = Todos
+  const [rolSeleccionado, setRolSeleccionado] = useState('TODOS'); // 'TODOS' | 'DESARROLLADOR' | 'LIDER' | 'COORDINADOR'
   const [techsSeleccionadas, setTechsSeleccionadas] = useState([]); // [] = Todas
   const [estadoSeleccionado, setEstadoSeleccionado] = useState('TODOS'); // 'TODOS' | 'ACTIVO' | 'INHABILITADO'
   const [filtroSolicitudes, setFiltroSolicitudes] = useState('TODAS'); // 'TODAS' | 'PENDIENTE' | 'ATENDIDA' | 'REABIERTA' | 'EN_PROCESO'
 
-  const handleToggleRoleFilter = (rolKey) => {
-    setRolesSeleccionados(prev =>
-      prev.includes(rolKey) ? prev.filter(r => r !== rolKey) : [...prev, rolKey]
-    );
+  const handleSelectRole = (rolKey) => {
+    // Selección Única Estricta de Rol
+    const newRole = rolSeleccionado === rolKey ? 'TODOS' : rolKey;
+    setRolSeleccionado(newRole);
+    // Reiniciar habilidades al cambiar de rol para evitar incongruencias
+    setTechsSeleccionadas([]);
   };
 
   const handleToggleTechFilter = (techName) => {
@@ -177,7 +179,7 @@ export const CoordinadorDashboard = () => {
 
   const handleClearAllFilters = () => {
     setSearchQuery('');
-    setRolesSeleccionados([]);
+    setRolSeleccionado('TODOS');
     setTechsSeleccionadas([]);
     setEstadoSeleccionado('TODOS');
   };
@@ -561,7 +563,7 @@ export const CoordinadorDashboard = () => {
       (t.email || '').toLowerCase().includes(query) ||
       (t.profesion || '').toLowerCase().includes(query);
 
-    const matchesRol = rolesSeleccionados.length === 0 || rolesSeleccionados.includes(t.rol);
+    const matchesRol = rolSeleccionado === 'TODOS' || t.rol === rolSeleccionado;
 
     let matchesTech = true;
     if (techsSeleccionadas.length > 0) {
@@ -576,7 +578,7 @@ export const CoordinadorDashboard = () => {
     return matchesSearch && matchesRol && matchesTech && matchesEstado;
   });
 
-  const activeFiltersCount = (searchQuery ? 1 : 0) + rolesSeleccionados.length + techsSeleccionadas.length + (estadoSeleccionado !== 'TODOS' ? 1 : 0);
+  const activeFiltersCount = (searchQuery ? 1 : 0) + (rolSeleccionado !== 'TODOS' ? 1 : 0) + techsSeleccionadas.length + (estadoSeleccionado !== 'TODOS' ? 1 : 0);
 
   const totalCount = (trabajadores || []).length;
   const activosCount = (trabajadores || []).filter(t => t.estado).length;
@@ -590,10 +592,10 @@ export const CoordinadorDashboard = () => {
   const liderPct = totalCount > 0 ? Math.round((lideresCount / totalCount) * 100) : 0;
   const coordPct = totalCount > 0 ? Math.round((coordCount / totalCount) * 100) : 0;
 
-  const getTopSkillsByRole = (list, selectedRoles) => {
+  const getTopSkillsByRole = (list, selectedRole) => {
     const counts = {};
     (list || []).forEach(t => {
-      if (selectedRoles.length > 0 && !selectedRoles.includes(t.rol)) {
+      if (selectedRole !== 'TODOS' && t.rol !== selectedRole) {
         return;
       }
       const spec = t.especialidad || '';
@@ -617,7 +619,7 @@ export const CoordinadorDashboard = () => {
       .slice(0, 10);
   };
 
-  const topSkills = getTopSkillsByRole(trabajadores, rolesSeleccionados);
+  const topSkills = getTopSkillsByRole(trabajadores, rolSeleccionado);
 
   const getFilterExplanationText = () => {
     if (activeFiltersCount === 0) {
@@ -625,11 +627,9 @@ export const CoordinadorDashboard = () => {
     }
 
     const parts = [];
-    if (rolesSeleccionados.length > 0) {
-      const roleNames = rolesSeleccionados.map(r => 
-        r === 'DESARROLLADOR' ? 'Desarrolladores' : r === 'LIDER' ? 'Líderes de Proyecto' : 'Coordinadores'
-      ).join(', ');
-      parts.push(roleNames);
+    if (rolSeleccionado !== 'TODOS') {
+      const roleName = rolSeleccionado === 'DESARROLLADOR' ? 'Desarrolladores' : rolSeleccionado === 'LIDER' ? 'Líderes de Proyecto' : 'Coordinadores';
+      parts.push(roleName);
     } else {
       parts.push('Personal general');
     }
@@ -758,7 +758,7 @@ export const CoordinadorDashboard = () => {
 
             </div>
 
-            {/* 2. Paso 1: Buscador Directo por Nombre / Cédula */}
+            {/* 2. Buscador Directo por Nombre / Cédula */}
             <div className="space-y-1.5">
               <label className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                 <Search size={13} className="text-blue-500" /> Búsqueda Directa por Texto Libre:
@@ -783,19 +783,19 @@ export const CoordinadorDashboard = () => {
               </div>
             </div>
 
-            {/* 3. Paso 2: Selección de Roles y Estado Lógico */}
+            {/* 3. Paso 1 (Selección Única de Rol) y Paso 2 (Estado Lógico) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
               
-              {/* A. Selección de Roles (Contextual) */}
+              {/* A. Selección Única de Rol (Paso 1) */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <Briefcase size={13} className="text-amber-500" /> Paso 1: Selecciona los Roles a consultar:
+                    <Briefcase size={13} className="text-amber-500" /> Paso 1: Selecciona 1 solo Rol a consultar:
                   </span>
-                  {rolesSeleccionados.length > 0 && (
+                  {rolSeleccionado !== 'TODOS' && (
                     <button 
-                      onClick={() => setRolesSeleccionados([])}
-                      className="text-[0.65rem] font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                      onClick={() => handleSelectRole('TODOS')}
+                      className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                     >
                       Ver Todos los Roles
                     </button>
@@ -804,27 +804,28 @@ export const CoordinadorDashboard = () => {
 
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { key: 'DESARROLLADOR', label: `Desarrolladores (${devsCount})`, icon: Code2, badge: 'Desarrollo WBS' },
-                    { key: 'LIDER', label: `Líderes (${lideresCount})`, icon: Briefcase, badge: 'Gestión Ágil' },
-                    { key: 'COORDINADOR', label: `Coordinadores (${coordCount})`, icon: Shield, badge: 'Administrativos' }
+                    { key: 'TODOS', label: `Todos los Roles (${totalCount})`, icon: Sparkles },
+                    { key: 'DESARROLLADOR', label: `Desarrolladores (${devsCount})`, icon: Code2 },
+                    { key: 'LIDER', label: `Líderes (${lideresCount})`, icon: Briefcase },
+                    { key: 'COORDINADOR', label: `Coordinadores (${coordCount})`, icon: Shield }
                   ].map(r => {
-                    const isSelected = rolesSeleccionados.includes(r.key);
+                    const isSelected = rolSeleccionado === r.key;
                     const IconComponent = r.icon;
                     return (
                       <button
                         key={r.key}
                         type="button"
-                        onClick={() => handleToggleRoleFilter(r.key)}
+                        onClick={() => handleSelectRole(r.key)}
                         className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                           isSelected
-                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-xs ring-2 ring-zinc-500/20 font-bold'
+                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
                             : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
                         }`}
                       >
-                        <div className={`w-4 h-4 rounded flex items-center justify-center text-[0.65rem] font-bold ${
-                          isSelected ? 'bg-white/20 dark:bg-zinc-900/20 text-current' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[0.65rem] font-bold ${
+                          isSelected ? 'bg-white text-blue-600' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
                         }`}>
-                          {isSelected ? <Check size={11} /> : '+'}
+                          {isSelected ? '✓' : '•'}
                         </div>
                         <IconComponent size={14} className="shrink-0" />
                         <span>{r.label}</span>
@@ -834,7 +835,7 @@ export const CoordinadorDashboard = () => {
                 </div>
               </div>
 
-              {/* B. Estado Lógico del Acceso */}
+              {/* B. Estado Lógico del Acceso (Paso 2) */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
@@ -856,7 +857,7 @@ export const CoordinadorDashboard = () => {
                         onClick={() => setEstadoSeleccionado(s.key)}
                         className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                           isSelected
-                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-xs ring-2 ring-zinc-500/20 font-bold'
                             : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
                         }`}
                       >
@@ -869,15 +870,18 @@ export const CoordinadorDashboard = () => {
 
             </div>
 
-            {/* 4. Paso 3: Habilidades Adaptativas según el Rol Seleccionado */}
+            {/* 4. Paso 3: Habilidades Adaptativas del Rol Seleccionado */}
             {topSkills.length > 0 && (
               <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                     <Cpu size={13} className="text-blue-500" />
-                    Paso 3: Habilidades de {rolesSeleccionados.length === 1 
-                      ? (rolesSeleccionados[0] === 'DESARROLLADOR' ? 'Desarrollo WBS' : rolesSeleccionados[0] === 'LIDER' ? 'Gestión Ágil' : 'Administración Operativa')
-                      : 'Personal Seleccionado'}:
+                    Paso 3: Habilidades de {
+                      rolSeleccionado === 'DESARROLLADOR' ? 'Desarrollo WBS' : 
+                      rolSeleccionado === 'LIDER' ? 'Gestión Ágil & Liderazgo' : 
+                      rolSeleccionado === 'COORDINADOR' ? 'Administración Operativa' : 
+                      'Personal General'
+                    }:
                   </span>
                   {techsSeleccionadas.length > 0 && (
                     <button 
