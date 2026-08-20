@@ -225,6 +225,7 @@ export const LiderDashboard = () => {
   const [filtroDevInc, setFiltroDevInc] = useState('TODOS');
   const [filtroFechaTipo, setFiltroFechaTipo] = useState('TODAS');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
   const [showGuiaUsuarioIncidencias, setShowGuiaUsuarioIncidencias] = useState(true);
 
   const [showFiltroFechasModal, setShowFiltroFechasModal] = useState(false);
