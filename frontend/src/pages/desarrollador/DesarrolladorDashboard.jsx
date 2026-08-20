@@ -249,7 +249,7 @@ export const DesarrolladorDashboard = () => {
       }
 
       const labels = { 'PENDIENTE': 'Pendiente', 'EN_PROGRESO': 'En Progreso', 'FINALIZADA': 'Finalizada' };
-      toast.success(`Estado actualizado a "${labels[nuevoEstado] || nuevoEstado}" en PostgreSQL.`);
+      toast.success(`¡Caso / Tarea #${idActividad} actualizada con éxito a estado "${labels[nuevoEstado] || nuevoEstado}"!`, { icon: '✅', duration: 5000 });
     } catch (err) {
       console.error('Error cambiando estado:', err);
       toast.error(err.message || 'Error al actualizar el estado de la actividad.');
@@ -311,7 +311,7 @@ export const DesarrolladorDashboard = () => {
         descripcion: errorForm.descripcion.trim()
       });
       
-      toast.success('Error técnico guardado en PostgreSQL. El Semáforo Predictivo fue actualizado.');
+      toast.success('¡Caso de Error Técnico registrado con éxito! Guardado en PostgreSQL.', { icon: '✅', duration: 5000 });
       setShowErrorModal(false);
       setErrorForm({ idEtapa: '', tipoError: '', severidad: '', descripcion: '' });
       setEtapaPreseleccionada(null);
@@ -353,7 +353,7 @@ export const DesarrolladorDashboard = () => {
         comentarios: interrupcionForm.comentarios.trim()
       });
       
-      toast.success(`Contingencia de ${interrupcionForm.duracionMinutos} minutos guardada en PostgreSQL.`);
+      toast.success(`¡Caso de Contingencia (${interrupcionForm.duracionMinutos} min) registrado con éxito! Guardado en PostgreSQL.`, { icon: '✅', duration: 5000 });
       setShowInterrupcionModal(false);
       setInterrupcionForm({ idEtapa: '', tipoInterrupcion: '', duracionMinutos: '', comentarios: '' });
       setEtapaPreseleccionada(null);

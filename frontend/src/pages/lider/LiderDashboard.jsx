@@ -232,6 +232,9 @@ export const LiderDashboard = () => {
   const [submittingReasignacion, setSubmittingReasignacion] = useState(false);
   const [submittingAtencion, setSubmittingAtencion] = useState(false);
 
+  const [ultimoCasoActualizado, setUltimoCasoActualizado] = useState(null);
+  const [showGuiaUsuarioIncidencias, setShowGuiaUsuarioIncidencias] = useState(true);
+
   const [nuevaActividad, setNuevaActividad] = useState({
     idEtapa: '',
     idDesarrollador: '',
@@ -645,7 +648,21 @@ export const LiderDashboard = () => {
         setInterrupciones(prev => prev.map(intp => intp.idInterrupcion === incidenciaAAtender.idInterrupcion ? { ...intp, ...res } : intp));
       }
 
-      toast.success('Estado del reporte y acción correctiva actualizados en PostgreSQL.');
+      const casoId = incidenciaAAtender.idError || incidenciaAAtender.idInterrupcion;
+      const estadoNuevo = atencionForm.estadoAtencion;
+      const timestampStr = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      setUltimoCasoActualizado({
+        id: casoId,
+        tipo: isError ? 'Error Técnico' : 'Contingencia',
+        estado: estadoNuevo,
+        timestamp: timestampStr
+      });
+
+      toast.success(`Caso #${casoId} actualizado con éxito a estado ${estadoNuevo}.`, {
+        duration: 5000,
+        icon: '✅'
+      });
       setShowAtenderModal(false);
       setIncidenciaAAtender(null);
       setAtencionForm({ estadoAtencion: 'EN_REVISION', resolucionNota: '' });
@@ -1518,6 +1535,88 @@ export const LiderDashboard = () => {
               </button>
             </div>
           </motion.div>
+
+          {/* Alerta Destacada: Caso Actualizado con Éxito */}
+          <AnimatePresence>
+            {ultimoCasoActualizado && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 border-2 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-100 text-xs font-bold flex items-center justify-between shadow-md"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <CheckCircle2 size={18} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                      <span>Caso Actualizado con Éxito</span>
+                      <span className="text-[0.6rem] font-bold px-2 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100">PostgreSQL</span>
+                    </div>
+                    <p className="text-[0.72rem] font-medium text-emerald-800 dark:text-emerald-200 mt-0.5">
+                      El caso <strong>#{ultimoCasoActualizado.id}</strong> ({ultimoCasoActualizado.tipo}) cambió a estado <strong>{ultimoCasoActualizado.estado}</strong> a las [{ultimoCasoActualizado.timestamp}]. Se guardó correctamente en el expediente corporativo.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUltimoCasoActualizado(null)}
+                  className="p-1 rounded-lg text-emerald-700 hover:bg-emerald-200/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
+                  title="Cerrar alerta"
+                >
+                  <X size={16} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Guía Rápida e Interactiva para Usuarios */}
+          <div className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 rounded-3xl p-4 sm:p-5 text-xs text-blue-950 dark:text-blue-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-blue-900 dark:text-blue-300 flex items-center gap-2 text-xs uppercase tracking-wider">
+                <HelpCircle size={15} className="text-blue-600 dark:text-blue-400" />
+                Guía Rápida: Cómo Entender y Resolver Casos en 3 Simples Pasos
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowGuiaUsuarioIncidencias(!showGuiaUsuarioIncidencias)}
+                className="text-[0.68rem] font-bold text-blue-700 dark:text-blue-300 hover:underline cursor-pointer"
+              >
+                {showGuiaUsuarioIncidencias ? 'Ocultar Guía' : 'Ver Guía Completa'}
+              </button>
+            </div>
+
+            {showGuiaUsuarioIncidencias && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2"
+              >
+                <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/40 space-y-1 shadow-2xs">
+                  <strong className="text-blue-600 dark:text-blue-400 block font-bold text-[0.72rem]">1. Filtrar por Fecha y Perfil</strong>
+                  <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+                    Filtra por Estado, Desarrollador o Rango de Fechas (Hoy, 7 Días, Período Exacto) usando el menú superior.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/40 space-y-1 shadow-2xs">
+                  <strong className="text-blue-600 dark:text-blue-400 block font-bold text-[0.72rem]">2. Ver Detalles del Expediente</strong>
+                  <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+                    Haz clic en <strong>Ver Detalles</strong> en cualquier fila para inspeccionar la causa raíz, desarrollador y fecha.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/40 space-y-1 shadow-2xs">
+                  <strong className="text-blue-600 dark:text-blue-400 block font-bold text-[0.72rem]">3. Atender y Guardar Resolución</strong>
+                  <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+                    Haz clic en <strong>Atender / Editar</strong> para cambiar el estado a <em>En Revisión</em> o <em>Solucionado</em>. ¡Recibirás una alerta visual inmediata!
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </div>
 
           {/* Tarjetas Resumen con Tooltips Interactivos */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -2438,6 +2537,36 @@ export const LiderDashboard = () => {
                 </p>
               </div>
 
+              {/* Indicador Visual de Progreso del Flujo de Atención (1-2-3) */}
+              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 space-y-2">
+                <span className="text-[0.62rem] font-extrabold uppercase tracking-wider text-zinc-400 block">Flujo de Atención del Caso:</span>
+                <div className="grid grid-cols-3 gap-1.5 text-center text-[0.68rem] font-bold">
+                  <div className={`p-2 rounded-xl border flex items-center justify-center gap-1 ${
+                    incidenciaAAtender.estadoAtencion === 'REGISTRADO' 
+                      ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-700 shadow-2xs' 
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
+                  }`}>
+                    <Clock size={11} /> 1. Registrado
+                  </div>
+                  <div className={`p-2 rounded-xl border flex items-center justify-center gap-1 ${
+                    incidenciaAAtender.estadoAtencion === 'EN_REVISION' 
+                      ? 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-700 shadow-2xs' 
+                      : (incidenciaAAtender.estadoAtencion === 'SOLUCIONADO' || incidenciaAAtender.estadoAtencion === 'RESUELTO')
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
+                        : 'bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-600 dark:border-zinc-800'
+                  }`}>
+                    <Activity size={11} /> 2. En Revisión
+                  </div>
+                  <div className={`p-2 rounded-xl border flex items-center justify-center gap-1 ${
+                    (incidenciaAAtender.estadoAtencion === 'SOLUCIONADO' || incidenciaAAtender.estadoAtencion === 'RESUELTO')
+                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-100 dark:border-emerald-700 font-extrabold shadow-2xs' 
+                      : 'bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-600 dark:border-zinc-800'
+                  }`}>
+                    <CheckCircle2 size={11} /> 3. Solucionado
+                  </div>
+                </div>
+              </div>
+
               <form onSubmit={handleAtenderIncidencia} className="space-y-4 text-xs">
                 <div>
                   <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
@@ -2531,6 +2660,36 @@ export const LiderDashboard = () => {
                       <span>ID Reporte:</span>
                       <strong className="text-zinc-800 dark:text-zinc-200">#{incidenciaVerDetalle.idError || incidenciaVerDetalle.idInterrupcion || incidenciaVerDetalle._id}</strong>
                     </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Indicador Visual de Progreso del Flujo de Atención (1-2-3) */}
+              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 space-y-2">
+                <span className="text-[0.62rem] font-extrabold uppercase tracking-wider text-zinc-400 block">Flujo de Atención del Caso:</span>
+                <div className="grid grid-cols-3 gap-1.5 text-center text-[0.68rem] font-bold">
+                  <div className={`p-2 rounded-xl border flex items-center justify-center gap-1 ${
+                    incidenciaVerDetalle.estadoAtencion === 'REGISTRADO' 
+                      ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-700 shadow-2xs' 
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
+                  }`}>
+                    <Clock size={11} /> 1. Registrado
+                  </div>
+                  <div className={`p-2 rounded-xl border flex items-center justify-center gap-1 ${
+                    incidenciaVerDetalle.estadoAtencion === 'EN_REVISION' 
+                      ? 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-700 shadow-2xs' 
+                      : (incidenciaVerDetalle.estadoAtencion === 'SOLUCIONADO' || incidenciaVerDetalle.estadoAtencion === 'RESUELTO')
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
+                        : 'bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-600 dark:border-zinc-800'
+                  }`}>
+                    <Activity size={11} /> 2. En Revisión
+                  </div>
+                  <div className={`p-2 rounded-xl border flex items-center justify-center gap-1 ${
+                    (incidenciaVerDetalle.estadoAtencion === 'SOLUCIONADO' || incidenciaVerDetalle.estadoAtencion === 'RESUELTO')
+                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-100 dark:border-emerald-700 font-extrabold shadow-2xs' 
+                      : 'bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-600 dark:border-zinc-800'
+                  }`}>
+                    <CheckCircle2 size={11} /> 3. Solucionado
                   </div>
                 </div>
               </div>
