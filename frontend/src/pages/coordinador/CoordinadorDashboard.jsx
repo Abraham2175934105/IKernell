@@ -870,17 +870,16 @@ export const CoordinadorDashboard = () => {
 
             </div>
 
-            {/* 4. Paso 3: Habilidades Adaptativas del Rol Seleccionado */}
-            {topSkills.length > 0 && (
+            {/* 4. Paso 3: Habilidades Adaptativas (Solo se muestran cuando se elige un Rol específico en el Paso 1) */}
+            {rolSeleccionado !== 'TODOS' && topSkills.length > 0 && (
               <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                     <Cpu size={13} className="text-blue-500" />
-                    Paso 3: Habilidades de {
+                    Paso 3: Habilidades Específicas de {
                       rolSeleccionado === 'DESARROLLADOR' ? 'Desarrollo WBS' : 
                       rolSeleccionado === 'LIDER' ? 'Gestión Ágil & Liderazgo' : 
-                      rolSeleccionado === 'COORDINADOR' ? 'Administración Operativa' : 
-                      'Personal General'
+                      'Administración Operativa'
                     }:
                   </span>
                   {techsSeleccionadas.length > 0 && (
