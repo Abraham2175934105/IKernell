@@ -10,7 +10,7 @@ import {
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, ChevronDown, X,
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
-  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search
+  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -194,6 +194,14 @@ export const LiderDashboard = () => {
   const [actividadAReasignar, setActividadAReasignar] = useState(null);
 
   const [showAtenderModal, setShowAtenderModal] = useState(false);
+  const [showDetalleIncidenciaModal, setShowDetalleIncidenciaModal] = useState(false);
+  const [incidenciaVerDetalle, setIncidenciaVerDetalle] = useState(null);
+
+  const handleVerDetallesIncidencia = (item) => {
+    setIncidenciaVerDetalle(item);
+    setShowDetalleIncidenciaModal(true);
+  };
+
   const [showConfirmFinalizar, setShowConfirmFinalizar] = useState(false);
   const [submittingFinalizar, setSubmittingFinalizar] = useState(false);
   const [motivoCancelacion, setMotivoCancelacion] = useState('CANCELACION_CLIENTE');
@@ -1734,25 +1742,38 @@ export const LiderDashboard = () => {
 
                         {/* Acción */}
                         <td className="py-3 px-3 text-right whitespace-nowrap sticky right-0 bg-white/95 dark:bg-zinc-900/95 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] md:shadow-none md:static">
-                          {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
-                            <span 
-                              className="inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
-                              title="Incidencia resuelta y congelada para auditoría y trazabilidad histórica (RF-24)"
-                            >
-                              <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                              <span>Resuelto</span>
-                            </span>
-                          ) : (
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* Botón Ver Detalles */}
                             <button
                               type="button"
-                              onClick={() => handleAbrirAtenderIncidencia(item)}
-                              className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors"
-                              title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
+                              onClick={() => handleVerDetallesIncidencia(item)}
+                              className="px-2.5 py-1 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-[0.7rem] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                              title="Ver expediente completo, descripción detallada e historial de atención"
                             >
-                              <Edit3 size={11} />
-                              <span>Atender / Editar</span>
+                              <Eye size={12} className="text-blue-500 shrink-0" />
+                              <span>Detalles</span>
                             </button>
-                          )}
+
+                            {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
+                              <span 
+                                className="inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
+                                title="Incidencia resuelta y congelada para auditoría (RF-24)"
+                              >
+                                <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <span>Resuelto</span>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleAbrirAtenderIncidencia(item)}
+                                className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors"
+                                title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
+                              >
+                                <Edit3 size={11} />
+                                <span>Atender / Editar</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -2353,6 +2374,165 @@ export const LiderDashboard = () => {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Expediente y Detalles Completos de Incidencia */}
+      <AnimatePresence>
+        {showDetalleIncidenciaModal && incidenciaVerDetalle && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto my-auto relative"
+            >
+              {/* Botón X de Cierre */}
+              <button
+                type="button"
+                onClick={() => setShowDetalleIncidenciaModal(false)}
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              {/* Cabecera del Expediente */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5 pr-8">
+                <div className="flex items-center gap-3.5">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ring-4 ${
+                    incidenciaVerDetalle._tipo === 'ERROR'
+                      ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-red-500/20 ring-red-500/10'
+                      : 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-amber-500/20 ring-amber-500/10'
+                  }`}>
+                    {incidenciaVerDetalle._tipo === 'ERROR' ? <Bug size={24} /> : <AlertTriangle size={24} />}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                        Expediente de {incidenciaVerDetalle._tipo === 'ERROR' ? 'Error Técnico' : 'Interrupción Contingente'}
+                      </h3>
+                      <EstadoAtencionBadge estado={incidenciaVerDetalle.estadoAtencion} />
+                    </div>
+                    <span className="text-xs text-zinc-500 font-medium font-mono">
+                      ID Reporte: #{incidenciaVerDetalle.idError || incidenciaVerDetalle.idInterrupcion || incidenciaVerDetalle._id}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Información General del Reporte (Grid 2 Columnas) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                {/* Proyecto */}
+                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 dark:text-zinc-500 block">
+                    Proyecto & Fase WBS
+                  </span>
+                  <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">
+                    {incidenciaVerDetalle.etapa?.proyecto?.nombre || incidenciaVerDetalle.proyecto?.nombre || proyectoSeleccionado?.nombre || 'Proyecto Corporativo'}
+                  </div>
+                  <div className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 flex items-center gap-1 font-medium">
+                    <Layers size={12} className="text-blue-500" />
+                    <span>Fase: {incidenciaVerDetalle.etapa?.nombreEtapa || 'WBS General'}</span>
+                  </div>
+                </div>
+
+                {/* Desarrollador */}
+                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 dark:text-zinc-500 block">
+                    Desarrollador Reportante
+                  </span>
+                  <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm flex items-center gap-1.5">
+                    <User size={14} className="text-blue-500 shrink-0" />
+                    <span>{incidenciaVerDetalle.desarrollador ? `${incidenciaVerDetalle.desarrollador.nombre} ${incidenciaVerDetalle.desarrollador.apellido}` : 'Sin Asignar'}</span>
+                  </div>
+                  <div className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 truncate font-medium">
+                    {getCleanEspecialidad(incidenciaVerDetalle.desarrollador?.especialidad, incidenciaVerDetalle.desarrollador?.profesion)}
+                  </div>
+                </div>
+
+                {/* Severidad o Duración */}
+                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 dark:text-zinc-500 block">
+                    {incidenciaVerDetalle._tipo === 'ERROR' ? 'Nivel de Severidad' : 'Tiempo de Interrupción'}
+                  </span>
+                  {incidenciaVerDetalle._tipo === 'ERROR' ? (
+                    <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold uppercase border ${
+                      incidenciaVerDetalle.severidad === 'CRITICA' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400' :
+                      incidenciaVerDetalle.severidad === 'ALTA' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/60 dark:text-orange-400' :
+                      incidenciaVerDetalle.severidad === 'MEDIA' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400' :
+                      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400'
+                    }`}>
+                      {incidenciaVerDetalle.severidad || 'BAJA'}
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 text-xs font-mono font-extrabold">
+                      {incidenciaVerDetalle.duracionMinutos || 0} Minutos ({((incidenciaVerDetalle.duracionMinutos || 0)/60).toFixed(1)} Horas)
+                    </span>
+                  )}
+                </div>
+
+                {/* Fecha y Hora */}
+                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 dark:text-zinc-500 block">
+                    Fecha y Hora de Ocurrencia
+                  </span>
+                  <div className="font-mono text-xs font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
+                    <Clock size={13} className="text-zinc-400 shrink-0" />
+                    <span>{new Date(incidenciaVerDetalle._fecha).toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'short' })}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Descripción Completa */}
+              <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                <div className="text-[0.7rem] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5">
+                  <FileText size={14} className="text-blue-500 shrink-0" />
+                  <span>Descripción y Detalles del Reporte Técnico:</span>
+                </div>
+                <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 text-xs leading-relaxed text-zinc-800 dark:text-zinc-200 font-medium whitespace-pre-wrap">
+                  {incidenciaVerDetalle.descripcion || incidenciaVerDetalle.comentarios || 'Sin descripción técnica disponible.'}
+                </div>
+              </div>
+
+              {/* Nota de Resolución / Atención (si aplica) */}
+              {incidenciaVerDetalle.resolucionNota && (
+                <div className="p-5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 space-y-2">
+                  <div className="text-[0.7rem] font-extrabold uppercase tracking-wider text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                    <CheckCircle2 size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>Resolución / Acción Correctiva Registrada:</span>
+                  </div>
+                  <p className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed font-medium italic">
+                    "{incidenciaVerDetalle.resolucionNota}"
+                  </p>
+                </div>
+              )}
+
+              {/* Botones de Acción */}
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowDetalleIncidenciaModal(false)}
+                  className="w-full sm:w-auto outline-button text-xs py-2.5 px-5 font-bold cursor-pointer text-zinc-700 dark:text-zinc-300"
+                >
+                  Cerrar Expediente
+                </button>
+
+                {incidenciaVerDetalle.estadoAtencion !== 'SOLUCIONADO' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDetalleIncidenciaModal(false);
+                      handleAbrirAtenderIncidencia(incidenciaVerDetalle);
+                    }}
+                    className="w-full sm:w-auto gradient-button text-xs py-2.5 px-6 font-extrabold cursor-pointer inline-flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <Edit3 size={14} /> Atender / Actualizar Estado
+                  </button>
+                )}
+              </div>
             </motion.div>
           </div>
         )}
