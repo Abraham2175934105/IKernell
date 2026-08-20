@@ -2388,7 +2388,7 @@ export const LiderDashboard = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto my-auto relative"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto my-auto relative"
             >
               {/* Botón X de Cierre */}
               <button
@@ -2399,7 +2399,7 @@ export const LiderDashboard = () => {
                 <X size={16} />
               </button>
 
-              {/* Cabecera del Expediente */}
+              {/* Cabecera Principal Ampliada */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5 pr-8">
                 <div className="flex items-center gap-3.5">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ring-4 ${
@@ -2416,108 +2416,134 @@ export const LiderDashboard = () => {
                       </h3>
                       <EstadoAtencionBadge estado={incidenciaVerDetalle.estadoAtencion} />
                     </div>
-                    <span className="text-xs text-zinc-500 font-medium font-mono">
-                      ID Reporte: #{incidenciaVerDetalle.idError || incidenciaVerDetalle.idInterrupcion || incidenciaVerDetalle._id}
+                    <span className="text-xs text-zinc-500 font-medium font-mono flex items-center gap-1.5 mt-0.5">
+                      <span>ID Reporte:</span>
+                      <strong className="text-zinc-800 dark:text-zinc-200">#{incidenciaVerDetalle.idError || incidenciaVerDetalle.idInterrupcion || incidenciaVerDetalle._id}</strong>
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Información General del Reporte (Grid 2 Columnas) */}
+              {/* Banner Explicativo / Orientación del Expediente */}
+              <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 flex items-start gap-3 text-xs shadow-2xs">
+                <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div className="leading-relaxed text-blue-900 dark:text-blue-200 font-medium">
+                  <strong>Auditoría Corporativa de Calidad (RF-22 a RF-24):</strong> Este expediente registra de forma inmutable el reporte técnico, el desarrollador responsable y la resolución aplicada para garantizar la estabilidad del proyecto.
+                </div>
+              </div>
+
+              {/* Información General del Reporte (Grid Responsivo de 4 Tarjetas) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                {/* Proyecto */}
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
-                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 dark:text-zinc-500 block">
-                    Proyecto & Fase WBS
+                {/* Tarjeta 1: Proyecto & Fase WBS */}
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-2 shadow-2xs">
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+                    <Briefcase size={13} className="text-blue-500 shrink-0" />
+                    <span>Proyecto & Fase WBS</span>
                   </span>
-                  <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">
+                  <div className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm truncate">
                     {incidenciaVerDetalle.etapa?.proyecto?.nombre || incidenciaVerDetalle.proyecto?.nombre || proyectoSeleccionado?.nombre || 'Proyecto Corporativo'}
                   </div>
-                  <div className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 flex items-center gap-1 font-medium">
-                    <Layers size={12} className="text-blue-500" />
-                    <span>Fase: {incidenciaVerDetalle.etapa?.nombreEtapa || 'WBS General'}</span>
+                  <div className="text-[0.72rem] text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5 font-medium">
+                    <Layers size={13} className="text-indigo-500 shrink-0" />
+                    <span className="truncate">Etapa: {incidenciaVerDetalle.etapa?.nombreEtapa || 'WBS General'}</span>
                   </div>
                 </div>
 
-                {/* Desarrollador */}
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
-                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 dark:text-zinc-500 block">
-                    Desarrollador Reportante
+                {/* Tarjeta 2: Desarrollador Reportante */}
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-2 shadow-2xs">
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+                    <UserCheck size={13} className="text-emerald-500 shrink-0" />
+                    <span>Desarrollador Reportante</span>
                   </span>
-                  <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm flex items-center gap-1.5">
-                    <User size={14} className="text-blue-500 shrink-0" />
-                    <span>{incidenciaVerDetalle.desarrollador ? `${incidenciaVerDetalle.desarrollador.nombre} ${incidenciaVerDetalle.desarrollador.apellido}` : 'Sin Asignar'}</span>
+                  <div className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold text-[0.65rem] flex items-center justify-center border border-blue-200 dark:border-blue-800 shrink-0">
+                      {incidenciaVerDetalle.desarrollador ? getInitials(incidenciaVerDetalle.desarrollador.nombre, incidenciaVerDetalle.desarrollador.apellido) : 'DEV'}
+                    </div>
+                    <span className="truncate">{incidenciaVerDetalle.desarrollador ? `${incidenciaVerDetalle.desarrollador.nombre} ${incidenciaVerDetalle.desarrollador.apellido}` : 'Sin Asignar'}</span>
                   </div>
-                  <div className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 truncate font-medium">
+                  <div className="text-[0.72rem] text-zinc-600 dark:text-zinc-400 truncate font-medium">
                     {getCleanEspecialidad(incidenciaVerDetalle.desarrollador?.especialidad, incidenciaVerDetalle.desarrollador?.profesion)}
                   </div>
                 </div>
 
-                {/* Severidad o Duración */}
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
-                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 dark:text-zinc-500 block">
-                    {incidenciaVerDetalle._tipo === 'ERROR' ? 'Nivel de Severidad' : 'Tiempo de Interrupción'}
+                {/* Tarjeta 3: Severidad / Duración */}
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-2 shadow-2xs">
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+                    {incidenciaVerDetalle._tipo === 'ERROR' ? <AlertTriangle size={13} className="text-red-500 shrink-0" /> : <Clock size={13} className="text-amber-500 shrink-0" />}
+                    <span>{incidenciaVerDetalle._tipo === 'ERROR' ? 'Nivel de Severidad del Fallo' : 'Tiempo Imputado de Interrupción'}</span>
                   </span>
-                  {incidenciaVerDetalle._tipo === 'ERROR' ? (
-                    <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold uppercase border ${
-                      incidenciaVerDetalle.severidad === 'CRITICA' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400' :
-                      incidenciaVerDetalle.severidad === 'ALTA' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/60 dark:text-orange-400' :
-                      incidenciaVerDetalle.severidad === 'MEDIA' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400' :
-                      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400'
-                    }`}>
-                      {incidenciaVerDetalle.severidad || 'BAJA'}
-                    </span>
-                  ) : (
-                    <span className="inline-block px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 text-xs font-mono font-extrabold">
-                      {incidenciaVerDetalle.duracionMinutos || 0} Minutos ({((incidenciaVerDetalle.duracionMinutos || 0)/60).toFixed(1)} Horas)
-                    </span>
-                  )}
+                  <div>
+                    {incidenciaVerDetalle._tipo === 'ERROR' ? (
+                      <span className={`inline-block px-3 py-1 rounded-xl text-xs font-mono font-extrabold uppercase border shadow-2xs ${
+                        incidenciaVerDetalle.severidad === 'CRITICA' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400' :
+                        incidenciaVerDetalle.severidad === 'ALTA' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/60 dark:text-orange-400' :
+                        incidenciaVerDetalle.severidad === 'MEDIA' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400' :
+                        'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400'
+                      }`}>
+                        Severidad: {incidenciaVerDetalle.severidad || 'BAJA'}
+                      </span>
+                    ) : (
+                      <span className="inline-block px-3 py-1 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 text-xs font-mono font-extrabold shadow-2xs">
+                        {incidenciaVerDetalle.duracionMinutos || 0} Minutos ({( (incidenciaVerDetalle.duracionMinutos || 0)/60 ).toFixed(1)} Horas)
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Fecha y Hora */}
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
-                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 dark:text-zinc-500 block">
-                    Fecha y Hora de Ocurrencia
+                {/* Tarjeta 4: Estampa de Tiempo */}
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-2 shadow-2xs">
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+                    <CalendarClock size={13} className="text-purple-500 shrink-0" />
+                    <span>Fecha & Hora de Registro</span>
                   </span>
-                  <div className="font-mono text-xs font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
-                    <Clock size={13} className="text-zinc-400 shrink-0" />
-                    <span>{new Date(incidenciaVerDetalle._fecha).toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'short' })}</span>
+                  <div className="font-mono text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                    {new Date(incidenciaVerDetalle._fecha).toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'short' })}
                   </div>
                 </div>
               </div>
 
-              {/* Descripción Completa */}
-              <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700 space-y-2">
-                <div className="text-[0.7rem] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5">
-                  <FileText size={14} className="text-blue-500 shrink-0" />
-                  <span>Descripción y Detalles del Reporte Técnico:</span>
+              {/* Descripción Completa y Detalles Técnicos */}
+              <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700 space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="text-[0.7rem] font-extrabold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                    <FileText size={15} className="text-blue-500 shrink-0" />
+                    <span>Descripción & Detalles del Reporte Técnico:</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold font-mono bg-zinc-200/80 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
+                    REPORTE DEL DESARROLLADOR
+                  </span>
                 </div>
-                <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 text-xs leading-relaxed text-zinc-800 dark:text-zinc-200 font-medium whitespace-pre-wrap">
-                  {incidenciaVerDetalle.descripcion || incidenciaVerDetalle.comentarios || 'Sin descripción técnica disponible.'}
+                <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 text-xs leading-relaxed text-zinc-800 dark:text-zinc-200 font-medium whitespace-pre-wrap font-sans">
+                  {incidenciaVerDetalle.descripcion || incidenciaVerDetalle.comentarios || 'Sin descripción técnica registrada.'}
                 </div>
               </div>
 
-              {/* Nota de Resolución / Atención (si aplica) */}
+              {/* Nota de Resolución / Acción Correctiva del Líder */}
               {incidenciaVerDetalle.resolucionNota && (
-                <div className="p-5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 space-y-2">
-                  <div className="text-[0.7rem] font-extrabold uppercase tracking-wider text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
-                    <CheckCircle2 size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>Resolución / Acción Correctiva Registrada:</span>
+                <div className="p-5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[0.7rem] font-extrabold uppercase tracking-wider text-blue-900 dark:text-blue-300 flex items-center gap-2">
+                      <CheckCircle2 size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span>Resolución / Acción Correctiva Registrada por el Líder:</span>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold font-mono bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                      RESOLUCIÓN DE LÍDER
+                    </span>
                   </div>
-                  <p className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed font-medium italic">
+                  <div className="p-4 rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-blue-200/80 dark:border-blue-800/60 text-xs leading-relaxed text-blue-950 dark:text-blue-100 font-medium italic">
                     "{incidenciaVerDetalle.resolucionNota}"
-                  </p>
+                  </div>
                 </div>
               )}
 
-              {/* Botones de Acción */}
+              {/* Botones de Acción y Navegación */}
               <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                 <button
                   type="button"
                   onClick={() => setShowDetalleIncidenciaModal(false)}
-                  className="w-full sm:w-auto outline-button text-xs py-2.5 px-5 font-bold cursor-pointer text-zinc-700 dark:text-zinc-300"
+                  className="w-full sm:w-auto outline-button text-xs py-2.5 px-6 font-bold cursor-pointer text-zinc-700 dark:text-zinc-300 inline-flex items-center justify-center gap-1.5"
                 >
-                  Cerrar Expediente
+                  <X size={15} /> Cerrar Expediente
                 </button>
 
                 {incidenciaVerDetalle.estadoAtencion !== 'SOLUCIONADO' && (
@@ -2527,9 +2553,9 @@ export const LiderDashboard = () => {
                       setShowDetalleIncidenciaModal(false);
                       handleAbrirAtenderIncidencia(incidenciaVerDetalle);
                     }}
-                    className="w-full sm:w-auto gradient-button text-xs py-2.5 px-6 font-extrabold cursor-pointer inline-flex items-center justify-center gap-2 shadow-md"
+                    className="w-full sm:w-auto gradient-button text-xs py-2.5 px-6 font-extrabold cursor-pointer inline-flex items-center justify-center gap-2 shadow-md transform active:scale-95 transition-all"
                   >
-                    <Edit3 size={14} /> Atender / Actualizar Estado
+                    <Edit3 size={15} /> Atender / Modificar Resolución
                   </button>
                 )}
               </div>
