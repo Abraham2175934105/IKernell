@@ -2432,14 +2432,6 @@ export const LiderDashboard = () => {
                 </div>
               </div>
 
-              {/* Banner Explicativo / Orientación del Expediente */}
-              <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 flex items-start gap-3 text-xs shadow-2xs">
-                <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                <div className="leading-relaxed text-blue-900 dark:text-blue-200 font-medium">
-                  <strong>Auditoría Corporativa de Calidad (RF-22 a RF-24):</strong> Este expediente registra de forma inmutable el reporte técnico, el desarrollador responsable y la resolución aplicada para garantizar la estabilidad del proyecto.
-                </div>
-              </div>
-
               {/* Información General del Reporte (Grid Responsivo de 4 Tarjetas) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 {/* Tarjeta 1: Proyecto & Fase WBS */}
