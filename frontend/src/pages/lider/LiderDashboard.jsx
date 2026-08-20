@@ -813,6 +813,19 @@ export const LiderDashboard = () => {
     return (totalMin / 60).toFixed(1);
   }, [interrupciones]);
 
+  // Diagnóstico dinámico y proactivo de salud operativa del equipo
+  const cantErroresActivos = useMemo(() => {
+    return (errores || []).filter(e => e.estadoAtencion !== 'SOLUCIONADO' && e.estadoAtencion !== 'RESUELTO').length;
+  }, [errores]);
+
+  const cantContingenciasPendientes = useMemo(() => {
+    return (interrupciones || []).filter(i => i.estadoAtencion !== 'SOLUCIONADO' && i.estadoAtencion !== 'RESUELTO').length;
+  }, [interrupciones]);
+
+  const cantDevsAltaCarga = useMemo(() => {
+    return (desarrolladoresCargas || []).filter(d => (d.porcentajeCarga || d.horasAsignadas || 0) >= 80).length;
+  }, [desarrolladoresCargas]);
+
   // Evidencia de auditoría para finalización de proyecto (RF-20)
   const evidenciaWbsFinalizacion = useMemo(() => {
     if (!etapas || !Array.isArray(etapas) || etapas.length === 0) {
@@ -1034,6 +1047,87 @@ export const LiderDashboard = () => {
           </button>
         </div>
       </motion.div>
+
+      {/* Asistente Reactivo y Diagnóstico Proactivo del Sistema */}
+      {(cantErroresActivos > 0 || cantContingenciasPendientes > 0 || cantDevsAltaCarga > 0) && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 dark:from-amber-950/40 dark:via-orange-950/40 dark:to-amber-950/40 border border-amber-300 dark:border-amber-700/80 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-950 dark:text-amber-200 font-extrabold text-xs">
+              <Sparkles size={16} className="text-amber-600 dark:text-amber-400 shrink-0 animate-pulse" />
+              <span>Asistente Reactivo: Diagnóstico Dinámico de Rendimiento y Salud Operativa</span>
+            </div>
+            <span className="text-[0.62rem] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-900/80 text-amber-900 dark:text-amber-100 shadow-2xs">
+              Sugerencias en Tiempo Real
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+            {cantErroresActivos > 0 && (
+              <div className="p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200 dark:border-amber-900/60 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[0.7rem] font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                    <Bug size={13} />
+                    <span>{cantErroresActivos} Errores Activos</span>
+                  </span>
+                  <button 
+                    onClick={() => setActiveTab('incidencias')} 
+                    className="text-[0.65rem] font-extrabold text-blue-600 hover:underline cursor-pointer"
+                  >
+                    Atender ➔
+                  </button>
+                </div>
+                <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
+                  Hay fallos técnicos en espera. Dirígete a la Consola de Incidencias para investigarlos o marcarlos como resueltos.
+                </p>
+              </div>
+            )}
+
+            {cantContingenciasPendientes > 0 && (
+              <div className="p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200 dark:border-amber-900/60 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[0.7rem] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <Clock size={13} />
+                    <span>{cantContingenciasPendientes} Contingencias Pendientes</span>
+                  </span>
+                  <button 
+                    onClick={() => setActiveTab('incidencias')} 
+                    className="text-[0.65rem] font-extrabold text-blue-600 hover:underline cursor-pointer"
+                  >
+                    Revisar ➔
+                  </button>
+                </div>
+                <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
+                  Tiempos de interrupción externa registrados por el equipo. Revisa el expediente para validar el impacto en el sprint.
+                </p>
+              </div>
+            )}
+
+            {cantDevsAltaCarga > 0 && (
+              <div className="p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200 dark:border-amber-900/60 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[0.7rem] font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
+                    <Activity size={13} />
+                    <span>{cantDevsAltaCarga} Desarrollador(es) Carga Alta</span>
+                  </span>
+                  <button 
+                    onClick={() => setActiveTab('burnout')} 
+                    className="text-[0.65rem] font-extrabold text-blue-600 hover:underline cursor-pointer"
+                  >
+                    Analizar ➔
+                  </button>
+                </div>
+                <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
+                  Integrantes del equipo superan el 80% de ocupación. Usa el Predictor de Burnout para balancear tareas WBS.
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Tarjeta de Detalles del Proyecto Seleccionado (Exclusiva de la sección WBS) */}
       {activeTab === 'wbs' && proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (() => {
