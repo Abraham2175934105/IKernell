@@ -123,8 +123,8 @@ export const ChatCorporativo = () => {
               <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Chat Corporativo Transversal
               </h3>
-              <span className="text-[0.65rem] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-                RF-31
+              <span className="text-[0.65rem] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                Seguro
               </span>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">

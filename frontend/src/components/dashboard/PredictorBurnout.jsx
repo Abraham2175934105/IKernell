@@ -445,7 +445,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
         <div>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-xs font-bold uppercase tracking-wider border border-blue-200 dark:border-blue-800/60">
-              <Sparkles size={13} className="text-blue-600 dark:text-blue-400" /> Analítica Predictiva • RF-35
+              <Sparkles size={13} className="text-blue-600 dark:text-blue-400" /> Analítica Predictiva • Burnout Engine
             </span>
             
             {/* Botón Ampliado: Selector de Proyectos y Alcance Global */}
@@ -584,7 +584,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
           <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 flex items-start gap-3 text-xs shadow-2xs mb-5">
             <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
             <div className="leading-relaxed text-indigo-950 dark:text-indigo-200 font-medium">
-              <strong>Motor Predictivo de Salud del Equipo & Burnout (RF-25 / ISO/IEC 25010):</strong> Selecciona un desarrollador en la columna izquierda para evaluar el desglose de su carga entre proyectos, analizar la fatiga en 21 días (S1, S2, S3) y ejecutar rebalanceos preventivos en el WBS para evitar sobrecargas.
+              <strong>Motor Predictivo de Salud del Equipo & Burnout (ISO/IEC 25010):</strong> Selecciona un desarrollador en la columna izquierda para evaluar el desglose de su carga entre proyectos, analizar la fatiga en 21 días (S1, S2, S3) y ejecutar rebalanceos preventivos en el WBS para evitar sobrecargas.
             </div>
           </div>
 
@@ -873,7 +873,8 @@ Generado automáticamente por el motor analítico IKernell v2.0
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                        {/* Tarjeta 1: En Este Proyecto */}
+                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                           <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
                             En este proyecto
                           </span>
@@ -883,9 +884,21 @@ Generado automáticamente por el motor analítico IKernell v2.0
                           <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5 truncate">
                             {isProyectoEspecifico ? proyecto.nombre : 'Todas las iniciativas'}
                           </span>
+
+                          {/* Burbuja emergente de detalle al pasar el cursor */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                            <div className="font-extrabold text-blue-300 mb-1 flex items-center gap-1">
+                              <Briefcase size={12} className="text-blue-400" /> Carga en Proyecto Actual
+                            </div>
+                            <p className="font-medium text-zinc-200">
+                              El desarrollador tiene <strong>{tareasEsteProyecto} tareas activas</strong> asignadas en "{isProyectoEspecifico ? proyecto.nombre : 'este proyecto'}". Representa el {totalTareas > 0 ? Math.round((tareasEsteProyecto / totalTareas) * 100) : 0}% de sus tareas asignadas.
+                            </p>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                          </div>
                         </div>
 
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                        {/* Tarjeta 2: En Otros Proyectos */}
+                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                           <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
                             En otros proyectos
                           </span>
@@ -895,9 +908,21 @@ Generado automáticamente por el motor analítico IKernell v2.0
                           <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5 truncate">
                             Otras iniciativas corporativas
                           </span>
+
+                          {/* Burbuja emergente de detalle */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                            <div className="font-extrabold text-amber-300 mb-1 flex items-center gap-1">
+                              <Layers size={12} className="text-amber-400" /> Concurrencia de Proyectos
+                            </div>
+                            <p className="font-medium text-zinc-200">
+                              Mantiene <strong>{tareasOtrosProyectos} tareas concurrentes</strong> en otros proyectos. El cambio de contexto entre proyectos incrementa el desgaste mental.
+                            </p>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                          </div>
                         </div>
 
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                        {/* Tarjeta 3: Carga Global Acumulada */}
+                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                           <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
                             Carga Global Acumulada
                           </span>
@@ -907,11 +932,22 @@ Generado automáticamente por el motor analítico IKernell v2.0
                           <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5">
                             Fatiga acumulada (21 días)
                           </span>
+
+                          {/* Burbuja emergente de detalle */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                            <div className="font-extrabold text-emerald-300 mb-1 flex items-center gap-1">
+                              <Activity size={12} className="text-emerald-400" /> Métrica Cognitiva Global
+                            </div>
+                            <p className="font-medium text-zinc-200">
+                              Porcentaje global de <strong>{Math.round(selectedDev.promedioCarga)}% de fatiga</strong> acumulada en 21 días. Combina tareas WBS, horas estimadas y reportes de errores.
+                            </p>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                          </div>
                         </div>
                       </div>
 
                       <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 leading-relaxed italic bg-blue-50/50 dark:bg-blue-950/20 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
-                        Nota: El índice de Burnout (RF-35) evalúa la fatiga acumulada del desarrollador en todos sus proyectos asignados. Al cambiar de proyecto en el dashboard, este porcentaje se mantiene constante porque el estrés cognitivo y la capacidad humana son globales.
+                        Nota: El índice de Burnout evalúa la fatiga acumulada del desarrollador en todos sus proyectos asignados. Al cambiar de proyecto en el dashboard, este porcentaje se mantiene constante porque el estrés cognitivo y la capacidad humana son globales.
                       </p>
                     </div>
                   );
@@ -919,16 +955,28 @@ Generado automáticamente por el motor analítico IKernell v2.0
 
                 {/* 3. Grid de 4 Métricas Clave */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60">
+                  {/* Tarjeta 4: Tareas Asignadas */}
+                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                     <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                       Tareas Asignadas
                     </span>
                     <div className="text-xl font-black text-zinc-900 dark:text-zinc-100">
                       {selectedDev.tareasActivas} <span className="text-[0.65rem] font-normal text-zinc-500">WBS</span>
                     </div>
+
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                      <div className="font-extrabold text-blue-300 mb-1 flex items-center gap-1">
+                        <FileText size={11} /> Volumen de Entregables
+                      </div>
+                      <p className="font-medium text-zinc-200">
+                        Suma de <strong>{selectedDev.tareasActivas} actividades WBS</strong> activas asignadas a este desarrollador en la base de datos de PostgreSQL.
+                      </p>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                    </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60">
+                  {/* Tarjeta 5: Carga Promedio */}
+                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                     <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                       Carga Promedio
                     </span>
@@ -940,9 +988,20 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     }`}>
                       {Math.round(selectedDev.promedioCarga)}%
                     </div>
+
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                      <div className="font-extrabold text-indigo-300 mb-1 flex items-center gap-1">
+                        <Activity size={11} /> Promedio Ponderado ISO
+                      </div>
+                      <p className="font-medium text-zinc-200">
+                        Nivel de fatiga de <strong>{Math.round(selectedDev.promedioCarga)}%</strong>. Un porcentaje mayor al 65% indica riesgo de sobrecarga y requiere redistribución WBS.
+                      </p>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                    </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60">
+                  {/* Tarjeta 6: Pico Máximo */}
+                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                     <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                       Pico Máximo
                     </span>
@@ -953,9 +1012,20 @@ Generado automáticamente por el motor analítico IKernell v2.0
                         Math.round(selectedDev.scoreSemana3 || 0)
                       )}%
                     </div>
+
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                      <div className="font-extrabold text-orange-300 mb-1 flex items-center gap-1">
+                        <TrendingUp size={11} /> Pico de Carga Histórico
+                      </div>
+                      <p className="font-medium text-zinc-200">
+                        Pico máximo alcanzado de <strong>{Math.max(Math.round(selectedDev.scoreSemana1 || 0), Math.round(selectedDev.scoreSemana2 || 0), Math.round(selectedDev.scoreSemana3 || 0))}%</strong> durante los 21 días analizados por acumulación de entregas o incidencias.
+                      </p>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                    </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60">
+                  {/* Tarjeta 7: Comportamiento */}
+                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                     <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                       Comportamiento
                     </span>
@@ -969,6 +1039,16 @@ Generado automáticamente por el motor analítico IKernell v2.0
                         </div>
                       );
                     })()}
+
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                      <div className="font-extrabold text-purple-300 mb-1 flex items-center gap-1">
+                        <TrendingUp size={11} /> Tendencia de Fatiga
+                      </div>
+                      <p className="font-medium text-zinc-200">
+                        Compara la evolución entre la Semana 1 y la Semana 3 para identificar si la fatiga del perfil está en aceleración o en fase de recuperación.
+                      </p>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                    </div>
                   </div>
                 </div>
 
@@ -985,8 +1065,8 @@ Generado automáticamente por el motor analítico IKernell v2.0
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
-                    {/* Semana 1 */}
-                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-center">
+                    {/* Tarjeta 8: Semana 1 */}
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-center relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                       <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                         S1 • Días 15-21
                       </span>
@@ -999,10 +1079,16 @@ Generado automáticamente por el motor analítico IKernell v2.0
                           style={{ width: `${Math.min(Math.round(selectedDev.scoreSemana1 || 0), 100)}%` }}
                         />
                       </div>
+
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                        <strong className="text-blue-300 block mb-0.5">🗓️ Semana 1 (Hace 21 días)</strong>
+                        <span>Nivel de carga de {Math.round(selectedDev.scoreSemana1 || 0)}% registrado al inicio del ciclo de analítica.</span>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                      </div>
                     </div>
 
-                    {/* Semana 2 */}
-                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-center">
+                    {/* Tarjeta 9: Semana 2 */}
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-center relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                       <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                         S2 • Días 8-14
                       </span>
@@ -1015,10 +1101,16 @@ Generado automáticamente por el motor analítico IKernell v2.0
                           style={{ width: `${Math.min(Math.round(selectedDev.scoreSemana2 || 0), 100)}%` }}
                         />
                       </div>
+
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                        <strong className="text-blue-300 block mb-0.5">🗓️ Semana 2 (Días 8-14)</strong>
+                        <span>Carga acumulada de {Math.round(selectedDev.scoreSemana2 || 0)}% a mitad de la ventana de análisis.</span>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                      </div>
                     </div>
 
-                    {/* Semana 3 */}
-                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-center">
+                    {/* Tarjeta 10: Semana 3 */}
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-center relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
                       <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
                         S3 • Últimos 7d
                       </span>
@@ -1035,6 +1127,12 @@ Generado automáticamente por el motor analítico IKernell v2.0
                           style={{ width: `${Math.min(Math.round(selectedDev.scoreSemana3 || 0), 100)}%` }}
                         />
                       </div>
+
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
+                        <strong className="text-emerald-300 block mb-0.5">🗓️ Semana 3 (Últimos 7 días)</strong>
+                        <span>Carga reciente de {Math.round(selectedDev.scoreSemana3 || 0)}%. Determina la tendencia actual del semáforo.</span>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1043,7 +1141,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 space-y-1.5">
                   <div className="flex items-center gap-2 font-bold text-xs text-blue-900 dark:text-blue-300">
                     <ShieldCheck size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>Dictamen del Motor Predictivo (RF-35):</span>
+                    <span>Dictamen del Motor Predictivo:</span>
                   </div>
                   <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
                     {selectedDev.recomendacion || 'Sin observaciones críticas. Mantener ritmo de entregas.'}

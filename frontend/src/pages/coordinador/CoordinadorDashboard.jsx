@@ -1453,7 +1453,7 @@ export const CoordinadorDashboard = () => {
         </motion.div>
       )}
 
-      {/* 3. SECCIÓN: PREDICTOR DE BURNOUT HISTÓRICO (RF-35) */}
+      {/* 3. SECCIÓN: PREDICTOR DE BURNOUT HISTÓRICO */}
       {activeTab === 'burnout' && (
         <motion.div 
           key="burnout"

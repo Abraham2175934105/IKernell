@@ -3,7 +3,7 @@ import { Terminal, Code2, ClipboardCheck, Copy, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 /**
- * Componente interactivo para la inyección de Snippets Técnicos (RF-36).
+ * Componente interactivo para la inyección de Snippets Técnicos.
  * Muestra el bloque de código o comando sugerido con soporte para copiar en un clic.
  */
 export const SnippetInjectionCard = ({ snippet }) => {

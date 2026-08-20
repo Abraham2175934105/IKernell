@@ -40,7 +40,7 @@ const strategies = [
   {
     icon: <Globe2 size={24} strokeWidth={2} />,
     title: 'Alianza Brasil',
-    description: 'Convenio de cooperación tecnológica que unifica métricas operativas y formatos internacionales de fechas/monedas mediante transferencia segura de datos automatizados (RF-28 a RF-30).',
+    description: 'Convenio de cooperación tecnológica que unifica métricas operativas y formatos internacionales de fechas/monedas mediante transferencia segura de datos automatizados.',
     image: "https://images.unsplash.com/photo-1483478550801-ceba5fe50e8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     accent: true
   }

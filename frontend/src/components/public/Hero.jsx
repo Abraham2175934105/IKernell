@@ -83,7 +83,7 @@ const stacks = [
   {
     id: 2,
     icon: <Gauge size={22} strokeWidth={2} />,
-    badge: 'RF-25 · capacity.pulse',
+    badge: 'capacity.pulse',
     title: 'Semáforo Predictivo Live',
     description: 'Algoritmo en tiempo real que evalúa errores e interrupciones en ventanas de 21 días para anticipar riesgos.',
     ctaLabel: 'Desplegar algoritmo capacity.pulse',
@@ -98,7 +98,7 @@ const stacks = [
   {
     id: 3,
     icon: <DatabaseZap size={22} strokeWidth={2} />,
-    badge: 'RF-28 · Alianza Brasil',
+    badge: 'Alianza Brasil',
     title: 'ETL Brasil & pg_trgm',
     description: 'Pipeline batch desatendido con exportaciones ISO 8601 UTC y motor Snippet.inject por trigramas en PostgreSQL.',
     ctaLabel: 'Ver detalles de exportación',

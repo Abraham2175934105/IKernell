@@ -19,7 +19,7 @@ export const ContactPage = () => {
             Centro de Contacto Corporativo
           </h1>
           <p className="text-text-muted text-base md:text-lg max-w-2xl mx-auto font-medium">
-            Consulta nuestras preguntas frecuentes (RF-03) o envía una duda personalizada directamente a la administración de IKernell (RF-04).
+            Consulta nuestras preguntas frecuentes o envía una duda personalizada directamente a la administración de IKernell.
           </p>
         </motion.div>
 

@@ -172,7 +172,7 @@ export const EtlBrasil = ({ proyecto, onExportSuccess }) => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-              Innovación 2 • Alianza Estratégica Brasil (RF-28 a RF-30)
+              Innovación 2 • Alianza Estratégica Brasil
             </span>
             <span className="text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
               ISO 8601 UTC

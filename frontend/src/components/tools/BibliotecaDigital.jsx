@@ -175,7 +175,7 @@ export const BibliotecaDigital = () => {
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(8);
         pdf.setTextColor(70, 70, 70);
-        pdf.text('IKERNELL SOLUCIONES SOFTWARE — SISTEMA DE INGENIERÍA (RF-33)', margin, 12);
+        pdf.text('IKERNELL SOLUCIONES SOFTWARE — SISTEMA DE INGENIERÍA', margin, 12);
         
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(7);
@@ -278,7 +278,7 @@ export const BibliotecaDigital = () => {
                 Biblioteca Digital de Documentos
               </h3>
               <span className="text-[0.65rem] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-                RF-33
+                Oficial
               </span>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -340,7 +340,7 @@ export const BibliotecaDigital = () => {
               >
                 <div className="p-2.5 bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-400">
                   <span className="flex items-center gap-1.5">
-                    <Sparkles size={12} className="text-amber-500" /> Coincidencias Predictivas (RF-33)
+                    <Sparkles size={12} className="text-amber-500" /> Coincidencias Predictivas
                   </span>
                   <span>{suggestions.length} sugerencias</span>
                 </div>

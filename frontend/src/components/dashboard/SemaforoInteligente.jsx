@@ -170,7 +170,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[0.65rem] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-                  Algoritmo Predictivo RF-25 • PostgreSQL Live
+                  Algoritmo Predictivo • PostgreSQL Live
                 </span>
                 <span className="text-zinc-300 dark:text-zinc-700">•</span>
                 <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 font-medium">
@@ -340,7 +340,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
         </div>
         <div>
           <strong className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 dark:text-white block mb-1">
-            Recomendación Predictiva (Motor IA / Reglas RF-25)
+            Recomendación Predictiva (Motor IA)
           </strong>
           <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed font-normal">
             {metrics?.recomendacion || 'Sin recomendaciones adicionales. Mantener ritmo de entregas.'}

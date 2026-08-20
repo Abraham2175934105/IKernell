@@ -223,6 +223,9 @@ export const LiderDashboard = () => {
   const [filtroTipoInc, setFiltroTipoInc] = useState('TODOS');
   const [filtroEstadoInc, setFiltroEstadoInc] = useState('TODOS');
   const [filtroDevInc, setFiltroDevInc] = useState('TODOS');
+  const [filtroFechaTipo, setFiltroFechaTipo] = useState('TODAS');
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
 
   const [submittingActividad, setSubmittingActividad] = useState(false);
   const [submittingEtapa, setSubmittingEtapa] = useState(false);
@@ -748,8 +751,52 @@ export const LiderDashboard = () => {
       combined = combined.filter(c => String(c.desarrollador?.idTrabajador) === String(filtroDevInc));
     }
 
+    if (filtroFechaTipo !== 'TODAS') {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+
+      combined = combined.filter(c => {
+        if (!c._fecha) return true;
+        const f = new Date(c._fecha);
+        
+        if (filtroFechaTipo === 'HOY') {
+          return f >= hoy;
+        }
+        if (filtroFechaTipo === '7_DIAS') {
+          const hace7 = new Date();
+          hace7.setDate(hace7.getDate() - 7);
+          hace7.setHours(0, 0, 0, 0);
+          return f >= hace7;
+        }
+        if (filtroFechaTipo === '30_DIAS') {
+          const hace30 = new Date();
+          hace30.setDate(hace30.getDate() - 30);
+          hace30.setHours(0, 0, 0, 0);
+          return f >= hace30;
+        }
+        if (filtroFechaTipo === 'ESTE_MES') {
+          const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+          return f >= inicioMes;
+        }
+        if (filtroFechaTipo === 'RANGO') {
+          if (filtroFechaDesde) {
+            const d = new Date(filtroFechaDesde);
+            d.setHours(0, 0, 0, 0);
+            if (f < d) return false;
+          }
+          if (filtroFechaHasta) {
+            const h = new Date(filtroFechaHasta);
+            h.setHours(23, 59, 59, 999);
+            if (f > h) return false;
+          }
+          return true;
+        }
+        return true;
+      });
+    }
+
     return combined;
-  }, [errores, interrupciones, filtroTipoInc, filtroEstadoInc, filtroDevInc, proyectoSeleccionado]);
+  }, [errores, interrupciones, filtroTipoInc, filtroEstadoInc, filtroDevInc, filtroFechaTipo, filtroFechaDesde, filtroFechaHasta, proyectoSeleccionado]);
 
   // Alias para retrocompatibilidad
   const listaIncidenciasUnificada = incidenciasFiltradas;
@@ -965,7 +1012,7 @@ export const LiderDashboard = () => {
               setShowNuevoProyectoModal(true);
             }}
             className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
-            title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11 / RF-13)"
+            title="Crear un nuevo proyecto de software con presupuesto y fechas"
           >
             <FolderPlus size={14} />
             <span>Nuevo Proyecto</span>
@@ -1036,7 +1083,7 @@ export const LiderDashboard = () => {
                     type="button"
                     onClick={() => setShowConfirmFinalizar(true)}
                     className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer shadow-2xs"
-                    title="Cerrar formalmente el ciclo de vida del proyecto, congelar su WBS y liberar la carga de desarrolladores (RF-20)"
+                    title="Cerrar formalmente el ciclo de vida del proyecto, congelar su WBS y liberar la carga de desarrolladores"
                   >
                     <CheckCircle2 size={13} className="text-red-500" />
                     <span>Finalizar Proyecto</span>
@@ -1162,7 +1209,7 @@ export const LiderDashboard = () => {
                     setShowNuevoProyectoModal(true);
                   }}
                   className="gradient-button text-xs py-2.5 px-4 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md"
-                  title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11 / RF-13)"
+                  title="Crear un nuevo proyecto de software con presupuesto y fechas"
                 >
                   <FolderPlus size={14} />
                   <span>Nuevo Proyecto</span>
@@ -1262,7 +1309,7 @@ export const LiderDashboard = () => {
                     }}
                     disabled={!proyectoSeleccionado}
                     className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                    title="Vincular desarrollador y definir dedicación horaria semanal (HU-12 / RF-16)"
+                    title="Vincular desarrollador y definir dedicación horaria semanal"
                   >
                     <UserPlus size={14} /> Asignar Desarrollador
                   </button>
@@ -1448,7 +1495,7 @@ export const LiderDashboard = () => {
           >
             <div>
               <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
-                Supervisión y Control de Calidad (RF-22 a RF-24)
+                Supervisión y Control de Calidad
               </span>
               <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
                 <ShieldAlert size={22} className="text-blue-600 dark:text-blue-400" />
@@ -1592,6 +1639,61 @@ export const LiderDashboard = () => {
                   ))}
                 </select>
               </div>
+
+              {/* Filtro por Fecha / Período */}
+              <div className="flex items-center gap-2">
+                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase flex items-center gap-1">
+                  <Calendar size={11} className="text-zinc-400" />
+                  Fecha:
+                </span>
+                <select
+                  value={filtroFechaTipo}
+                  onChange={(e) => setFiltroFechaTipo(e.target.value)}
+                  title="Filtrar incidencias por período o rango de fechas"
+                  className="input-field py-1 px-2.5 text-xs font-bold"
+                >
+                  <option value="TODAS">Todas las Fechas</option>
+                  <option value="HOY">Hoy</option>
+                  <option value="7_DIAS">Últimos 7 Días</option>
+                  <option value="30_DIAS">Últimos 30 Días</option>
+                  <option value="ESTE_MES">Este Mes</option>
+                  <option value="RANGO">Rango Personalizado...</option>
+                </select>
+              </div>
+
+              {/* Rango Personalizado de Fechas (Si se selecciona 'RANGO') */}
+              {filtroFechaTipo === 'RANGO' && (
+                <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/80 p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[0.6rem] font-bold text-zinc-500">Desde:</span>
+                    <input
+                      type="date"
+                      value={filtroFechaDesde}
+                      onChange={(e) => setFiltroFechaDesde(e.target.value)}
+                      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-0.5 text-[0.7rem] font-mono font-bold text-zinc-800 dark:text-zinc-200"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[0.6rem] font-bold text-zinc-500">Hasta:</span>
+                    <input
+                      type="date"
+                      value={filtroFechaHasta}
+                      onChange={(e) => setFiltroFechaHasta(e.target.value)}
+                      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-0.5 text-[0.7rem] font-mono font-bold text-zinc-800 dark:text-zinc-200"
+                    />
+                  </div>
+                  {(filtroFechaDesde || filtroFechaHasta) && (
+                    <button
+                      type="button"
+                      onClick={() => { setFiltroFechaDesde(''); setFiltroFechaHasta(''); }}
+                      className="text-[0.62rem] font-bold text-red-500 hover:underline px-1 cursor-pointer"
+                      title="Limpiar fechas"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -1767,7 +1869,7 @@ export const LiderDashboard = () => {
                           {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
                             <span 
                               className="inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
-                              title="Incidencia resuelta y congelada para auditoría (RF-24)"
+                              title="Incidencia resuelta y congelada para auditoría"
                             >
                               <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                               <span>Resuelto</span>
@@ -1864,7 +1966,7 @@ export const LiderDashboard = () => {
             >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <UserCheck size={20} /> Asignar Tarea a Desarrollador (RF-17)
+                  <UserCheck size={20} /> Asignar Tarea a Desarrollador
                 </h3>
                 <button onClick={() => { setShowAsignarModal(false); setFormErrors({}); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
                   <X size={20} />
@@ -2149,7 +2251,7 @@ export const LiderDashboard = () => {
             >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Layers size={20} /> Registrar Nueva Etapa WBS (RF-15)
+                  <Layers size={20} /> Registrar Nueva Etapa WBS
                 </h3>
                 <button onClick={() => setShowNuevaEtapaModal(false)} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
                   <X size={20} />
@@ -2876,7 +2978,7 @@ export const LiderDashboard = () => {
                         </div>
 
                         <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed font-medium">
-                          Se detectaron elementos sin marcar como completados en el cronograma WBS. Al confirmar, el sistema forzará automáticamente la finalización histórica de todas estas fases para cumplir con la norma de auditoría <strong>RF-20</strong>.
+                          Se detectaron elementos sin marcar como completados en el cronograma WBS. Al confirmar, el sistema forzará automáticamente la finalización histórica de todas estas fases para cumplir con la norma de auditoría.
                         </p>
 
                         {/* Contenedor Adaptativo de Evidencia WBS */}
