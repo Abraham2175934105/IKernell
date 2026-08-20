@@ -1611,6 +1611,7 @@ export const LiderDashboard = () => {
                     <th className="py-3 px-2.5 whitespace-nowrap" title="Desarrollador asignado responsable del reporte">Desarrollador</th>
                     <th className="py-3 px-2.5 whitespace-nowrap" title="Fecha y hora exacta en que se registró la incidencia">Fecha</th>
                     <th className="py-3 px-2.5 whitespace-nowrap text-center" title="Estado actual del flujo de atención del reporte">Estado</th>
+                    <th className="py-3 px-2.5 whitespace-nowrap text-center" title="Abrir expediente completo con evidencia y detalles">Expediente</th>
                     <th className="py-3 px-3 text-right whitespace-nowrap sticky right-0 bg-zinc-50/90 dark:bg-zinc-800/50 md:static" title="Gestionar estado, registrar acción correctiva y asignar resolución técnica">Acción</th>
                   </tr>
                 </thead>
@@ -1618,7 +1619,7 @@ export const LiderDashboard = () => {
                   {loadingDetalle && (
                     <>
                       <tr>
-                        <td colSpan={8} className="py-8 px-6">
+                        <td colSpan={9} className="py-8 px-6">
                           <div className="space-y-3">
                             <div className="h-10 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-xl" />
                             <div className="h-10 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-xl" />
@@ -1631,7 +1632,7 @@ export const LiderDashboard = () => {
 
                   {!loadingDetalle && incidenciasFiltradas.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="py-12 px-6">
+                      <td colSpan={9} className="py-12 px-6">
                         <div className="flex flex-col items-center justify-center text-center w-full max-w-md mx-auto space-y-3">
                           <div className="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-inner">
                             <CheckCircle2 size={32} />
@@ -1748,40 +1749,40 @@ export const LiderDashboard = () => {
                           <EstadoAtencionBadge estado={item.estadoAtencion} />
                         </td>
 
+                        {/* Expediente / Ver Detalles */}
+                        <td className="py-3 px-2.5 whitespace-nowrap text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleVerDetallesIncidencia(item)}
+                            className="px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[0.7rem] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                            title="Ver expediente completo, descripción detallada e historial de atención"
+                          >
+                            <Eye size={12} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span>Ver Detalles</span>
+                          </button>
+                        </td>
+
                         {/* Acción */}
                         <td className="py-3 px-3 text-right whitespace-nowrap sticky right-0 bg-white/95 dark:bg-zinc-900/95 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] md:shadow-none md:static">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {/* Botón Ver Detalles */}
+                          {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
+                            <span 
+                              className="inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
+                              title="Incidencia resuelta y congelada para auditoría (RF-24)"
+                            >
+                              <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <span>Resuelto</span>
+                            </span>
+                          ) : (
                             <button
                               type="button"
-                              onClick={() => handleVerDetallesIncidencia(item)}
-                              className="px-2.5 py-1 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-[0.7rem] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
-                              title="Ver expediente completo, descripción detallada e historial de atención"
+                              onClick={() => handleAbrirAtenderIncidencia(item)}
+                              className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors"
+                              title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
                             >
-                              <Eye size={12} className="text-blue-500 shrink-0" />
-                              <span>Detalles</span>
+                              <Edit3 size={11} />
+                              <span>Atender / Editar</span>
                             </button>
-
-                            {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
-                              <span 
-                                className="inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
-                                title="Incidencia resuelta y congelada para auditoría (RF-24)"
-                              >
-                                <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                <span>Resuelto</span>
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleAbrirAtenderIncidencia(item)}
-                                className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors"
-                                title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
-                              >
-                                <Edit3 size={11} />
-                                <span>Atender / Editar</span>
-                              </button>
-                            )}
-                          </div>
+                          )}
                         </td>
                       </tr>
                     );
