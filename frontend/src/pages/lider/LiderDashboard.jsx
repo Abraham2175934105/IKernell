@@ -232,7 +232,6 @@ export const LiderDashboard = () => {
   const [submittingReasignacion, setSubmittingReasignacion] = useState(false);
   const [submittingAtencion, setSubmittingAtencion] = useState(false);
 
-  const [ultimoCasoActualizado, setUltimoCasoActualizado] = useState(null);
   const [showGuiaUsuarioIncidencias, setShowGuiaUsuarioIncidencias] = useState(true);
 
   const [nuevaActividad, setNuevaActividad] = useState({
@@ -648,18 +647,7 @@ export const LiderDashboard = () => {
         setInterrupciones(prev => prev.map(intp => intp.idInterrupcion === incidenciaAAtender.idInterrupcion ? { ...intp, ...res } : intp));
       }
 
-      const casoId = incidenciaAAtender.idError || incidenciaAAtender.idInterrupcion;
-      const estadoNuevo = atencionForm.estadoAtencion;
-      const timestampStr = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-      setUltimoCasoActualizado({
-        id: casoId,
-        tipo: isError ? 'Error Técnico' : 'Contingencia',
-        estado: estadoNuevo,
-        timestamp: timestampStr
-      });
-
-      toast.success(`Caso #${casoId} actualizado con éxito a estado ${estadoNuevo}.`, { duration: 5000 });
+      toast.success(`Caso #${casoId} actualizado con éxito a estado ${estadoNuevo}.`, { duration: 3000 });
       setShowAtenderModal(false);
       setIncidenciaAAtender(null);
       setAtencionForm({ estadoAtencion: 'EN_REVISION', resolucionNota: '' });
@@ -1533,41 +1521,7 @@ export const LiderDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Alerta Destacada: Caso Actualizado con Éxito */}
-          <AnimatePresence>
-            {ultimoCasoActualizado && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-                className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 border-2 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-100 text-xs font-bold flex items-center justify-between shadow-md"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
-                    <CheckCircle2 size={18} />
-                  </div>
-                  <div>
-                    <div className="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
-                      <span>Caso Actualizado con Éxito</span>
-                      <span className="text-[0.6rem] font-bold px-2 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100">PostgreSQL</span>
-                    </div>
-                    <p className="text-[0.72rem] font-medium text-emerald-800 dark:text-emerald-200 mt-0.5">
-                      El caso <strong>#{ultimoCasoActualizado.id}</strong> ({ultimoCasoActualizado.tipo}) cambió a estado <strong>{ultimoCasoActualizado.estado}</strong> a las [{ultimoCasoActualizado.timestamp}]. Se guardó correctamente en el expediente corporativo.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setUltimoCasoActualizado(null)}
-                  className="p-1 rounded-lg text-emerald-700 hover:bg-emerald-200/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
-                  title="Cerrar alerta"
-                >
-                  <X size={16} />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+
 
           {/* Guía Rápida e Interactiva para Usuarios */}
           <div className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 rounded-3xl p-4 sm:p-5 text-xs text-blue-950 dark:text-blue-200 space-y-3">
