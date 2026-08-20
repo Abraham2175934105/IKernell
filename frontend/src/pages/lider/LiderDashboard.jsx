@@ -659,10 +659,7 @@ export const LiderDashboard = () => {
         timestamp: timestampStr
       });
 
-      toast.success(`Caso #${casoId} actualizado con éxito a estado ${estadoNuevo}.`, {
-        duration: 5000,
-        icon: '✅'
-      });
+      toast.success(`Caso #${casoId} actualizado con éxito a estado ${estadoNuevo}.`, { duration: 5000 });
       setShowAtenderModal(false);
       setIncidenciaAAtender(null);
       setAtencionForm({ estadoAtencion: 'EN_REVISION', resolucionNota: '' });
