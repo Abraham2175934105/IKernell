@@ -647,6 +647,9 @@ export const LiderDashboard = () => {
         setInterrupciones(prev => prev.map(intp => intp.idInterrupcion === incidenciaAAtender.idInterrupcion ? { ...intp, ...res } : intp));
       }
 
+      const casoId = incidenciaAAtender.idError || incidenciaAAtender.idInterrupcion;
+      const estadoNuevo = atencionForm.estadoAtencion;
+
       toast.success(`Caso #${casoId} actualizado con éxito a estado ${estadoNuevo}.`, { duration: 3000 });
       setShowAtenderModal(false);
       setIncidenciaAAtender(null);
