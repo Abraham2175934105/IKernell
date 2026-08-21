@@ -15,6 +15,7 @@ import {
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton, SkeletonCard, SkeletonTable, SkeletonMetricCard } from '../../components/ui/Skeleton';
+import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
 
 // Variantes de animación ultra rápidas y fluidas (0.25s)
 const containerVariants = {
@@ -124,25 +125,41 @@ const getEstadoBadgeClasses = (estado) => {
 };
 
 const formatearFechaHumana = (fechaStr) => {
-  if (!fechaStr) return 'Fecha no definida';
+  if (!fechaStr || typeof fechaStr !== 'string') return 'Fecha no definida';
   try {
-    const [y, m, d] = fechaStr.split('-').map(Number);
-    const date = y && m && d ? new Date(y, m - 1, d, 12, 0, 0) : new Date(fechaStr);
-    return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+    const rawStr = fechaStr.split('T')[0];
+    const parts = rawStr.split('-');
+    if (parts.length === 3) {
+      const [y, m, d] = parts.map(Number);
+      if (y && m && d && !isNaN(y) && !isNaN(m) && !isNaN(d)) {
+        const date = new Date(y, m - 1, d, 12, 0, 0);
+        if (!isNaN(date.getTime())) {
+          return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+        }
+      }
+    }
+    const date = new Date(fechaStr);
+    if (!isNaN(date.getTime())) {
+      return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+    }
+    return 'Fecha no definida';
   } catch {
-    return fechaStr;
+    return 'Fecha no definida';
   }
 };
 
 const calcularDuracionProyecto = (inicioStr, finStr) => {
-  if (!inicioStr || !finStr) return null;
+  if (!inicioStr || !finStr || typeof inicioStr !== 'string' || typeof finStr !== 'string') return '0 días';
   try {
-    const [y1, m1, d1] = inicioStr.split('-').map(Number);
-    const [y2, m2, d2] = finStr.split('-').map(Number);
-    const date1 = y1 && m1 && d1 ? new Date(y1, m1 - 1, d1) : new Date(inicioStr);
-    const date2 = y2 && m2 && d2 ? new Date(y2, m2 - 1, d2) : new Date(finStr);
+    const raw1 = inicioStr.split('T')[0];
+    const raw2 = finStr.split('T')[0];
+    const [y1, m1, d1] = raw1.split('-').map(Number);
+    const [y2, m2, d2] = raw2.split('-').map(Number);
+    const date1 = (y1 && m1 && d1) ? new Date(y1, m1 - 1, d1) : new Date(inicioStr);
+    const date2 = (y2 && m2 && d2) ? new Date(y2, m2 - 1, d2) : new Date(finStr);
+    if (isNaN(date1.getTime()) || isNaN(date2.getTime())) return '0 días';
     const diffMs = date2.getTime() - date1.getTime();
-    if (isNaN(diffMs) || diffMs <= 0) return null;
+    if (isNaN(diffMs) || diffMs <= 0) return '0 días';
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     const diffMonths = Math.round(diffDays / 30.4375);
     if (diffMonths >= 1) {
@@ -150,7 +167,7 @@ const calcularDuracionProyecto = (inicioStr, finStr) => {
     }
     return `${diffDays} ${diffDays === 1 ? 'día' : 'días'}`;
   } catch {
-    return null;
+    return '0 días';
   }
 };
 
@@ -908,9 +925,10 @@ export const LiderDashboard = () => {
       setActiveTab={setActiveTab}
       customMetrics={{
         metric1: loadingProyectos ? 'Cargando...' : `Proyectos: ${proyectos?.length || 0} en Sistema`,
-        metric2: proyectoSeleccionado ? `Activo: ${proyectoSeleccionado.nombre}` : 'Sin proyecto'
+        metric2: proyectoSeleccionado ? `Activo: ${proyectoSeleccionado?.nombre || ''}` : 'Sin proyecto'
       }}
     >
+      <ErrorBoundary title="Error General del Dashboard del Líder">
       
       {/* Selector de Proyecto en Cabecera (Enterprise Jira/Linear Style) */}
       <motion.div 
@@ -983,24 +1001,24 @@ export const LiderDashboard = () => {
                   <div className="text-left min-w-0 flex-1 truncate">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 shrink-0">
-                        [PRJ-00{proyectoSeleccionado.idProyecto}]
+                        [PRJ-00{proyectoSeleccionado?.idProyecto || 0}]
                       </span>
-                      <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate max-w-[130px] sm:max-w-[170px]" title={proyectoSeleccionado.nombre}>
-                        {proyectoSeleccionado.nombre}
+                      <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate max-w-[130px] sm:max-w-[170px]" title={proyectoSeleccionado?.nombre || ''}>
+                        {proyectoSeleccionado?.nombre || 'Proyecto'}
                       </span>
                     </div>
-                    {proyectoSeleccionado.cliente && (
+                    {proyectoSeleccionado?.cliente && (
                       <span className="text-[0.65rem] text-zinc-400 dark:text-zinc-500 block truncate">
                         {proyectoSeleccionado.cliente}
                       </span>
                     )}
                   </div>
                   {(() => {
-                    const estInfo = getEstadoBadgeClasses(proyectoSeleccionado.estado);
+                    const estInfo = getEstadoBadgeClasses(proyectoSeleccionado?.estado);
                     return (
                       <span className={`hidden sm:inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full border shrink-0 ${estInfo.badge}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
-                        <span>{proyectoSeleccionado.estado || 'ACTIVO'}</span>
+                        <span>{proyectoSeleccionado?.estado || 'ACTIVO'}</span>
                       </span>
                     );
                   })()}
@@ -1071,25 +1089,25 @@ export const LiderDashboard = () => {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight truncate max-w-full sm:max-w-md lg:max-w-xl" title={proyectoSeleccionado.nombre}>
-                      {proyectoSeleccionado.nombre}
+                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight truncate max-w-full sm:max-w-md lg:max-w-xl" title={proyectoSeleccionado?.nombre || ''}>
+                      {proyectoSeleccionado?.nombre || 'Proyecto Activo'}
                     </h3>
                     <span className={`px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase border shrink-0 ${
                       isProyectoFinalizado
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800'
                         : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800'
                     }`}>
-                      {isProyectoFinalizado ? 'FINALIZADO (Solo Lectura)' : (proyectoSeleccionado.estado || 'ACTIVO')}
+                      {isProyectoFinalizado ? 'FINALIZADO (Solo Lectura)' : (proyectoSeleccionado?.estado || 'ACTIVO')}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                    Identificador del Proyecto: <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">PRJ-00{proyectoSeleccionado.idProyecto}</span>
+                    Identificador del Proyecto: <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">PRJ-00{proyectoSeleccionado?.idProyecto || 0}</span>
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap shrink-0">
-                {proyectoSeleccionado.lider && (
+                {proyectoSeleccionado?.lider && (
                   <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
                     <User size={14} className="text-blue-600 dark:text-blue-400" />
                     <span>
@@ -1122,8 +1140,8 @@ export const LiderDashboard = () => {
                   <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
                     Cliente / Organización
                   </span>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate" title={proyectoSeleccionado.cliente || 'Organización Interna IKernell'}>
-                    {proyectoSeleccionado.cliente || 'Organización Interna IKernell'}
+                  <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate" title={proyectoSeleccionado?.cliente || 'Organización Interna IKernell'}>
+                    {proyectoSeleccionado?.cliente || 'Organización Interna IKernell'}
                   </p>
                 </div>
               </div>
@@ -1138,21 +1156,21 @@ export const LiderDashboard = () => {
                     Dimensión Presupuestal
                   </span>
                   <p className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100 truncate text-xs">
-                    {proyectoSeleccionado.presupuesto !== null && proyectoSeleccionado.presupuesto !== undefined
+                    {proyectoSeleccionado?.presupuesto !== null && proyectoSeleccionado?.presupuesto !== undefined
                       ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(Number(proyectoSeleccionado.presupuesto))
                       : 'Sin dimensionar'}
                   </p>
                   {/* Barra de Ejecución Presupuestal */}
-                  {Number(proyectoSeleccionado.presupuesto) > 0 && (
+                  {Number(proyectoSeleccionado?.presupuesto || 0) > 0 && (
                     <div className="mt-1.5 space-y-0.5">
                       <div className="flex justify-between text-[0.6rem] font-bold text-zinc-500">
                         <span>Ejecutado: {Math.round(porcentajeAvanceGlobal || 0)}%</span>
-                        <span>${Math.round((Number(proyectoSeleccionado.presupuesto) * (porcentajeAvanceGlobal || 0)) / 100).toLocaleString()} USD</span>
+                        <span>${Math.round((Number(proyectoSeleccionado?.presupuesto || 0) * Number(porcentajeAvanceGlobal || 0)) / 100).toLocaleString()} USD</span>
                       </div>
                       <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-emerald-500 transition-all duration-500 rounded-full"
-                          style={{ width: `${Math.min(100, porcentajeAvanceGlobal || 0)}%` }}
+                          style={{ width: `${Math.min(100, Math.max(0, Number(porcentajeAvanceGlobal || 0)))}%` }}
                         />
                       </div>
                     </div>
@@ -1183,9 +1201,10 @@ export const LiderDashboard = () => {
                     {fechaInicioFormateada} <span className="text-zinc-400 font-normal mx-0.5">&rarr;</span> {fechaFinFormateada}
                   </p>
                   {/* Cálculo interactivo de días restantes */}
-                  {(proyectoSeleccionado.fechaEstimadaEntrega || proyectoSeleccionado.fechaFinEstimada) && (() => {
+                  {(proyectoSeleccionado?.fechaEstimadaEntrega || proyectoSeleccionado?.fechaFinEstimada) && (() => {
                     const hoy = new Date();
-                    const fechaFinStr = proyectoSeleccionado.fechaEstimadaEntrega || proyectoSeleccionado.fechaFinEstimada;
+                    const fechaFinStr = proyectoSeleccionado?.fechaEstimadaEntrega || proyectoSeleccionado?.fechaFinEstimada;
+                    if (!fechaFinStr || typeof fechaFinStr !== 'string') return null;
                     const fin = new Date(fechaFinStr);
                     if (isNaN(fin.getTime())) return null;
                     const diffTime = fin.getTime() - hoy.getTime();
@@ -1533,10 +1552,12 @@ export const LiderDashboard = () => {
           animate="visible"
           className="space-y-6"
         >
-          <SemaforoInteligente 
-            idProyecto={proyectoSeleccionado?.idProyecto || 'GLOBAL'} 
-            proyectoNombre={proyectoSeleccionado?.nombre || 'Todos los Proyectos'}
-          />
+          <ErrorBoundary title="Error en Módulo Semáforo Inteligente">
+            <SemaforoInteligente 
+              idProyecto={proyectoSeleccionado?.idProyecto || 'GLOBAL'} 
+              proyectoNombre={proyectoSeleccionado?.nombre || 'Todos los Proyectos'}
+            />
+          </ErrorBoundary>
         </motion.div>
       )}
 
@@ -2050,7 +2071,9 @@ export const LiderDashboard = () => {
               </div>
             </div>
           ) : (
-            <EtlBrasil proyecto={proyectoSeleccionado} />
+            <ErrorBoundary title="Error en Módulo ETL Brasil">
+              <EtlBrasil proyecto={proyectoSeleccionado} />
+            </ErrorBoundary>
           )}
         </motion.div>
       )}
@@ -2064,11 +2087,13 @@ export const LiderDashboard = () => {
           animate="visible"
           className="space-y-6"
         >
-          <PredictorBurnout 
-            proyecto={proyectoSeleccionado} 
-            etapas={etapas} 
-            onNavigateToWbs={() => setActiveTab('wbs')} 
-          />
+          <ErrorBoundary title="Error en Módulo Predictor de Burnout">
+            <PredictorBurnout 
+              proyecto={proyectoSeleccionado} 
+              etapas={etapas} 
+              onNavigateToWbs={() => setActiveTab('wbs')} 
+            />
+          </ErrorBoundary>
         </motion.div>
       )}
 
@@ -3709,6 +3734,7 @@ export const LiderDashboard = () => {
         )}
       </AnimatePresence>
 
+      </ErrorBoundary>
     </DashboardLayout>
   );
 };

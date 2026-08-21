@@ -29,7 +29,16 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
   const [exporting, setExporting] = useState(false);
   const [etlResult, setEtlResult] = useState(null);
 
-  const isGlobal = !idProyecto || idProyecto === 'GLOBAL';
+  // Extracción defensiva del ID de proyecto (soporta objetos { idProyecto: X }, string, número o null)
+  const targetId = useMemo(() => {
+    if (!idProyecto) return null;
+    if (typeof idProyecto === 'object') {
+      return idProyecto.idProyecto || idProyecto.id || null;
+    }
+    return idProyecto;
+  }, [idProyecto]);
+
+  const isGlobal = !targetId || targetId === 'GLOBAL';
 
   // Peticiones API en tiempo real (Global o por Proyecto)
   const cargarMetricas = useCallback(async () => {
@@ -37,16 +46,17 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
       setLoading(true);
       const url = isGlobal 
         ? '/lider/proyectos/global/metricas-semaforo' 
-        : `/lider/proyectos/${idProyecto}/metricas-semaforo`;
+        : `/lider/proyectos/${targetId}/metricas-semaforo`;
       const data = await api.get(url);
-      setMetrics(data);
+      setMetrics(data && typeof data === 'object' ? data : null);
     } catch (err) {
       console.error('Error cargando métricas del Semáforo:', err);
       toast.error('Error al sincronizar métricas predictivas desde PostgreSQL.');
+      setMetrics(null);
     } finally {
       setLoading(false);
     }
-  }, [api, idProyecto, isGlobal]);
+  }, [api, targetId, isGlobal]);
 
   // Efectos (Hooks)
   useEffect(() => {
@@ -55,7 +65,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
 
   // Estructura los datos para el gráfico circular según la severidad de errores (4 niveles homologados)
   const pieData = useMemo(() => {
-    if (!metrics || !metrics.severityCount) return [];
+    if (!metrics || !metrics.severityCount || typeof metrics.severityCount !== 'object') return [];
     const colors = {
       CRITICA: '#ef4444',
       ALTA: '#f97316',
@@ -69,14 +79,18 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
       BAJA: 'Baja'
     };
 
-    return Object.entries(metrics.severityCount)
-      .map(([key, value]) => ({
-        name: labels[key] || key,
-        rawKey: key,
-        value: Number(value) || 0,
-        color: colors[key] || '#71717a'
-      }))
-      .filter(item => item.value > 0);
+    try {
+      return Object.entries(metrics.severityCount)
+        .map(([key, value]) => ({
+          name: labels[key] || key,
+          rawKey: key,
+          value: Number(value || 0),
+          color: colors[key] || '#71717a'
+        }))
+        .filter(item => item.value > 0);
+    } catch {
+      return [];
+    }
   }, [metrics]);
 
   // Manejador de exportación ETL hacia Brasil (RF-28 a RF-30)
@@ -144,7 +158,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
     Icon: Activity
   };
 
-  const LevelIcon = nivelConfig.Icon;
+  const LevelIcon = nivelConfig?.Icon || Activity;
 
   return (
     <motion.div 

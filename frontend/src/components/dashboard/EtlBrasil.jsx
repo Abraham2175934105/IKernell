@@ -108,7 +108,7 @@ export const EtlBrasil = ({ proyecto, onExportSuccess }) => {
 
   // Renderiza una línea con Syntax Highlighting en el visor terminal
   const renderHighlightedLine = (line, idx) => {
-    if (!line) return null;
+    if (!line || typeof line !== 'string') return null;
     
     // Si es línea de comentario o cabecera
     if (line.startsWith('#') || line.startsWith('//') || line.startsWith('---')) {
@@ -125,24 +125,25 @@ export const EtlBrasil = ({ proyecto, onExportSuccess }) => {
       <div key={idx} className="hover:bg-zinc-800/60 py-0.5 px-1 rounded transition-colors flex items-start font-mono text-[0.72rem] leading-relaxed">
         <span className="text-zinc-600 select-none mr-2 font-mono text-[0.65rem] shrink-0 pt-0.5">{(idx + 1).toString().padStart(2, '0')}</span>
         <div className="flex-1 break-all">
-          {parts.map((part, pIdx) => {
+          {(Array.isArray(parts) ? parts : []).map((part, pIdx) => {
             let partStyle = "text-zinc-300";
+            const safePart = part || '';
             // Validación si es fecha ISO 8601 UTC
-            if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(part)) {
+            if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(safePart)) {
               partStyle = "text-cyan-300 font-semibold";
-            } else if (/^\d+(\.\d+)?$/.test(part.trim())) {
+            } else if (/^\d+(\.\d+)?$/.test(safePart.trim())) {
               partStyle = "text-amber-400 font-bold";
             } else if (pIdx === 0) {
               partStyle = "text-blue-400 font-bold";
-            } else if (part.includes('ERROR') || part.includes('CRITICO') || part.includes('ALTO')) {
+            } else if (safePart.includes('ERROR') || safePart.includes('CRITICO') || safePart.includes('ALTO')) {
               partStyle = "text-red-400 font-semibold";
-            } else if (part.includes('FINALIZADA') || part.includes('OK') || part.includes('VERDE')) {
+            } else if (safePart.includes('FINALIZADA') || safePart.includes('OK') || safePart.includes('VERDE')) {
               partStyle = "text-emerald-400 font-semibold";
             }
 
             return (
               <React.Fragment key={pIdx}>
-                <span className={partStyle}>{part}</span>
+                <span className={partStyle}>{safePart}</span>
                 {pIdx < parts.length - 1 && (
                   <span className="text-zinc-600 font-black mx-1 select-none">|</span>
                 )}
@@ -155,7 +156,7 @@ export const EtlBrasil = ({ proyecto, onExportSuccess }) => {
   };
 
   const previewLines = useMemo(() => {
-    if (!reporteEtl?.vistaPreviaFormatoISO) return [];
+    if (!reporteEtl?.vistaPreviaFormatoISO || typeof reporteEtl.vistaPreviaFormatoISO !== 'string') return [];
     return reporteEtl.vistaPreviaFormatoISO.split('\n');
   }, [reporteEtl]);
 

@@ -223,22 +223,25 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
 
   // 1. Filtrado por Proyecto Activo (si aplica)
   const metricasPorProyecto = useMemo(() => {
+    const list = Array.isArray(metricas) ? metricas : [];
     if (!isProyectoEspecifico || devIdsEnProyecto === null) {
-      return metricas;
+      return list;
     }
-    return metricas.filter(m => devIdsEnProyecto.has(m.idTrabajador));
+    return list.filter(m => m && devIdsEnProyecto.has(m.idTrabajador));
   }, [metricas, isProyectoEspecifico, devIdsEnProyecto]);
 
   // 2. Conteo reactivo e insensible de métricas para las píldoras de semáforo
   const conteosSemaforo = useMemo(() => {
+    const list = Array.isArray(metricasPorProyecto) ? metricasPorProyecto : [];
     const counts = {
-      TODOS: metricasPorProyecto.length,
+      TODOS: list.length,
       CRITICA: 0,
       ALTA: 0,
       MEDIA: 0,
       BAJA: 0,
     };
-    metricasPorProyecto.forEach(m => {
+    list.forEach(m => {
+      if (!m) return;
       const nivel = normalizarEstado(m.estadoAlerta);
       if (counts[nivel] !== undefined) {
         counts[nivel]++;
@@ -251,29 +254,33 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
 
   // 3. Filtrado por Búsqueda, Semáforo y Ordenamiento
   const metricasFiltradas = useMemo(() => {
-    let result = [...metricasPorProyecto];
+    const list = Array.isArray(metricasPorProyecto) ? metricasPorProyecto : [];
+    let result = [...list];
 
     // Búsqueda por texto (nombre, especialidad, email)
-    if (searchQuery.trim()) {
+    if (searchQuery && typeof searchQuery === 'string' && searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(m => 
-        (m.nombreCompleto && m.nombreCompleto.toLowerCase().includes(q)) ||
-        (m.especialidad && m.especialidad.toLowerCase().includes(q)) ||
-        (m.email && m.email.toLowerCase().includes(q))
+        m && (
+          (m.nombreCompleto && typeof m.nombreCompleto === 'string' && m.nombreCompleto.toLowerCase().includes(q)) ||
+          (m.especialidad && typeof m.especialidad === 'string' && m.especialidad.toLowerCase().includes(q)) ||
+          (m.email && typeof m.email === 'string' && m.email.toLowerCase().includes(q))
+        )
       );
     }
 
     // Filtro de semáforo homologado
     if (filtroSemaforo !== 'TODOS') {
-      result = result.filter(m => normalizarEstado(m.estadoAlerta) === filtroSemaforo);
+      result = result.filter(m => m && normalizarEstado(m.estadoAlerta) === filtroSemaforo);
     }
 
     // Ordenamiento
     result.sort((a, b) => {
-      if (orden === 'RIESGO_DESC') return (b.promedioCarga || 0) - (a.promedioCarga || 0);
-      if (orden === 'RIESGO_ASC') return (a.promedioCarga || 0) - (b.promedioCarga || 0);
-      if (orden === 'TAREAS_DESC') return (b.tareasActivas || 0) - (a.tareasActivas || 0);
-      if (orden === 'NOMBRE_ASC') return (a.nombreCompleto || '').localeCompare(b.nombreCompleto || '');
+      if (!a || !b) return 0;
+      if (orden === 'RIESGO_DESC') return Number(b.promedioCarga || 0) - Number(a.promedioCarga || 0);
+      if (orden === 'RIESGO_ASC') return Number(a.promedioCarga || 0) - Number(b.promedioCarga || 0);
+      if (orden === 'TAREAS_DESC') return Number(b.tareasActivas || 0) - Number(a.tareasActivas || 0);
+      if (orden === 'NOMBRE_ASC') return String(a.nombreCompleto || '').localeCompare(String(b.nombreCompleto || ''));
       return 0;
     });
 
