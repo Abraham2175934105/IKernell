@@ -50,7 +50,7 @@ export const AppRouter = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Módulo Público (con Navbar & Footer corporativo) */}

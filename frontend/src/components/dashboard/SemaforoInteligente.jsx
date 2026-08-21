@@ -168,7 +168,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
       className="glass-panel p-6 md:p-8 mb-8 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm space-y-6"
     >
       
-      {/* ─── Encabezado Corporativo (Global vs Proyecto Específico) ─── */}
+      {/* Encabezado Corporativo (Global vs Proyecto Específico) */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
@@ -226,7 +226,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
         </div>
       </div>
 
-      {/* ─── Grid Principal de Métricas Semafóricas ─── */}
+      {/* Grid Principal de Métricas Semafóricas */}
       {loading && !metrics ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-pulse">
           <div className="lg:col-span-5 h-48 bg-zinc-100 dark:bg-zinc-800 rounded-3xl" />
@@ -347,7 +347,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
         </div>
       )}
 
-      {/* ─── Recomendación Proactiva del Algoritmo Predictivo ─── */}
+      {/* Recomendación Proactiva del Algoritmo Predictivo */}
       <div className="p-4 sm:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-start gap-3.5 bg-zinc-50 dark:bg-zinc-800/50 shadow-sm">
         <div className="mt-0.5 text-blue-600 dark:text-blue-400 shrink-0">
           <Sparkles size={18} />
@@ -362,7 +362,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
         </div>
       </div>
 
-      {/* ─── Panel del Resultado ETL Brasil ─── */}
+      {/* Panel del Resultado ETL Brasil */}
       <AnimatePresence>
         {etlResult && (
           <motion.div 

@@ -81,7 +81,7 @@ export const FloatingActions = () => {
   return (
     <aside aria-label="Acciones flotantes" className="fixed bottom-6 right-5 z-40 flex flex-col items-end gap-3 pointer-events-none">
 
-      {/* ── Botón Scroll-to-Top Compacto & Glassmorphic ─────────────── */}
+      {/* Botón Scroll-to-Top Compacto & Glassmorphic */}
       <AnimatePresence>
         {showScrollTop && (
           <div className="relative pointer-events-auto">
@@ -120,7 +120,7 @@ export const FloatingActions = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Widget Flotante de Asistencia Directa (Glassmorphic) ────── */}
+      {/* Widget Flotante de Asistencia Directa (Glassmorphic) */}
       <div className="relative pointer-events-auto">
         <motion.button
           layout
