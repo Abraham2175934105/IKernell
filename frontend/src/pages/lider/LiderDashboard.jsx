@@ -1182,11 +1182,14 @@ export const LiderDashboard = () => {
                     {fechaInicioFormateada} <span className="text-zinc-400 font-normal mx-0.5">&rarr;</span> {fechaFinFormateada}
                   </p>
                   {/* Cálculo interactivo de días restantes */}
-                  {proyectoSeleccionado.fechaEstimadaEntrega && (() => {
+                  {(proyectoSeleccionado.fechaEstimadaEntrega || proyectoSeleccionado.fechaFinEstimada) && (() => {
                     const hoy = new Date();
-                    const fin = new Date(proyectoSeleccionado.fechaEstimadaEntrega);
+                    const fechaFinStr = proyectoSeleccionado.fechaEstimadaEntrega || proyectoSeleccionado.fechaFinEstimada;
+                    const fin = new Date(fechaFinStr);
+                    if (isNaN(fin.getTime())) return null;
                     const diffTime = fin.getTime() - hoy.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (isNaN(diffDays)) return null;
                     return (
                       <p className="text-[0.65rem] font-bold text-violet-600 dark:text-violet-400 mt-1 font-mono">
                         &bull; {diffDays > 0 ? `Faltan ${diffDays} días para entrega` : diffDays === 0 ? 'Entrega programada para hoy' : `Concluido hace ${Math.abs(diffDays)} días`}
@@ -2590,8 +2593,10 @@ export const LiderDashboard = () => {
                   </label>
                   <select
                     value={atencionForm.estadoAtencion}
+                    disabled={['RESUELTO', 'SOLUCIONADO', 'FINALIZADO', 'CERRADO'].includes((incidenciaAAtender?.estadoAtencion || '').toUpperCase())}
                     onChange={(e) => setAtencionForm({ ...atencionForm, estadoAtencion: e.target.value })}
-                    className="input-field py-2 font-bold"
+                    className="input-field py-2 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={['RESUELTO', 'SOLUCIONADO', 'FINALIZADO', 'CERRADO'].includes((incidenciaAAtender?.estadoAtencion || '').toUpperCase()) ? 'Incidencia ya resuelta y cerrada.' : 'Seleccione el nuevo estado de atención del caso'}
                   >
                     <option value="REGISTRADO">Registrado (En espera)</option>
                     <option value="EN_REVISION">En Revisión (En investigación)</option>

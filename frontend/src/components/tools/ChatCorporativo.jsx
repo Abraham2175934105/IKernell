@@ -245,9 +245,32 @@ export const ChatCorporativo = () => {
                 ? `${msg.remitente.nombre} ${msg.remitente.apellido}` 
                 : 'Usuario Corporativo';
               const rolRemitente = msg.remitente?.rol || 'TRABAJADOR';
-              const hora = msg.fechaEnvio 
-                ? new Date(msg.fechaEnvio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-                : 'Reciente';
+              const horaUTC = msg.fechaEnvio 
+                ? `${new Date(msg.fechaEnvio).toISOString().substring(11, 16)} UTC` 
+                : `${new Date().toISOString().substring(11, 16)} UTC`;
+
+              const formatContent = (text) => {
+                if (!text) return null;
+                const parts = text.split(/(#[A-Za-z0-9_-]+)/g);
+                return parts.map((part, index) => {
+                  if (part.startsWith('#')) {
+                    return (
+                      <span 
+                        key={index} 
+                        className={`font-mono font-extrabold px-1.5 py-0.5 rounded text-[0.72rem] inline-block mx-0.5 border ${
+                          isCurrentUser
+                            ? 'bg-blue-600/30 text-white border-blue-400/50 dark:bg-blue-900/60 dark:text-blue-100'
+                            : 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/70 dark:text-blue-200 dark:border-blue-700'
+                        }`}
+                        title={`Referencia WBS / Solicitud: ${part}`}
+                      >
+                        {part}
+                      </span>
+                    );
+                  }
+                  return part;
+                });
+              };
 
               return (
                 <div 
@@ -266,14 +289,14 @@ export const ChatCorporativo = () => {
                     }`}>
                       {rolRemitente}
                     </span>
-                    <span className="text-[0.65rem] text-zinc-400">{hora}</span>
+                    <span className="text-[0.65rem] text-zinc-400 font-mono" title="Estampa de tiempo internacional UTC">{horaUTC}</span>
                   </div>
                   <div className={`p-3.5 rounded-2xl max-w-lg text-xs sm:text-sm leading-relaxed ${
                     isCurrentUser
                       ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-medium rounded-tr-none shadow-sm'
                       : 'bg-zinc-100 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 rounded-tl-none border border-zinc-200 dark:border-zinc-700/80 shadow-sm'
                   }`}>
-                    {msg.contenido}
+                    {formatContent(msg.contenido)}
                   </div>
                 </div>
               );

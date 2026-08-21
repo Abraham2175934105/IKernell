@@ -716,9 +716,10 @@ export const DesarrolladorDashboard = () => {
                       <div className="relative">
                         <select
                           value={act.estado}
-                          disabled={changingEstado === act.idActividad}
+                          disabled={changingEstado === act.idActividad || ['RESUELTO', 'SOLUCIONADO', 'FINALIZADA', 'CERRADO'].includes(act.estado)}
                           onChange={(e) => handleCambiarEstado(act.idActividad, e.target.value)}
                           className="input-field py-1.5 text-xs font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={['RESUELTO', 'SOLUCIONADO', 'FINALIZADA', 'CERRADO'].includes(act.estado) ? 'Actividad concluida. Estado no modificable.' : 'Seleccione el nuevo estado de avance de la actividad'}
                         >
                           <option value="PENDIENTE">Pendiente</option>
                           <option value="EN_PROGRESO">En Progreso</option>
