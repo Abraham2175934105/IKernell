@@ -7,7 +7,7 @@ import {
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
-  ChevronLeft, ChevronRight, Building2, Printer, Download
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -146,21 +146,6 @@ const RoleBadge = ({ rol }) => {
   }
 };
 
-/* ─── Insignia de Vinculación Contractual (tipo_trabajador: PLANTA / CONTRATISTA) ─── */
-const TipoTrabajadorBadge = ({ tipo }) => {
-  const isPlanta = (tipo || 'PLANTA').toUpperCase() === 'PLANTA';
-  return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[0.68rem] font-bold border ${
-      isPlanta 
-        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-        : 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800'
-    }`}>
-      <Building2 size={11} className="shrink-0 text-blue-500" />
-      <span>{isPlanta ? 'Planta' : 'Contratista'}</span>
-    </span>
-  );
-};
-
 export const CoordinadorDashboard = () => {
   const { user } = useAuth();
   const api = useApi();
@@ -175,11 +160,9 @@ export const CoordinadorDashboard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [rolSeleccionado, setRolSeleccionado] = useState('TODOS'); // 'TODOS' | 'DESARROLLADOR' | 'LIDER' | 'COORDINADOR'
-  const [tipoTrabajadorSeleccionado, setTipoTrabajadorSeleccionado] = useState('TODOS'); // 'TODOS' | 'PLANTA' | 'CONTRATISTA'
   const [techsSeleccionadas, setTechsSeleccionadas] = useState([]); // [] = Todas
   const [estadoSeleccionado, setEstadoSeleccionado] = useState('TODOS'); // 'TODOS' | 'ACTIVO' | 'INHABILITADO'
   const [filtroSolicitudes, setFiltroSolicitudes] = useState('TODAS'); // 'TODAS' | 'PENDIENTE' | 'ATENDIDA' | 'REABIERTA' | 'EN_PROCESO'
-  const [showReporteDesempenoModal, setShowReporteDesempenoModal] = useState(false);
 
   // Estados de Paginación Inteligente (Por cantidad y por hojas)
   const [currentPage, setCurrentPage] = useState(1);
@@ -230,7 +213,6 @@ export const CoordinadorDashboard = () => {
     email: '',
     profesion: '',
     especialidad: '',
-    tipoTrabajador: 'PLANTA',
     rol: 'DESARROLLADOR',
     passwordHash: 'abrah1234'
   });
@@ -334,8 +316,6 @@ export const CoordinadorDashboard = () => {
         email: newTrabajador.email.trim(),
         profesion: newTrabajador.profesion.trim() || 'Ingeniero de Software',
         especialidad: especialidadFinal || 'Desarrollador General',
-        tipoTrabajador: newTrabajador.tipoTrabajador || 'PLANTA',
-        tipo_trabajador: newTrabajador.tipoTrabajador || 'PLANTA',
         rol: newTrabajador.rol,
         passwordHash: 'abrah1234'
       });
@@ -350,7 +330,6 @@ export const CoordinadorDashboard = () => {
         email: '',
         profesion: '',
         especialidad: '',
-        tipoTrabajador: 'PLANTA',
         rol: 'DESARROLLADOR',
         passwordHash: 'abrah1234'
       });
@@ -605,10 +584,7 @@ export const CoordinadorDashboard = () => {
       (estadoSeleccionado === 'ACTIVO' && t.estado) || 
       (estadoSeleccionado === 'INHABILITADO' && !t.estado);
 
-    const matchesTipoContractual = tipoTrabajadorSeleccionado === 'TODOS' || 
-      (t.tipoTrabajador || t.tipo_trabajador || 'PLANTA').toUpperCase() === tipoTrabajadorSeleccionado;
-
-    return matchesSearch && matchesRol && matchesTech && matchesEstado && matchesTipoContractual;
+    return matchesSearch && matchesRol && matchesTech && matchesEstado;
   });
 
   const activeFiltersCount = (searchQuery ? 1 : 0) + (rolSeleccionado !== 'TODOS' ? 1 : 0) + techsSeleccionadas.length + (estadoSeleccionado !== 'TODOS' ? 1 : 0);
@@ -741,14 +717,6 @@ export const CoordinadorDashboard = () => {
                 className="outline-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
               >
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refrescar
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowReporteDesempenoModal(true)}
-                className="outline-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
-                title="Generar consolidado ejecutivo de desempeño del personal"
-              >
-                <FileText size={15} /> Reporte de Desempeño
               </button>
               <button
                 type="button"
@@ -989,7 +957,6 @@ export const CoordinadorDashboard = () => {
                     <th className="py-4 px-6">Identificación</th>
                     <th className="py-4 px-6">Trabajador & Contacto</th>
                     <th className="py-4 px-6">Profesión / Stack Técnico</th>
-                    <th className="py-4 px-6">Vínculo Contractual</th>
                     <th className="py-4 px-6">Rol Asignado</th>
                     <th className="py-4 px-6">Estado Lógico</th>
                     <th className="py-4 px-6 text-right">Acción de Acceso</th>
@@ -1073,11 +1040,6 @@ export const CoordinadorDashboard = () => {
                           <span>{t.profesion || 'Ingeniero de Software'}</span>
                         </div>
                         {renderEspecialidadYSkills(t.especialidad)}
-                      </td>
-
-                      {/* Vínculo Contractual (tipo_trabajador) */}
-                      <td className="py-4 px-6">
-                        <TipoTrabajadorBadge tipo={t.tipoTrabajador || t.tipo_trabajador} />
                       </td>
 
                       {/* Insignia Dinámica del Rol */}
@@ -1562,7 +1524,7 @@ export const CoordinadorDashboard = () => {
                       <span>1. Identificación & Credenciales de Acceso</span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div>
                         <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
                           Número de Identificación / Cédula *
@@ -1572,7 +1534,7 @@ export const CoordinadorDashboard = () => {
                           required
                           value={newTrabajador.identificacion}
                           onChange={(e) => { setNewTrabajador({ ...newTrabajador, identificacion: e.target.value }); setFormErrors(p => ({ ...p, identificacion: undefined })); }}
-                          placeholder="Número de documento o cédula"
+                          placeholder="Número de documento o cédula de identidad"
                           className={`input-field py-2 text-xs font-mono ${formErrors.identificacion ? 'border-red-400 dark:border-red-600' : ''}`}
                         />
                         {formErrors.identificacion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.identificacion}</p>}
@@ -1593,20 +1555,6 @@ export const CoordinadorDashboard = () => {
                           <option value="DESARROLLADOR">Desarrollador (Operatividad WBS)</option>
                           <option value="LIDER">Líder de Proyecto (Gestión & Asignación)</option>
                           <option value="COORDINADOR">Coordinador (Administración Global)</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                          Vinculación Contractual *
-                        </label>
-                        <select
-                          value={newTrabajador.tipoTrabajador}
-                          onChange={(e) => setNewTrabajador({ ...newTrabajador, tipoTrabajador: e.target.value })}
-                          className="input-field py-2 text-xs font-bold uppercase"
-                        >
-                          <option value="PLANTA">Planta (Nómina Corporativa)</option>
-                          <option value="CONTRATISTA">Contratista (Servicios)</option>
                         </select>
                       </div>
                     </div>
@@ -2050,131 +1998,6 @@ export const CoordinadorDashboard = () => {
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Modal de Reporte Ejecutivo de Desempeño del Personal y Discriminador Contractual */}
-      <AnimatePresence>
-        {showReporteDesempenoModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto"
-            >
-              {/* Encabezado del Reporte */}
-              <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800 shrink-0 shadow-2xs">
-                    <FileText size={22} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                      Reporte Ejecutivo de Desempeño de Personal
-                    </h3>
-                    <p className="text-xs text-zinc-500 font-medium">
-                      Consolidado corporativo, discriminador contractual (Planta vs Contratista) y auditoría de talento
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => window.print()}
-                    className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer text-zinc-700 dark:text-zinc-300"
-                  >
-                    <Printer size={14} /> Imprimir / PDF
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowReporteDesempenoModal(false)}
-                    className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors cursor-pointer"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Resumen Métrico Consolidado */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80">
-                  <span className="text-[0.65rem] font-extrabold uppercase text-zinc-400 block">Total Personal</span>
-                  <span className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">{(trabajadores || []).length}</span>
-                  <span className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 block font-bold mt-0.5">{(trabajadores || []).filter(t => t.estado).length} Activos</span>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/80">
-                  <span className="text-[0.65rem] font-extrabold uppercase text-blue-600 dark:text-blue-400 block">Personal de Planta</span>
-                  <span className="text-xl font-extrabold text-blue-900 dark:text-blue-100 font-mono">
-                    {(trabajadores || []).filter(t => (t.tipoTrabajador || t.tipo_trabajador || 'PLANTA').toUpperCase() === 'PLANTA').length}
-                  </span>
-                  <span className="text-[0.68rem] text-blue-600 dark:text-blue-400 block font-bold mt-0.5">Nómina Corporativa</span>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/80">
-                  <span className="text-[0.65rem] font-extrabold uppercase text-amber-600 dark:text-amber-400 block">Contratistas</span>
-                  <span className="text-xl font-extrabold text-amber-900 dark:text-amber-100 font-mono">
-                    {(trabajadores || []).filter(t => (t.tipoTrabajador || t.tipo_trabajador) && (t.tipoTrabajador || t.tipo_trabajador).toUpperCase() === 'CONTRATISTA').length}
-                  </span>
-                  <span className="text-[0.68rem] text-amber-600 dark:text-amber-400 block font-bold mt-0.5">Prestación Servicios</span>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/80">
-                  <span className="text-[0.65rem] font-extrabold uppercase text-purple-600 dark:text-purple-400 block">Desarrolladores WBS</span>
-                  <span className="text-xl font-extrabold text-purple-900 dark:text-purple-100 font-mono">
-                    {(trabajadores || []).filter(t => t.rol === 'DESARROLLADOR').length}
-                  </span>
-                  <span className="text-[0.68rem] text-purple-600 dark:text-purple-400 block font-bold mt-0.5">Operatividad Técnica</span>
-                </div>
-              </div>
-
-              {/* Tabla Detallada del Reporte */}
-              <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-extrabold uppercase text-[0.65rem] tracking-wider">
-                    <tr>
-                      <th className="py-3 px-4">Identificación</th>
-                      <th className="py-3 px-4">Nombre Completo</th>
-                      <th className="py-3 px-4">Rol</th>
-                      <th className="py-3 px-4">Vínculo Contractual</th>
-                      <th className="py-3 px-4">Estado Lógico</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 font-medium">
-                    {(trabajadores || []).map(t => {
-                      const isPlanta = (t.tipoTrabajador || t.tipo_trabajador || 'PLANTA').toUpperCase() === 'PLANTA';
-                      return (
-                        <tr key={t.idTrabajador} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                          <td className="py-2.5 px-4 font-mono font-bold">#{t.identificacion}</td>
-                          <td className="py-2.5 px-4 font-bold text-zinc-900 dark:text-zinc-100">{t.nombre} {t.apellido}</td>
-                          <td className="py-2.5 px-4"><RoleBadge rol={t.rol} /></td>
-                          <td className="py-2.5 px-4"><TipoTrabajadorBadge tipo={t.tipoTrabajador || t.tipo_trabajador} /></td>
-                          <td className="py-2.5 px-4">
-                            <span className={`text-[0.68rem] font-bold ${t.estado ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'}`}>
-                              {t.estado ? '● HABILITADO' : '○ INHABILITADO'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex justify-between items-center pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-400 font-medium">
-                <span>Generado automáticamente por la Plataforma IKernell • {new Date().toLocaleString()}</span>
-                <button
-                  type="button"
-                  onClick={() => setShowReporteDesempenoModal(false)}
-                  className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer"
-                >
-                  Cerrar Reporte
-                </button>
-              </div>
             </motion.div>
           </div>
         )}
