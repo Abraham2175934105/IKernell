@@ -3117,8 +3117,8 @@ export const LiderDashboard = () => {
                           className="w-full p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed font-medium"
                         />
                         {cancelacionError && (
-                          <span className="text-[0.72rem] text-red-600 dark:text-red-400 font-bold block mt-1">
-                            ⚠️ {cancelacionError}
+                          <span className="text-[0.72rem] text-red-600 dark:text-red-400 font-bold block mt-1 flex items-center gap-1">
+                            <AlertTriangle size={14} className="shrink-0" /> {cancelacionError}
                           </span>
                         )}
                       </div>

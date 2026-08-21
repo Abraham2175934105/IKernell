@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/lider")
+@PreAuthorize("hasAnyRole('COORDINADOR','LIDER')")
 @Tag(name = "Módulo Líder", description = "Gestión de WBS de proyectos, Semáforo Predictivo y exportación automatizada ETL")
 @SecurityRequirement(name = "BearerAuth")
 public class LiderController {

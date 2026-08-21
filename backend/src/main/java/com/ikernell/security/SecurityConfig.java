@@ -35,10 +35,10 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // Algoritmo de hash BCrypt unidireccional con sal aleatoria para el resguardo seguro de contraseñas
+    // Algoritmo de hash BCrypt unidireccional con sal aleatoria y costo computacional explícito (factor 12)
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     // Proveedor de autenticación que valida el usuario contra la base de datos PostgreSQL
@@ -96,12 +96,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Permitimos desarrollo local y accesos desde la red local
+        // Permitimos exclusivamente desarrollo local y accesos desde la red interna corporativa
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
                 "http://127.0.0.1:*",
-                "http://10.1.163.*",
-                "*"
+                "http://10.1.163.*"
         ));
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));

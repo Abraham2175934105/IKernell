@@ -1928,8 +1928,8 @@ export const CoordinadorDashboard = () => {
                       placeholder="Explica la razón por la cual se reabre el caso (ej. Cliente solicitó cotización adicional, nuevo requerimiento de alcance, reconsideración de propuesta)..."
                       className="input-field py-2.5 leading-relaxed text-xs w-full bg-white dark:bg-zinc-900 border-purple-300 dark:border-purple-700 focus:ring-purple-500/30"
                     />
-                    <p className="text-[0.65rem] text-purple-700 dark:text-purple-300 font-medium">
-                      ⚠️ Al reabrir, se incrementará el contador de reaperturas y se estampará la fecha y hora UTC de reapertura.
+                    <p className="text-[0.65rem] text-purple-700 dark:text-purple-300 font-medium flex items-center gap-1">
+                      <AlertTriangle size={13} className="shrink-0" /> Al reabrir, se incrementará el contador de reaperturas y se estampará la fecha y hora UTC de reapertura.
                     </p>
                   </div>
                 )}

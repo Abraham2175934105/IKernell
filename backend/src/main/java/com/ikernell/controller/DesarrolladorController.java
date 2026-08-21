@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/desarrollador")
+@PreAuthorize("hasAnyRole('COORDINADOR','LIDER','DESARROLLADOR')")
 @Tag(name = "Módulo Desarrollador", description = "Seguimiento de actividades asignadas y reporte de contingencias o errores en tiempo real")
 @SecurityRequirement(name = "BearerAuth")
 public class DesarrolladorController {

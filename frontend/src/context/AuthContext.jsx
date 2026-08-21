@@ -4,10 +4,15 @@ const AuthContext = createContext();
 
 // Proveedor de contexto global para la sesión de usuario y tokens JWT
 export const AuthProvider = ({ children }) => {
-  // Inicializamos el estado del usuario leyendo desde localStorage para persistir la sesión al recargar
+  // Inicializamos el estado del usuario leyendo desde localStorage con parsing seguro
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      localStorage.removeItem('user');
+      return null;
+    }
   });
 
   // Token JWT para autorizar peticiones HTTP hacia el backend
@@ -23,12 +28,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(authData));
   };
 
-  // Limpia la sesión activa y remueve los datos almacenados en el navegador
+  // Limpia la sesión activa y remueve todos los datos almacenados en el navegador
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.clear();
   };
 
   const isAuthenticated = !!token;
@@ -48,3 +52,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
