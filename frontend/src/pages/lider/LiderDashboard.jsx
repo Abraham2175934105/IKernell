@@ -888,6 +888,13 @@ export const LiderDashboard = () => {
     };
   }, [etapas]);
 
+  // Porcentaje de avance global acumulado de la cartera de proyectos
+  const porcentajeAvanceGlobal = useMemo(() => {
+    if (!proyectos || !Array.isArray(proyectos) || proyectos.length === 0) return 0;
+    const suma = proyectos.reduce((acc, curr) => acc + Number(curr?.progreso || curr?.porcentajeAvance || curr?.avance || 0), 0);
+    return Math.round(suma / proyectos.length);
+  }, [proyectos]);
+
   // Proyectos filtrados para el menú emergente / explorador
   const proyectosModalFiltrados = useMemo(() => {
     if (!Array.isArray(proyectos)) return [];
