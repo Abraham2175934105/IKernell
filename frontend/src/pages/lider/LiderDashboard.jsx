@@ -124,6 +124,12 @@ const getEstadoBadgeClasses = (estado) => {
   }
 };
 
+const formatearMoneda = (monto) => {
+  const val = Number(monto || 0);
+  if (isNaN(val) || val <= 0) return 'Sin dimensionar';
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+};
+
 const formatearFechaHumana = (fechaStr) => {
   if (!fechaStr || typeof fechaStr !== 'string') return 'Fecha no definida';
   try {
@@ -243,7 +249,8 @@ export const LiderDashboard = () => {
   const [filtroFechaTipo, setFiltroFechaTipo] = useState('TODAS');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
-  const [showGuiaUsuarioIncidencias, setShowGuiaUsuarioIncidencias] = useState(true);
+  const [showGuiaUsuarioIncidencias, setShowGuiaUsuarioIncidencias] = useState(false);
+  const [showGuiaModal, setShowGuiaModal] = useState(false);
 
   const [showFiltroFechasModal, setShowFiltroFechasModal] = useState(false);
   const [tempFechaDesde, setTempFechaDesde] = useState('');
@@ -594,6 +601,10 @@ export const LiderDashboard = () => {
     e.preventDefault();
     if (!datosReasignacion.nuevoDesarrolladorId) {
       toast.error('Seleccione el nuevo desarrollador responsable.');
+      return;
+    }
+    if (!datosReasignacion.motivo?.trim()) {
+      toast.error('Debe ingresar un motivo o justificación obligatoria para la reasignación.');
       return;
     }
 
@@ -1158,30 +1169,11 @@ export const LiderDashboard = () => {
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
                   <CircleDollarSign size={16} />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
-                    Dimensión Presupuestal
+                <div className="min-w-0 flex-1 flex flex-col">
+                  <span className="text-xs text-zinc-500 font-medium">Dimensión Presupuestal</span>
+                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    {formatearMoneda(proyectoSeleccionado?.presupuesto || 0)}
                   </span>
-                  <p className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100 truncate text-xs">
-                    {proyectoSeleccionado?.presupuesto !== null && proyectoSeleccionado?.presupuesto !== undefined
-                      ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(Number(proyectoSeleccionado.presupuesto))
-                      : 'Sin dimensionar'}
-                  </p>
-                  {/* Barra de Ejecución Presupuestal */}
-                  {Number(proyectoSeleccionado?.presupuesto || 0) > 0 && (
-                    <div className="mt-1.5 space-y-0.5">
-                      <div className="flex justify-between text-[0.6rem] font-bold text-zinc-500">
-                        <span>Ejecutado: {Math.round(porcentajeAvanceGlobal || 0)}%</span>
-                        <span>${Math.round((Number(proyectoSeleccionado?.presupuesto || 0) * Number(porcentajeAvanceGlobal || 0)) / 100).toLocaleString()} USD</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-emerald-500 transition-all duration-500 rounded-full"
-                          style={{ width: `${Math.min(100, Math.max(0, Number(porcentajeAvanceGlobal || 0)))}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -1598,6 +1590,14 @@ export const LiderDashboard = () => {
             <div className="flex gap-2">
               <button
                 type="button"
+                onClick={() => setShowGuiaModal(true)}
+                className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                title="Guía Rápida: Cómo Entender y Resolver Casos en 3 Pasos"
+              >
+                <HelpCircle size={14} className="text-blue-500" /> Guía Rápida
+              </button>
+              <button
+                type="button"
                 onClick={() => seleccionarProyecto(proyectoSeleccionado || { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' })}
                 disabled={loadingDetalle}
                 className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
@@ -1607,54 +1607,6 @@ export const LiderDashboard = () => {
               </button>
             </div>
           </motion.div>
-
-
-
-          {/* Guía Rápida e Interactiva para Usuarios */}
-          <div className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 rounded-3xl p-4 sm:p-5 text-xs text-blue-950 dark:text-blue-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-extrabold text-blue-900 dark:text-blue-300 flex items-center gap-2 text-xs uppercase tracking-wider">
-                <HelpCircle size={15} className="text-blue-600 dark:text-blue-400" />
-                Guía Rápida: Cómo Entender y Resolver Casos en 3 Simples Pasos
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowGuiaUsuarioIncidencias(!showGuiaUsuarioIncidencias)}
-                className="text-[0.68rem] font-bold text-blue-700 dark:text-blue-300 hover:underline cursor-pointer"
-              >
-                {showGuiaUsuarioIncidencias ? 'Ocultar Guía' : 'Ver Guía Completa'}
-              </button>
-            </div>
-
-            {showGuiaUsuarioIncidencias && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2"
-              >
-                <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/40 space-y-1 shadow-2xs">
-                  <strong className="text-blue-600 dark:text-blue-400 block font-bold text-[0.72rem]">1. Filtrar por Fecha y Perfil</strong>
-                  <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
-                    Filtra por Estado, Desarrollador o Rango de Fechas (Hoy, 7 Días, Período Exacto) usando el menú superior.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/40 space-y-1 shadow-2xs">
-                  <strong className="text-blue-600 dark:text-blue-400 block font-bold text-[0.72rem]">2. Ver Detalles del Expediente</strong>
-                  <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
-                    Haz clic en <strong>Ver Detalles</strong> en cualquier fila para inspeccionar la causa raíz, desarrollador y fecha.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/40 space-y-1 shadow-2xs">
-                  <strong className="text-blue-600 dark:text-blue-400 block font-bold text-[0.72rem]">3. Atender y Guardar Resolución</strong>
-                  <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
-                    Haz clic en <strong>Atender / Editar</strong> para cambiar el estado a <em>En Revisión</em> o <em>Solucionado</em>. ¡Recibirás una alerta visual inmediata!
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </div>
 
           {/* Tarjetas Resumen con Tooltips Interactivos */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -2507,12 +2459,13 @@ export const LiderDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Motivo o Justificación de la Reasignación</label>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Motivo o Justificación de la Reasignación *</label>
                   <textarea
                     rows={2}
+                    required
                     value={datosReasignacion.motivo}
                     onChange={(e) => setDatosReasignacion({ ...datosReasignacion, motivo: e.target.value })}
-                    placeholder="Motivo o justificación técnica de la reasignación"
+                    placeholder="Motivo o justificación técnica obligatoria de la reasignación"
                     className="input-field py-2"
                   />
                 </div>
@@ -3735,6 +3688,66 @@ export const LiderDashboard = () => {
                     Aplicar Fechas
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Modal: Guía Rápida de Incidencias en 3 Pasos */}
+        {showGuiaModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-[95%] sm:w-full max-w-lg shadow-2xl space-y-5"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-extrabold text-sm uppercase tracking-wider">
+                  <HelpCircle size={18} />
+                  <span>Guía Rápida: Resolver Casos en 3 Pasos</span>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setShowGuiaModal(false)} 
+                  className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-3.5 text-xs">
+                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 space-y-1">
+                  <strong className="text-blue-600 dark:text-blue-400 block font-bold text-xs">Paso 1: Filtrar por Fecha y Perfil</strong>
+                  <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+                    Filtra por Estado, Desarrollador o Rango de Fechas (Hoy, 7 Días, Período Exacto) usando los selectores de la consola.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 space-y-1">
+                  <strong className="text-blue-600 dark:text-blue-400 block font-bold text-xs">Paso 2: Ver Detalles del Expediente</strong>
+                  <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+                    Haz clic en <strong>Ver Detalles</strong> en cualquier fila para inspeccionar la causa raíz, desarrollador responsable y fecha de registro.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 space-y-1">
+                  <strong className="text-blue-600 dark:text-blue-400 block font-bold text-xs">Paso 3: Atender y Guardar Resolución</strong>
+                  <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+                    Haz clic en <strong>Atender / Editar</strong> para cambiar el estado a <em>En Revisión</em> o <em>Solucionado</em> guardando constancia en PostgreSQL.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowGuiaModal(false)}
+                  className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer shadow-sm"
+                >
+                  Cerrar
+                </button>
               </div>
             </motion.div>
           </div>
