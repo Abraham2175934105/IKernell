@@ -231,6 +231,7 @@ export const LiderDashboard = () => {
   const [showFiltroFechasModal, setShowFiltroFechasModal] = useState(false);
   const [tempFechaDesde, setTempFechaDesde] = useState('');
   const [tempFechaHasta, setTempFechaHasta] = useState('');
+  const [scopeExpanded, setScopeExpanded] = useState(false);
 
   const [nuevaActividad, setNuevaActividad] = useState({
     idEtapa: '',
@@ -1135,15 +1136,30 @@ export const LiderDashboard = () => {
                   <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
                     Dimensión Presupuestal
                   </span>
-                  <p className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                  <p className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100 truncate text-xs">
                     {proyectoSeleccionado.presupuesto !== null && proyectoSeleccionado.presupuesto !== undefined
                       ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(Number(proyectoSeleccionado.presupuesto))
                       : 'Sin dimensionar'}
                   </p>
+                  {/* Barra de Ejecución Presupuestal */}
+                  {Number(proyectoSeleccionado.presupuesto) > 0 && (
+                    <div className="mt-1.5 space-y-0.5">
+                      <div className="flex justify-between text-[0.6rem] font-bold text-zinc-500">
+                        <span>Ejecutado: {Math.round(porcentajeAvanceGlobal || 0)}%</span>
+                        <span>${Math.round((Number(proyectoSeleccionado.presupuesto) * (porcentajeAvanceGlobal || 0)) / 100).toLocaleString()} USD</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-emerald-500 transition-all duration-500 rounded-full"
+                          style={{ width: `${Math.min(100, porcentajeAvanceGlobal || 0)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* 3. Cronograma Estimado con Fechas Humanizadas y Micro-Badge */}
+              {/* 3. Cronograma Estimado con Fechas Humanizadas y Días Restantes */}
               <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 sm:col-span-2 lg:col-span-1 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 shadow-2xs">
                   <CalendarClock size={16} />
@@ -1158,27 +1174,50 @@ export const LiderDashboard = () => {
                         className="inline-flex items-center gap-1 text-[0.65rem] font-extrabold px-2 py-0.5 rounded-md bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 font-mono"
                         title="Duración total calculada entre la fecha de inicio y la fecha estimada de finalización"
                       >
-                        <Clock size={10} /> Duración: {duracionEstimada}
+                        <Clock size={10} /> {duracionEstimada}
                       </span>
                     )}
                   </div>
                   <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate text-xs" title={`${fechaInicioFormateada} → ${fechaFinFormateada}`}>
                     {fechaInicioFormateada} <span className="text-zinc-400 font-normal mx-0.5">&rarr;</span> {fechaFinFormateada}
                   </p>
+                  {/* Cálculo interactivo de días restantes */}
+                  {proyectoSeleccionado.fechaEstimadaEntrega && (() => {
+                    const hoy = new Date();
+                    const fin = new Date(proyectoSeleccionado.fechaEstimadaEntrega);
+                    const diffTime = fin.getTime() - hoy.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return (
+                      <p className="text-[0.65rem] font-bold text-violet-600 dark:text-violet-400 mt-1 font-mono">
+                        &bull; {diffDays > 0 ? `Faltan ${diffDays} días para entrega` : diffDays === 0 ? 'Entrega programada para hoy' : `Concluido hace ${Math.abs(diffDays)} días`}
+                      </p>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
 
-            {/* 4. Descripción del Alcance */}
+            {/* 4. Descripción del Alcance Colapsable */}
             <div className="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/60 border-l-4 border-indigo-500 text-xs min-w-0 shadow-2xs space-y-1">
-              <div className="flex items-center gap-2">
-                <AlignLeft size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
-                  Descripción del Alcance y Objetivos
-                </span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <AlignLeft size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                    Descripción del Alcance y Objetivos
+                  </span>
+                </div>
+                {proyectoSeleccionado.descripcion && proyectoSeleccionado.descripcion.length > 120 && (
+                  <button
+                    type="button"
+                    onClick={() => setScopeExpanded(!scopeExpanded)}
+                    className="text-[0.65rem] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                  >
+                    {scopeExpanded ? 'Ver menos' : 'Ver más'}
+                  </button>
+                )}
               </div>
               {proyectoSeleccionado.descripcion?.trim() ? (
-                <p className="text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed pt-0.5">
+                <p className={`text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed pt-0.5 ${!scopeExpanded && proyectoSeleccionado.descripcion.length > 120 ? 'line-clamp-2' : ''}`}>
                   {proyectoSeleccionado.descripcion}
                 </p>
               ) : (
