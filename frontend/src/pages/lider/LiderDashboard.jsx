@@ -1051,10 +1051,11 @@ export const LiderDashboard = () => {
 
       {/* Tarjeta de Detalles del Proyecto Seleccionado (Exclusiva de la sección WBS) */}
       {activeTab === 'wbs' && proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (() => {
-        const isProyectoFinalizado = proyectoSeleccionado.estado === 'FINALIZADO' || proyectoSeleccionado.estado === 'COMPLETADO';
-        const fechaInicioFormateada = formatearFechaHumana(proyectoSeleccionado.fechaInicio);
-        const fechaFinFormateada = formatearFechaHumana(proyectoSeleccionado.fechaFinEstimada);
-        const duracionEstimada = calcularDuracionProyecto(proyectoSeleccionado.fechaInicio, proyectoSeleccionado.fechaFinEstimada);
+        const isProyectoFinalizado = proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO';
+        const fechaFinTarget = proyectoSeleccionado?.fechaFinEstimada || proyectoSeleccionado?.fechaEstimadaEntrega;
+        const fechaInicioFormateada = formatearFechaHumana(proyectoSeleccionado?.fechaInicio);
+        const fechaFinFormateada = formatearFechaHumana(fechaFinTarget);
+        const duracionEstimada = calcularDuracionProyecto(proyectoSeleccionado?.fechaInicio, fechaFinTarget);
 
         return (
           <motion.div
@@ -1209,7 +1210,7 @@ export const LiderDashboard = () => {
                     Descripción del Alcance y Objetivos
                   </span>
                 </div>
-                {proyectoSeleccionado.descripcion && proyectoSeleccionado.descripcion.length > 120 && (
+                {proyectoSeleccionado?.descripcion && (proyectoSeleccionado.descripcion?.length || 0) > 120 && (
                   <button
                     type="button"
                     onClick={() => setScopeExpanded(!scopeExpanded)}
@@ -1219,8 +1220,8 @@ export const LiderDashboard = () => {
                   </button>
                 )}
               </div>
-              {proyectoSeleccionado.descripcion?.trim() ? (
-                <p className={`text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed pt-0.5 ${!scopeExpanded && proyectoSeleccionado.descripcion.length > 120 ? 'line-clamp-2' : ''}`}>
+              {proyectoSeleccionado?.descripcion?.trim() ? (
+                <p className={`text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed pt-0.5 ${!scopeExpanded && (proyectoSeleccionado.descripcion?.length || 0) > 120 ? 'line-clamp-2' : ''}`}>
                   {proyectoSeleccionado.descripcion}
                 </p>
               ) : (
