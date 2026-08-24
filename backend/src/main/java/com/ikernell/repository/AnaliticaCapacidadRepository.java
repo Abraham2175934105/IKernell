@@ -18,12 +18,10 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, L
 
     @Query(value = """
         WITH
-        -- ═══════════════════════════════════════════════════════════════════
         -- CTE 1: Calendario de los últimos 21 días dividido en 3 ventanas
         -- S3 (días 1 a 7): Carga reciente (mayor sensibilidad al estrés)
         -- S2 (días 8 a 14): Carga intermedia
         -- S1 (días 15 a 21): Línea base histórica
-        -- ═══════════════════════════════════════════════════════════════════
         calendario_analitico AS (
             SELECT 
                 d::date AS dia,
@@ -39,18 +37,14 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, L
             ) AS d
         ),
        
-        -- ═══════════════════════════════════════════════════════════════════
         -- CTE 2: Desarrolladores activos en la plataforma
-        -- ═══════════════════════════════════════════════════════════════════
         desarrolladores AS (
             SELECT id_trabajador, nombre, apellido, email, especialidad
             FROM trabajador
             WHERE rol = 'DESARROLLADOR' AND estado = true
         ),
        
-        -- ═══════════════════════════════════════════════════════════════════
         -- CTE 3: Carga actual de la WBS (tareas activas por desarrollador)
-        -- ═══════════════════════════════════════════════════════════════════
         carga_wbs AS (
             SELECT
                 desarrollador_id,
@@ -61,10 +55,8 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, L
             GROUP BY desarrollador_id
         ),
        
-        -- ═══════════════════════════════════════════════════════════════════
         -- CTE 4: Errores técnicos cruzados con el calendario analítico
         -- Peso diferencial: CRITICA = x2, resto = x1
-        -- ═══════════════════════════════════════════════════════════════════
         errores_por_ventana AS (
             SELECT
                 e.desarrollador_id,
@@ -76,10 +68,8 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, L
             GROUP BY e.desarrollador_id, c.ventana
         ),
        
-        -- ═══════════════════════════════════════════════════════════════════
         -- CTE 5: Interrupciones/contingencias cruzadas con el calendario
         -- Convierte minutos a horas decimales para el cálculo de impacto
-        -- ═══════════════════════════════════════════════════════════════════
         interrupciones_por_ventana AS (
             SELECT
                 i.desarrollador_id,
@@ -90,9 +80,7 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, L
             GROUP BY i.desarrollador_id, c.ventana
         ),
        
-        -- ═══════════════════════════════════════════════════════════════════
         -- CTE 6: Consolidación limpia por ventana sin producto cartesiano
-        -- ═══════════════════════════════════════════════════════════════════
         metricas_por_ventana AS (
             SELECT 
                 COALESCE(e.desarrollador_id, i.desarrollador_id) AS desarrollador_id,
@@ -116,9 +104,7 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, L
             GROUP BY desarrollador_id
         ),
 
-        -- ═══════════════════════════════════════════════════════════════════
-        -- CTE 7: Cruce maestro 1-a-1 por desarrollador
-        -- ═══════════════════════════════════════════════════════════════════
+        -- CTE 7: Cruce maestro 1-a-1 por desarrollador con suavizado laplaciano
         metricas_cruzadas AS (
             SELECT
                 d.id_trabajador,
@@ -138,11 +124,9 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, L
             LEFT JOIN metricas_pivoteadas mp    ON mp.desarrollador_id = d.id_trabajador
         ),
 
-        -- ═══════════════════════════════════════════════════════════════════
         -- CTE 8: Fórmula ponderada de estrés por ventana temporal
         -- S1/S2: errores x10, horas x6 (línea base / transición)
         -- S3:    errores x12, horas x8 (sensibilidad alta a carga reciente)
-        -- ═══════════════════════════════════════════════════════════════════
         scores_finales AS (
             SELECT
                 mc.*,
@@ -152,9 +136,7 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, L
             FROM metricas_cruzadas mc
         )
        
-        -- ═══════════════════════════════════════════════════════════════════
         -- SELECT FINAL: Clasificación homologada en 4 niveles de riesgo
-        -- ═══════════════════════════════════════════════════════════════════
         SELECT
             sf.id_trabajador                                                               AS idTrabajador,
             sf.nombre_completo                                                             AS nombreCompleto,
