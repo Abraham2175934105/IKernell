@@ -29,7 +29,7 @@ public class Etapa {
     private String estado;
 
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"etapa"})
-    @OneToMany(mappedBy = "etapa", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "etapa", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Actividad> actividades = new ArrayList<>();
 
     @com.fasterxml.jackson.annotation.JsonIgnore

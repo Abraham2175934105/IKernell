@@ -70,9 +70,11 @@ public class LiderService {
             lider = trabajadorRepository.findById(proyecto.getLider().getIdTrabajador())
                     .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + proyecto.getLider().getIdTrabajador()));
         } else {
-            lider = trabajadorRepository.findAll().stream()
-                    .filter(t -> t.getRol() == Rol.LIDER || t.getRol() == Rol.COORDINADOR)
-                    .findFirst()
+            List<Trabajador> lideres = trabajadorRepository.findByRolAndEstado(Rol.LIDER, true);
+            if (lideres.isEmpty()) {
+                lideres = trabajadorRepository.findByRolAndEstado(Rol.COORDINADOR, true);
+            }
+            lider = lideres.stream().findFirst()
                     .orElseThrow(() -> new ResourceNotFoundException("No se encontró ningún Líder o Coordinador activo para asociar al proyecto."));
         }
         
@@ -410,7 +412,7 @@ public class LiderService {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
 
-        List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
+        List<Etapa> etapas = etapaRepository.findByProyectoWithActividades(proyecto);
 
         List<Error> todosErrores = new ArrayList<>();
         List<Interrupcion> todasInterrupciones = new ArrayList<>();

@@ -19,8 +19,8 @@ public class JwtUtils {
     @Value("${app.jwt.secret:IKernellSoftwareSecretKeySuperSecureJwtToken2026ForSpringSecurityRBACSystem}")
     private String jwtSecret;
 
-    // Tiempo de expiración del token (24 horas por defecto)
-    @Value("${app.jwt.expiration-ms:86400000}")
+    // Tiempo de expiración del token (15 minutos por defecto)
+    @Value("${app.jwt.expiration-ms:900000}")
     private int jwtExpirationMs;
 
     // Genera la clave secreta en formato binario para JJWT

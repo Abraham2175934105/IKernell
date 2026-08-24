@@ -26,6 +26,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, 
                                     HttpServletResponse response, 
@@ -34,8 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Extraemos la cadena del token presente en la cabecera Authorization
             String jwt = parseJwt(request);
             
-            // Si el token existe y su firma criptográfica es válida, autenticamos al usuario
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+            // Si el token existe, no ha sido revocado (blacklist) y su firma es válida, autenticamos al usuario
+            if (jwt != null && !tokenBlacklistService.isBlacklisted(jwt) && jwtUtils.validateJwtToken(jwt)) {
                 String username = jwtUtils.getUsernameFromJwtToken(jwt);
 
                 // Cargamos los datos del usuario y sus roles asignados

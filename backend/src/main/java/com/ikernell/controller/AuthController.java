@@ -8,6 +8,7 @@ import com.ikernell.model.Trabajador;
 import com.ikernell.repository.SolicitudContactoRepository;
 import com.ikernell.repository.TrabajadorRepository;
 import com.ikernell.security.JwtUtils;
+import com.ikernell.security.TokenBlacklistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,14 +32,18 @@ public class AuthController {
     private final TrabajadorRepository trabajadorRepository;
     private final SolicitudContactoRepository solicitudContactoRepository;
 
+    private final TokenBlacklistService tokenBlacklistService;
+
     public AuthController(AuthenticationManager authenticationManager, 
                           JwtUtils jwtUtils, 
                           TrabajadorRepository trabajadorRepository,
-                          SolicitudContactoRepository solicitudContactoRepository) {
+                          SolicitudContactoRepository solicitudContactoRepository,
+                          TokenBlacklistService tokenBlacklistService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.trabajadorRepository = trabajadorRepository;
         this.solicitudContactoRepository = solicitudContactoRepository;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     // Valida las credenciales del usuario y emite un token JWT si son correctas
@@ -69,6 +74,20 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(authResponse);
+    }
+
+    // Revoca el token JWT activo agregándolo a la lista negra en memoria
+    @PostMapping("/logout")
+    @Operation(summary = "Cerrar sesión e invalidar token JWT", description = "Agrega el token Bearer activo a la lista negra del servidor (AUD-02)")
+    public ResponseEntity<java.util.Map<String, String>> logout(@RequestHeader(value = "Authorization", required = false) String headerAuth) {
+        if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
+            String token = headerAuth.substring(7);
+            tokenBlacklistService.blacklistToken(token);
+        }
+        SecurityContextHolder.clearContext();
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "Sesión cerrada e invalidada exitosamente en el servidor.");
+        return ResponseEntity.ok(response);
     }
 
     // Guarda mensajes del formulario de contacto público en la bandeja de entrada del Coordinador
