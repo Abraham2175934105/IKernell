@@ -13,8 +13,17 @@ export const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [activeDemo, setActiveDemo] = useState('');
   
-  const { login } = useAuth();
+  const { user, isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
+
+  // Redirección automática si el usuario ya cuenta con sesión activa
+  React.useEffect(() => {
+    if (isAuthenticated && user?.rol) {
+      if (user.rol === 'COORDINADOR') navigate('/coordinador', { replace: true });
+      else if (user.rol === 'LIDER') navigate('/lider', { replace: true });
+      else navigate('/desarrollador', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();

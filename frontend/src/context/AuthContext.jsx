@@ -28,14 +28,31 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(authData));
   };
 
-  // Limpia la sesión activa y remueve todos los datos almacenados en el navegador
+  // Limpia la sesión activa y remueve todos los datos almacenados en el navegador (Hardening)
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.clear();
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      console.error('[IKernell Auth] Error al limpiar almacenamiento:', e);
+    }
   };
 
-  const isAuthenticated = !!token;
+  // Listener reactivo para invalación cross-tab y destrucción instantánea de sesión
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if ((e.key === 'token' || e.key === 'user') && !e.newValue) {
+        setUser(null);
+        setToken(null);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const isAuthenticated = !!token && !!user;
 
   return (
     <AuthContext.Provider value={{ user, token, isAuthenticated, login, logout }}>

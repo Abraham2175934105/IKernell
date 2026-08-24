@@ -265,6 +265,20 @@ export const CoordinadorDashboard = () => {
 
   // Manejadores de eventos (Handlers) - Soft Delete / Toggle Estado Lógico
   const handleInhabilitar = async (id) => {
+    // Regla de Negocio: Bloqueo de auto-inhabilitación del usuario autenticado
+    const targetUser = trabajadores.find(t => t.idTrabajador === id);
+    const isSelf = user && (
+      user.idTrabajador === id || 
+      user.id === id || 
+      (user.email && targetUser?.email && user.email.toLowerCase() === targetUser.email.toLowerCase()) ||
+      (user.identificacion && targetUser?.identificacion && String(user.identificacion) === String(targetUser.identificacion))
+    );
+
+    if (isSelf) {
+      toast.error('Operación bloqueada por seguridad: No puedes inhabilitar tu propio usuario en sesión.');
+      return;
+    }
+
     try {
       setTogglingId(id);
       const updated = await api.patch(`/coordinador/trabajadores/${id}/estado`);
@@ -843,7 +857,7 @@ export const CoordinadorDashboard = () => {
                         <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[0.65rem] font-bold ${
                           isSelected ? 'bg-white text-blue-600' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
                         }`}>
-                          {isSelected ? '✓' : '•'}
+                          {isSelected ? <Check size={10} /> : <span className="w-1 h-1 rounded-full bg-current inline-block" />}
                         </div>
                         <IconComponent size={14} className="shrink-0" />
                         <span>{r.label}</span>
@@ -1059,32 +1073,47 @@ export const CoordinadorDashboard = () => {
                         </span>
                       </td>
 
-                      {/* Botón de Acción Explicativo */}
+                      {/* Botón de Acción Explicativo / Protegido contra Auto-Inhabilitación */}
                       <td className="py-4 px-6 text-right">
-                        <button
-                          type="button"
-                          disabled={togglingId === t.idTrabajador}
-                          onClick={() => handleInhabilitar(t.idTrabajador)}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs disabled:opacity-50 ${
-                            t.estado
-                              ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-300 border-red-200 dark:border-red-800'
-                              : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                          }`}
-                        >
-                          {togglingId === t.idTrabajador ? (
-                            <>
-                              <Loader2 size={13} className="animate-spin" /> Procesando...
-                            </>
-                          ) : t.estado ? (
-                            <>
-                              <UserX size={13} /> Inhabilitar
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck size={13} /> Reactivar
-                            </>
-                          )}
-                        </button>
+                        {user && (
+                          user.idTrabajador === t.idTrabajador ||
+                          user.id === t.idTrabajador ||
+                          (user.email && t.email && user.email.toLowerCase() === t.email.toLowerCase()) ||
+                          (user.identificacion && t.identificacion && String(user.identificacion) === String(t.identificacion))
+                        ) ? (
+                          <span 
+                            title="Cuenta en sesión activa. No es posible auto-inhabilitarse por seguridad."
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold text-xs border border-zinc-200 dark:border-zinc-700 cursor-not-allowed opacity-80"
+                          >
+                            <Shield size={13} className="text-purple-500 shrink-0" />
+                            Sesión Actual
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={togglingId === t.idTrabajador}
+                            onClick={() => handleInhabilitar(t.idTrabajador)}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs disabled:opacity-50 ${
+                              t.estado
+                                ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-300 border-red-200 dark:border-red-800'
+                                : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                            }`}
+                          >
+                            {togglingId === t.idTrabajador ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" /> Procesando...
+                              </>
+                            ) : t.estado ? (
+                              <>
+                                <UserX size={13} /> Inhabilitar
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck size={13} /> Reactivar
+                              </>
+                            )}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

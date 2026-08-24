@@ -6,7 +6,9 @@ import {
   CheckSquare, Bug, AlertTriangle, X, CheckCircle2, 
   ChevronRight, Clock, Plus, Activity, Layers, Sparkles,
   Loader2, Inbox, RefreshCw, Eye, RotateCcw, Info, ArrowRight,
-  FileText, Calendar, User, ShieldAlert, Play, Check
+  FileText, Calendar, User, ShieldAlert, Play, Check,
+  Filter, SlidersHorizontal, Search, FolderGit2, ArrowUpDown,
+  LayoutGrid, List
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -88,16 +90,19 @@ const EstadoAtencionBadge = ({ estado }) => {
   const styles = {
     'REGISTRADO': 'bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700',
     'EN_REVISION': 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800',
+    'EN_ANALISIS': 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800',
     'SOLUCIONADO': 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800',
   };
   const icons = {
     'REGISTRADO': <Clock size={11} />,
     'EN_REVISION': <Eye size={11} />,
+    'EN_ANALISIS': <Eye size={11} />,
     'SOLUCIONADO': <CheckCircle2 size={11} />,
   };
   const labels = {
     'REGISTRADO': 'Registrado',
     'EN_REVISION': 'En Revisión',
+    'EN_ANALISIS': 'En Análisis',
     'SOLUCIONADO': 'Solucionado',
   };
   const est = estado || 'REGISTRADO';
@@ -119,6 +124,20 @@ export const DesarrolladorDashboard = () => {
   const [etapas, setEtapas] = useState([]);
   const [misReportes, setMisReportes] = useState({ errores: [], interrupciones: [], totalErrores: 0, totalInterrupciones: 0 });
   const [filtroHistorial, setFiltroHistorial] = useState('TODOS');
+  
+  // Estados para Filtros, Buscador y Ordenamiento en Cliente (HU-16 / RF-21)
+  const [searchTaskQuery, setSearchTaskQuery] = useState('');
+  const [proyectoFilter, setProyectoFilter] = useState('TODOS');
+  const [estadoFilter, setEstadoFilter] = useState('TODAS');
+  const [ordenarPor, setOrdenarPor] = useState('RECIENTES');
+
+  // Estados para Filtros y Conmutador de Vistas del Historial (HU-17 / RF-22 a RF-24)
+  const [searchReportQuery, setSearchReportQuery] = useState('');
+  const [filtroSeveridad, setFiltroSeveridad] = useState('TODAS');
+  const [filtroEstadoAtencion, setFiltroEstadoAtencion] = useState('TODOS');
+  const [ordenarReportesPor, setOrdenarReportesPor] = useState('RECIENTES');
+  const [reportViewMode, setReportViewMode] = useState('grid'); // 'grid' | 'list'
+
   const [loading, setLoading] = useState(true);
   const [loadingEtapas, setLoadingEtapas] = useState(true);
   const [loadingReportes, setLoadingReportes] = useState(false);
@@ -371,6 +390,79 @@ export const DesarrolladorDashboard = () => {
   const actividadesEnProgreso = useMemo(() => actividades.filter(a => a.estado === 'EN_PROGRESO').length, [actividades]);
   const actividadesFinalizadas = useMemo(() => actividades.filter(a => a.estado === 'FINALIZADA').length, [actividades]);
 
+  // Proyectos extraídos dinámicamente de las tareas asignadas
+  const proyectosDisponibles = useMemo(() => {
+    const projMap = new Map();
+    (actividades || []).forEach(a => {
+      const pNom = a.etapa?.proyecto?.nombre || 'Proyecto General';
+      const pId = a.etapa?.proyecto?.idProyecto?.toString() || pNom;
+      if (!projMap.has(pId)) {
+        projMap.set(pId, pNom);
+      }
+    });
+    return Array.from(projMap.entries()).map(([id, nombre]) => ({ id, nombre }));
+  }, [actividades]);
+
+  // Lista de actividades filtradas y ordenadas en cliente (HU-16 / RF-21)
+  const actividadesFiltradasYOrdenadas = useMemo(() => {
+    let result = [...actividades];
+
+    // 1. Buscador reactivo por texto (descripción, etapa o proyecto)
+    if (searchTaskQuery.trim()) {
+      const q = searchTaskQuery.trim().toLowerCase();
+      result = result.filter(a => {
+        const desc = (a.descripcion || '').toLowerCase();
+        const etapa = (a.etapa?.nombreEtapa || a.etapa?.nombre || '').toLowerCase();
+        const proy = (a.etapa?.proyecto?.nombre || '').toLowerCase();
+        return desc.includes(q) || etapa.includes(q) || proy.includes(q);
+      });
+    }
+
+    // 2. Filtro por proyecto
+    if (proyectoFilter !== 'TODOS') {
+      result = result.filter(a => {
+        const pId = a.etapa?.proyecto?.idProyecto?.toString();
+        const pNom = a.etapa?.proyecto?.nombre;
+        return pId === proyectoFilter || pNom === proyectoFilter;
+      });
+    }
+
+    // 3. Filtro por estado operativo
+    if (estadoFilter !== 'TODAS') {
+      result = result.filter(a => a.estado === estadoFilter);
+    }
+
+    // 4. Ordenamiento dinámico
+    result.sort((a, b) => {
+      if (ordenarPor === 'RECIENTES') {
+        return (b.idActividad || 0) - (a.idActividad || 0);
+      }
+      if (ordenarPor === 'ANTIGUAS') {
+        return (a.idActividad || 0) - (b.idActividad || 0);
+      }
+      if (ordenarPor === 'DESCRIPCION') {
+        return (a.descripcion || '').localeCompare(b.descripcion || '');
+      }
+      if (ordenarPor === 'ETAPA') {
+        const eA = a.etapa?.nombreEtapa || a.etapa?.nombre || '';
+        const eB = b.etapa?.nombreEtapa || b.etapa?.nombre || '';
+        return eA.localeCompare(eB);
+      }
+      return 0;
+    });
+
+    return result;
+  }, [actividades, searchTaskQuery, proyectoFilter, estadoFilter, ordenarPor]);
+
+  const activeTaskFiltersCount = (searchTaskQuery ? 1 : 0) + (proyectoFilter !== 'TODOS' ? 1 : 0) + (estadoFilter !== 'TODAS' ? 1 : 0) + (ordenarPor !== 'RECIENTES' ? 1 : 0);
+
+  const handleClearTaskFilters = () => {
+    setSearchTaskQuery('');
+    setProyectoFilter('TODOS');
+    setEstadoFilter('TODAS');
+    setOrdenarPor('RECIENTES');
+  };
+
   const listaReportesUnificada = useMemo(() => {
     const errs = (misReportes.errores || []).map(e => ({
       ...e,
@@ -389,6 +481,63 @@ export const DesarrolladorDashboard = () => {
     if (filtroHistorial === 'INTERRUPCIONES') return combined.filter(c => c._tipo === 'INTERRUPCION');
     return combined;
   }, [misReportes, filtroHistorial]);
+
+  // Filtros avanzados y ordenamiento sobre la lista unificada de reportes (HU-17 / RF-22 a RF-24)
+  const listaReportesFiltradaYOrdenada = useMemo(() => {
+    let list = [...listaReportesUnificada];
+
+    // 1. Buscador reactivo por texto (descripción, comentarios, etapa o nota de respuesta)
+    if (searchReportQuery.trim()) {
+      const q = searchReportQuery.trim().toLowerCase();
+      list = list.filter(item => {
+        const desc = (item.descripcion || item.comentarios || '').toLowerCase();
+        const etapa = (item.etapa?.nombreEtapa || item.etapa?.nombre || '').toLowerCase();
+        const proy = (item.etapa?.proyecto?.nombre || '').toLowerCase();
+        const resNota = (item.resolucionNota || '').toLowerCase();
+        const tipoStr = (item.tipoError || item.tipoInterrupcion || '').toLowerCase();
+        return desc.includes(q) || etapa.includes(q) || proy.includes(q) || resNota.includes(q) || tipoStr.includes(q);
+      });
+    }
+
+    // 2. Filtro por Severidad / Impacto
+    if (filtroSeveridad !== 'TODAS') {
+      list = list.filter(item => item.severidad === filtroSeveridad);
+    }
+
+    // 3. Filtro por Estado de Atención
+    if (filtroEstadoAtencion !== 'TODOS') {
+      list = list.filter(item => (item.estadoAtencion || 'REGISTRADO') === filtroEstadoAtencion);
+    }
+
+    // 4. Ordenamiento dinámico
+    list.sort((a, b) => {
+      if (ordenarReportesPor === 'RECIENTES') {
+        return b._fecha - a._fecha;
+      }
+      if (ordenarReportesPor === 'ANTIGUOS') {
+        return a._fecha - b._fecha;
+      }
+      if (ordenarReportesPor === 'SEVERIDAD') {
+        const sevOrder = { 'CRITICA': 4, 'ALTA': 3, 'MEDIA': 2, 'BAJA': 1 };
+        const sA = sevOrder[a.severidad] || 0;
+        const sB = sevOrder[b.severidad] || 0;
+        return sB - sA;
+      }
+      return 0;
+    });
+
+    return list;
+  }, [listaReportesUnificada, searchReportQuery, filtroSeveridad, filtroEstadoAtencion, ordenarReportesPor]);
+
+  const activeReportFiltersCount = (searchReportQuery ? 1 : 0) + (filtroHistorial !== 'TODOS' ? 1 : 0) + (filtroSeveridad !== 'TODAS' ? 1 : 0) + (filtroEstadoAtencion !== 'TODOS' ? 1 : 0) + (ordenarReportesPor !== 'RECIENTES' ? 1 : 0);
+
+  const handleClearReportFilters = () => {
+    setSearchReportQuery('');
+    setFiltroHistorial('TODOS');
+    setFiltroSeveridad('TODAS');
+    setFiltroEstadoAtencion('TODOS');
+    setOrdenarReportesPor('RECIENTES');
+  };
 
   const FieldError = ({ message }) => message ? (
     <p className="text-[0.65rem] text-red-500 font-bold mt-1 flex items-center gap-1">
@@ -594,6 +743,137 @@ export const DesarrolladorDashboard = () => {
 
           </motion.div>
 
+          {/* Barra de Herramientas de Filtros, Búsqueda y Ordenamiento en Cliente (HU-16 / RF-21) */}
+          <motion.div 
+            variants={itemVariants}
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-3xl shadow-sm space-y-4"
+          >
+            {/* Fila Superior: Buscador, Selector de Proyecto y Selector de Ordenamiento */}
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+              
+              {/* Buscador Rápido Reactivo */}
+              <div className="relative flex-1">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                <input
+                  type="text"
+                  value={searchTaskQuery}
+                  onChange={(e) => setSearchTaskQuery(e.target.value)}
+                  placeholder="Buscar actividad por descripción, etapa WBS o proyecto..."
+                  className="input-field pl-10 pr-9 py-2 text-xs font-medium"
+                />
+                {searchTaskQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTaskQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Controles Dropdown: Filtro por Proyecto y Ordenamiento */}
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                
+                {/* Selector de Proyecto */}
+                <div className="relative flex-1 sm:flex-initial min-w-[200px]">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
+                    <FolderGit2 size={14} />
+                  </div>
+                  <select
+                    value={proyectoFilter}
+                    onChange={(e) => setProyectoFilter(e.target.value)}
+                    className="input-field pl-9 py-2 text-xs font-bold appearance-none cursor-pointer"
+                  >
+                    <option value="TODOS">Todos los Proyectos</option>
+                    {proyectosDisponibles.map(p => (
+                      <option key={p.id} value={p.id}>{p.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Selector de Ordenamiento */}
+                <div className="relative flex-1 sm:flex-initial min-w-[170px]">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
+                    <SlidersHorizontal size={14} />
+                  </div>
+                  <select
+                    value={ordenarPor}
+                    onChange={(e) => setOrdenarPor(e.target.value)}
+                    className="input-field pl-9 py-2 text-xs font-bold appearance-none cursor-pointer"
+                  >
+                    <option value="RECIENTES">Más Recientes primero</option>
+                    <option value="ANTIGUAS">Más Antiguas primero</option>
+                    <option value="DESCRIPCION">Ordenar por Descripción</option>
+                    <option value="ETAPA">Ordenar por Etapa WBS</option>
+                  </select>
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Fila Inferior: Pestañas Rápidas de Estado Operativo & Contador de Resultados */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+              
+              {/* Pestañas Rápidas de Estado Operativo */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mr-1 flex items-center gap-1">
+                  <Filter size={11} /> Estado:
+                </span>
+
+                {[
+                  { key: 'TODAS', label: 'Todas', count: actividades.length },
+                  { key: 'PENDIENTE', label: 'Pendientes', count: actividadesPendientes },
+                  { key: 'EN_PROGRESO', label: 'En Progreso', count: actividadesEnProgreso },
+                  { key: 'FINALIZADA', label: 'Finalizadas', count: actividadesFinalizadas }
+                ].map(tab => {
+                  const isActive = estadoFilter === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setEstadoFilter(tab.key)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer text-xs ${
+                        isActive
+                          ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs'
+                          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      <span className={`px-1.5 py-0.2 rounded-md font-mono text-[0.65rem] font-bold ${
+                        isActive 
+                          ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900' 
+                          : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+                      }`}>
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Contador de Resultados y Restablecer */}
+              <div className="flex items-center gap-2 self-end sm:self-auto font-medium text-zinc-500 dark:text-zinc-400 text-xs">
+                <span>
+                  Mostrando <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{actividadesFiltradasYOrdenadas.length}</strong> de <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{actividades.length}</strong> actividades
+                </span>
+
+                {activeTaskFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearTaskFilters}
+                    className="text-[0.7rem] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer ml-2"
+                  >
+                    <RotateCcw size={11} /> Limpiar Filtros
+                  </button>
+                )}
+              </div>
+
+            </div>
+
+          </motion.div>
+
           {/* Grid de Actividades */}
           <motion.div 
             variants={itemVariants}
@@ -609,7 +889,7 @@ export const DesarrolladorDashboard = () => {
               </>
             )}
 
-            {/* Empty State */}
+            {/* Empty State General (Sin actividades asignadas) */}
             {!loading && actividades.length === 0 && (
               <EmptyState
                 icon={Inbox}
@@ -627,8 +907,26 @@ export const DesarrolladorDashboard = () => {
               />
             )}
 
-            {/* Tarjetas de Actividades Reales */}
-            {!loading && actividades.map(act => {
+            {/* Empty State por Filtros (Hay actividades pero ninguna coincide con la búsqueda) */}
+            {!loading && actividades.length > 0 && actividadesFiltradasYOrdenadas.length === 0 && (
+              <EmptyState
+                icon={Search}
+                title="No se encontraron actividades"
+                description="Ninguna actividad asignada coincide con los criterios de búsqueda, proyecto o estado operativo seleccionados."
+                action={
+                  <button
+                    type="button"
+                    onClick={handleClearTaskFilters}
+                    className="outline-button text-xs py-2.5 px-5 font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <RotateCcw size={14} /> Restablecer Todos los Filtros
+                  </button>
+                }
+              />
+            )}
+
+            {/* Tarjetas de Actividades Reales Filtradas y Ordenadas */}
+            {!loading && actividadesFiltradasYOrdenadas.map(act => {
               const { isReassigned, motivo, cleanDescripcion } = parseReasignacion(act.descripcion);
 
               return (
@@ -870,7 +1168,7 @@ export const DesarrolladorDashboard = () => {
           animate="visible"
           className="space-y-6"
         >
-          {/* Header */}
+          {/* Header del Historial */}
           <motion.div 
             variants={itemVariants}
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
@@ -883,138 +1181,437 @@ export const DesarrolladorDashboard = () => {
                 Historial de Mis Reportes
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                Consulte el estado de atención, respuestas del Líder y acciones correctivas aplicadas a sus reportes
+                Consulte la trazabilidad de errores, contingencias y la resolución de su Líder de Proyecto
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={cargarMisReportes}
                 disabled={loadingReportes}
                 className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
               >
-                <RefreshCw size={13} className={loadingReportes ? 'animate-spin' : ''} /> Actualizar Historial
+                <RefreshCw size={13} className={loadingReportes ? 'animate-spin' : ''} /> Actualizar
               </button>
             </div>
           </motion.div>
 
-          {/* Filtros de Pestaña */}
-          <motion.div variants={itemVariants} className="flex gap-2 flex-wrap items-center">
-            <button
-              onClick={() => setFiltroHistorial('TODOS')}
-              className={`text-xs py-2 px-4 rounded-2xl font-bold transition-all cursor-pointer ${
-                filtroHistorial === 'TODOS'
-                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md'
-                  : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              Todos ({((misReportes.errores?.length || 0) + (misReportes.interrupciones?.length || 0))})
-            </button>
-            <button
-              onClick={() => setFiltroHistorial('ERRORES')}
-              className={`text-xs py-2 px-4 rounded-2xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                filtroHistorial === 'ERRORES'
-                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md'
-                  : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              <Bug size={13} /> Errores Técnicos ({misReportes.errores?.length || 0})
-            </button>
-            <button
-              onClick={() => setFiltroHistorial('INTERRUPCIONES')}
-              className={`text-xs py-2 px-4 rounded-2xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                filtroHistorial === 'INTERRUPCIONES'
-                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md'
-                  : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              <AlertTriangle size={13} /> Interrupciones ({misReportes.interrupciones?.length || 0})
-            </button>
+          {/* Barra de Herramientas Interactiva y Colorida (HU-17 / RF-22 a RF-24) */}
+          <motion.div 
+            variants={itemVariants}
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-3xl shadow-sm space-y-4"
+          >
+            {/* Fila 1: Pestañas de Tipo de Evento (Vibrantes con Color) + Buscador + Conmutador Grid/List */}
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+              
+              {/* Pestañas de Tipo de Evento Coloridas e Interactivas */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setFiltroHistorial('TODOS')}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer border ${
+                    filtroHistorial === 'TODOS'
+                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-sm'
+                      : 'bg-zinc-50 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-800 border-zinc-200 dark:border-zinc-700'
+                  }`}
+                >
+                  <Layers size={14} />
+                  <span>Todos los Reportes</span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[0.65rem] font-mono font-black ${
+                    filtroHistorial === 'TODOS'
+                      ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900'
+                      : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+                  }`}>
+                    {(misReportes.errores?.length || 0) + (misReportes.interrupciones?.length || 0)}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltroHistorial('ERRORES')}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer border ${
+                    filtroHistorial === 'ERRORES'
+                      ? 'bg-red-600 text-white border-red-600 dark:bg-red-600 dark:text-white shadow-sm'
+                      : 'bg-red-50/70 text-red-700 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-900/60 border-red-200 dark:border-red-800/60'
+                  }`}
+                >
+                  <Bug size={14} />
+                  <span>Errores Técnicos</span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[0.65rem] font-mono font-black ${
+                    filtroHistorial === 'ERRORES'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200'
+                  }`}>
+                    {misReportes.errores?.length || 0}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltroHistorial('INTERRUPCIONES')}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer border ${
+                    filtroHistorial === 'INTERRUPCIONES'
+                      ? 'bg-amber-600 text-white border-amber-600 dark:bg-amber-600 dark:text-white shadow-sm'
+                      : 'bg-amber-50/70 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/60 border-amber-200 dark:border-amber-800/60'
+                  }`}
+                >
+                  <AlertTriangle size={14} />
+                  <span>Interrupciones</span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[0.65rem] font-mono font-black ${
+                    filtroHistorial === 'INTERRUPCIONES'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200'
+                  }`}>
+                    {misReportes.interrupciones?.length || 0}
+                  </span>
+                </button>
+              </div>
+
+              {/* Buscador y Conmutador Grid/List en el extremo derecho */}
+              <div className="flex items-center gap-2 flex-1 lg:flex-initial">
+                
+                {/* Buscador Rápido */}
+                <div className="relative flex-1 min-w-[220px]">
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                  <input
+                    type="text"
+                    value={searchReportQuery}
+                    onChange={(e) => setSearchReportQuery(e.target.value)}
+                    placeholder="Buscar por descripción, etapa o nota..."
+                    className="input-field pl-9 pr-8 py-2 text-xs font-medium"
+                  />
+                  {searchReportQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchReportQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Conmutador de Vistas Grid/List Integrado */}
+                <div className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex items-center gap-1 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setReportViewMode('grid')}
+                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      reportViewMode === 'grid'
+                        ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-xs border border-zinc-200 dark:border-zinc-700'
+                        : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                    }`}
+                    title="Vista en Tarjetas (Grid)"
+                  >
+                    <LayoutGrid size={14} />
+                    <span className="hidden sm:inline">Tarjetas</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReportViewMode('list')}
+                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      reportViewMode === 'list'
+                        ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-xs border border-zinc-200 dark:border-zinc-700'
+                        : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                    }`}
+                    title="Vista en Tabla (List)"
+                  >
+                    <List size={14} />
+                    <span className="hidden sm:inline">Tabla</span>
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Fila 2: Selectores Desplegables con Íconos Vectoriales (SIN EMOJIS) + Contador */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+              
+              {/* Selectores Desplegables con Íconos Vectoriales */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 max-w-3xl">
+                
+                {/* Selector 1: Severidad (Errores/Todos) o Duración (Interrupciones) */}
+                {filtroHistorial === 'INTERRUPCIONES' ? (
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 pointer-events-none z-10">
+                      <Clock size={14} />
+                    </div>
+                    <select
+                      value={filtroDuracion}
+                      onChange={(e) => setFiltroDuracion(e.target.value)}
+                      className="select-field pl-9 appearance-none w-full"
+                    >
+                      <optgroup label="Duración de Bloqueo">
+                        <option value="TODAS">Cualquier Duración</option>
+                        <option value="CORTA">Corta (Hasta 30 min)</option>
+                        <option value="MEDIA">Media (30 a 60 min)</option>
+                        <option value="LARGA">Larga (Más de 60 min)</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none z-10">
+                      <ShieldAlert size={14} />
+                    </div>
+                    <select
+                      value={filtroSeveridad}
+                      onChange={(e) => setFiltroSeveridad(e.target.value)}
+                      className="select-field pl-9 appearance-none w-full"
+                    >
+                      <optgroup label="Grado de Severidad">
+                        <option value="TODAS">Todas las Severidades</option>
+                        <option value="CRITICA">Crítica (Prioridad Máxima)</option>
+                        <option value="ALTA">Alta (Atención Requerida)</option>
+                        <option value="MEDIA">Media (Impacto Moderado)</option>
+                        <option value="BAJA">Baja (Menor Severidad)</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                )}
+
+                {/* Selector 2: Estado de Atención */}
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none z-10">
+                    <Activity size={14} />
+                  </div>
+                  <select
+                    value={filtroEstadoAtencion}
+                    onChange={(e) => setFiltroEstadoAtencion(e.target.value)}
+                    className="select-field pl-9 appearance-none w-full"
+                  >
+                    <optgroup label="Estado de Flujo">
+                      <option value="TODOS">Todos los Estados</option>
+                      <option value="REGISTRADO">Registrado</option>
+                      <option value="EN_REVISION">En Revisión / Análisis</option>
+                      <option value="SOLUCIONADO">Solucionado</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                {/* Selector 3: Ordenamiento Dinámico */}
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none z-10">
+                    <SlidersHorizontal size={14} />
+                  </div>
+                  <select
+                    value={ordenarReportesPor}
+                    onChange={(e) => setOrdenarReportesPor(e.target.value)}
+                    className="select-field pl-9 appearance-none w-full"
+                  >
+                    <optgroup label="Criterio de Orden">
+                      <option value="RECIENTES">Más Recientes primero</option>
+                      <option value="ANTIGUOS">Más Antiguos primero</option>
+                      {filtroHistorial === 'INTERRUPCIONES' ? (
+                        <option value="DURACION">Mayor Duración primero</option>
+                      ) : (
+                        <option value="SEVERIDAD">Por Mayor Severidad</option>
+                      )}
+                    </optgroup>
+                  </select>
+                </div>
+
+              </div>
+
+              {/* Contador de Resultados y Restablecer */}
+              <div className="flex items-center gap-2 self-end sm:self-auto font-medium text-zinc-500 dark:text-zinc-400 text-xs shrink-0">
+                <span>
+                  Mostrando <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{listaReportesFiltradaYOrdenada.length}</strong> de <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{listaReportesUnificada.length}</strong> reportes
+                </span>
+
+                {activeReportFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearReportFilters}
+                    className="text-[0.7rem] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer ml-2"
+                  >
+                    <RotateCcw size={11} /> Limpiar Filtros
+                  </button>
+                )}
+              </div>
+
+            </div>
+
           </motion.div>
 
-          {/* Listado de Tarjetas */}
-          <motion.div variants={itemVariants} className="space-y-3">
+
+          {/* Renderizado de Reportes (Vista Grid vs Vista Tabla List) */}
+          <motion.div variants={itemVariants}>
             {loadingReportes && (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <SkeletonCard rows={2} />
                 <SkeletonCard rows={2} />
                 <SkeletonCard rows={2} />
               </div>
             )}
 
+            {/* Empty State General */}
             {!loadingReportes && listaReportesUnificada.length === 0 && (
               <EmptyState
                 icon={Inbox}
-                title="Sin reportes en esta categoría"
-                description="No registra incidencias técnicas o interrupciones en la vista seleccionada. Cuando reporte un hallazgo, aparecerá aquí junto con la resolución del Líder."
+                title="Sin reportes registrados"
+                description="Aún no ha registrado hallazgos técnicos o contingencias operativas. Cuando reporte un fallo, aparecerá en esta sección junto con la resolución del Líder de Proyecto."
               />
             )}
 
-            {!loadingReportes && listaReportesUnificada.map(item => {
-              const isError = item._tipo === 'ERROR';
-              const fechaStr = new Date(item._fecha).toLocaleString('es-ES', {
-                dateStyle: 'medium',
-                timeStyle: 'short'
-              });
+            {/* Empty State por Filtros */}
+            {!loadingReportes && listaReportesUnificada.length > 0 && listaReportesFiltradaYOrdenada.length === 0 && (
+              <EmptyState
+                icon={Search}
+                title="No se encontraron reportes"
+                description="Ningún reporte coincide con los criterios de búsqueda, severidad o estado de atención seleccionados."
+                action={
+                  <button
+                    type="button"
+                    onClick={handleClearReportFilters}
+                    className="outline-button text-xs py-2.5 px-5 font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <RotateCcw size={14} /> Restablecer Filtros
+                  </button>
+                }
+              />
+            )}
 
-              return (
-                <div 
-                  key={item._id}
-                  className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 space-y-3"
-                >
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        isError ? 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400'
-                      }`}>
-                        {isError ? <Bug size={16} /> : <AlertTriangle size={16} />}
-                      </div>
+            {/* OPCIÓN 1: VISTA EN TARJETAS RESPONSIVAS (GRID) */}
+            {!loadingReportes && reportViewMode === 'grid' && listaReportesFiltradaYOrdenada.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                {listaReportesFiltradaYOrdenada.map(item => {
+                  const isError = item._tipo === 'ERROR';
+                  const fechaStr = new Date(item._fecha).toLocaleString('es-ES', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                  });
+
+                  return (
+                    <div 
+                      key={item._id}
+                      className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 flex flex-col justify-between space-y-4 h-full"
+                    >
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
-                            {isError ? `Error: ${item.tipoError}` : `Interrupción: ${item.tipoInterrupcion?.replace(/_/g, ' ')}`}
-                          </h4>
-                          {isError ? (
-                            <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
-                              {item.severidad}
-                            </span>
-                          ) : (
-                            <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
-                              {item.duracionMinutos} min
-                            </span>
-                          )}
+                        {/* Header de la Tarjeta de Reporte */}
+                        <div className="flex justify-between items-start gap-2 mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                              isError ? 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400'
+                            }`}>
+                              {isError ? <Bug size={16} /> : <AlertTriangle size={16} />}
+                            </div>
+                            <div>
+                              <h4 className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100">
+                                {isError ? `Error: ${item.tipoError}` : `Interrupción: ${item.tipoInterrupcion?.replace(/_/g, ' ')}`}
+                              </h4>
+                              {isError ? (
+                                <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
+                                  {item.severidad}
+                                </span>
+                              ) : (
+                                <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
+                                  {item.duracionMinutos} min
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <EstadoAtencionBadge estado={item.estadoAtencion} />
                         </div>
-                        <span className="text-[0.65rem] text-zinc-400 font-medium">
-                          {item.etapa?.proyecto?.nombre ? `${item.etapa.proyecto.nombre} • ` : ''}{item.etapa?.nombreEtapa || 'Etapa WBS'} • {fechaStr}
+
+                        {/* Descripción / Comentarios */}
+                        <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans mb-3">
+                          {item.descripcion || item.comentarios}
+                        </div>
+
+                        {/* Respuesta / Acción Correctiva del Líder */}
+                        {item.resolucionNota && (
+                          <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-xs space-y-1">
+                            <div className="flex items-center gap-1.5 font-extrabold text-blue-800 dark:text-blue-300 text-[0.7rem]">
+                              <Info size={13} /> Acción Correctiva del Líder:
+                            </div>
+                            <p className="text-zinc-700 dark:text-zinc-300 italic">
+                              "{item.resolucionNota}"
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Pie de la Tarjeta: Metadatos de Fecha y Etapa WBS */}
+                      <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-[0.65rem] text-zinc-400 font-medium">
+                        <span className="truncate max-w-[180px]">
+                          {item.etapa?.proyecto?.nombre ? `${item.etapa.proyecto.nombre} • ` : ''}{item.etapa?.nombreEtapa || 'Etapa WBS'}
                         </span>
+                        <span>{fechaStr}</span>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            )}
 
-                    <EstadoAtencionBadge estado={item.estadoAtencion} />
-                  </div>
+            {/* OPCIÓN 2: VISTA EN TABLA COMPACTA (LIST) */}
+            {!loadingReportes && reportViewMode === 'list' && listaReportesFiltradaYOrdenada.length > 0 && (
+              <div className="overflow-x-auto rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-zinc-50 dark:bg-zinc-800/60 text-zinc-500 font-extrabold uppercase text-[0.65rem] tracking-wider border-b border-zinc-200 dark:border-zinc-800">
+                    <tr>
+                      <th className="py-3.5 px-4">Tipo / Clasificación</th>
+                      <th className="py-3.5 px-4">Severidad / Duración</th>
+                      <th className="py-3.5 px-4">Descripción & Respuesta</th>
+                      <th className="py-3.5 px-4">Etapa WBS</th>
+                      <th className="py-3.5 px-4">Fecha UTC / Registro</th>
+                      <th className="py-3.5 px-4 text-right">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60 font-medium">
+                    {listaReportesFiltradaYOrdenada.map(item => {
+                      const isError = item._tipo === 'ERROR';
+                      const fechaStr = new Date(item._fecha).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
 
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans">
-                    {item.descripcion || item.comentarios}
-                  </div>
-
-                  {item.resolucionNota && (
-                    <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-xs space-y-1">
-                      <div className="flex items-center gap-1.5 font-extrabold text-blue-800 dark:text-blue-300 text-[0.7rem]">
-                        <Info size={13} /> Nota de Respuesta / Acción Correctiva del Líder:
-                      </div>
-                      <p className="text-zinc-700 dark:text-zinc-300 italic">
-                        "{item.resolucionNota}"
-                      </p>
-                      {item.fechaResolucion && (
-                        <span className="text-[0.6rem] text-zinc-400 block pt-0.5">
-                          Atendido el: {new Date(item.fechaResolucion).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                      return (
+                        <tr key={item._id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-zinc-100">
+                              {isError ? <Bug size={14} className="text-red-500" /> : <AlertTriangle size={14} className="text-amber-500" />}
+                              <span>{isError ? `Error: ${item.tipoError}` : `Interrupción: ${item.tipoInterrupcion?.replace(/_/g, ' ')}`}</span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {isError ? (
+                              <span className="font-mono text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                                {item.severidad}
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                                {item.duracionMinutos} min
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 max-w-xs">
+                            <p className="text-zinc-700 dark:text-zinc-300 truncate" title={item.descripcion || item.comentarios}>
+                              {item.descripcion || item.comentarios}
+                            </p>
+                            {item.resolucionNota && (
+                              <span className="text-[0.65rem] text-blue-600 dark:text-blue-400 font-bold block truncate" title={`Líder: "${item.resolucionNota}"`}>
+                                Líder: "{item.resolucionNota}"
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-zinc-500 dark:text-zinc-400 font-bold">
+                            {item.etapa?.nombreEtapa || 'Etapa WBS'}
+                          </td>
+                          <td className="py-3.5 px-4 text-zinc-400 text-[0.7rem] font-mono">
+                            {fechaStr}
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <EstadoAtencionBadge estado={item.estadoAtencion} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

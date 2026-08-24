@@ -1702,12 +1702,14 @@ export const LiderDashboard = () => {
                   value={filtroEstadoInc}
                   onChange={(e) => setFiltroEstadoInc(e.target.value)}
                   title="Filtrar por estado del flujo de atención"
-                  className="input-field py-1 px-2.5 text-xs font-bold"
+                  className="select-field cursor-pointer"
                 >
-                  <option value="TODOS">Todos los Estados</option>
-                  <option value="REGISTRADO">Registrado</option>
-                  <option value="EN_REVISION">En Revisión</option>
-                  <option value="SOLUCIONADO">Solucionado</option>
+                  <optgroup label="Estado de Atención">
+                    <option value="TODOS">Todos los Estados</option>
+                    <option value="REGISTRADO">Registrado</option>
+                    <option value="EN_REVISION">En Revisión</option>
+                    <option value="SOLUCIONADO">Solucionado</option>
+                  </optgroup>
                 </select>
               </div>
 
@@ -1718,14 +1720,16 @@ export const LiderDashboard = () => {
                   value={filtroDevInc}
                   onChange={(e) => setFiltroDevInc(e.target.value)}
                   title="Filtrar reportes emitidos por un desarrollador específico"
-                  className="input-field py-1 px-2.5 text-xs font-bold"
+                  className="select-field cursor-pointer max-w-[220px]"
                 >
-                  <option value="TODOS">Todos los Desarrolladores</option>
-                  {desarrolladores.map(d => (
-                    <option key={d.idTrabajador} value={d.idTrabajador}>
-                      {d.nombre} {d.apellido} — {getCleanEspecialidad(d.especialidad, d.profesion)}
-                    </option>
-                  ))}
+                  <optgroup label="Equipo de Desarrollo">
+                    <option value="TODOS">Todos los Desarrolladores</option>
+                    {(desarrolladores || [])?.map(d => (
+                      <option key={d.idTrabajador} value={d.idTrabajador}>
+                        {d.nombre} {d.apellido} — {getCleanEspecialidad(d.especialidad, d.profesion)}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
@@ -1774,7 +1778,7 @@ export const LiderDashboard = () => {
                     <Calendar size={12} className="text-blue-600 dark:text-blue-400" />
                     <span>
                       {filtroFechaDesde && filtroFechaHasta 
-                        ? `${filtroFechaDesde} ➔ ${filtroFechaHasta}` 
+                        ? `${filtroFechaDesde} - ${filtroFechaHasta}` 
                         : 'Ingresar Rango de Fechas'}
                     </span>
                     <Edit3 size={11} className="text-blue-500 opacity-80" />
