@@ -23,8 +23,9 @@ Doc/
 doc/
 Docs/
 docs/
+/docs/
 
-# Archivos ofimáticos y temporales de Office
+# Archivos ofimáticos y especificaciones externas
 *.doc
 *.docx
 *.DOC
@@ -42,6 +43,8 @@ docs/
 *.odt
 *.rtf
 *.csv
+HISTORIAS_DE_USUARIO.md
+MATRIZ_TRAZABILIDAD_REQUISITOS.md
 ~$*
 ~$*.docx
 ~$*.doc
