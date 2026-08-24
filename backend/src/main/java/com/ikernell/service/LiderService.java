@@ -320,14 +320,23 @@ public class LiderService {
         return trabajadorRepository.findByRolAndEstado(Rol.DESARROLLADOR, true);
     }
 
-    // Lista desarrolladores con su balance de horas semanales y estado de capacidad (HU-12 / RF-16)
+    // Lista desarrolladores con su balance de horas semanales y estado de capacidad (HU-12 / RF-16) - Optimizado (Anti N+1)
     @Transactional(readOnly = true)
     public List<com.ikernell.dto.DesarrolladorCargaDTO> listarDesarrolladoresConCarga() {
         List<Trabajador> devs = trabajadorRepository.findByRolAndEstado(Rol.DESARROLLADOR, true);
         List<com.ikernell.dto.DesarrolladorCargaDTO> resultado = new ArrayList<>();
 
+        // Consulta agregada única para traer las horas asignadas de todos los desarrolladores de 1 sola vez
+        List<Object[]> resumenHoras = proyectoDesarrolladorRepository.obtenerHorasTotalesPorDesarrollador();
+        Map<Long, Integer> mapHoras = new HashMap<>();
+        for (Object[] row : resumenHoras) {
+            if (row[0] != null && row[1] != null) {
+                mapHoras.put(((Number) row[0]).longValue(), ((Number) row[1]).intValue());
+            }
+        }
+
         for (Trabajador dev : devs) {
-            int horasAsignadas = proyectoDesarrolladorRepository.calcularHorasTotalesAsignadas(dev);
+            int horasAsignadas = mapHoras.getOrDefault(dev.getIdTrabajador(), 0);
             int limiteMaximo = 48;
             int horasDisponibles = Math.max(0, limiteMaximo - horasAsignadas);
             double porcentaje = Math.round(((double) horasAsignadas / limiteMaximo) * 1000.0) / 10.0;
@@ -406,23 +415,17 @@ public class LiderService {
         return response;
     }
 
-    // Calcula el semáforo de riesgo ponderando errores críticos y minutos de contingencia
+    // Calcula el semáforo de riesgo ponderando errores críticos y minutos de contingencia (Anti N+1)
     @Transactional(readOnly = true)
     public SemaforoMetricsDto calcularMetricasSemaforo(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
 
-        List<Etapa> etapas = etapaRepository.findByProyectoWithActividades(proyecto);
+        // Consulta directa optimizada mediante JOIN FETCH
+        List<Error> todosErrores = errorRepository.findByProyectoWithDetails(proyecto);
+        List<Interrupcion> todasInterrupciones = interrupcionRepository.findByProyectoWithDetails(proyecto);
 
-        List<Error> todosErrores = new ArrayList<>();
-        List<Interrupcion> todasInterrupciones = new ArrayList<>();
-
-        for (Etapa etapa : etapas) {
-            todosErrores.addAll(errorRepository.findByEtapa(etapa));
-            todasInterrupciones.addAll(interrupcionRepository.findByEtapa(etapa));
-        }
-
-        // Conteo por severidad
+        // Conteo por severidad con normalización insensible a mayúsculas/minúsculas y acentos
         Map<String, Integer> severityCount = new HashMap<>();
         severityCount.put("BAJA", 0);
         severityCount.put("MEDIA", 0);
@@ -431,7 +434,15 @@ public class LiderService {
 
         int erroresCriticosOAltos = 0;
         for (Error err : todosErrores) {
-            String sev = err.getSeveridad() != null ? err.getSeveridad().toUpperCase() : "BAJA";
+            String raw = err.getSeveridad() != null ? err.getSeveridad().trim().toUpperCase() : "BAJA";
+            String sev = "BAJA";
+            if (raw.contains("CRITIC") || raw.contains("CRÍTICA")) {
+                sev = "CRITICA";
+            } else if (raw.contains("ALT")) {
+                sev = "ALTA";
+            } else if (raw.contains("MED")) {
+                sev = "MEDIA";
+            }
             severityCount.put(sev, severityCount.getOrDefault(sev, 0) + 1);
             if ("CRITICA".equals(sev) || "ALTA".equals(sev)) {
                 erroresCriticosOAltos++;
@@ -503,7 +514,15 @@ public class LiderService {
 
         int erroresCriticosOAltos = 0;
         for (Error err : todosErrores) {
-            String sev = err.getSeveridad() != null ? err.getSeveridad().toUpperCase() : "BAJA";
+            String raw = err.getSeveridad() != null ? err.getSeveridad().trim().toUpperCase() : "BAJA";
+            String sev = "BAJA";
+            if (raw.contains("CRITIC") || raw.contains("CRÍTICA")) {
+                sev = "CRITICA";
+            } else if (raw.contains("ALT")) {
+                sev = "ALTA";
+            } else if (raw.contains("MED")) {
+                sev = "MEDIA";
+            }
             severityCount.put(sev, severityCount.getOrDefault(sev, 0) + 1);
             if ("CRITICA".equals(sev) || "ALTA".equals(sev)) {
                 erroresCriticosOAltos++;

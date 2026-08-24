@@ -30,6 +30,9 @@ public interface ProyectoDesarrolladorRepository extends JpaRepository<ProyectoD
         @org.springframework.data.repository.query.Param("idProyectoExcluir") Long idProyectoExcluir
     );
 
+    @org.springframework.data.jpa.repository.Query("SELECT pd.desarrollador.idTrabajador, COALESCE(SUM(pd.horasSemanales), 0) FROM ProyectoDesarrollador pd WHERE pd.proyecto.estado = 'ACTIVO' GROUP BY pd.desarrollador.idTrabajador")
+    List<Object[]> obtenerHorasTotalesPorDesarrollador();
+
     @org.springframework.data.jpa.repository.Query("SELECT pd FROM ProyectoDesarrollador pd LEFT JOIN FETCH pd.desarrollador WHERE pd.proyecto = :proyecto ORDER BY pd.idAsignacion ASC")
     List<ProyectoDesarrollador> findByProyectoWithDesarrollador(@org.springframework.data.repository.query.Param("proyecto") Proyecto proyecto);
 }
