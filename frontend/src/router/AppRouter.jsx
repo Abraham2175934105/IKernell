@@ -4,6 +4,7 @@ import { AuthProvider } from '../context/AuthContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { PublicLayout } from '../components/layout/PublicLayout';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { Cpu } from 'lucide-react';
 
 // Lazy Loading y Code-Splitting de rutas
@@ -50,35 +51,49 @@ export const AppRouter = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {/* Módulo Público (con Navbar & Footer corporativo) */}
-              <Route element={<PublicLayout />}>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/contacto" element={<ContactPage />} />
-                <Route path="/faqs" element={<FaqPage />} />
-                <Route path="/login" element={<LoginPage />} />
-              </Route>
+        <ErrorBoundary>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* Módulo Público (con Navbar & Footer corporativo) */}
+                <Route element={<PublicLayout />}>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/contacto" element={<ContactPage />} />
+                  <Route path="/faqs" element={<FaqPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                </Route>
 
-              {/* Rutas Privadas Protegidas por Rol (RBAC con DashboardLayout) */}
-              <Route element={<ProtectedRoute allowedRoles={['COORDINADOR']} />}>
-                <Route path="/coordinador" element={<CoordinadorDashboard />} />
-              </Route>
+                {/* Rutas Privadas Protegidas por Rol (RBAC con DashboardLayout) */}
+                <Route element={<ProtectedRoute allowedRoles={['COORDINADOR']} />}>
+                  <Route path="/coordinador" element={
+                    <ErrorBoundary title="Error en Panel de Coordinador">
+                      <CoordinadorDashboard />
+                    </ErrorBoundary>
+                  } />
+                </Route>
 
-              <Route element={<ProtectedRoute allowedRoles={['LIDER']} />}>
-                <Route path="/lider" element={<LiderDashboard />} />
-              </Route>
+                <Route element={<ProtectedRoute allowedRoles={['LIDER']} />}>
+                  <Route path="/lider" element={
+                    <ErrorBoundary title="Error en Panel de Líder">
+                      <LiderDashboard />
+                    </ErrorBoundary>
+                  } />
+                </Route>
 
-              <Route element={<ProtectedRoute allowedRoles={['DESARROLLADOR']} />}>
-                <Route path="/desarrollador" element={<DesarrolladorDashboard />} />
-              </Route>
+                <Route element={<ProtectedRoute allowedRoles={['DESARROLLADOR']} />}>
+                  <Route path="/desarrollador" element={
+                    <ErrorBoundary title="Error en Panel de Desarrollador">
+                      <DesarrolladorDashboard />
+                    </ErrorBoundary>
+                  } />
+                </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<LandingPage />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
+                {/* Fallback */}
+                <Route path="*" element={<LandingPage />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </ErrorBoundary>
       </AuthProvider>
     </ThemeProvider>
   );

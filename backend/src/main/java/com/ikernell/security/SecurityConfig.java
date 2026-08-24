@@ -16,13 +16,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
-// Configuración central de seguridad perimetral, control de acceso basado en roles (RBAC) y CORS
+// Configuración central de seguridad perimetral, control de acceso basado en roles (RBAC) y anti-caché
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -65,6 +66,14 @@ public class SecurityConfig {
             
             // Habilitamos CORS para permitir llamadas cruzadas desde el cliente Vite / React
             .cors(Customizer.withDefaults())
+
+            // Hardening de Cabeceras HTTP Anti-Caché y Seguridad (Anti Back-Button & Cache Control)
+            .headers(headers -> headers
+                .cacheControl(Customizer.withDefaults())
+                .addHeaderWriter(new StaticHeadersWriter("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate"))
+                .addHeaderWriter(new StaticHeadersWriter("Pragma", "no-cache"))
+                .addHeaderWriter(new StaticHeadersWriter("Expires", "0"))
+            )
             
             // Definimos sesiones sin estado para que el backend no almacene cookies ni sesiones en memoria
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
