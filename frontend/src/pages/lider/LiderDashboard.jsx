@@ -980,23 +980,23 @@ export const LiderDashboard = () => {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap shrink-0 min-w-0 max-w-full">
-          {/* Botón Trigger para Menú Emergente / Explorador de Proyectos */}
+          {/* Botón Trigger para Menú Emergente / Selector de Proyectos Enterprise */}
           <button
             type="button"
             onClick={() => setModalProyectosOpen(true)}
             disabled={loadingProyectos}
-            className="group flex items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200/90 dark:border-zinc-700/80 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl px-4 py-2.5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[270px] sm:min-w-[340px] max-w-full disabled:opacity-60 text-left"
+            className="group flex items-center justify-between gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 rounded-2xl px-4 py-2.5 shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer min-w-[270px] sm:min-w-[340px] max-w-full disabled:opacity-60 text-left"
             title="Abrir menú emergente de selección y búsqueda de proyectos"
           >
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               {loadingProyectos ? (
                 <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate">
-                  <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />
+                  <Loader2 size={14} className="animate-spin text-blue-600 dark:text-blue-400 shrink-0" />
                   <span>Sincronizando proyectos...</span>
                 </div>
               ) : (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-7 h-7 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                  <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0 shadow-2xs">
                     <Globe size={14} />
                   </div>
                   <div className="text-left truncate">
@@ -1013,7 +1013,7 @@ export const LiderDashboard = () => {
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                  <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 shadow-2xs">
                     <FolderGit2 size={14} />
                   </div>
                   <div className="text-left min-w-0 flex-1 truncate">
@@ -1044,7 +1044,7 @@ export const LiderDashboard = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-1 text-zinc-400 group-hover:text-blue-500 shrink-0 transition-colors">
+            <div className="flex items-center gap-1 text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200 shrink-0 transition-colors">
               <span className="text-[0.65rem] font-bold hidden xl:inline">Cambiar</span>
               <ChevronDown size={15} className="group-hover:translate-y-0.5 transition-transform" />
             </div>
@@ -1064,21 +1064,23 @@ export const LiderDashboard = () => {
               setNuevoProyectoErrors({});
               setShowNuevoProyectoModal(true);
             }}
-            className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
-            title="Crear un nuevo proyecto de software con presupuesto y fechas"
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+            title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11)"
           >
             <FolderPlus size={14} />
             <span>Nuevo Proyecto</span>
           </button>
 
+          {/* Botón de Actualización Minimalista Outline */}
           <button
             type="button"
             onClick={handleManualRefresh}
             disabled={loadingProyectos || refreshingManual}
-            className="outline-button p-2.5 rounded-2xl font-bold inline-flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 rounded-2xl px-3.5 py-2.5 text-xs font-bold transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
             title="Sincronizar proyectos y etapas en tiempo real con PostgreSQL"
           >
-            <RefreshCw size={15} className={loadingProyectos || refreshingManual ? 'animate-spin text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-300'} />
+            <RefreshCw size={14} className={loadingProyectos || refreshingManual ? 'animate-spin text-blue-600 dark:text-blue-400' : 'text-zinc-500 dark:text-zinc-400'} />
+            <span className="hidden sm:inline">Actualizar</span>
           </button>
         </div>
       </motion.div>

@@ -173,7 +173,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
             <div className="p-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm">
-              {isGlobal ? <Globe size={20} className="text-blue-500" /> : <FolderGit2 size={20} className="text-emerald-500" />}
+              {isGlobal ? <Globe size={18} className="text-blue-500" /> : <FolderGit2 size={18} className="text-emerald-500" />}
             </div>
             <div>
               <h3 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -203,10 +203,10 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
             type="button"
             onClick={cargarMetricas}
             disabled={loading}
-            className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+            className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 text-xs py-2 px-3.5 rounded-2xl font-bold inline-flex items-center gap-2 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
             title="Recalcular métricas en base a PostgreSQL en tiempo real"
           >
-            <RefreshCw size={13} className={loading ? 'animate-spin text-blue-500' : ''} />
+            <RefreshCw size={14} className={loading ? 'animate-spin text-blue-600 dark:text-blue-400' : 'text-zinc-500 dark:text-zinc-400'} />
             <span>Actualizar</span>
           </button>
           
@@ -214,13 +214,13 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
             type="button"
             onClick={handleExportEtlBrasil}
             disabled={exporting}
-            className="gradient-button whitespace-nowrap text-xs py-2 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-md"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl whitespace-nowrap text-xs font-bold inline-flex items-center gap-2 transition-all shadow-sm cursor-pointer disabled:opacity-50"
             title="Generar archivo plano bajo norma ISO 8601 UTC para Alianza Estratégica Brasil"
           >
             {exporting ? (
-              <><Loader2 size={13} className="animate-spin" /> Procesando ETL...</>
+              <><Loader2 size={14} className="animate-spin" /> Procesando ETL...</>
             ) : (
-              <><FileText size={13} /> Exportar ETL Brasil (ISO 8601)</>
+              <><FileText size={14} /> Exportar ETL Brasil (ISO 8601)</>
             )}
           </button>
         </div>
