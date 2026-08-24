@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { 
   MessageSquare, Send, Users, Hash, Shield, Sparkles, CheckCircle2, User,
   Loader2, RefreshCw, AlertCircle, Clock, Check, Cpu, Globe, AlertTriangle,
-  Search, ShieldCheck, Tag, Plus, Filter, CornerDownLeft
+  Search, ShieldCheck, Tag, Plus, Filter, CornerDownLeft, Zap, Radio
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
@@ -17,7 +17,9 @@ const CHANNELS = [
     fullName: 'General - Equipo IKernell', 
     desc: 'Comunicaciones oficiales y anuncios generales',
     icon: Hash,
-    color: 'text-blue-500'
+    color: 'text-blue-500',
+    glowFrom: 'from-blue-500/5',
+    glowTo: 'to-blue-600/10'
   },
   { 
     id: 'arquitectura', 
@@ -25,7 +27,9 @@ const CHANNELS = [
     fullName: 'Arquitectura & Backend', 
     desc: 'Diseño Spring Boot, Hibernate, JPA y PostgreSQL',
     icon: Cpu,
-    color: 'text-purple-500'
+    color: 'text-purple-500',
+    glowFrom: 'from-purple-500/5',
+    glowTo: 'to-purple-600/10'
   },
   { 
     id: 'soporte-brasil', 
@@ -33,7 +37,9 @@ const CHANNELS = [
     fullName: 'Alianza Brasil (ETL)', 
     desc: 'Normativa ISO 8601 UTC y transferencias SFTP',
     icon: Globe,
-    color: 'text-emerald-500'
+    color: 'text-emerald-500',
+    glowFrom: 'from-emerald-500/5',
+    glowTo: 'to-emerald-600/10'
   },
   { 
     id: 'alertas-wbs', 
@@ -41,12 +47,101 @@ const CHANNELS = [
     fullName: 'Alertas del Semáforo WBS', 
     desc: 'Notificaciones automáticas del motor predictivo',
     icon: AlertTriangle,
-    color: 'text-amber-500'
+    color: 'text-amber-500',
+    glowFrom: 'from-amber-500/5',
+    glowTo: 'to-amber-600/10'
   }
 ];
 
 // Etiquetas rápidas sugeridas para atajos de mención
 const QUICK_TAGS = ['#Tarea', '#Bug', '#Urgente', '#WBS', '#Revisión'];
+
+// Variantes de animación para la lista de mensajes (efecto cascada stagger)
+const messageListVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.05 }
+  }
+};
+
+const messageItemVariants = {
+  hidden: { opacity: 0, y: 18, scale: 0.97 },
+  visible: { 
+    opacity: 1, y: 0, scale: 1,
+    transition: { type: 'spring', stiffness: 400, damping: 28 }
+  }
+};
+
+// Variante de rebote para el botón de envío
+const sendButtonVariants = {
+  idle: { scale: 1 },
+  tap: { scale: 0.88, transition: { type: 'spring', stiffness: 600, damping: 15 } },
+  hover: { scale: 1.05, transition: { type: 'spring', stiffness: 400, damping: 12 } }
+};
+
+// Variante para apertura suave del canal
+const channelPanelVariants = {
+  initial: { opacity: 0, x: -10 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } },
+  exit: { opacity: 0, x: -10, transition: { duration: 0.15 } }
+};
+
+// Indicador de Escritura pulsante (Typing Indicator)
+const TypingIndicator = () => (
+  <motion.div
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: 8 }}
+    transition={{ duration: 0.2 }}
+    className="flex items-center gap-2 px-4 py-2"
+  >
+    <div className="flex items-center gap-1 px-3 py-2 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60">
+      <motion.span
+        animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }}
+        transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
+        className="w-1.5 h-1.5 rounded-full bg-blue-500"
+      />
+      <motion.span
+        animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }}
+        transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
+        className="w-1.5 h-1.5 rounded-full bg-blue-500"
+      />
+      <motion.span
+        animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }}
+        transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }}
+        className="w-1.5 h-1.5 rounded-full bg-blue-500"
+      />
+    </div>
+    <span className="text-[0.65rem] text-zinc-400 font-semibold italic">escribiendo...</span>
+  </motion.div>
+);
+
+// Configuración de acentos cromáticos por rol
+const ROL_ACCENTS = {
+  COORDINADOR: {
+    badge: 'bg-blue-500/10 text-blue-600 border border-blue-500/20 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/25',
+    dot: 'bg-blue-500',
+    glow: 'shadow-blue-500/10'
+  },
+  LIDER: {
+    badge: 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-400 dark:border-indigo-500/25',
+    dot: 'bg-indigo-500',
+    glow: 'shadow-indigo-500/10'
+  },
+  DESARROLLADOR: {
+    badge: 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/25',
+    dot: 'bg-emerald-500',
+    glow: 'shadow-emerald-500/10'
+  },
+  SISTEMA: {
+    badge: 'bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/25',
+    dot: 'bg-amber-500',
+    glow: 'shadow-amber-500/10'
+  }
+};
+
+const getRolAccent = (rol) => ROL_ACCENTS[rol] || ROL_ACCENTS.DESARROLLADOR;
 
 export const ChatCorporativo = () => {
   const { user } = useAuth();
@@ -59,6 +154,7 @@ export const ChatCorporativo = () => {
   const [messages, setMessages] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
   
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -188,12 +284,18 @@ export const ChatCorporativo = () => {
       className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden h-[calc(100vh-180px)] min-h-[650px] flex flex-col"
     >
       
-      {/* Header Superior Corporativo */}
-      <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center shadow-md flex-shrink-0">
+      {/* Header Superior Corporativo con glow sutil */}
+      <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0 relative overflow-hidden">
+        {/* Glow perimetral de fondo en la cabecera */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${currentChannel.glowFrom || 'from-blue-500/5'} via-transparent ${currentChannel.glowTo || 'to-blue-600/10'} pointer-events-none`} />
+
+        <div className="flex items-center gap-3 relative z-10">
+          <motion.div 
+            whileHover={{ rotate: [0, -6, 6, 0], transition: { duration: 0.5 } }}
+            className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center shadow-md flex-shrink-0"
+          >
             <MessageSquare size={20} />
-          </div>
+          </motion.div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
@@ -209,17 +311,19 @@ export const ChatCorporativo = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 self-end sm:self-auto">
-          <button
+        <div className="flex items-center gap-2.5 self-end sm:self-auto relative z-10">
+          <motion.button
             type="button"
             onClick={() => cargarMensajes(activeChannel)}
             disabled={loadingMessages}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.94 }}
             className="outline-button text-xs py-1.5 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
             title="Refrescar hilo de conversación"
           >
             <RefreshCw size={13} className={loadingMessages ? 'animate-spin' : ''} />
             <span>Refrescar</span>
-          </button>
+          </motion.button>
 
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[0.7rem] font-extrabold">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
@@ -237,7 +341,7 @@ export const ChatCorporativo = () => {
           
           {/* Segmented Tab Bar */}
           <div className="p-3 border-b border-zinc-200 dark:border-zinc-800">
-            <div className="bg-zinc-200/70 dark:bg-zinc-800/70 p-1 rounded-2xl flex items-center gap-1">
+            <div className="bg-zinc-200/70 dark:bg-zinc-800/70 p-1 rounded-2xl flex items-center gap-1 relative">
               <button
                 type="button"
                 onClick={() => setActiveTab('canales')}
@@ -290,99 +394,124 @@ export const ChatCorporativo = () => {
           <div className="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-0">
             
             {/* Pestaña: Canales Temáticos */}
-            {activeTab === 'canales' && (
-              <div className="space-y-1">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-2 block mb-2">
-                  Temáticas de Discusión
-                </span>
-                {canalesFiltrados.map(ch => {
-                  const IconComp = ch.icon || Hash;
-                  const isActive = activeChannel === ch.id;
+            <AnimatePresence mode="wait">
+              {activeTab === 'canales' && (
+                <motion.div 
+                  key="canales-panel"
+                  variants={channelPanelVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="space-y-1"
+                >
+                  <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-2 block mb-2">
+                    Temáticas de Discusión
+                  </span>
+                  {canalesFiltrados.map((ch, idx) => {
+                    const IconComp = ch.icon || Hash;
+                    const isActive = activeChannel === ch.id;
 
-                  return (
-                    <button
-                      key={ch.id}
-                      type="button"
-                      onClick={() => setActiveChannel(ch.id)}
-                      className={`w-full text-left p-3 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-start gap-2.5 border ${
-                        isActive
-                          ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-md'
-                          : 'bg-white dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
-                      }`}
-                    >
-                      <div className={`p-1.5 rounded-xl flex-shrink-0 ${
-                        isActive 
-                          ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900' 
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
-                      }`}>
-                        <IconComp size={15} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-extrabold truncate">#{ch.name}</span>
-                          {isActive && (
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 dark:bg-emerald-600 flex-shrink-0" />
-                          )}
-                        </div>
-                        <p className={`text-[0.68rem] truncate font-normal mt-0.5 ${
-                          isActive ? 'text-zinc-300 dark:text-zinc-700' : 'text-zinc-500 dark:text-zinc-400'
+                    return (
+                      <motion.button
+                        key={ch.id}
+                        type="button"
+                        onClick={() => setActiveChannel(ch.id)}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.04, type: 'spring', stiffness: 500, damping: 30 }}
+                        whileHover={{ x: 3, transition: { duration: 0.15 } }}
+                        className={`w-full text-left p-3 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-start gap-2.5 border ${
+                          isActive
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-md'
+                            : 'bg-white dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                        }`}
+                      >
+                        <div className={`p-1.5 rounded-xl flex-shrink-0 ${
+                          isActive 
+                            ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900' 
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
                         }`}>
-                          {ch.desc}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                          <IconComp size={15} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-extrabold truncate">#{ch.name}</span>
+                            {isActive && (
+                              <motion.span 
+                                layoutId="active-channel-dot"
+                                className="w-2 h-2 rounded-full bg-emerald-400 dark:bg-emerald-600 flex-shrink-0"
+                              />
+                            )}
+                          </div>
+                          <p className={`text-[0.68rem] truncate font-normal mt-0.5 ${
+                            isActive ? 'text-zinc-300 dark:text-zinc-700' : 'text-zinc-500 dark:text-zinc-400'
+                          }`}>
+                            {ch.desc}
+                          </p>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Pestaña: Directorio de Personal */}
-            {activeTab === 'personal' && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between px-2 mb-2">
-                  <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-                    Equipo IKernell ({usuariosFiltrados.length})
-                  </span>
-                  {loadingUsers && <Loader2 size={12} className="animate-spin text-zinc-400" />}
-                </div>
+            <AnimatePresence mode="wait">
+              {activeTab === 'personal' && (
+                <motion.div 
+                  key="personal-panel"
+                  variants={channelPanelVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="space-y-1.5"
+                >
+                  <div className="flex items-center justify-between px-2 mb-2">
+                    <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                      Equipo IKernell ({usuariosFiltrados.length})
+                    </span>
+                    {loadingUsers && <Loader2 size={12} className="animate-spin text-zinc-400" />}
+                  </div>
 
-                {usuariosFiltrados.map(u => {
-                  const rolBadge = u.rol === 'COORDINADOR' ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800' :
-                                   u.rol === 'LIDER' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' :
-                                   'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800';
-                  
-                  const iniciales = `${(u.nombre || 'U')[0]}${(u.apellido || '')[0] || ''}`.toUpperCase();
+                  {usuariosFiltrados.map((u, idx) => {
+                    const accent = getRolAccent(u.rol);
+                    const iniciales = `${(u.nombre || 'U')[0]}${(u.apellido || '')[0] || ''}`.toUpperCase();
 
-                  return (
-                    <div 
-                      key={u.idTrabajador || u.email}
-                      className="p-2.5 rounded-2xl bg-white dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between gap-2 text-xs hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="relative flex-shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-black text-[0.7rem] flex items-center justify-center shadow-xs">
-                            {iniciales}
+                    return (
+                      <motion.div 
+                        key={u.idTrabajador || u.email}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.03, type: 'spring', stiffness: 500, damping: 30 }}
+                        className={`p-2.5 rounded-2xl bg-white dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between gap-2 text-xs hover:border-zinc-300 dark:hover:border-zinc-700 transition-all ${accent.glow}`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-black text-[0.7rem] flex items-center justify-center shadow-xs">
+                              {iniciales}
+                            </div>
+                            <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ${accent.dot} border-2 border-white dark:border-zinc-900 animate-pulse`} />
                           </div>
-                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 animate-pulse" />
+                          <div className="min-w-0">
+                            <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-xs truncate">
+                              {u.nombre} {u.apellido}
+                            </h4>
+                            <span className="text-[0.65rem] text-zinc-400 font-medium block truncate">
+                              {u.especialidad || u.tipoContrato || 'Desarrollador'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-xs truncate">
-                            {u.nombre} {u.apellido}
-                          </h4>
-                          <span className="text-[0.65rem] text-zinc-400 font-medium block truncate">
-                            {u.especialidad || u.tipoContrato || 'Desarrollador'}
-                          </span>
-                        </div>
-                      </div>
 
-                      <span className={`text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-md border flex-shrink-0 ${rolBadge}`}>
-                        {u.rol?.substring(0, 4)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                        <span className={`text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-md flex-shrink-0 ${accent.badge}`}>
+                          {u.rol?.substring(0, 4)}
+                        </span>
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
           </div>
 
@@ -397,19 +526,34 @@ export const ChatCorporativo = () => {
         {/* Columna Derecha: Área Principal de Conversación (Flex 1) */}
         <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-zinc-950/40 min-h-0">
           
-          {/* Header del Canal Activo */}
-          <div className="px-6 py-3.5 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 flex items-center justify-between gap-4 flex-shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-white flex-shrink-0 shadow-xs">
+          {/* Header del Canal Activo con glow perimetral */}
+          <div className="px-6 py-3.5 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 flex items-center justify-between gap-4 flex-shrink-0 relative overflow-hidden">
+            {/* Glow de fondo acentuado según el canal */}
+            <motion.div 
+              key={currentChannel.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className={`absolute inset-0 bg-gradient-to-r ${currentChannel.glowFrom || 'from-blue-500/5'} via-transparent ${currentChannel.glowTo || 'to-blue-600/10'} pointer-events-none`} 
+            />
+
+            <div className="flex items-center gap-3 min-w-0 relative z-10">
+              <motion.div 
+                key={`icon-${currentChannel.id}`}
+                initial={{ scale: 0.7, rotate: -15 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+                className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-white flex-shrink-0 shadow-xs"
+              >
                 <ChannelIcon size={18} className={currentChannel.color} />
-              </div>
+              </motion.div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate">
                     #{currentChannel.fullName}
                   </h4>
-                  <span className="text-[0.65rem] font-extrabold uppercase px-2 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono">
-                    Canal Activo
+                  <span className="text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono inline-flex items-center gap-1">
+                    <Radio size={9} className="text-emerald-500 animate-pulse" /> Canal Activo
                   </span>
                 </div>
                 <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium truncate">
@@ -418,7 +562,7 @@ export const ChatCorporativo = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0 text-xs font-bold text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center gap-2 flex-shrink-0 text-xs font-bold text-zinc-500 dark:text-zinc-400 relative z-10">
               <Users size={14} className="text-zinc-400" />
               <span>{usuarios.length} Participantes</span>
             </div>
@@ -448,9 +592,14 @@ export const ChatCorporativo = () => {
             {/* Empty State */}
             {!loadingMessages && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center py-16 text-zinc-400">
-                <div className="w-16 h-16 rounded-3xl bg-zinc-100 dark:bg-zinc-800/80 flex items-center justify-center mb-4 text-zinc-400 shadow-inner">
+                <motion.div 
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  className="w-16 h-16 rounded-3xl bg-zinc-100 dark:bg-zinc-800/80 flex items-center justify-center mb-4 text-zinc-400 shadow-inner"
+                >
                   <MessageSquare size={30} />
-                </div>
+                </motion.div>
                 <h4 className="text-sm font-extrabold text-zinc-700 dark:text-zinc-300 mb-1">
                   No hay mensajes en #{currentChannel.name}
                 </h4>
@@ -460,84 +609,98 @@ export const ChatCorporativo = () => {
               </div>
             )}
 
-            {/* Renderizado de Hilos de Conversación */}
-            {!loadingMessages && messages.map((msg, index) => {
-              const isCurrentUser = msg?.remitente?.email === user?.email || 
-                                    msg?.remitente?.idTrabajador === user?.idTrabajador;
-              
-              const nombreRemitente = msg?.remitente 
-                ? `${msg.remitente.nombre || ''} ${msg.remitente.apellido || ''}`.trim() 
-                : 'Usuario Corporativo';
-              
-              const rolRemitente = msg?.remitente?.rol || 'DESARROLLADOR';
-              
-              const horaUTC = msg?.fechaEnvio 
-                ? `${new Date(msg.fechaEnvio).toISOString().substring(11, 16)} UTC` 
-                : `${new Date().toISOString().substring(11, 16)} UTC`;
+            {/* Renderizado de Hilos de Conversación con Stagger Cascade */}
+            {!loadingMessages && messages.length > 0 && (
+              <motion.div
+                variants={messageListVariants}
+                initial="hidden"
+                animate="visible"
+                className="space-y-4"
+              >
+                {messages.map((msg, index) => {
+                  const isCurrentUser = msg?.remitente?.email === user?.email || 
+                                        msg?.remitente?.idTrabajador === user?.idTrabajador;
+                  
+                  const nombreRemitente = msg?.remitente 
+                    ? `${msg.remitente.nombre || ''} ${msg.remitente.apellido || ''}`.trim() 
+                    : 'Usuario Corporativo';
+                  
+                  const rolRemitente = msg?.remitente?.rol || 'DESARROLLADOR';
+                  const accent = getRolAccent(rolRemitente);
+                  
+                  const horaUTC = msg?.fechaEnvio 
+                    ? `${new Date(msg.fechaEnvio).toISOString().substring(11, 16)} UTC` 
+                    : `${new Date().toISOString().substring(11, 16)} UTC`;
 
-              // Formateo dinámico con resalte interactivo de etiquetas #ID (#ACT-102, #PRJ-01, #INC-05, etc.)
-              const formatContent = (text) => {
-                if (!text) return null;
-                const parts = text.split(/(#[A-Za-z0-9_-]+)/g);
-                return parts.map((part, idx) => {
-                  if (part.startsWith('#')) {
-                    return (
-                      <span 
-                        key={idx} 
-                        onClick={() => toast.success(`Referencia de Tarea/Proyecto: ${part}`, { icon: '🏷️' })}
-                        className={`font-mono font-extrabold px-1.5 py-0.5 rounded text-[0.72rem] inline-block mx-0.5 border cursor-pointer transition-all hover:scale-105 ${
+                  // Formateo dinámico con resalte interactivo de etiquetas #ID con glow translúcido
+                  const formatContent = (text) => {
+                    if (!text) return null;
+                    const parts = text.split(/(#[A-Za-z0-9_-]+)/g);
+                    return parts.map((part, idx) => {
+                      if (part.startsWith('#')) {
+                        return (
+                          <motion.span 
+                            key={idx}
+                            whileHover={{ scale: 1.08, transition: { duration: 0.15 } }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => toast.success(`Referencia de Tarea/Proyecto: ${part}`)}
+                            className={`font-mono font-extrabold px-1.5 py-0.5 rounded text-[0.72rem] inline-block mx-0.5 border cursor-pointer transition-all ${
+                              isCurrentUser
+                                ? 'bg-blue-600/40 text-white border-blue-400/50 dark:bg-blue-900/60 dark:text-blue-100 hover:bg-blue-600/60 hover:shadow-[0_0_8px_rgba(59,130,246,0.25)]'
+                                : 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/80 dark:text-blue-200 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-900 hover:shadow-[0_0_8px_rgba(59,130,246,0.15)]'
+                            }`}
+                            title={`Referencia transaccional: ${part}`}
+                          >
+                            {part}
+                          </motion.span>
+                        );
+                      }
+                      return part;
+                    });
+                  };
+
+                  return (
+                    <motion.div 
+                      key={msg?.idMensaje || `msg-${index}`}
+                      variants={messageItemVariants}
+                      className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}
+                    >
+                      {/* Metadata Header del Mensaje */}
+                      <div className="flex items-center gap-2 mb-1 px-1">
+                        <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
+                          {isCurrentUser ? 'Tú' : nombreRemitente}
+                        </span>
+                        <span className={`text-[0.6rem] font-black uppercase px-1.5 py-0.5 rounded-md ${accent.badge}`}>
+                          {rolRemitente}
+                        </span>
+                        <span className="text-[0.65rem] text-zinc-400 font-mono" title="Estampa de tiempo internacional ISO 8601 UTC">
+                          {horaUTC}
+                        </span>
+                      </div>
+
+                      {/* Burbuja de Diálogo con Alta Jerarquía Visual */}
+                      <motion.div 
+                        whileHover={{ scale: 1.008, transition: { duration: 0.2 } }}
+                        className={`p-4 rounded-3xl max-w-xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
                           isCurrentUser
-                            ? 'bg-blue-600/40 text-white border-blue-400/50 dark:bg-blue-900/60 dark:text-blue-100 hover:bg-blue-600/60'
-                            : 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/80 dark:text-blue-200 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-900'
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium rounded-tr-none shadow-md'
+                            : 'bg-zinc-100 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 rounded-tl-none border border-zinc-200 dark:border-zinc-700/80 shadow-sm'
                         }`}
-                        title={`Referencia transaccional: ${part}`}
                       >
-                        {part}
-                      </span>
-                    );
-                  }
-                  return part;
-                });
-              };
+                        {formatContent(msg?.contenido)}
+                      </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
 
-              const rolBadgeStyle = 
-                rolRemitente === 'COORDINADOR' ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800' :
-                rolRemitente === 'LIDER' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800' :
-                rolRemitente === 'SISTEMA' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800' :
-                'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700';
-
-              return (
-                <motion.div 
-                  key={msg?.idMensaje || `msg-${index}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}
-                >
-                  {/* Metadata Header del Mensaje */}
-                  <div className="flex items-center gap-2 mb-1 px-1">
-                    <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
-                      {isCurrentUser ? 'Tú' : nombreRemitente}
-                    </span>
-                    <span className={`text-[0.6rem] font-black uppercase px-1.5 py-0.2 rounded border ${rolBadgeStyle}`}>
-                      {rolRemitente}
-                    </span>
-                    <span className="text-[0.65rem] text-zinc-400 font-mono" title="Estampa de tiempo internacional ISO 8601 UTC">
-                      {horaUTC}
-                    </span>
-                  </div>
-
-                  {/* Burbuja de Diálogo con Alta Jerarquía Visual */}
-                  <div className={`p-4 rounded-3xl max-w-xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
-                    isCurrentUser
-                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium rounded-tr-none shadow-md'
-                      : 'bg-zinc-100 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 rounded-tl-none border border-zinc-200 dark:border-zinc-700/80 shadow-sm'
-                  }`}>
-                    {formatContent(msg?.contenido)}
-                  </div>
-                </motion.div>
-              );
-            })}
+            {/* Typing Indicator dinámico al tener foco */}
+            <AnimatePresence>
+              {inputFocused && newMessage.length > 0 && (
+                <TypingIndicator />
+              )}
+            </AnimatePresence>
 
             <div ref={messagesEndRef} />
           </div>
@@ -551,14 +714,16 @@ export const ChatCorporativo = () => {
                 <Tag size={11} /> Mencionar:
               </span>
               {QUICK_TAGS.map(tag => (
-                <button
+                <motion.button
                   key={tag}
                   type="button"
                   onClick={() => handleInsertTag(tag)}
-                  className="px-2.5 py-1 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-mono text-[0.7rem] font-bold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer inline-flex items-center gap-1 shadow-xs"
+                  whileHover={{ scale: 1.06, y: -1 }}
+                  whileTap={{ scale: 0.94 }}
+                  className="px-2.5 py-1 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-mono text-[0.7rem] font-bold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer inline-flex items-center gap-1 shadow-xs hover:shadow-[0_0_6px_rgba(59,130,246,0.12)]"
                 >
                   <Plus size={10} /> {tag}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -571,8 +736,12 @@ export const ChatCorporativo = () => {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onFocus={() => setInputFocused(true)}
+                  onBlur={() => setInputFocused(false)}
                   placeholder={`Escribir en #${currentChannel.name}... (Enter para enviar, Shift+Enter para salto)`}
-                  className="input-field py-2.5 px-4 text-xs sm:text-sm bg-white dark:bg-zinc-900 resize-none font-sans min-h-[52px]"
+                  className={`input-field py-2.5 px-4 text-xs sm:text-sm bg-white dark:bg-zinc-900 resize-none font-sans min-h-[52px] transition-shadow duration-300 ${
+                    inputFocused ? 'shadow-[0_0_0_2px_rgba(59,130,246,0.15)]' : ''
+                  }`}
                   disabled={sending}
                 />
                 <span className="absolute right-3 bottom-2 text-[0.65rem] text-zinc-400 font-mono hidden sm:inline">
@@ -580,9 +749,13 @@ export const ChatCorporativo = () => {
                 </span>
               </div>
 
-              <button
+              <motion.button
                 type="submit"
                 disabled={!newMessage.trim() || sending}
+                variants={sendButtonVariants}
+                initial="idle"
+                whileHover="hover"
+                whileTap="tap"
                 className="gradient-button px-5 py-3 text-xs sm:text-sm font-bold flex-shrink-0 cursor-pointer disabled:opacity-40 inline-flex items-center justify-center gap-2 shadow-md h-[52px]"
                 title="Enviar mensaje"
               >
@@ -594,7 +767,7 @@ export const ChatCorporativo = () => {
                     <Send size={15} />
                   </>
                 )}
-              </button>
+              </motion.button>
             </form>
 
           </div>
