@@ -125,8 +125,8 @@ const getEstadoBadgeClasses = (estado) => {
 };
 
 const formatearMoneda = (monto) => {
-  const val = Number(monto || 0);
-  if (isNaN(val) || val <= 0) return 'Sin dimensionar';
+  const val = Number(monto);
+  if (isNaN(val) || val <= 0) return null;
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 };
 
@@ -140,13 +140,13 @@ const formatearFechaHumana = (fechaStr) => {
       if (y && m && d && !isNaN(y) && !isNaN(m) && !isNaN(d)) {
         const date = new Date(y, m - 1, d, 12, 0, 0);
         if (!isNaN(date.getTime())) {
-          return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+          return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
         }
       }
     }
     const date = new Date(fechaStr);
     if (!isNaN(date.getTime())) {
-      return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+      return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
     }
     return 'Fecha no definida';
   } catch {
@@ -1170,10 +1170,18 @@ export const LiderDashboard = () => {
                   <CircleDollarSign size={16} />
                 </div>
                 <div className="min-w-0 flex-1 flex flex-col">
-                  <span className="text-xs text-zinc-500 font-medium">Dimensión Presupuestal</span>
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    {formatearMoneda(proyectoSeleccionado?.presupuesto || 0)}
+                  <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-0.5">
+                    Dimensión Presupuestal
                   </span>
+                  {formatearMoneda(proyectoSeleccionado?.presupuesto) ? (
+                    <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 font-mono">
+                      {formatearMoneda(proyectoSeleccionado.presupuesto)}
+                    </span>
+                  ) : (
+                    <span className="text-zinc-500 italic text-xs">
+                      Presupuesto por definir
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -1189,10 +1197,10 @@ export const LiderDashboard = () => {
                     </span>
                     {duracionEstimada && (
                       <span 
-                        className="inline-flex items-center gap-1 text-[0.65rem] font-extrabold px-2 py-0.5 rounded-md bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 font-mono"
+                        className="inline-flex items-center gap-1 text-[0.65rem] font-extrabold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-mono"
                         title="Duración total calculada entre la fecha de inicio y la fecha estimada de finalización"
                       >
-                        <Clock size={10} /> {duracionEstimada}
+                        <Clock size={10} /> (Duración: {duracionEstimada})
                       </span>
                     )}
                   </div>
@@ -1239,12 +1247,12 @@ export const LiderDashboard = () => {
                 )}
               </div>
               {proyectoSeleccionado?.descripcion?.trim() ? (
-                <p className={`text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed pt-0.5 ${!scopeExpanded && (proyectoSeleccionado.descripcion?.length || 0) > 120 ? 'line-clamp-2' : ''}`}>
+                <p className={`text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed text-xs pt-0.5 ${!scopeExpanded && (proyectoSeleccionado.descripcion?.length || 0) > 120 ? 'line-clamp-2' : ''}`}>
                   {proyectoSeleccionado.descripcion}
                 </p>
               ) : (
-                <p className="text-zinc-400 dark:text-zinc-500 italic font-medium leading-relaxed pt-0.5">
-                  Sin descripción detallada del alcance para este proyecto. Contacte al Coordinador para mayor información.
+                <p className="text-zinc-500 italic text-xs font-medium leading-relaxed pt-0.5">
+                  No se ha definido el alcance de este proyecto.
                 </p>
               )}
             </div>
