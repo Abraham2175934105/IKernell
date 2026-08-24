@@ -160,27 +160,7 @@ El sistema implementa una matriz estricta de Control de Acceso Basado en Roles (
 
 ---
 
-## 5. Modulos de Innovacion Empresarial
-
-### 5.1. Semaforo Predictivo Inteligente (capacity.pulse)
-Algoritmo continuo en tiempo real que evalua la salud operacional de los proyectos combinando la acumulacion de minutos de interrupcion externa con la gravedad de los errores tecnicos registrados:
-* Estado Verde (Estable): Flujo operativo continuo sin impedimentos criticos.
-* Estado Naranja (Advertencia / Atencion): Deteccion de contingencias acumuladas o errores de severidad media que sugieren redistribucion preventiva.
-* Estado Rojo (Riesgo Critico): Superacion de umbrales tolerables de contingencia o presencia de errores criticos; emite alerta para intervencion del lider.
-
-### 5.2. Pipeline Batch ETL Alianza Estratégica Brasil
-Canalizacion de datos orientada a la interoperabilidad internacional con aliados estrategicos:
-* Estandar de Tiempos: Fechas y marcas de tiempo normalizadas bajo norma ISO 8601 UTC (YYYY-MM-DDTHH:mm:ssZ).
-* Estructura de Archivo: Registros planos delimitados por barra vertical (|).
-* Mecanismos de Ejecucion: Modo manual One-Click desde el panel del lider y modo desatendido automatico mediante tareas programadas (@Scheduled) en Spring Boot.
-* Certificacion de Integridad: Firma de contenido mediante hash SHA-256 generado al momento de la emision.
-
-### 5.3. Repositorio de Micro-Snippets con Busqueda Difusa Trigramatica
-Motor de reutilizacion de codigo que permite a los desarrolladores consultar fragmentos optimizados mediante similitud de texto calculada por la extension pg_trgm de PostgreSQL y acelerada con indices GIN, logrando tiempos de respuesta inferiores a 50 ms.
-
----
-
-## 6. Guia de Despliegue e Instalacion
+## 5. Guia de Despliegue e Instalacion
 
 ### Requisitos Previos
 * Java Development Kit (JDK): Version 17 LTS o superior.
@@ -189,7 +169,7 @@ Motor de reutilizacion de codigo que permite a los desarrolladores consultar fra
 * pnpm: Version 8.0 o superior (gestor de paquetes exclusivo; el uso de otros gestores no esta permitido por la politica de calidad del proyecto).
 * PostgreSQL: Version 14 o superior (instalado localmente o accesible por red).
 
-### 6.1. Preparacion de la Base de Datos
+### 5.1. Preparacion de la Base de Datos
 1. Acceda a la consola de administracion de PostgreSQL (`psql`) y cree la base de datos:
 ```sql
 CREATE DATABASE backend_db;
@@ -207,7 +187,7 @@ spring.datasource.username=abrah
 spring.datasource.password=abrah1234
 ```
 
-### 6.2. Compilacion y Ejecucion del Backend (Spring Boot)
+### 5.2. Compilacion y Ejecucion del Backend (Spring Boot)
 1. Navegue al directorio del backend:
 ```bash
 cd backend
@@ -223,7 +203,7 @@ mvn spring-boot:run
 * El servidor iniciara en el puerto configurado: `http://localhost:8080`
 * Documentacion interactiva OpenAPI / Swagger: `http://localhost:8080/swagger-ui.html`
 
-### 6.3. Instalacion y Ejecucion del Frontend (React + Vite + pnpm)
+### 5.3. Instalacion y Ejecucion del Frontend (React + Vite + pnpm)
 1. Navegue al directorio del frontend:
 ```bash
 cd ../frontend
@@ -244,7 +224,7 @@ pnpm run build
 
 ---
 
-## 7. Credenciales de Acceso para Pruebas
+## 6. Credenciales de Acceso para Pruebas
 
 Para validar los flujos de trabajo de cada rol en el entorno local de desarrollo, utilice las siguientes cuentas sembradas en la base de datos:
 
@@ -258,12 +238,51 @@ Para validar los flujos de trabajo de cada rol en el entorno local de desarrollo
 
 ---
 
-## 8. Politicas de Seguridad, Calidad y Mantenibilidad
+## 7. Politicas de Seguridad, Calidad y Mantenibilidad
 
 * Control de Acceso Stateless: Ausencia total de sesiones HTTP en memoria de servidor; cada solicitud es validada independientemente mediante tokens JWT.
 * Proteccion contra Ataques XSS: Sanitizacion obligatoria en cliente mediante DOMPurify y tipado estricto en entidades JPA.
 * Gestion Segura de Secretos: Exclusion de archivos `.env`, credenciales productivas y carpetas de compilacion mediante reglas estrictas en `.gitignore`.
 * Prevencion de Fugas de Memoria: Paginacion obligatoria con objetos `Pageable` de Spring Data en consultas masivas de personal y actividades.
+
+---
+
+## 8. Matriz de Requerimientos Funcionales y No Funcionales
+
+El proyecto IKernell satisface la totalidad de los requerimientos de la especificacion tecnica oficial:
+
+| Modulo / Dominio | Codigo RF / RNF | Descripcion de la Funcionalidad | Estado de Implementacion |
+| :--- | :--- | :--- | :--- |
+| Autenticacion | RNF-08 a RNF-10 | Autenticacion JWT Stateless con cifrado BCrypt y filtrado Spring Security | Implementado (100%) |
+| Coordinador | RF-01 a RF-05 | Gestion de talentos, inhabilitacion logica y bandeja de solicitudes comerciales | Implementado (100%) |
+| Lider de Proyecto | RF-11 a RF-20 | Dimensionamiento WBS, asignacion max. 48h semanal y reasignacion con auditoria | Implementado (100%) |
+| Desarrollador | RF-21 a RF-24 | Tablero personal de actividades, reporte de errores y contingencias | Implementado (100%) |
+| Analitica Predictiva | RF-25 a RF-27 | Algoritmo capacity.pulse (Semáforo) y proyeccion Burnout de fatiga 21d | Implementado (100%) |
+| Interoperabilidad ETL | RF-28 | Pipeline batch delimitado por pipe ISO 8601 UTC con sello SHA-256 | Implementado (100%) |
+| Biblioteca Digital | RF-33 | Visor dual Hoja A4 / Consola tecnica con exportacion PDF directa en cliente | Implementado (100%) |
+| Micro-Snippets | RF-36 | Motor Snippet.inject con busqueda difusa por similitud de trigramas (`pg_trgm`) | Implementado (100%) |
+
+---
+
+## 9. Módulos de Innovación Empresarial y Gestión del Conocimiento
+
+### 9.1. Semáforo Predictivo Inteligente (capacity.pulse)
+Algoritmo continuo en tiempo real que evalúa la salud operacional de los proyectos combinando la acumulación de minutos de interrupción externa con la gravedad de los errores técnicos registrados:
+* Estado Verde (Estable): Flujo operativo continuo sin impedimentos críticos.
+* Estado Naranja (Advertencia / Atención): Detección de contingencias acumuladas o errores de severidad media que sugieren redistribución preventiva.
+* Estado Rojo (Riesgo Crítico): Superación de umbrales tolerables de contingencia o presencia de errores críticos; emite alerta para intervención del líder.
+
+### 9.2. Pipeline Batch ETL Alianza Estratégica Brasil
+Canalización de datos orientada a la interoperabilidad internacional con aliados estratégicos:
+* Estándar de Tiempos: Fechas y marcas de tiempo normalizadas bajo norma ISO 8601 UTC (YYYY-MM-DDTHH:mm:ssZ).
+* Estructura de Archivo: Registros planos delimitados por barra vertical (|).
+* Mecanismos de Ejecución: Modo manual One-Click desde el panel del líder y modo desatendido automático mediante tareas programadas (@Scheduled) en Spring Boot.
+* Certificación de Integridad: Firma de contenido mediante hash SHA-256 generado al momento de la emisión.
+
+### 9.3. Gestión del Conocimiento y Productividad Técnica
+Módulo integral para la gobernanza de documentación institucional y aceleración de la resolución de contingencias de desarrollo:
+* **Biblioteca Digital con Visor Dual A4 (RF-33):** Sistema de documentación técnica interactiva que ofrece conmutación fluida entre la vista formal estilizada en hoja A4 y la consola técnica. Soporta renderizado de Markdown/GFM, cambio dinámico de tema Claro/Oscuro y generación y descarga directa en el cliente de archivos PDF estilizados utilizando jsPDF y html2canvas sin requerir procesamiento adicional en servidor.
+* **Motor de Inyección Predictiva Snippet.inject (RF-36):** Motor de aceleración operativa y reutilización de componentes de software basado en la búsqueda difusa por similitud de trigramas (`pg_trgm`) en PostgreSQL. Optimizado mediante índices GIN (`gin_trgm_ops`) para lograr respuestas en sub-50 ms, permitiendo el autocompletado predictivo e inyección directa de plantillas de solución técnica y scripts al portapapeles.
 
 ---
 
