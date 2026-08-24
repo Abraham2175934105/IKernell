@@ -86,8 +86,10 @@ public class EtlAutomationService {
         List<Error> errores = errorRepository.findByProyectoWithDetails(proyecto);
         List<Interrupcion> interrupciones = interrupcionRepository.findByProyectoWithDetails(proyecto);
 
-        // Estructuración del archivo plano con encabezado, desglose WBS y métricas
-        StringBuilder sb = new StringBuilder();
+        int totalEstimado = etapas.size() + errores.size() + interrupciones.size() + 5;
+        // Asignación de capacidad inicial para evitar relocalizaciones continuas en memoria RAM
+        StringBuilder sb = new StringBuilder(Math.min(5242880, Math.max(1024, totalEstimado * 200)));
+
         sb.append("HEADER|SYSTEM_IKERNELL|PARTNER_BRAZIL|TYPE_EXPORT|")
           .append(LocalDateTime.now(ZoneId.of("UTC")).format(ISO_FORMATTER)).append("\n");
 
@@ -109,9 +111,9 @@ public class EtlAutomationService {
             totalRegistros++;
         }
 
-        // Registro de Errores Técnicos
+        // Registro de Errores Técnicos con estandarización UTC estricta
         for (Error err : errores) {
-            LocalDateTime fechaReg = err.getFechaRegistro() != null ? err.getFechaRegistro() : LocalDateTime.now();
+            LocalDateTime fechaReg = err.getFechaRegistro() != null ? err.getFechaRegistro() : LocalDateTime.now(ZoneId.of("UTC"));
             String isoDate = fechaReg.atZone(ZoneId.systemDefault())
                     .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
 
@@ -131,9 +133,9 @@ public class EtlAutomationService {
             totalRegistros++;
         }
 
-        // Registro de Contingencias e Interrupciones Operativas
+        // Registro de Contingencias e Interrupciones Operativas con estandarización UTC estricta
         for (Interrupcion intp : interrupciones) {
-            LocalDateTime fechaOcurr = intp.getFechaOcurrencia() != null ? intp.getFechaOcurrencia() : LocalDateTime.now();
+            LocalDateTime fechaOcurr = intp.getFechaOcurrencia() != null ? intp.getFechaOcurrencia() : LocalDateTime.now(ZoneId.of("UTC"));
             String isoDate = fechaOcurr.atZone(ZoneId.systemDefault())
                     .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
 
@@ -158,20 +160,26 @@ public class EtlAutomationService {
 
         String nombreArchivo = String.format("METRICAS_BRASIL_PROY_%d_%s.txt",
                 proyecto.getIdProyecto(),
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")));
+                LocalDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")));
 
-        byte[] contenidoPlano = sb.toString().getBytes(StandardCharsets.UTF_8);
+        String contenidoCompleto = sb.toString();
+        byte[] contenidoPlano = contenidoCompleto.getBytes(StandardCharsets.UTF_8);
 
         // Envío simulado por canal seguro SFTP
         String mensajeEnvio = simularEnvioSeguroSftpYEmail(nombreArchivo, contenidoPlano);
+
+        // Protección contra desbordamiento en respuesta REST: truncar vista previa si excede 50k caracteres
+        String vistaPrevia = contenidoCompleto.length() > 50000 
+                ? contenidoCompleto.substring(0, 50000) + "\n...[TRUNCADO POR TAMAÑO EXCESIVO EN VISTA PREVIA REST]..." 
+                : contenidoCompleto;
 
         return new EtlReportResponse(
                 nombreArchivo,
                 "PROCESADO_EXITOSAMENTE (" + tipoEjecucion + ")",
                 totalRegistros,
-                LocalDateTime.now(),
+                LocalDateTime.now(ZoneId.of("UTC")),
                 mensajeEnvio,
-                sb.toString()
+                vistaPrevia
         );
     }
 
