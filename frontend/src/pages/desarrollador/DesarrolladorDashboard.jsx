@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { 
   CheckSquare, Bug, AlertTriangle, X, CheckCircle2, 
-  ChevronRight, Clock, Plus, Activity, Layers, Sparkles,
+  ChevronRight, ChevronDown, Clock, Plus, Activity, Layers, Sparkles,
   Loader2, Inbox, RefreshCw, Eye, RotateCcw, Info, ArrowRight,
   FileText, Calendar, User, ShieldAlert, Play, Check,
   Filter, SlidersHorizontal, Search, FolderGit2, ArrowUpDown,
@@ -65,6 +65,103 @@ const EmptyState = ({ icon: Icon, title, description, action }) => (
     {action && action}
   </div>
 );
+
+// Componente Dropdown Personalizado Enterprise con Iconos, Micro-Badges y Click-Outside
+const CustomDropdown = ({ 
+  icon: Icon, 
+  iconColor = 'text-zinc-500', 
+  label, 
+  value, 
+  options = [], 
+  onChange 
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === value) || options[0];
+  const SelectedIcon = selectedOption?.icon || Icon;
+
+  return (
+    <div className="relative flex-1 min-w-[180px]" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold transition-all cursor-pointer shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500/20"
+      >
+        <div className="flex items-center gap-2 truncate">
+          {SelectedIcon && <SelectedIcon size={14} className={selectedOption?.iconColor || iconColor} />}
+          {selectedOption?.badgeColor && (
+            <span className={`w-2 h-2 rounded-full ${selectedOption.badgeColor} flex-shrink-0`} />
+          )}
+          <span className="truncate text-zinc-900 dark:text-zinc-100 font-bold">
+            {selectedOption?.label || label}
+          </span>
+        </div>
+        <ChevronDown 
+          size={14} 
+          className={`text-zinc-400 dark:text-zinc-500 transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} 
+        />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="absolute left-0 right-0 sm:left-auto sm:right-0 z-30 mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-2xl p-1.5 min-w-[210px] space-y-0.5"
+          >
+            {label && (
+              <div className="px-3 py-1.5 text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 border-b border-zinc-100 dark:border-zinc-800/80 mb-1">
+                {label}
+              </div>
+            )}
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              const OptIcon = opt.icon;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white font-extrabold'
+                      : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 hover:text-zinc-900 dark:hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 truncate">
+                    {opt.badgeColor ? (
+                      <span className={`w-2 h-2 rounded-full ${opt.badgeColor} flex-shrink-0`} />
+                    ) : OptIcon ? (
+                      <OptIcon size={14} className={opt.iconColor || 'text-zinc-400'} />
+                    ) : null}
+                    <span className="truncate">{opt.label}</span>
+                  </div>
+                  {isSelected && <Check size={13} className="text-blue-600 dark:text-blue-400 flex-shrink-0" />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // Indicador visual del estado de una actividad
 const EstadoBadge = ({ estado }) => {
@@ -134,6 +231,7 @@ export const DesarrolladorDashboard = () => {
   // Estados para Filtros y Conmutador de Vistas del Historial (HU-17 / RF-22 a RF-24)
   const [searchReportQuery, setSearchReportQuery] = useState('');
   const [filtroSeveridad, setFiltroSeveridad] = useState('TODAS');
+  const [filtroDuracion, setFiltroDuracion] = useState('TODAS');
   const [filtroEstadoAtencion, setFiltroEstadoAtencion] = useState('TODOS');
   const [ordenarReportesPor, setOrdenarReportesPor] = useState('RECIENTES');
   const [reportViewMode, setReportViewMode] = useState('grid'); // 'grid' | 'list'
@@ -360,7 +458,7 @@ export const DesarrolladorDashboard = () => {
   };
 
   const handleReportarInterrupcion = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!validarInterrupcionForm()) return;
 
     try {
@@ -369,7 +467,7 @@ export const DesarrolladorDashboard = () => {
         idEtapa: parseInt(interrupcionForm.idEtapa),
         tipoInterrupcion: interrupcionForm.tipoInterrupcion,
         duracionMinutos: parseInt(interrupcionForm.duracionMinutos),
-        comentarios: interrupcionForm.comentarios.trim()
+        comentarios: (interrupcionForm.comentarios || '').trim()
       });
       
       toast.success(`Caso de Contingencia (${interrupcionForm.duracionMinutos} min) registrado con éxito. Guardado en PostgreSQL.`, { duration: 3000 });
@@ -377,9 +475,10 @@ export const DesarrolladorDashboard = () => {
       setInterrupcionForm({ idEtapa: '', tipoInterrupcion: '', duracionMinutos: '', comentarios: '' });
       setEtapaPreseleccionada(null);
       setInterrupcionFormErrors({});
+      cargarMisReportes();
     } catch (err) {
       console.error('Error registrando interrupción:', err);
-      toast.error(err.message || 'Error al registrar la contingencia.');
+      toast.error(err?.message || 'Error al registrar la contingencia.');
     } finally {
       setSubmittingInterrupcion(false);
     }
@@ -464,17 +563,17 @@ export const DesarrolladorDashboard = () => {
   };
 
   const listaReportesUnificada = useMemo(() => {
-    const errs = (misReportes.errores || []).map(e => ({
+    const errs = (misReportes?.errores || []).map(e => ({
       ...e,
       _tipo: 'ERROR',
-      _id: `err-${e.idError}`,
-      _fecha: new Date(e.fechaRegistro || Date.now())
+      _id: `err-${e?.idError || e?.id || Math.random()}`,
+      _fecha: new Date(e?.fechaRegistro || Date.now())
     }));
-    const ints = (misReportes.interrupciones || []).map(i => ({
+    const ints = (misReportes?.interrupciones || []).map(i => ({
       ...i,
       _tipo: 'INTERRUPCION',
-      _id: `int-${i.idInterrupcion}`,
-      _fecha: new Date(i.fechaOcurrencia || Date.now())
+      _id: `int-${i?.idInterrupcion || i?.id || Math.random()}`,
+      _fecha: new Date(i?.fechaOcurrencia || i?.fechaRegistro || Date.now())
     }));
     const combined = [...errs, ...ints].sort((a, b) => b._fecha - a._fecha);
     if (filtroHistorial === 'ERRORES') return combined.filter(c => c._tipo === 'ERROR');
@@ -490,23 +589,34 @@ export const DesarrolladorDashboard = () => {
     if (searchReportQuery.trim()) {
       const q = searchReportQuery.trim().toLowerCase();
       list = list.filter(item => {
-        const desc = (item.descripcion || item.comentarios || '').toLowerCase();
-        const etapa = (item.etapa?.nombreEtapa || item.etapa?.nombre || '').toLowerCase();
-        const proy = (item.etapa?.proyecto?.nombre || '').toLowerCase();
-        const resNota = (item.resolucionNota || '').toLowerCase();
-        const tipoStr = (item.tipoError || item.tipoInterrupcion || '').toLowerCase();
+        const desc = (item?.descripcion || item?.comentarios || '').toLowerCase();
+        const etapa = (item?.etapa?.nombreEtapa || item?.etapa?.nombre || '').toLowerCase();
+        const proy = (item?.etapa?.proyecto?.nombre || '').toLowerCase();
+        const resNota = (item?.resolucionNota || '').toLowerCase();
+        const tipoStr = (item?.tipoError || item?.tipoInterrupcion || '').toLowerCase();
         return desc.includes(q) || etapa.includes(q) || proy.includes(q) || resNota.includes(q) || tipoStr.includes(q);
       });
     }
 
-    // 2. Filtro por Severidad / Impacto
+    // 2. Filtro por Severidad / Impacto (para Errores)
     if (filtroSeveridad !== 'TODAS') {
-      list = list.filter(item => item.severidad === filtroSeveridad);
+      list = list.filter(item => item?.severidad === filtroSeveridad);
+    }
+
+    // 2b. Filtro por Duración de Bloqueo (para Interrupciones)
+    if (filtroHistorial === 'INTERRUPCIONES' && filtroDuracion !== 'TODAS') {
+      list = list.filter(item => {
+        const mins = parseInt(item?.duracionMinutos || 0);
+        if (filtroDuracion === 'CORTA') return mins <= 30;
+        if (filtroDuracion === 'MEDIA') return mins > 30 && mins <= 60;
+        if (filtroDuracion === 'LARGA') return mins > 60;
+        return true;
+      });
     }
 
     // 3. Filtro por Estado de Atención
     if (filtroEstadoAtencion !== 'TODOS') {
-      list = list.filter(item => (item.estadoAtencion || 'REGISTRADO') === filtroEstadoAtencion);
+      list = list.filter(item => (item?.estadoAtencion || 'REGISTRADO') === filtroEstadoAtencion);
     }
 
     // 4. Ordenamiento dinámico
@@ -519,22 +629,28 @@ export const DesarrolladorDashboard = () => {
       }
       if (ordenarReportesPor === 'SEVERIDAD') {
         const sevOrder = { 'CRITICA': 4, 'ALTA': 3, 'MEDIA': 2, 'BAJA': 1 };
-        const sA = sevOrder[a.severidad] || 0;
-        const sB = sevOrder[b.severidad] || 0;
+        const sA = sevOrder[a?.severidad] || 0;
+        const sB = sevOrder[b?.severidad] || 0;
         return sB - sA;
+      }
+      if (ordenarReportesPor === 'DURACION') {
+        const dA = parseInt(a?.duracionMinutos || 0);
+        const dB = parseInt(b?.duracionMinutos || 0);
+        return dB - dA;
       }
       return 0;
     });
 
     return list;
-  }, [listaReportesUnificada, searchReportQuery, filtroSeveridad, filtroEstadoAtencion, ordenarReportesPor]);
+  }, [listaReportesUnificada, searchReportQuery, filtroSeveridad, filtroDuracion, filtroEstadoAtencion, ordenarReportesPor, filtroHistorial]);
 
-  const activeReportFiltersCount = (searchReportQuery ? 1 : 0) + (filtroHistorial !== 'TODOS' ? 1 : 0) + (filtroSeveridad !== 'TODAS' ? 1 : 0) + (filtroEstadoAtencion !== 'TODOS' ? 1 : 0) + (ordenarReportesPor !== 'RECIENTES' ? 1 : 0);
+  const activeReportFiltersCount = (searchReportQuery ? 1 : 0) + (filtroHistorial !== 'TODOS' ? 1 : 0) + (filtroSeveridad !== 'TODAS' ? 1 : 0) + (filtroDuracion !== 'TODAS' ? 1 : 0) + (filtroEstadoAtencion !== 'TODOS' ? 1 : 0) + (ordenarReportesPor !== 'RECIENTES' ? 1 : 0);
 
   const handleClearReportFilters = () => {
     setSearchReportQuery('');
     setFiltroHistorial('TODOS');
     setFiltroSeveridad('TODAS');
+    setFiltroDuracion('TODAS');
     setFiltroEstadoAtencion('TODOS');
     setOrdenarReportesPor('RECIENTES');
   };
@@ -1041,7 +1157,7 @@ export const DesarrolladorDashboard = () => {
       )}
 
       {/* Pestaña: Módulo para registrar incidencias e interrupciones */}
-      {activeTab === 'reportar' && (
+      {(activeTab === 'reportar' || activeTab === 'interrupciones' || activeTab === 'contingencias') && (
         <motion.div 
           key="reportar"
           variants={containerVariants}
@@ -1223,7 +1339,7 @@ export const DesarrolladorDashboard = () => {
                       ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900'
                       : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
                   }`}>
-                    {(misReportes.errores?.length || 0) + (misReportes.interrupciones?.length || 0)}
+                    {(misReportes?.errores?.length || 0) + (misReportes?.interrupciones?.length || 0)}
                   </span>
                 </button>
 
@@ -1326,92 +1442,74 @@ export const DesarrolladorDashboard = () => {
 
             </div>
 
-            {/* Fila 2: Selectores Desplegables con Íconos Vectoriales (SIN EMOJIS) + Contador */}
+            {/* Fila 2: Selectores Desplegables Enterprise con Íconos Vectoriales y Micro-Badges (SIN SELECT NATIVOS) */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs">
               
-              {/* Selectores Desplegables con Íconos Vectoriales */}
+              {/* Selectores Desplegables Enterprise */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 max-w-3xl">
                 
                 {/* Selector 1: Severidad (Errores/Todos) o Duración (Interrupciones) */}
                 {filtroHistorial === 'INTERRUPCIONES' ? (
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 pointer-events-none z-10">
-                      <Clock size={14} />
-                    </div>
-                    <select
-                      value={filtroDuracion}
-                      onChange={(e) => setFiltroDuracion(e.target.value)}
-                      className="select-field pl-9 appearance-none w-full"
-                    >
-                      <optgroup label="Duración de Bloqueo">
-                        <option value="TODAS">Cualquier Duración</option>
-                        <option value="CORTA">Corta (Hasta 30 min)</option>
-                        <option value="MEDIA">Media (30 a 60 min)</option>
-                        <option value="LARGA">Larga (Más de 60 min)</option>
-                      </optgroup>
-                    </select>
-                  </div>
+                  <CustomDropdown
+                    icon={Clock}
+                    iconColor="text-amber-500"
+                    label="Duración de Bloqueo"
+                    value={filtroDuracion}
+                    onChange={setFiltroDuracion}
+                    options={[
+                      { value: 'TODAS', label: 'Cualquier Duración', badgeColor: 'bg-zinc-400' },
+                      { value: 'CORTA', label: 'Corta (Hasta 30 min)', badgeColor: 'bg-emerald-500' },
+                      { value: 'MEDIA', label: 'Media (30 a 60 min)', badgeColor: 'bg-amber-500' },
+                      { value: 'LARGA', label: 'Larga (Más de 60 min)', badgeColor: 'bg-red-500' }
+                    ]}
+                  />
                 ) : (
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none z-10">
-                      <ShieldAlert size={14} />
-                    </div>
-                    <select
-                      value={filtroSeveridad}
-                      onChange={(e) => setFiltroSeveridad(e.target.value)}
-                      className="select-field pl-9 appearance-none w-full"
-                    >
-                      <optgroup label="Grado de Severidad">
-                        <option value="TODAS">Todas las Severidades</option>
-                        <option value="CRITICA">Crítica (Prioridad Máxima)</option>
-                        <option value="ALTA">Alta (Atención Requerida)</option>
-                        <option value="MEDIA">Media (Impacto Moderado)</option>
-                        <option value="BAJA">Baja (Menor Severidad)</option>
-                      </optgroup>
-                    </select>
-                  </div>
+                  <CustomDropdown
+                    icon={ShieldAlert}
+                    iconColor="text-red-500"
+                    label="Grado de Severidad"
+                    value={filtroSeveridad}
+                    onChange={setFiltroSeveridad}
+                    options={[
+                      { value: 'TODAS', label: 'Todas las Severidades', badgeColor: 'bg-zinc-400' },
+                      { value: 'CRITICA', label: 'Crítica (Prioridad Máxima)', badgeColor: 'bg-red-500' },
+                      { value: 'ALTA', label: 'Alta (Atención Requerida)', badgeColor: 'bg-orange-500' },
+                      { value: 'MEDIA', label: 'Media (Impacto Moderado)', badgeColor: 'bg-amber-500' },
+                      { value: 'BAJA', label: 'Baja (Menor Severidad)', badgeColor: 'bg-blue-500' }
+                    ]}
+                  />
                 )}
 
                 {/* Selector 2: Estado de Atención */}
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none z-10">
-                    <Activity size={14} />
-                  </div>
-                  <select
-                    value={filtroEstadoAtencion}
-                    onChange={(e) => setFiltroEstadoAtencion(e.target.value)}
-                    className="select-field pl-9 appearance-none w-full"
-                  >
-                    <optgroup label="Estado de Flujo">
-                      <option value="TODOS">Todos los Estados</option>
-                      <option value="REGISTRADO">Registrado</option>
-                      <option value="EN_REVISION">En Revisión / Análisis</option>
-                      <option value="SOLUCIONADO">Solucionado</option>
-                    </optgroup>
-                  </select>
-                </div>
+                <CustomDropdown
+                  icon={Activity}
+                  iconColor="text-blue-500"
+                  label="Estado de Flujo"
+                  value={filtroEstadoAtencion}
+                  onChange={setFiltroEstadoAtencion}
+                  options={[
+                    { value: 'TODOS', label: 'Todos los Estados', badgeColor: 'bg-zinc-400' },
+                    { value: 'REGISTRADO', label: 'Registrado', badgeColor: 'bg-zinc-500', icon: Clock },
+                    { value: 'EN_REVISION', label: 'En Revisión / Análisis', badgeColor: 'bg-blue-500', icon: Eye },
+                    { value: 'SOLUCIONADO', label: 'Solucionado', badgeColor: 'bg-emerald-500', icon: CheckCircle2 }
+                  ]}
+                />
 
                 {/* Selector 3: Ordenamiento Dinámico */}
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none z-10">
-                    <SlidersHorizontal size={14} />
-                  </div>
-                  <select
-                    value={ordenarReportesPor}
-                    onChange={(e) => setOrdenarReportesPor(e.target.value)}
-                    className="select-field pl-9 appearance-none w-full"
-                  >
-                    <optgroup label="Criterio de Orden">
-                      <option value="RECIENTES">Más Recientes primero</option>
-                      <option value="ANTIGUOS">Más Antiguos primero</option>
-                      {filtroHistorial === 'INTERRUPCIONES' ? (
-                        <option value="DURACION">Mayor Duración primero</option>
-                      ) : (
-                        <option value="SEVERIDAD">Por Mayor Severidad</option>
-                      )}
-                    </optgroup>
-                  </select>
-                </div>
+                <CustomDropdown
+                  icon={SlidersHorizontal}
+                  iconColor="text-zinc-400"
+                  label="Criterio de Orden"
+                  value={ordenarReportesPor}
+                  onChange={setOrdenarReportesPor}
+                  options={[
+                    { value: 'RECIENTES', label: 'Más Recientes primero', icon: Clock },
+                    { value: 'ANTIGUOS', label: 'Más Antiguos primero', icon: RotateCcw },
+                    filtroHistorial === 'INTERRUPCIONES'
+                      ? { value: 'DURACION', label: 'Mayor Duración primero', icon: Clock, badgeColor: 'bg-amber-500' }
+                      : { value: 'SEVERIDAD', label: 'Por Mayor Severidad', icon: ShieldAlert, badgeColor: 'bg-red-500' }
+                  ]}
+                />
 
               </div>
 
@@ -1477,16 +1575,15 @@ export const DesarrolladorDashboard = () => {
             {/* OPCIÓN 1: VISTA EN TARJETAS RESPONSIVAS (GRID) */}
             {!loadingReportes && reportViewMode === 'grid' && listaReportesFiltradaYOrdenada.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                {listaReportesFiltradaYOrdenada.map(item => {
-                  const isError = item._tipo === 'ERROR';
-                  const fechaStr = new Date(item._fecha).toLocaleString('es-ES', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                  });
+                {(listaReportesFiltradaYOrdenada || []).map(item => {
+                  const isError = item?._tipo === 'ERROR';
+                  const fechaStr = item?._fecha 
+                    ? new Date(item._fecha).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })
+                    : 'Fecha N/A';
 
                   return (
                     <div 
-                      key={item._id}
+                      key={item?._id || item?.idInterrupcion || item?.idError || Math.random()}
                       className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 flex flex-col justify-between space-y-4 h-full"
                     >
                       <div>
@@ -1500,30 +1597,33 @@ export const DesarrolladorDashboard = () => {
                             </div>
                             <div>
                               <h4 className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100">
-                                {isError ? `Error: ${item.tipoError}` : `Interrupción: ${item.tipoInterrupcion?.replace(/_/g, ' ')}`}
+                                {isError 
+                                  ? `Error: ${item?.tipoError || 'N/A'}` 
+                                  : `Interrupción: ${(item?.tipoInterrupcion || 'GENERAL').replace(/_/g, ' ')}`
+                                }
                               </h4>
                               {isError ? (
                                 <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
-                                  {item.severidad}
+                                  {item?.severidad || 'MEDIA'}
                                 </span>
                               ) : (
                                 <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
-                                  {item.duracionMinutos} min
+                                  {item?.duracionMinutos || 0} min
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <EstadoAtencionBadge estado={item.estadoAtencion} />
+                          <EstadoAtencionBadge estado={item?.estadoAtencion} />
                         </div>
 
                         {/* Descripción / Comentarios */}
                         <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans mb-3">
-                          {item.descripcion || item.comentarios}
+                          {item?.descripcion || item?.comentarios || 'Sin detalles registrados.'}
                         </div>
 
                         {/* Respuesta / Acción Correctiva del Líder */}
-                        {item.resolucionNota && (
+                        {item?.resolucionNota && (
                           <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-xs space-y-1">
                             <div className="flex items-center gap-1.5 font-extrabold text-blue-800 dark:text-blue-300 text-[0.7rem]">
                               <Info size={13} /> Acción Correctiva del Líder:
@@ -1538,7 +1638,7 @@ export const DesarrolladorDashboard = () => {
                       {/* Pie de la Tarjeta: Metadatos de Fecha y Etapa WBS */}
                       <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-[0.65rem] text-zinc-400 font-medium">
                         <span className="truncate max-w-[180px]">
-                          {item.etapa?.proyecto?.nombre ? `${item.etapa.proyecto.nombre} • ` : ''}{item.etapa?.nombreEtapa || 'Etapa WBS'}
+                          {item?.etapa?.proyecto?.nombre ? `${item.etapa.proyecto.nombre} • ` : ''}{item?.etapa?.nombreEtapa || item?.etapa?.nombre || 'Etapa WBS'}
                         </span>
                         <span>{fechaStr}</span>
                       </div>
@@ -1563,47 +1663,54 @@ export const DesarrolladorDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60 font-medium">
-                    {listaReportesFiltradaYOrdenada.map(item => {
-                      const isError = item._tipo === 'ERROR';
-                      const fechaStr = new Date(item._fecha).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+                    {(listaReportesFiltradaYOrdenada || []).map(item => {
+                      const isError = item?._tipo === 'ERROR';
+                      const fechaStr = item?._fecha 
+                        ? new Date(item._fecha).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })
+                        : 'Fecha N/A';
 
                       return (
-                        <tr key={item._id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors">
+                        <tr key={item?._id || item?.idInterrupcion || item?.idError || Math.random()} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-zinc-100">
                               {isError ? <Bug size={14} className="text-red-500" /> : <AlertTriangle size={14} className="text-amber-500" />}
-                              <span>{isError ? `Error: ${item.tipoError}` : `Interrupción: ${item.tipoInterrupcion?.replace(/_/g, ' ')}`}</span>
+                              <span>
+                                {isError 
+                                  ? `Error: ${item?.tipoError || 'N/A'}` 
+                                  : `Interrupción: ${(item?.tipoInterrupcion || 'GENERAL').replace(/_/g, ' ')}`
+                                }
+                              </span>
                             </div>
                           </td>
                           <td className="py-3.5 px-4">
                             {isError ? (
                               <span className="font-mono text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
-                                {item.severidad}
+                                {item?.severidad || 'MEDIA'}
                               </span>
                             ) : (
                               <span className="font-mono text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
-                                {item.duracionMinutos} min
+                                {item?.duracionMinutos || 0} min
                               </span>
                             )}
                           </td>
                           <td className="py-3.5 px-4 max-w-xs">
-                            <p className="text-zinc-700 dark:text-zinc-300 truncate" title={item.descripcion || item.comentarios}>
-                              {item.descripcion || item.comentarios}
+                            <p className="text-zinc-700 dark:text-zinc-300 truncate" title={item?.descripcion || item?.comentarios || 'N/A'}>
+                              {item?.descripcion || item?.comentarios || 'Sin detalles'}
                             </p>
-                            {item.resolucionNota && (
+                            {item?.resolucionNota && (
                               <span className="text-[0.65rem] text-blue-600 dark:text-blue-400 font-bold block truncate" title={`Líder: "${item.resolucionNota}"`}>
                                 Líder: "{item.resolucionNota}"
                               </span>
                             )}
                           </td>
                           <td className="py-3.5 px-4 text-zinc-500 dark:text-zinc-400 font-bold">
-                            {item.etapa?.nombreEtapa || 'Etapa WBS'}
+                            {item?.etapa?.nombreEtapa || item?.etapa?.nombre || 'Etapa WBS'}
                           </td>
                           <td className="py-3.5 px-4 text-zinc-400 text-[0.7rem] font-mono">
                             {fechaStr}
                           </td>
                           <td className="py-3.5 px-4 text-right">
-                            <EstadoAtencionBadge estado={item.estadoAtencion} />
+                            <EstadoAtencionBadge estado={item?.estadoAtencion} />
                           </td>
                         </tr>
                       );
