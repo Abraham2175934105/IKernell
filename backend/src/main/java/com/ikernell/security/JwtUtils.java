@@ -16,11 +16,11 @@ import java.util.Date;
 public class JwtUtils {
 
     // Clave de firma simétrica configurada en el archivo de propiedades
-    @Value("${app.jwt.secret:IKernellSoftwareSecretKeySuperSecureJwtToken2026ForSpringSecurityRBACSystem}")
+    @Value("${jwt.secret}")
     private String jwtSecret;
 
-    // Tiempo de expiración del token (15 minutos por defecto)
-    @Value("${app.jwt.expiration-ms:900000}")
+    // Tiempo de expiración del token (24 horas por defecto o según propiedad)
+    @Value("${jwt.expiration:86400000}")
     private int jwtExpirationMs;
 
     // Genera la clave secreta en formato binario para JJWT
