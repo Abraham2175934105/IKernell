@@ -1814,7 +1814,7 @@ export const LiderDashboard = () => {
             className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm w-full"
           >
             <div className="overflow-x-auto w-full">
-              <table className="w-full text-left text-xs table-auto">
+              <table className="w-full text-left text-xs table-auto min-w-[900px]">
                 <thead className="bg-zinc-50/90 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-[0.68rem] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   <tr>
                     <th className="py-3 px-3 whitespace-nowrap" title="Tipo de registro: Error técnico en código o Contingencia/interrupción operativa">Tipo</th>
