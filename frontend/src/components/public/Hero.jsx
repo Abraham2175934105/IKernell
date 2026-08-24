@@ -204,7 +204,7 @@ export const Hero = () => {
 
         {/* ── Indicador Guía de Telemetría con Alto Contraste ─────────────── */}
         <motion.div variants={itemVariants} className="flex justify-center mb-6">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-zinc-200/90 dark:border-zinc-700/80 text-zinc-900 font-bold dark:text-zinc-300 text-xs shadow-sm tracking-wide">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-zinc-200/90 dark:border-zinc-700/80 text-zinc-900 font-extrabold dark:text-zinc-300 text-xs shadow-sm tracking-wide">
             <Layers size={14} className="text-blue-600 dark:text-blue-400" strokeWidth={2} />
             Pase el cursor sobre cada tarjeta para desplegar la telemetría
           </span>
@@ -221,7 +221,7 @@ export const Hero = () => {
             return (
               <div
                 key={s.id}
-                className="relative group/stack overflow-visible"
+                className="group relative overflow-visible"
                 style={{ minHeight: 290 }}
                 onMouseEnter={() => setActiveStack(s.id)}
                 onMouseLeave={() => setActiveStack(null)}
@@ -231,19 +231,19 @@ export const Hero = () => {
                 <div
                   className={`
                     absolute inset-0 rounded-2xl p-5
-                    bg-white/95 text-zinc-900 border-zinc-200 shadow-xl
+                    bg-white/95 text-zinc-900 border border-zinc-200 shadow-xl
                     dark:bg-zinc-900/90 dark:border-zinc-700/60 dark:text-zinc-100
-                    border transition-all duration-300 ease-out
+                    transition-all duration-300 ease-out
                     flex flex-col justify-between
                     ${isSelected
-                      ? 'translate-y-[4.5rem] opacity-100 blur-0 backdrop-blur-none z-40'
-                      : 'translate-y-2 opacity-75 blur-[1.5px] backdrop-blur-sm z-0 group-hover/stack:translate-y-[4.5rem] group-hover/stack:opacity-100 group-hover/stack:blur-0 group-hover/stack:backdrop-blur-none group-hover/stack:z-40'
+                      ? 'translate-y-0 opacity-100 blur-0 backdrop-blur-none z-50'
+                      : 'translate-y-3 opacity-70 blur-[2px] backdrop-blur-sm z-0 group-hover:translate-y-0 group-hover:opacity-100 group-hover:blur-0 group-hover:backdrop-blur-none group-hover:z-50'
                     }
                   `}
                 >
                   {/* Header de la tarjeta inferior */}
-                  <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
-                    <span className="text-[0.68rem] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-zinc-200 dark:border-zinc-800">
+                    <span className="text-[0.68rem] font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
                       {s.headerTelemetria || 'Telemetría del Sistema'}
                     </span>
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -253,8 +253,8 @@ export const Hero = () => {
                   <div className="space-y-2.5 py-2">
                     {metricsList.map((m, i) => (
                       <div key={i} className="flex items-center justify-between">
-                        <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 text-[0.72rem] font-medium">
-                          <span className="text-zinc-400 dark:text-zinc-500">{m.icon}</span>
+                        <span className="flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200 text-[0.72rem] font-medium">
+                          <span className="text-zinc-600 dark:text-zinc-400">{m.icon}</span>
                           {m.label || ''}
                           <MetricTooltip text={m.help} />
                         </span>
@@ -266,7 +266,7 @@ export const Hero = () => {
                   </div>
 
                   {/* Pie de estado */}
-                  <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-semibold">
+                  <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[0.65rem] text-zinc-800 dark:text-zinc-200 font-semibold">
                     <span>Estado del servicio</span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Operativo</span>
                   </div>
@@ -275,43 +275,43 @@ export const Hero = () => {
                 {/* ── CAPA PRINCIPAL SUPERIOR (Frontal) ───────────────────────────── */}
                 <div className={`
                   relative rounded-2xl p-6
-                  bg-white/95 text-zinc-900 border-zinc-200 shadow-xl
+                  bg-white/95 text-zinc-900 border border-zinc-200 shadow-xl
                   dark:bg-zinc-900/90 dark:border-zinc-700/60 dark:text-zinc-100
-                  border transition-all duration-300 z-20
+                  transition-all duration-300 z-20
                   flex flex-col justify-between
                   ${s.featured
-                    ? 'border-blue-500/60 dark:border-blue-500/50 group-hover/stack:border-blue-500'
-                    : 'border-zinc-200 dark:border-zinc-700 group-hover/stack:border-zinc-400 dark:group-hover/stack:border-zinc-500'
+                    ? 'border-blue-500/60 dark:border-blue-500/50 group-hover:border-blue-500'
+                    : 'border-zinc-200 dark:border-zinc-700 group-hover:border-zinc-400 dark:group-hover:border-zinc-500'
                   }
                 `} style={{ minHeight: 240 }}>
 
                   {/* Top row */}
                   <div>
                     <div className="flex items-start justify-between mb-4">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover/stack:scale-110 group-hover/stack:rotate-2
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-2
                         ${s.featured
                           ? 'bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-500 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
-                          : 'bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-200 group-hover/stack:bg-gradient-to-tr group-hover/stack:from-blue-600 group-hover/stack:to-blue-500 group-hover/stack:text-white group-hover/stack:border-blue-500 group-hover/stack:shadow-blue-500/20'
+                          : 'bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-200 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-blue-500 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-blue-500/20'
                         }`}>
                         {s.icon}
                       </div>
                       <span className={`px-2.5 py-1 rounded-full text-[0.62rem] font-bold uppercase tracking-wider
                         ${s.featured
                           ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700'
                         }`}>
                         {s.badge || 'Módulo'}
                       </span>
                     </div>
 
                     <h3 className="text-lg font-black text-zinc-950 dark:text-zinc-100 mb-2 leading-snug">{s.title || ''}</h3>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed font-medium">{s.description || ''}</p>
+                    <p className="text-zinc-800 dark:text-zinc-200 text-xs leading-relaxed font-medium">{s.description || ''}</p>
                   </div>
 
                   {/* CTA row */}
-                  <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-[0.7rem] font-bold mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-[0.7rem] font-bold mt-4 pt-3 border-t border-zinc-200 dark:border-zinc-800">
                     <span>{s.ctaLabel || 'Ver detalles'}</span>
-                    <ArrowRight size={11} className="group-hover/stack:translate-x-0.5 transition-transform" />
+                    <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
               </div>
