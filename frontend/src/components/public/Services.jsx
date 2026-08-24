@@ -46,7 +46,7 @@ const ServiceCardImage = ({ src, alt, fallbackIcon }) => {
   return (
     <img 
       src={src} 
-      alt={alt}
+      alt={alt || 'Servicio IKernell'}
       onError={() => setHasError(true)}
       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
       loading="lazy"
@@ -99,9 +99,6 @@ const servicesList = [
   }
 ];
 
-/* ────────────────────────────────────────────────────────────────────────
-   Especificaciones técnicas del módulo RBAC & JWT
-──────────────────────────────────────────────────────────────────────── */
 const securityFeatures = [
   {
     icon: <ShieldCheck size={22} strokeWidth={2} />,
@@ -121,6 +118,9 @@ const securityFeatures = [
 ];
 
 export const Services = () => {
+  const safeServices = servicesList || [];
+  const safeFeatures = securityFeatures || [];
+
   return (
     <section id="servicios" className="py-20 md:py-28 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/50">
       <motion.div 
@@ -147,61 +147,64 @@ export const Services = () => {
           </p>
         </motion.div>
 
-        {/* Services Cards Grid (All 6 Services Maintained with Fallback Images) */}
+        {/* Services Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
-          {servicesList.map((srv, idx) => (
-            <motion.div 
-              key={idx} 
-              variants={itemVariants}
-              whileHover={{ y: -5 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className={`group relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border transition-all duration-300 h-full flex flex-col ${
-                srv.featured 
-                  ? 'border-blue-500/40 shadow-lg shadow-blue-500/10 dark:shadow-blue-500/5' 
-                  : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 dark:hover:shadow-blue-500/5'
-              }`}
-            >
-              {/* Card Image con protección anti-rotura */}
-              <div className="relative h-44 overflow-hidden">
-                <ServiceCardImage 
-                  src={srv.image} 
-                  alt={srv.title} 
-                  fallbackIcon={srv.icon} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/30 to-transparent dark:from-zinc-900 dark:via-zinc-900/30 dark:to-transparent" />
-                
-                {/* Floating icon badge */}
-                <div className={`absolute bottom-4 left-6 w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover:scale-110 group-hover:-rotate-2 ${
-                  srv.featured
-                    ? 'bg-gradient-to-tr from-blue-700 to-indigo-600 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
-                    : 'bg-white/95 dark:bg-zinc-800/95 text-zinc-800 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700/90 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-blue-500 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-blue-500/25'
-                }`}>
-                  {srv.icon}
-                </div>
-
-                {srv.featured && (
-                  <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-blue-600 text-white text-[0.6rem] font-black uppercase tracking-widest shadow-md">
-                    Destacado
+          {safeServices.map((srv, idx) => {
+            if (!srv) return null;
+            return (
+              <motion.div 
+                key={idx} 
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`group relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border transition-all duration-300 h-full flex flex-col ${
+                  srv.featured 
+                    ? 'border-blue-500/40 shadow-lg shadow-blue-500/10 dark:shadow-blue-500/5' 
+                    : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 dark:hover:shadow-blue-500/5'
+                }`}
+              >
+                {/* Card Image con protección anti-rotura */}
+                <div className="relative h-44 overflow-hidden">
+                  <ServiceCardImage 
+                    src={srv.image} 
+                    alt={srv.title} 
+                    fallbackIcon={srv.icon} 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white/30 to-transparent dark:from-zinc-900 dark:via-zinc-900/30 dark:to-transparent" />
+                  
+                  {/* Floating icon badge */}
+                  <div className={`absolute bottom-4 left-6 w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover:scale-110 group-hover:-rotate-2 ${
+                    srv.featured
+                      ? 'bg-gradient-to-tr from-blue-700 to-indigo-600 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
+                      : 'bg-white/95 dark:bg-zinc-800/95 text-zinc-800 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700/90 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-blue-500 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-blue-500/25'
+                  }`}>
+                    {srv.icon || <Boxes size={24} />}
                   </div>
-                )}
-              </div>
 
-              {/* Card Content */}
-              <div className="p-6 md:p-7 flex flex-col flex-1">
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2.5 leading-snug">{srv.title}</h3>
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{srv.description}</p>
-                <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800/70">
-                  <a 
-                    href="/#contacto" 
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 uppercase tracking-wider transition-colors group/link"
-                  >
-                    Más información 
-                    <ArrowRight size={13} className="group-hover/link:translate-x-0.5 transition-transform" />
-                  </a>
+                  {srv.featured && (
+                    <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-blue-600 text-white text-[0.6rem] font-black uppercase tracking-widest shadow-md">
+                      Destacado
+                    </div>
+                  )}
                 </div>
-              </div>
-            </motion.div>
-          ))}
+
+                {/* Card Content */}
+                <div className="p-6 md:p-7 flex flex-col flex-1">
+                  <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2.5 leading-snug">{srv.title || ''}</h3>
+                  <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{srv.description || ''}</p>
+                  <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800/70">
+                    <a 
+                      href="/#contacto" 
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 uppercase tracking-wider transition-colors group/link"
+                    >
+                      Más información 
+                      <ArrowRight size={13} className="group-hover/link:translate-x-0.5 transition-transform" />
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* ── Bloque Destacado: Arquitectura de Seguridad RBAC & JWT ──── */}
@@ -224,21 +227,24 @@ export const Services = () => {
 
           {/* Security Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {securityFeatures.map((feat, idx) => (
-              <motion.div
-                key={idx}
-                variants={itemVariants}
-                whileHover={{ y: -4 }}
-                transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                className="group relative rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-7 flex flex-col hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300"
-              >
-                <div className="w-13 h-13 rounded-2xl bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 flex items-center justify-center mb-5 shadow-sm group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-indigo-500 group-hover:text-white group-hover:border-blue-500 group-hover:scale-105 transition-all duration-300">
-                  {feat.icon}
-                </div>
-                <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2.5 leading-snug">{feat.title}</h4>
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{feat.description}</p>
-              </motion.div>
-            ))}
+            {safeFeatures.map((feat, idx) => {
+              if (!feat) return null;
+              return (
+                <motion.div
+                  key={idx}
+                  variants={itemVariants}
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                  className="group relative rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-7 flex flex-col hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300"
+                >
+                  <div className="w-13 h-13 rounded-2xl bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 flex items-center justify-center mb-5 shadow-sm group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-indigo-500 group-hover:text-white group-hover:border-blue-500 group-hover:scale-105 transition-all duration-300">
+                    {feat.icon || <ShieldCheck size={22} />}
+                  </div>
+                  <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2.5 leading-snug">{feat.title || ''}</h4>
+                  <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{feat.description || ''}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
 

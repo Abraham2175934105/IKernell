@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 export const NewsModal = ({ isOpen, onClose, news }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && onClose) onClose();
     };
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -21,6 +21,9 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
   }, [isOpen, onClose]);
 
   if (!isOpen || !news) return null;
+
+  const stackList = news?.stack || [];
+  const benefitsList = news?.benefits || [];
 
   return (
     <AnimatePresence>
@@ -49,8 +52,12 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
           {/* Modal Header Image */}
           <div className="relative h-64 sm:h-72 w-full overflow-hidden rounded-t-3xl bg-zinc-950 flex-shrink-0">
             <img 
-              src={news.image} 
-              alt={news.title} 
+              src={news?.image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'} 
+              alt={news?.title || 'Detalle de Noticia'} 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80';
+              }}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/40 to-transparent" />
@@ -58,20 +65,24 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
             {/* Header Overlays */}
             <div className="absolute bottom-6 left-6 right-6">
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-600 text-white shadow-md">
-                  <Tag size={12} /> {news.tag}
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md text-white border border-white/20">
-                  <Calendar size={12} /> {news.date}
-                </span>
-                {news.author && (
+                {news?.tag && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-600 text-white shadow-md">
+                    <Tag size={12} /> {news.tag}
+                  </span>
+                )}
+                {news?.date && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md text-white border border-white/20">
+                    <Calendar size={12} /> {news.date}
+                  </span>
+                )}
+                {news?.author && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md text-zinc-200 border border-white/10">
                     <UserCheck size={12} /> {news.author}
                   </span>
                 )}
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight">
-                {news.title}
+                {news?.title || ''}
               </h2>
             </div>
           </div>
@@ -80,7 +91,7 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
           <div className="p-6 sm:p-8 space-y-6 flex-1">
             
             {/* Subtitle / Key Takeaway */}
-            {news.subtitle && (
+            {news?.subtitle && (
               <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40 flex items-start gap-2.5">
                 <Info size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <p className="text-sm sm:text-base font-bold text-blue-900 dark:text-blue-300 leading-relaxed">
@@ -96,18 +107,18 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
                 Descripción Técnica y Funcional
               </h3>
               <p className="text-zinc-700 dark:text-zinc-300 text-sm sm:text-base leading-relaxed font-normal">
-                {news.fullText || news.summary}
+                {news?.fullText || news?.summary || ''}
               </p>
             </div>
 
             {/* Architecture & Stack */}
-            {news.stack && (
+            {stackList.length > 0 && (
               <div className="space-y-3">
                 <h3 className="text-sm font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   Arquitectura & Tecnologías Involucradas
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {news.stack.map((tech, i) => (
+                  {stackList.map((tech, i) => (
                     <span 
                       key={i} 
                       className="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs font-semibold border border-zinc-200 dark:border-zinc-700"
@@ -120,14 +131,14 @@ export const NewsModal = ({ isOpen, onClose, news }) => {
             )}
 
             {/* Corporate Benefits */}
-            {news.benefits && news.benefits.length > 0 && (
+            {benefitsList.length > 0 && (
               <div className="space-y-3 pt-2">
                 <h3 className="text-sm font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
                   <ShieldCheck size={16} className="text-emerald-600 dark:text-emerald-400" />
                   Impacto Operativo & Beneficios de Negocio
                 </h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {news.benefits.map((benefit, i) => (
+                  {benefitsList.map((benefit, i) => (
                     <li 
                       key={i} 
                       className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex items-start gap-2.5 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 font-medium"

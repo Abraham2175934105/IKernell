@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
- * Normaliza cadenas de texto eliminando tildes, signos diacríticos y convirtiendo a minúsculas.
+ * Normaliza cadenas de texto eliminando tildes, signos diacríticos y convirtiendo a minúsculas con sanitización.
  */
 const normalizeText = (text) => {
-  if (!text) return '';
+  if (!text || typeof text !== 'string') return '';
   return text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -52,12 +52,14 @@ export const Faq = () => {
   const [openIndex, setOpenIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filtrado predictivo en tiempo real para el bloque de la landing
+  // Filtrado predictivo en tiempo real sanitizado para el bloque de la landing
   const filteredFaqs = useMemo(() => {
     const term = normalizeText(searchTerm);
-    const baseList = term ? faqsList : faqsList.slice(0, 4);
+    const safeBase = Array.isArray(faqsList) ? faqsList : [];
+    const baseList = term ? safeBase : safeBase.slice(0, 4);
 
     return baseList.filter(faq => {
+      if (!faq) return false;
       const normalizedQuestion = normalizeText(faq.question);
       const normalizedAnswer = normalizeText(faq.answer);
       const normalizedCategory = normalizeText(faq.category);
@@ -97,7 +99,7 @@ export const Faq = () => {
             placeholder="Buscar por pregunta, tecnología o concepto (ej. WBS, roles, semáforo, JWT)..."
             value={searchTerm}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
+              setSearchTerm(e.target.value || '');
               setOpenIndex(0);
             }}
             className="input-field pl-11 pr-10 py-3 text-sm shadow-sm"
@@ -137,7 +139,7 @@ export const Faq = () => {
             <AnimatePresence>
               {filteredFaqs.map((faq, idx) => (
                 <motion.div 
-                  key={faq.question}
+                  key={faq.question || idx}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -159,10 +161,10 @@ export const Faq = () => {
                           ? 'text-blue-600 dark:text-blue-400' 
                           : 'text-zinc-500 dark:text-zinc-400'
                       }`}>
-                        {faq.category}
+                        {faq.category || 'GENERAL'}
                       </span>
                       <span className="font-bold text-base text-zinc-900 dark:text-white leading-snug">
-                        {faq.question}
+                        {faq.question || ''}
                       </span>
                     </div>
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
@@ -184,7 +186,7 @@ export const Faq = () => {
                         className="overflow-hidden"
                       >
                         <div className="px-5 pb-5 text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed font-normal border-t border-zinc-100 dark:border-zinc-800 pt-3.5">
-                          {faq.answer}
+                          {faq.answer || ''}
                         </div>
                       </motion.div>
                     )}

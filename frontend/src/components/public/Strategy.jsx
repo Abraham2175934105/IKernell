@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Target, Eye, Globe2, Compass, TrendingUp, Building2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -47,6 +47,8 @@ const strategies = [
 ];
 
 export const Strategy = () => {
+  const safeStrategies = strategies || [];
+
   return (
     <section id="estrategia" className="py-20 md:py-28 border-t border-zinc-200 dark:border-zinc-800/50">
       <motion.div 
@@ -75,51 +77,58 @@ export const Strategy = () => {
 
         {/* Strategy Cards - Horizontal layout on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-7">
-          {strategies.map((item, idx) => (
-            <motion.div
-              key={idx}
-              variants={itemVariants}
-              whileHover={{ y: -5 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className={`group relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border flex flex-col h-full transition-all duration-300 ${
-                item.accent
-                  ? 'border-blue-500/40 shadow-lg shadow-blue-500/10 dark:shadow-blue-500/5'
-                  : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5'
-              }`}
-            >
-              {/* Card Image */}
-              <div className="relative h-48 overflow-hidden">
-                <img 
-                  src={item.image} 
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent dark:from-zinc-900 dark:via-zinc-900/40 dark:to-transparent" />
-                
-                {/* Icon Badge */}
-                <div className={`absolute bottom-4 left-6 w-13 h-13 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-3 ${
-                  item.accent 
-                    ? 'bg-gradient-to-tr from-blue-700 to-indigo-600 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
-                    : 'bg-white/95 dark:bg-zinc-800/95 text-zinc-800 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700/90 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-blue-500 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-blue-500/25'
-                }`}>
-                  {item.icon}
+          {safeStrategies.map((item, idx) => {
+            if (!item) return null;
+            return (
+              <motion.div
+                key={idx}
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`group relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border flex flex-col h-full transition-all duration-300 ${
+                  item.accent
+                    ? 'border-blue-500/40 shadow-lg shadow-blue-500/10 dark:shadow-blue-500/5'
+                    : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5'
+                }`}
+              >
+                {/* Card Image */}
+                <div className="relative h-48 overflow-hidden bg-zinc-950">
+                  <img 
+                    src={item.image} 
+                    alt={item.title || 'Estrategia IKernell'}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent dark:from-zinc-900 dark:via-zinc-900/40 dark:to-transparent" />
+                  
+                  {/* Icon Badge */}
+                  <div className={`absolute bottom-4 left-6 w-13 h-13 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-3 ${
+                    item.accent 
+                      ? 'bg-gradient-to-tr from-blue-700 to-indigo-600 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
+                      : 'bg-white/95 dark:bg-zinc-800/95 text-zinc-800 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700/90 group-hover:bg-gradient-to-tr group-hover:from-blue-600 group-hover:to-blue-500 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-blue-500/25'
+                  }`}>
+                    {item.icon || <Compass size={24} />}
+                  </div>
+
+                  {item.accent && (
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-600 text-white text-[0.6rem] font-black uppercase tracking-widest shadow-md">
+                      <Globe2 size={10} /> Internacional
+                    </div>
+                  )}
                 </div>
 
-                {item.accent && (
-                  <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-600 text-white text-[0.6rem] font-black uppercase tracking-widest shadow-md">
-                    <Globe2 size={10} /> Internacional
-                  </div>
-                )}
-              </div>
-
-              {/* Card Content */}
-              <div className="p-6 md:p-7 flex flex-col flex-1">
-                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-3 leading-snug">{item.title}</h3>
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{item.description}</p>
-              </div>
-            </motion.div>
-          ))}
+                {/* Card Content */}
+                <div className="p-6 md:p-7 flex flex-col flex-1">
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-3 leading-snug">{item.title || ''}</h3>
+                  <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1">{item.description || ''}</p>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
       </motion.div>

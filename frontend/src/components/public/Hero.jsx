@@ -27,10 +27,12 @@ const itemVariants = {
 };
 
 /* ────────────────────────────────────────────────────────────────────────
-   Micro-Tooltip de Métrica Técnica
+   Micro-Tooltip de Métrica Técnica con Blindaje Defensivo
 ──────────────────────────────────────────────────────────────────────── */
 const MetricTooltip = ({ text }) => {
   const [open, setOpen] = useState(false);
+  if (!text) return null;
+
   return (
     <div className="relative inline-flex items-center ml-1">
       <button
@@ -114,6 +116,7 @@ const stacks = [
 
 export const Hero = () => {
   const [activeStack, setActiveStack] = useState(null);
+  const safeStacks = stacks || [];
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center pb-20 pt-28 md:pt-32">
@@ -123,7 +126,7 @@ export const Hero = () => {
         {/* Light Mode — imagen local nítida */}
         <div
           className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-700 opacity-100 dark:opacity-0"
-          style={{ backgroundImage: `url(${heroLightImg}), url('/assets/hero-light.jpg')` }}
+          style={{ backgroundImage: `url(${heroLightImg || '/assets/hero-light.jpg'})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-zinc-50/55" />
         </div>
@@ -210,104 +213,110 @@ export const Hero = () => {
         {/* ── TARJETAS APILADAS ────────────────────────────────────────── */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left pb-16 overflow-visible">
 
-          {stacks.map((s) => (
-            <div
-              key={s.id}
-              className="relative group/stack overflow-visible"
-              style={{ minHeight: 290 }}
-              onMouseEnter={() => setActiveStack(s.id)}
-              onMouseLeave={() => setActiveStack(null)}
-              onClick={() => setActiveStack(activeStack === s.id ? null : s.id)}
-            >
-              {/* ── CAPA INFERIOR DE SOPORTE (Telemetría / Modo Claro y Oscuro) ── */}
+          {safeStacks.map((s) => {
+            if (!s) return null;
+            const isSelected = activeStack === s.id;
+            const metricsList = s.metrics || [];
+
+            return (
               <div
-                className={`
-                  absolute inset-0 rounded-2xl p-5
-                  bg-white/95 text-zinc-900 border-zinc-200 shadow-xl
-                  dark:bg-zinc-900/90 dark:border-zinc-700/60 dark:text-zinc-100
-                  border transition-all duration-300 ease-out
-                  flex flex-col justify-between
-                  ${activeStack === s.id
-                    ? 'translate-y-[4.5rem] opacity-100 blur-0 backdrop-blur-none z-40'
-                    : 'translate-y-2 opacity-75 blur-[1.5px] backdrop-blur-sm z-0 group-hover/stack:translate-y-[4.5rem] group-hover/stack:opacity-100 group-hover/stack:blur-0 group-hover/stack:backdrop-blur-none group-hover/stack:z-40'
-                  }
-                `}
+                key={s.id}
+                className="relative group/stack overflow-visible"
+                style={{ minHeight: 290 }}
+                onMouseEnter={() => setActiveStack(s.id)}
+                onMouseLeave={() => setActiveStack(null)}
+                onClick={() => setActiveStack(isSelected ? null : s.id)}
               >
-                {/* Header de la tarjeta inferior */}
-                <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
-                  <span className="text-[0.68rem] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    {s.headerTelemetria}
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                </div>
-
-                {/* Métricas con micro-guías / tooltips */}
-                <div className="space-y-2.5 py-2">
-                  {s.metrics.map((m, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 text-[0.72rem] font-medium">
-                        <span className="text-zinc-400 dark:text-zinc-500">{m.icon}</span>
-                        {m.label}
-                        <MetricTooltip text={m.help} />
-                      </span>
-                      <span className="text-zinc-900 dark:text-zinc-100 text-[0.72rem] font-bold font-mono tracking-tight">
-                        {m.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pie de estado */}
-                <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-semibold">
-                  <span>Estado del servicio</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Operativo</span>
-                </div>
-              </div>
-
-              {/* ── CAPA PRINCIPAL SUPERIOR (Frontal) ───────────────────────────── */}
-              <div className={`
-                relative rounded-2xl p-6
-                bg-white/95 text-zinc-900 border-zinc-200 shadow-xl
-                dark:bg-zinc-900/90 dark:border-zinc-700/60 dark:text-zinc-100
-                border transition-all duration-300 z-20
-                flex flex-col justify-between
-                ${s.featured
-                  ? 'border-blue-500/60 dark:border-blue-500/50 group-hover/stack:border-blue-500'
-                  : 'border-zinc-200 dark:border-zinc-700 group-hover/stack:border-zinc-400 dark:group-hover/stack:border-zinc-500'
-                }
-              `} style={{ minHeight: 240 }}>
-
-                {/* Top row */}
-                <div>
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover/stack:scale-110 group-hover/stack:rotate-2
-                      ${s.featured
-                        ? 'bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-500 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
-                        : 'bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-200 group-hover/stack:bg-gradient-to-tr group-hover/stack:from-blue-600 group-hover/stack:to-blue-500 group-hover/stack:text-white group-hover/stack:border-blue-500 group-hover/stack:shadow-blue-500/20'
-                      }`}>
-                      {s.icon}
-                    </div>
-                    <span className={`px-2.5 py-1 rounded-full text-[0.62rem] font-bold uppercase tracking-wider
-                      ${s.featured
-                        ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60'
-                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
-                      }`}>
-                      {s.badge}
+                {/* ── CAPA INFERIOR DE SOPORTE (Telemetría / Modo Claro y Oscuro) ── */}
+                <div
+                  className={`
+                    absolute inset-0 rounded-2xl p-5
+                    bg-white/95 text-zinc-900 border-zinc-200 shadow-xl
+                    dark:bg-zinc-900/90 dark:border-zinc-700/60 dark:text-zinc-100
+                    border transition-all duration-300 ease-out
+                    flex flex-col justify-between
+                    ${isSelected
+                      ? 'translate-y-[4.5rem] opacity-100 blur-0 backdrop-blur-none z-40'
+                      : 'translate-y-2 opacity-75 blur-[1.5px] backdrop-blur-sm z-0 group-hover/stack:translate-y-[4.5rem] group-hover/stack:opacity-100 group-hover/stack:blur-0 group-hover/stack:backdrop-blur-none group-hover/stack:z-40'
+                    }
+                  `}
+                >
+                  {/* Header de la tarjeta inferior */}
+                  <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
+                    <span className="text-[0.68rem] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                      {s.headerTelemetria || 'Telemetría del Sistema'}
                     </span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   </div>
 
-                  <h3 className="text-lg font-black text-zinc-950 dark:text-zinc-100 mb-2 leading-snug">{s.title}</h3>
-                  <p className="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed font-medium">{s.description}</p>
+                  {/* Métricas con micro-guías / tooltips */}
+                  <div className="space-y-2.5 py-2">
+                    {metricsList.map((m, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 text-[0.72rem] font-medium">
+                          <span className="text-zinc-400 dark:text-zinc-500">{m.icon}</span>
+                          {m.label || ''}
+                          <MetricTooltip text={m.help} />
+                        </span>
+                        <span className="text-zinc-900 dark:text-zinc-100 text-[0.72rem] font-bold font-mono tracking-tight">
+                          {m.value || 'N/A'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pie de estado */}
+                  <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-semibold">
+                    <span>Estado del servicio</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Operativo</span>
+                  </div>
                 </div>
 
-                {/* CTA row */}
-                <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-[0.7rem] font-bold mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                  <span>{s.ctaLabel}</span>
-                  <ArrowRight size={11} className="group-hover/stack:translate-x-0.5 transition-transform" />
+                {/* ── CAPA PRINCIPAL SUPERIOR (Frontal) ───────────────────────────── */}
+                <div className={`
+                  relative rounded-2xl p-6
+                  bg-white/95 text-zinc-900 border-zinc-200 shadow-xl
+                  dark:bg-zinc-900/90 dark:border-zinc-700/60 dark:text-zinc-100
+                  border transition-all duration-300 z-20
+                  flex flex-col justify-between
+                  ${s.featured
+                    ? 'border-blue-500/60 dark:border-blue-500/50 group-hover/stack:border-blue-500'
+                    : 'border-zinc-200 dark:border-zinc-700 group-hover/stack:border-zinc-400 dark:group-hover/stack:border-zinc-500'
+                  }
+                `} style={{ minHeight: 240 }}>
+
+                  {/* Top row */}
+                  <div>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 transform group-hover/stack:scale-110 group-hover/stack:rotate-2
+                        ${s.featured
+                          ? 'bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-500 text-white shadow-blue-600/30 ring-2 ring-blue-400/20'
+                          : 'bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-200 group-hover/stack:bg-gradient-to-tr group-hover/stack:from-blue-600 group-hover/stack:to-blue-500 group-hover/stack:text-white group-hover/stack:border-blue-500 group-hover/stack:shadow-blue-500/20'
+                        }`}>
+                        {s.icon}
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-[0.62rem] font-bold uppercase tracking-wider
+                        ${s.featured
+                          ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                        }`}>
+                        {s.badge || 'Módulo'}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-black text-zinc-950 dark:text-zinc-100 mb-2 leading-snug">{s.title || ''}</h3>
+                    <p className="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed font-medium">{s.description || ''}</p>
+                  </div>
+
+                  {/* CTA row */}
+                  <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-[0.7rem] font-bold mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    <span>{s.ctaLabel || 'Ver detalles'}</span>
+                    <ArrowRight size={11} className="group-hover/stack:translate-x-0.5 transition-transform" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
         </motion.div>
       </motion.div>

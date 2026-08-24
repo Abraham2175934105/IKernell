@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, ArrowRight, Newspaper, Award, User, Tag } from 'lucide-react';
+import { Calendar, ArrowRight, Newspaper, Award, User, Tag, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { NewsModal } from './NewsModal';
 
@@ -103,6 +103,7 @@ const newsItems = [
 
 export const News = () => {
   const [selectedNews, setSelectedNews] = useState(null);
+  const safeNews = newsItems || [];
 
   return (
     <section id="noticias" className="py-20 md:py-28 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/50 relative">
@@ -132,77 +133,84 @@ export const News = () => {
 
         {/* News Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {newsItems.map((news) => (
-            <motion.article 
-              key={news.id} 
-              variants={itemVariants}
-              whileHover={{ y: -6 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className={`group relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border flex flex-col h-full transition-all duration-300 ${
-                news.featured
-                  ? 'border-blue-500/50 shadow-xl shadow-blue-500/10 dark:shadow-blue-500/5 ring-1 ring-blue-500/20'
-                  : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/40 shadow-md hover:shadow-xl hover:shadow-blue-500/10'
-              }`}
-            >
-              {/* Article Image */}
-              <div className="relative h-52 overflow-hidden bg-zinc-950">
-                <img 
-                  src={news.image} 
-                  alt={news.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                
-                {/* Tag Badge */}
-                <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[0.68rem] font-extrabold uppercase tracking-wider shadow-lg backdrop-blur-md ${
-                  news.featured 
-                    ? 'bg-blue-600 text-white border border-blue-400/30'
-                    : 'bg-zinc-900/85 text-white border border-white/15'
-                }`}>
-                  {news.tag}
-                </div>
-
-                {news.featured && (
-                  <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[0.65rem] font-black uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 flex items-center gap-1 shadow-md">
-                    <Award size={12} strokeWidth={2.5} /> Destacado
+          {safeNews.map((news) => {
+            if (!news) return null;
+            return (
+              <motion.article 
+                key={news.id} 
+                variants={itemVariants}
+                whileHover={{ y: -6 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`group relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border flex flex-col h-full transition-all duration-300 ${
+                  news.featured
+                    ? 'border-blue-500/50 shadow-xl shadow-blue-500/10 dark:shadow-blue-500/5 ring-1 ring-blue-500/20'
+                    : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/40 shadow-md hover:shadow-xl hover:shadow-blue-500/10'
+                }`}
+              >
+                {/* Article Image */}
+                <div className="relative h-52 overflow-hidden bg-zinc-950">
+                  <img 
+                    src={news.image} 
+                    alt={news.title || 'Noticia IKernell'}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  
+                  {/* Tag Badge */}
+                  <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[0.68rem] font-extrabold uppercase tracking-wider shadow-lg backdrop-blur-md ${
+                    news.featured 
+                      ? 'bg-blue-600 text-white border border-blue-400/30'
+                      : 'bg-zinc-900/85 text-white border border-white/15'
+                  }`}>
+                    {news.tag || 'Actualidad'}
                   </div>
-                )}
-              </div>
 
-              {/* Article Content */}
-              <div className="p-6 md:p-7 flex flex-col flex-1">
-                <div className="flex items-center justify-between gap-2 mb-3 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar size={13} className="text-blue-600 dark:text-blue-400" />
-                    <span>{news.date}</span>
+                  {news.featured && (
+                    <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[0.65rem] font-black uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 flex items-center gap-1 shadow-md">
+                      <Award size={12} strokeWidth={2.5} /> Destacado
+                    </div>
+                  )}
+                </div>
+
+                {/* Article Content */}
+                <div className="p-6 md:p-7 flex flex-col flex-1">
+                  <div className="flex items-center justify-between gap-2 mb-3 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar size={13} className="text-blue-600 dark:text-blue-400" />
+                      <span>{news.date || 'Reciente'}</span>
+                    </div>
+                    <span className="text-[0.7rem] px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold truncate max-w-[140px]">
+                      {news.author || 'IKernell'}
+                    </span>
                   </div>
-                  <span className="text-[0.7rem] px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold truncate max-w-[140px]">
-                    {news.author}
-                  </span>
-                </div>
-                
-                <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-100 mb-3 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {news.title}
-                </h3>
-                
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1 mb-6">
-                  {news.summary}
-                </p>
+                  
+                  <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-100 mb-3 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {news.title || ''}
+                  </h3>
+                  
+                  <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1 mb-6">
+                    {news.summary || ''}
+                  </p>
 
-                {/* Interactive 'Más Información' Button */}
-                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                  <button 
-                    onClick={() => setSelectedNews(news)}
-                    className="w-full inline-flex items-center justify-between py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-blue-600 dark:bg-blue-950/40 dark:hover:bg-blue-600 text-blue-700 hover:text-white dark:text-blue-300 dark:hover:text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 group/btn shadow-sm cursor-pointer"
-                  >
-                    <span>Más información</span>
-                    <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                  </button>
+                  {/* Interactive 'Más Información' Button */}
+                  <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                    <button 
+                      onClick={() => setSelectedNews(news)}
+                      className="w-full inline-flex items-center justify-between py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-blue-600 dark:bg-blue-950/40 dark:hover:bg-blue-600 text-blue-700 hover:text-white dark:text-blue-300 dark:hover:text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 group/btn shadow-sm cursor-pointer"
+                    >
+                      <span>Más información</span>
+                      <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </motion.article>
-          ))}
+              </motion.article>
+            );
+          })}
         </div>
 
       </motion.div>

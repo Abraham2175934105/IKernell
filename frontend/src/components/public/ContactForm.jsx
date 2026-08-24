@@ -7,20 +7,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
 /* ────────────────────────────────────────────────────────────────────────
-   Validation helpers
+   Validation helpers defensivos
 ──────────────────────────────────────────────────────────────────────── */
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const validate = (name, value) => {
+  const str = (value || '').trim();
   switch (name) {
     case 'nombre':
-      return value.trim().length < 3 ? 'El nombre debe tener al menos 3 caracteres.' : '';
+      return str.length < 3 ? 'El nombre debe tener al menos 3 caracteres.' : '';
     case 'email':
-      return !EMAIL_REGEX.test(value.trim()) ? 'Ingrese un correo electrónico válido (ej. nombre@empresa.com).' : '';
+      return !EMAIL_REGEX.test(str) ? 'Ingrese un correo electrónico válido (ej. nombre@empresa.com).' : '';
     case 'asunto':
-      return value.trim().length < 4 ? 'El asunto debe tener al menos 4 caracteres.' : '';
+      return str.length < 4 ? 'El asunto debe tener al menos 4 caracteres.' : '';
     case 'mensaje':
-      return value.trim().length < 20 ? `Mínimo 20 caracteres (${value.trim().length} ingresados).` : '';
+      return str.length < 20 ? `Mínimo 20 caracteres (${str.length} ingresados).` : '';
     default:
       return '';
   }
@@ -86,6 +87,8 @@ const FieldError = ({ message }) => (
 ──────────────────────────────────────────────────────────────────────── */
 const FieldTooltip = ({ text }) => {
   const [open, setOpen] = useState(false);
+  if (!text) return null;
+
   return (
     <div className="relative inline-flex items-center">
       <button
@@ -123,7 +126,7 @@ const FieldTooltip = ({ text }) => {
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === 'Escape' && !loading) onClose();
+      if (e.key === 'Escape' && !loading && onClose) onClose();
     };
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -138,6 +141,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
   }, [isOpen, loading, onClose]);
 
   if (!isOpen) return null;
+  const safeData = data || {};
 
   return (
     <AnimatePresence>
@@ -169,26 +173,26 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
           <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-3 mb-6 text-xs">
             <div className="flex items-start justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700/60 pb-2">
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem]">Remitente</span>
-              <span className="font-bold text-zinc-900 dark:text-zinc-100 text-right">{data.nombre}</span>
+              <span className="font-bold text-zinc-900 dark:text-zinc-100 text-right">{safeData.nombre || 'N/A'}</span>
             </div>
             <div className="flex items-start justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700/60 pb-2">
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem]">Correo</span>
-              <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-right">{data.email}</span>
+              <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-right">{safeData.email || 'N/A'}</span>
             </div>
-            {data.telefono && (
+            {safeData.telefono && (
               <div className="flex items-start justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700/60 pb-2">
                 <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem]">Teléfono</span>
-                <span className="font-mono text-zinc-800 dark:text-zinc-200 text-right">{data.telefono}</span>
+                <span className="font-mono text-zinc-800 dark:text-zinc-200 text-right">{safeData.telefono}</span>
               </div>
             )}
             <div className="flex items-start justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700/60 pb-2">
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem]">Asunto</span>
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100 text-right">{data.asunto}</span>
+              <span className="font-semibold text-zinc-900 dark:text-zinc-100 text-right">{safeData.asunto || 'N/A'}</span>
             </div>
             <div>
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem] block mb-1">Mensaje</span>
               <p className="text-zinc-700 dark:text-zinc-300 italic text-[0.72rem] line-clamp-3 bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                "{data.mensaje}"
+                "{safeData.mensaje || ''}"
               </p>
             </div>
           </div>
@@ -199,7 +203,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
               type="button"
               disabled={loading}
               onClick={onClose}
-              className="w-full sm:w-1/2 py-3 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-1/2 py-3 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <Edit3 size={14} /> Revisar datos
             </button>
@@ -207,7 +211,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
               type="button"
               disabled={loading}
               onClick={onConfirm}
-              className="w-full sm:w-1/2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-1/2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {loading ? (
                 <><Loader2 size={16} className="animate-spin" /> Enviando...</>
@@ -223,7 +227,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
 };
 
 /* ────────────────────────────────────────────────────────────────────────
-   ContactForm Principal con Validación Activa y UX Guiada
+   ContactForm Principal con Validación Activa, Try/Catch y UX Guiada
 ──────────────────────────────────────────────────────────────────────── */
 export const ContactForm = () => {
   const INITIAL = { nombre: '', email: '', telefono: '', asunto: '', mensaje: '' };
@@ -248,7 +252,7 @@ export const ContactForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value || '' }));
     setTouched((prev) => ({ ...prev, [name]: true }));
     setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
   };
@@ -261,7 +265,7 @@ export const ContactForm = () => {
 
   /* Intercept submit -> Validate -> Open confirmation modal */
   const handlePreSubmit = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     const allTouched = { nombre: true, email: true, asunto: true, mensaje: true };
     const allErrors = {
       nombre: validate('nombre', formData.nombre),
@@ -288,17 +292,17 @@ export const ContactForm = () => {
     setShowConfirm(true);
   };
 
-  /* Final network submit from confirmation modal */
+  /* Final network submit from confirmation modal with Try/Catch protection */
   const handleFinalSubmit = async () => {
     setLoading(true);
     try {
       await axios.post('http://localhost:8080/api/auth/contacto', {
-        nombreRemitente: formData.nombre.trim(),
-        emailRemitente: formData.email.trim(),
-        telefono: formData.telefono.trim(),
-        asunto: formData.asunto.trim(),
-        mensaje: formData.mensaje.trim(),
-      });
+        nombreRemitente: (formData.nombre || '').trim(),
+        emailRemitente: (formData.email || '').trim(),
+        telefono: (formData.telefono || '').trim(),
+        asunto: (formData.asunto || '').trim(),
+        mensaje: (formData.mensaje || '').trim(),
+      }, { timeout: 10000 });
 
       setShowConfirm(false);
       setSubmitted(true);
@@ -312,11 +316,12 @@ export const ContactForm = () => {
     } catch (err) {
       console.error('Error enviando contacto:', err);
       setShowConfirm(false);
+      const errorMsg = err?.response?.data?.message || err?.message || 'Error al procesar el envío. Por favor intente de nuevo más tarde.';
       setToast({
         type: 'error',
-        message: 'Error al procesar el envío. Por favor intente de nuevo más tarde.',
+        message: `No se pudo entregar la solicitud: ${errorMsg}`,
       });
-    } finally {
+    } fontally: {
       setLoading(false);
     }
   };
@@ -485,11 +490,11 @@ export const ContactForm = () => {
               </label>
               <div className="flex items-center gap-2">
                 <span className={`text-[0.65rem] font-semibold tabular-nums ${
-                  formData.mensaje.trim().length < 20
+                  (formData.mensaje || '').trim().length < 20
                     ? 'text-zinc-400 dark:text-zinc-500'
                     : 'text-emerald-600 dark:text-emerald-400'
                 }`}>
-                  {formData.mensaje.trim().length}/20 mín.
+                  {(formData.mensaje || '').trim().length}/20 mín.
                 </span>
                 <FieldTooltip text="Detalla el alcance, tecnologías o requerimientos específicos de tu proyecto." />
               </div>
@@ -510,9 +515,14 @@ export const ContactForm = () => {
           {/* Submit button */}
           <button
             type="submit"
-            className="gradient-button w-full text-sm sm:text-base py-3.5 mt-1 font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-transform hover:-translate-y-0.5"
+            disabled={loading}
+            className="gradient-button w-full text-sm sm:text-base py-3.5 mt-1 font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-transform hover:-translate-y-0.5 disabled:opacity-50"
           >
-            <Send size={17} /> Continuar y Revisar Solicitud
+            {loading ? (
+              <><Loader2 size={18} className="animate-spin" /> Procesando Solicitud...</>
+            ) : (
+              <><Send size={17} /> Continuar y Revisar Solicitud</>
+            )}
           </button>
 
         </motion.form>
