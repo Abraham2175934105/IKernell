@@ -353,6 +353,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
     if (!dev) return;
     const fecha = new Date().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
     const nivel = normalizarEstado(dev.estadoAlerta);
+    const nombreDev = dev?.nombreCompleto || 'Desarrollador';
     const contenido = `===============================================================
 IKERNELL SOLUCIONES SOFTWARE - DICTAMEN DE ANALÍTICA PREDICTIVA
 MÓDULO: PREDICTOR DE DESGASTE Y BURNOUT HISTÓRICO (RF-35)
@@ -360,20 +361,20 @@ NORMATIVA: ISO/IEC 25010 (Mantenibilidad & Fiabilidad de Software)
 ===============================================================
 
 Fecha de Emisión: ${fecha}
-Desarrollador Evaluado: ${dev.nombreCompleto} (ID: ${dev.idTrabajador})
-Especialidad: ${dev.especialidad || 'Desarrollo de Software'}
-Correo Electrónico: ${dev.email}
+Desarrollador Evaluado: ${nombreDev} (ID: ${dev?.idTrabajador || 'N/A'})
+Especialidad: ${dev?.especialidad || 'Desarrollo de Software'}
+Correo Electrónico: ${dev?.email || 'N/A'}
 Nivel Semafórico Homologado: ${nivel}
-Capacidad Bloqueada en Sistema: ${dev.capacidadBloqueada ? 'SÍ (Bloqueo Preventivo)' : 'NO'}
+Capacidad Bloqueada en Sistema: ${dev?.capacidadBloqueada ? 'SÍ (Bloqueo Preventivo)' : 'NO'}
 
 ---------------------------------------------------------------
 1. MÉTRICAS CLAVE Y SERIES TEMPORALES DE 21 DÍAS
 ---------------------------------------------------------------
-- Tareas WBS Asignadas Activas: ${dev.tareasActivas}
-- Score de Carga Cognitiva Global: ${Math.round(dev.promedioCarga)} / 100
-- Semana 1 (Días 15 a 21): ${Math.round(dev.scoreSemana1)}%
-- Semana 2 (Días 8 a 14): ${Math.round(dev.scoreSemana2)}%
-- Semana 3 (Últimos 7 días): ${Math.round(dev.scoreSemana3)}%
+- Tareas WBS Asignadas Activas: ${dev?.tareasActivas || 0}
+- Score de Carga Cognitiva Global: ${Math.round(dev?.promedioCarga || 0)} / 100
+- Semana 1 (Días 15 a 21): ${Math.round(dev?.scoreSemana1 || 0)}%
+- Semana 2 (Días 8 a 14): ${Math.round(dev?.scoreSemana2 || 0)}%
+- Semana 3 (Últimos 7 días): ${Math.round(dev?.scoreSemana3 || 0)}%
 
 ---------------------------------------------------------------
 2. DIAGNÓSTICO CLÍNICO-OPERATIVO
@@ -383,7 +384,7 @@ ${getDiagnosticoClaro(dev)}
 ---------------------------------------------------------------
 3. RECOMENDACIÓN FORMULADA POR EL MOTOR PREDICTIVO
 ---------------------------------------------------------------
-${dev.recomendacion || 'Mantener monitoreo continuo en cada sprint.'}
+${dev?.recomendacion || 'Mantener monitoreo continuo en cada sprint.'}
 
 ===============================================================
 Generado automáticamente por el motor analítico IKernell v2.0
@@ -393,11 +394,11 @@ Generado automáticamente por el motor analítico IKernell v2.0
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `DIAGNOSTICO_BURNOUT_${dev.nombreCompleto.replace(/\s+/g, '_')}.txt`;
+    link.download = `DIAGNOSTICO_BURNOUT_${nombreDev.replace(/\s+/g, '_')}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success(`Diagnóstico de ${dev.nombreCompleto} exportado con éxito.`);
+    toast.success(`Diagnóstico de ${nombreDev} exportado con éxito.`);
   };
 
   // Badge estilizado con indicadores SVG limpios (sin emojis)
