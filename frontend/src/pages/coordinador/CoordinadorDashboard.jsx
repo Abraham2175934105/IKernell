@@ -1338,13 +1338,14 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Consola Única de Búsqueda y Filtrado Estricto por Fechas */}
+          {/* Consola Única y Optimizada de Búsqueda, Fechas y Filtros */}
           <motion.div 
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5"
+            className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4"
           >
-            {/* 1. Barra de Búsqueda por Texto Libre */}
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            {/* 1. Fila Superior: Búsqueda Global por Texto + Indicadores del Histórico Completo */}
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+              {/* Caja de Búsqueda */}
               <div className="relative flex-1">
                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
@@ -1352,204 +1353,210 @@ export const CoordinadorDashboard = () => {
                   value={searchSolicitudQuery}
                   onChange={(e) => setSearchSolicitudQuery(e.target.value)}
                   placeholder="Buscar por código (SOL-001), cliente, correo, asunto o contenido..."
-                  className="w-full pl-11 pr-10 py-3 text-xs sm:text-sm rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                  className="w-full pl-11 pr-10 py-2.5 text-xs sm:text-sm rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
                 />
                 {searchSolicitudQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchSolicitudQuery('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg transition-colors cursor-pointer"
                   >
                     <X size={15} />
                   </button>
                 )}
               </div>
 
-              {/* Contador de Filtros Activos y Botón de Limpieza */}
-              {(searchSolicitudQuery || fechaInicioSolicitud || fechaFinSolicitud || filtroSolicitudes !== 'TODAS') && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchSolicitudQuery('');
-                    setFechaInicioSolicitud('');
-                    setFechaFinSolicitud('');
-                    setFiltroSolicitudes('TODAS');
-                  }}
-                  className="px-4 py-3 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 text-xs font-bold transition-all hover:bg-red-100 cursor-pointer inline-flex items-center justify-center gap-1.5 shrink-0"
-                  title="Reiniciar todos los filtros de búsqueda, estado y fechas"
-                >
-                  <X size={14} />
-                  <span>Limpiar Filtros</span>
-                </button>
+              {/* Indicadores Píldora del Rango Exigente Base */}
+              {rangoFechasSolicitudes.primera && (
+                <div className="flex items-center gap-2 text-[0.68rem] font-extrabold text-zinc-500 dark:text-zinc-400 shrink-0 flex-wrap">
+                  <span className="px-3 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 flex items-center gap-1.5">
+                    <Calendar size={13} className="text-blue-500" />
+                    <span>Primera:</span>
+                    <strong className="text-zinc-900 dark:text-zinc-100 font-mono">{rangoFechasSolicitudes.primeraFormateada}</strong>
+                  </span>
+                  <span className="px-3 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 flex items-center gap-1.5">
+                    <Calendar size={13} className="text-blue-500" />
+                    <span>Última:</span>
+                    <strong className="text-zinc-900 dark:text-zinc-100 font-mono">{rangoFechasSolicitudes.ultimaFormateada}</strong>
+                  </span>
+                </div>
               )}
             </div>
 
-            {/* 2. Sección de Filtrado Estricto por Fechas (Fechas Exigentes de Primera y Última Solicitud) */}
-            <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60 space-y-3">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <Calendar size={16} className="text-blue-600 dark:text-blue-400" />
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
-                    Filtrado Estricto por Rango de Fechas
+            {/* 2. Fila Inferior: Filtros de Estado a la Izquierda + Selector Estricto de Fechas a la Derecha */}
+            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+              
+              {/* Píldoras de Estado (Izquierda) */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setFiltroSolicitudes('TODAS')}
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
+                    filtroSolicitudes === 'TODAS'
+                      ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-md scale-[1.02]'
+                      : 'bg-zinc-100 dark:bg-zinc-800/70 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  <span>Todas</span>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                    filtroSolicitudes === 'TODAS' ? 'bg-white/20 dark:bg-black/20 font-extrabold' : 'bg-zinc-200 dark:bg-zinc-700'
+                  }`}>
+                    {solicitudes.length}
                   </span>
-                </div>
+                </button>
 
-                {rangoFechasSolicitudes.primera && (
-                  <div className="flex items-center gap-2 text-[0.68rem] font-bold text-zinc-500 dark:text-zinc-400 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
-                      Primera Solicitud: <strong className="text-blue-600 dark:text-blue-400 font-mono">{rangoFechasSolicitudes.primeraFormateada}</strong>
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
-                      Última Solicitud: <strong className="text-blue-600 dark:text-blue-400 font-mono">{rangoFechasSolicitudes.ultimaFormateada}</strong>
-                    </span>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setFiltroSolicitudes('PENDIENTE')}
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
+                    filtroSolicitudes === 'PENDIENTE'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20 scale-[1.02]'
+                      : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60 hover:bg-blue-100'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                  <span>Pendientes</span>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                    filtroSolicitudes === 'PENDIENTE' ? 'bg-white/20 font-extrabold' : 'bg-blue-100 dark:bg-blue-900/60'
+                  }`}>
+                    {solicitudes.filter(s => (s.estado === 'PENDIENTE' || (!s.estado && !s.atendido))).length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltroSolicitudes('EN_PROCESO')}
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
+                    filtroSolicitudes === 'EN_PROCESO'
+                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/20 scale-[1.02]'
+                      : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 hover:bg-amber-100'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <span>En Proceso</span>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                    filtroSolicitudes === 'EN_PROCESO' ? 'bg-white/20 font-extrabold' : 'bg-amber-100 dark:bg-amber-900/60'
+                  }`}>
+                    {solicitudes.filter(s => s.estado === 'EN_PROCESO').length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltroSolicitudes('ATENDIDA')}
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
+                    filtroSolicitudes === 'ATENDIDA'
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20 scale-[1.02]'
+                      : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span>Atendidas</span>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                    filtroSolicitudes === 'ATENDIDA' ? 'bg-white/20 font-extrabold' : 'bg-emerald-100 dark:bg-emerald-900/60'
+                  }`}>
+                    {solicitudes.filter(s => s.estado === 'ATENDIDA' || (s.atendido && !s.estado)).length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltroSolicitudes('REABIERTA')}
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
+                    filtroSolicitudes === 'REABIERTA'
+                      ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20 scale-[1.02]'
+                      : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60 hover:bg-purple-100'
+                  }`}
+                >
+                  <RotateCcw size={13} />
+                  <span>Reabiertas</span>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                    filtroSolicitudes === 'REABIERTA' ? 'bg-white/20 font-extrabold' : 'bg-purple-100 dark:bg-purple-900/60'
+                  }`}>
+                    {solicitudes.filter(s => s.estado === 'REABIERTA').length}
+                  </span>
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
-                {/* Selector Fecha Inicio */}
-                <div>
-                  <label className="text-[0.65rem] font-extrabold uppercase text-zinc-500 dark:text-zinc-400 block mb-1">
-                    Desde (Primera Solicitud)
-                  </label>
+              {/* Control Integrado de Fechas Exigentes & Accesos Rápidos (Derecha) */}
+              <div className="flex items-center gap-2 flex-wrap shrink-0 justify-start xl:justify-end">
+                {/* Selector Fecha Desde */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[0.65rem] font-extrabold uppercase text-zinc-500 dark:text-zinc-400">Desde:</span>
                   <input
                     type="date"
                     value={fechaInicioSolicitud}
                     min={rangoFechasSolicitudes.primera}
                     max={rangoFechasSolicitudes.ultima}
                     onChange={(e) => setFechaInicioSolicitud(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium"
+                    className="px-2.5 py-1.5 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
-                {/* Selector Fecha Fin */}
-                <div>
-                  <label className="text-[0.65rem] font-extrabold uppercase text-zinc-500 dark:text-zinc-400 block mb-1">
-                    Hasta (Última Solicitud)
-                  </label>
+                {/* Selector Fecha Hasta */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[0.65rem] font-extrabold uppercase text-zinc-500 dark:text-zinc-400">Hasta:</span>
                   <input
                     type="date"
                     value={fechaFinSolicitud}
                     min={rangoFechasSolicitudes.primera}
                     max={rangoFechasSolicitudes.ultima}
                     onChange={(e) => setFechaFinSolicitud(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium"
+                    className="px-2.5 py-1.5 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
-                {/* Accesos Rápidos de Rango */}
-                <div className="sm:col-span-2 lg:col-span-2 flex items-center gap-2 flex-wrap pt-1">
+                {/* Botón Acción Todo el Historial */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFechaInicioSolicitud('');
+                    setFechaFinSolicitud('');
+                  }}
+                  className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer border ${
+                    !fechaInicioSolicitud && !fechaFinSolicitud
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
+                  }`}
+                  title="Mostrar todo el historial disponible"
+                >
+                  Todo
+                </button>
+
+                {/* Botón Acción Rango Exigente */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (rangoFechasSolicitudes.primera && rangoFechasSolicitudes.ultima) {
+                      setFechaInicioSolicitud(rangoFechasSolicitudes.primera);
+                      setFechaFinSolicitud(rangoFechasSolicitudes.ultima);
+                    }
+                  }}
+                  className="text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer border bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                  title="Filtra desde la fecha de la primera solicitud hasta la última"
+                >
+                  Rango Exigente
+                </button>
+
+                {/* Botón Limpiar Todo cuando hay filtros activos */}
+                {(searchSolicitudQuery || fechaInicioSolicitud || fechaFinSolicitud || filtroSolicitudes !== 'TODAS') && (
                   <button
                     type="button"
                     onClick={() => {
+                      setSearchSolicitudQuery('');
                       setFechaInicioSolicitud('');
                       setFechaFinSolicitud('');
+                      setFiltroSolicitudes('TODAS');
                     }}
-                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer border ${
-                      !fechaInicioSolicitud && !fechaFinSolicitud
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
-                    }`}
+                    className="py-1.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 text-xs font-black transition-all hover:bg-red-100 cursor-pointer inline-flex items-center gap-1"
+                    title="Reiniciar todos los filtros activados"
                   >
-                    Todo el Historial
+                    <X size={13} />
+                    <span>Limpiar</span>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (rangoFechasSolicitudes.primera && rangoFechasSolicitudes.ultima) {
-                        setFechaInicioSolicitud(rangoFechasSolicitudes.primera);
-                        setFechaFinSolicitud(rangoFechasSolicitudes.ultima);
-                      }
-                    }}
-                    className="text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer border bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
-                  >
-                    Rango Exigente Completo
-                  </button>
-                </div>
+                )}
               </div>
-            </div>
 
-            {/* 3. Filtros Rápidos por Estado de Solicitud */}
-            <div className="flex items-center gap-2 flex-wrap pt-1">
-              <button
-                type="button"
-                onClick={() => setFiltroSolicitudes('TODAS')}
-                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  filtroSolicitudes === 'TODAS'
-                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                <span>Todas</span>
-                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20 dark:bg-black/10">
-                  {solicitudes.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFiltroSolicitudes('PENDIENTE')}
-                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  filtroSolicitudes === 'PENDIENTE'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100'
-                }`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                <span>Pendientes</span>
-                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
-                  {solicitudes.filter(s => (s.estado === 'PENDIENTE' || (!s.estado && !s.atendido))).length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFiltroSolicitudes('EN_PROCESO')}
-                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  filtroSolicitudes === 'EN_PROCESO'
-                    ? 'bg-amber-600 text-white shadow-sm'
-                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100'
-                }`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                <span>En Proceso</span>
-                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
-                  {solicitudes.filter(s => s.estado === 'EN_PROCESO').length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFiltroSolicitudes('ATENDIDA')}
-                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  filtroSolicitudes === 'ATENDIDA'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'
-                }`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>Atendidas</span>
-                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
-                  {solicitudes.filter(s => s.estado === 'ATENDIDA' || (s.atendido && !s.estado)).length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFiltroSolicitudes('REABIERTA')}
-                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  filtroSolicitudes === 'REABIERTA'
-                    ? 'bg-purple-600 text-white shadow-sm'
-                    : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'
-                }`}
-              >
-                <RotateCcw size={12} />
-                <span>Reabiertas</span>
-                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
-                  {solicitudes.filter(s => s.estado === 'REABIERTA').length}
-                </span>
-              </button>
             </div>
           </motion.div>
 
