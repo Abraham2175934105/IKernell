@@ -972,17 +972,39 @@ export const LiderDashboard = () => {
     }
   };
 
-  // Filtrado reactivo para la grilla del catálogo de proyectos
+  // Filtrado reactivo para la grilla del catálogo de proyectos con segregación por propiedad de Líder
   const proyectosCatalogoFiltrados = useMemo(() => {
     if (!proyectos || !Array.isArray(proyectos)) return [];
-    if (!busquedaCatalogoProyecto || !busquedaCatalogoProyecto.trim()) return proyectos;
-    const q = busquedaCatalogoProyecto.trim().toLowerCase();
-    return proyectos.filter(p => 
-      (p.nombre && p.nombre.toLowerCase().includes(q)) ||
-      (p.cliente && p.cliente.toLowerCase().includes(q)) ||
-      (p.estado && p.estado.toLowerCase().includes(q))
-    );
-  }, [proyectos, busquedaCatalogoProyecto]);
+    const userDevId = user?.idTrabajador || user?.id;
+    const userEmail = (user?.email || '').toLowerCase();
+
+    return proyectos.filter(p => {
+      // 1. Filtro por Propiedad de Líder
+      if (filtroPropiedadLider === 'MIS_PROYECTOS') {
+        const pLiderId = p.lider?.idTrabajador || p.lider?.id;
+        const pLiderEmail = (p.lider?.email || '').toLowerCase();
+        const isMine = (userDevId && String(pLiderId) === String(userDevId)) || (userEmail && pLiderEmail && userEmail === pLiderEmail);
+        if (!isMine) return false;
+      } else if (filtroPropiedadLider === 'OTROS_LIDERES') {
+        const pLiderId = p.lider?.idTrabajador || p.lider?.id;
+        const pLiderEmail = (p.lider?.email || '').toLowerCase();
+        const isMine = (userDevId && String(pLiderId) === String(userDevId)) || (userEmail && pLiderEmail && userEmail === pLiderEmail);
+        if (isMine) return false;
+      }
+
+      // 2. Búsqueda por Texto
+      if (busquedaCatalogoProyecto && busquedaCatalogoProyecto.trim()) {
+        const q = busquedaCatalogoProyecto.trim().toLowerCase();
+        const mNom = p.nombre && p.nombre.toLowerCase().includes(q);
+        const mCli = p.cliente && p.cliente.toLowerCase().includes(q);
+        const mEst = p.estado && p.estado.toLowerCase().includes(q);
+        const mLid = p.lider && `${p.lider.nombre} ${p.lider.apellido}`.toLowerCase().includes(q);
+        if (!mNom && !mCli && !mEst && !mLid) return false;
+      }
+
+      return true;
+    });
+  }, [proyectos, busquedaCatalogoProyecto, filtroPropiedadLider, user]);
 
   // Efectos (Hooks)
   useEffect(() => {
@@ -2542,6 +2564,52 @@ export const LiderDashboard = () => {
                   >
                     <FolderPlus size={14} />
                     <span>Nuevo Proyecto</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Selector Destacado de Filtro: Mis Proyectos vs Otros Líderes vs Todos */}
+              <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 font-mono tracking-wider mr-1">
+                    Visualizar:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFiltroPropiedadLider('MIS_PROYECTOS')}
+                    className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center gap-2 border ${
+                      filtroPropiedadLider === 'MIS_PROYECTOS'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-transparent hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <Briefcase size={14} />
+                    <span>Mis Proyectos Asignados</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltroPropiedadLider('OTROS_LIDERES')}
+                    className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center gap-2 border ${
+                      filtroPropiedadLider === 'OTROS_LIDERES'
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-600/20'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-transparent hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <Globe size={14} />
+                    <span>Otros Proyectos (Vista Global - Solo Lectura)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltroPropiedadLider('TODOS')}
+                    className={`px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 border ${
+                      filtroPropiedadLider === 'TODOS'
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-sm'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-transparent hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span>Todos ({proyectos?.length || 0})</span>
                   </button>
                 </div>
               </div>
