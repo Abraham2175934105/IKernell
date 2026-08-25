@@ -1289,28 +1289,44 @@ export const LiderDashboard = () => {
           className="space-y-6"
         >
           {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-            <div className="space-y-6">
-              {/* Encabezado del Catálogo con Buscador Integrado */}
+            <div className="space-y-8">
+              {/* Componente Empty State Premium para Vista Global WBS */}
+              <div className="p-10 bg-zinc-50 dark:bg-zinc-900/30 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 text-center flex flex-col items-center justify-center space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-400 shadow-xs">
+                  <Globe size={48} className="text-zinc-400" />
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white mb-2 tracking-tight">
+                    Vista Global Corporativa Activa
+                  </h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-2xl mx-auto leading-relaxed font-medium">
+                    Seleccione un proyecto específico en el menú superior para gestionar su Estructura de Desglose de Trabajo (WBS) y asignar actividades. La estructura de desglose de trabajo (fases, etapas y asignación de tareas a desarrolladores) requiere el contexto de un proyecto individual y no puede operarse de forma consolidada.
+                  </p>
+                </div>
+              </div>
+
+              {/* Catálogo Corporativo de Selección Directa de Proyectos */}
               <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                  <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    <FolderGit2 size={20} className="text-zinc-800 dark:text-zinc-200" />
+                  <h4 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <FolderGit2 size={18} className="text-zinc-700 dark:text-zinc-300" />
                     Catálogo Corporativo de Proyectos
-                  </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
-                    Seleccione un proyecto activo para gestionar sus fases WBS, cronograma y asignación de desarrolladores.
+                  </h4>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                    Haga clic en cualquiera de los proyectos a continuación para ingresar al desglose WBS correspondiente.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                  <div className="relative flex-1 md:w-72">
+                  <div className="relative flex-1 md:w-64">
                     <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                     <input
                       type="text"
                       value={busquedaCatalogoProyecto}
                       onChange={(e) => setBusquedaCatalogoProyecto(e.target.value)}
-                      placeholder="Buscar proyecto por nombre o cliente..."
-                      className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-500 font-medium"
+                      placeholder="Buscar por nombre o cliente..."
+                      className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 font-medium"
                     />
                     {busquedaCatalogoProyecto && (
                       <button
@@ -1338,7 +1354,6 @@ export const LiderDashboard = () => {
                       setShowNuevoProyectoModal(true);
                     }}
                     className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md shrink-0"
-                    title="Crear un nuevo proyecto de software"
                   >
                     <FolderPlus size={14} />
                     <span>Nuevo Proyecto</span>
@@ -1346,12 +1361,10 @@ export const LiderDashboard = () => {
                 </div>
               </div>
 
-              {/* Grilla de Tarjetas Interactivas de Proyectos */}
+              {/* Grilla de Tarjetas Interactivas de Proyectos (B&W Corporate High-Contrast) */}
               {proyectosCatalogoFiltrados.length === 0 ? (
-                <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-12 text-center text-zinc-400 text-xs font-medium space-y-2">
-                  <FolderGit2 size={32} className="mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
-                  <p className="font-bold text-zinc-700 dark:text-zinc-300 text-sm">No se encontraron proyectos coincidentes</p>
-                  <p className="text-zinc-500">Pruebe ajustando el término de búsqueda o cree un nuevo proyecto.</p>
+                <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 text-center text-zinc-400 text-xs font-medium">
+                  No se encontraron proyectos que coincidan con el término de búsqueda.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
