@@ -4,7 +4,7 @@ import {
   User, RefreshCw, Sparkles, Lock, Layers, Users,
   Briefcase, Check, Info, Search, X, HelpCircle, Download,
   TrendingDown, Minus, Clock, Globe, FolderGit2, ChevronDown, ChevronRight,
-  ShieldCheck, FileText, Filter, DollarSign, Calendar, Loader2, Building2
+  ShieldCheck, FileText, Filter, DollarSign, Calendar, Loader2, Building2, ArrowLeft, RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
@@ -94,6 +94,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showTareasDevModal, setShowTareasDevModal] = useState(false);
   const [showEvolucionModal, setShowEvolucionModal] = useState(false);
+  const [previousNavigationContext, setPreviousNavigationContext] = useState(null);
 
   // Carga lista de proyectos disponibles para el selector interactivo
   useEffect(() => {
@@ -506,6 +507,14 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
 
   // Manejador de navegación con auto-filtrado y redirección automática al WBS
   const handleIrAProyectoWbs = (proyectoTarget) => {
+    // Guardar contexto previo para permitir "Volver con 1 Clic"
+    if (selectedDev) {
+      setPreviousNavigationContext({
+        dev: selectedDev,
+        proyectoAnterior: proyectoSeleccionadoLocal
+      });
+    }
+
     setShowTareasDevModal(false);
     setShowEvolucionModal(false);
     
@@ -520,7 +529,24 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
       onNavigateToWbs();
     }
 
-    toast.success(`Navegando al desglose WBS de "${proyectoTarget?.nombre || 'Proyecto'}"`);
+    toast.success(`Navegando a "${proyectoTarget?.nombre || 'Proyecto'}". Usa el botón "Volver a inspección" para retornar.`);
+  };
+
+  // Retorno instantáneo al modal de inspección del desarrollador previo
+  const handleVolverAInspeccion = () => {
+    if (!previousNavigationContext) return;
+    const { dev, proyectoAnterior } = previousNavigationContext;
+
+    if (proyectoAnterior) {
+      setProyectoSeleccionadoLocal(proyectoAnterior);
+    }
+    if (dev) {
+      setSelectedDev(dev);
+      setShowTareasDevModal(true);
+    }
+
+    setPreviousNavigationContext(null);
+    toast.success(`Retornaste a la inspección de tareas de ${dev?.nombre || 'Colaborador'}`);
   };
 
   // Sincroniza la selección de desarrollador al cambiar filtros o proyecto
@@ -666,7 +692,38 @@ Generado automáticamente por el motor analítico IKernell v2.0
 
   return (
     <div className="w-full bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
-      
+      {/* Banner de Retorno Rápido (Volver con 1 Clic al Contexto Previo de Inspección) */}
+      {previousNavigationContext && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white p-3.5 sm:p-4 rounded-3xl shadow-lg flex items-center justify-between gap-3 border border-blue-400/40"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0 shadow-inner">
+              <RotateCcw size={20} />
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm font-extrabold tracking-tight flex items-center gap-2">
+                <span>Navegación Directa: Viendo proyecto "{proyectoSeleccionadoLocal?.nombre || 'Seleccionado'}"</span>
+              </p>
+              <p className="text-[0.68rem] sm:text-xs text-blue-100 font-medium mt-0.5">
+                ¿Deseas volver a la inspección de <strong className="text-white underline decoration-white/40">{previousNavigationContext.dev?.nombre} {previousNavigationContext.dev?.apellido}</strong>? Haz clic en el botón a la derecha.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleVolverAInspeccion}
+            className="bg-white text-blue-700 hover:bg-blue-50 text-xs font-black py-2.5 px-4 sm:px-5 rounded-2xl shadow-md transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 hover:scale-105"
+          >
+            <ArrowLeft size={16} className="stroke-[3]" />
+            <span>Volver a Inspección de {previousNavigationContext.dev?.nombre || 'Colaborador'}</span>
+          </button>
+        </motion.div>
+      )}
+
       {/* ─── Encabezado Principal & Contexto ─── */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-6 border-b border-zinc-200 dark:border-zinc-800">
         <div className="space-y-2">
