@@ -221,6 +221,11 @@ export const LiderDashboard = () => {
   const [desarrolladoresCargas, setDesarrolladoresCargas] = useState([]);
 
   const [showNuevaEtapaModal, setShowNuevaEtapaModal] = useState(false);
+  const [submittingEtapa, setSubmittingEtapa] = useState(false);
+  const [submittingActividad, setSubmittingActividad] = useState(false);
+  const [submittingReasignacion, setSubmittingReasignacion] = useState(false);
+  const [submittingAtencion, setSubmittingAtencion] = useState(false);
+  const [busquedaCatalogoProyecto, setBusquedaCatalogoProyecto] = useState('');
   const [showReasignarModal, setShowReasignarModal] = useState(false);
   const [actividadAReasignar, setActividadAReasignar] = useState(null);
 
@@ -387,6 +392,18 @@ export const LiderDashboard = () => {
       setTimeout(() => setRefreshingManual(false), 500);
     }
   };
+
+  // Filtrado reactivo para la grilla del catálogo de proyectos
+  const proyectosCatalogoFiltrados = useMemo(() => {
+    if (!proyectos || !Array.isArray(proyectos)) return [];
+    if (!busquedaCatalogoProyecto || !busquedaCatalogoProyecto.trim()) return proyectos;
+    const q = busquedaCatalogoProyecto.trim().toLowerCase();
+    return proyectos.filter(p => 
+      (p.nombre && p.nombre.toLowerCase().includes(q)) ||
+      (p.cliente && p.cliente.toLowerCase().includes(q)) ||
+      (p.estado && p.estado.toLowerCase().includes(q))
+    );
+  }, [proyectos, busquedaCatalogoProyecto]);
 
   // Efectos (Hooks)
   useEffect(() => {
@@ -1272,50 +1289,128 @@ export const LiderDashboard = () => {
           className="space-y-6"
         >
           {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-            <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-10 sm:p-14 text-center max-w-2xl mx-auto shadow-sm my-4 space-y-2">
-              <div className="w-16 h-16 rounded-3xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center mx-auto mb-4 border border-zinc-200 dark:border-zinc-700 shadow-inner">
-                <FolderGit2 size={32} className="text-zinc-800 dark:text-zinc-200" />
-              </div>
-              <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2 tracking-tight">
-                Vista Global Activa. Seleccione un proyecto específico en el menú superior para gestionar su Estructura de Desglose de Trabajo (WBS) y asignar actividades.
-              </h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto font-medium">
-                La estructura de desglose de trabajo (fases, etapas y asignación de tareas a desarrolladores) requiere el contexto de un proyecto individual y no puede operarse en la vista global corporativa.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNuevoProyectoForm({
-                      nombre: '',
-                      cliente: '',
-                      descripcion: '',
-                      fechaInicio: new Date().toISOString().split('T')[0],
-                      fechaFinEstimada: '',
-                      presupuesto: ''
-                    });
-                    setNuevoProyectoErrors({});
-                    setShowNuevoProyectoModal(true);
-                  }}
-                  className="gradient-button text-xs py-2.5 px-4 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md"
-                  title="Crear un nuevo proyecto de software con presupuesto y fechas"
-                >
-                  <FolderPlus size={14} />
-                  <span>Nuevo Proyecto</span>
-                </button>
-                {proyectos?.map(p => (
+            <div className="space-y-6">
+              {/* Encabezado del Catálogo con Buscador Integrado */}
+              <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <FolderGit2 size={20} className="text-zinc-800 dark:text-zinc-200" />
+                    Catálogo Corporativo de Proyectos
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                    Seleccione un proyecto activo para gestionar sus fases WBS, cronograma y asignación de desarrolladores.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                  <div className="relative flex-1 md:w-72">
+                    <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                    <input
+                      type="text"
+                      value={busquedaCatalogoProyecto}
+                      onChange={(e) => setBusquedaCatalogoProyecto(e.target.value)}
+                      placeholder="Buscar proyecto por nombre o cliente..."
+                      className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-500 font-medium"
+                    />
+                    {busquedaCatalogoProyecto && (
+                      <button
+                        type="button"
+                        onClick={() => setBusquedaCatalogoProyecto('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+
                   <button
-                    key={p.idProyecto}
                     type="button"
-                    onClick={() => seleccionarProyecto(p)}
-                    className="outline-button text-xs py-2.5 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:border-zinc-400 dark:hover:border-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                    title={`Seleccionar proyecto [PRJ-00${p.idProyecto}] ${p.nombre}`}
+                    onClick={() => {
+                      setNuevoProyectoForm({
+                        nombre: '',
+                        cliente: '',
+                        descripcion: '',
+                        fechaInicio: new Date().toISOString().split('T')[0],
+                        fechaFinEstimada: '',
+                        presupuesto: ''
+                      });
+                      setNuevoProyectoErrors({});
+                      setShowNuevoProyectoModal(true);
+                    }}
+                    className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md shrink-0"
+                    title="Crear un nuevo proyecto de software"
                   >
-                    <FolderGit2 size={13} className="text-zinc-600 dark:text-zinc-400" />
-                    <span>[PRJ-00{p.idProyecto}] {p.nombre}</span>
+                    <FolderPlus size={14} />
+                    <span>Nuevo Proyecto</span>
                   </button>
-                ))}
+                </div>
               </div>
+
+              {/* Grilla de Tarjetas Interactivas de Proyectos */}
+              {proyectosCatalogoFiltrados.length === 0 ? (
+                <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-12 text-center text-zinc-400 text-xs font-medium space-y-2">
+                  <FolderGit2 size={32} className="mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
+                  <p className="font-bold text-zinc-700 dark:text-zinc-300 text-sm">No se encontraron proyectos coincidentes</p>
+                  <p className="text-zinc-500">Pruebe ajustando el término de búsqueda o cree un nuevo proyecto.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {proyectosCatalogoFiltrados.map((p) => {
+                    const badgeStyle = getEstadoBadgeClasses(p.estado);
+                    return (
+                      <div
+                        key={p.idProyecto}
+                        onClick={() => seleccionarProyecto(p)}
+                        className="group bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-900 dark:hover:border-zinc-100 shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-9 h-9 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-extrabold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                                #{p.idProyecto}
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-900 dark:group-hover:text-white truncate">
+                                  {p.nombre}
+                                </h4>
+                                <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-semibold flex items-center gap-1 truncate">
+                                  <Building2 size={11} className="shrink-0 text-zinc-400" />
+                                  <span>{p.cliente || 'Cliente Interno'}</span>
+                                </p>
+                              </div>
+                            </div>
+
+                            <span className={`inline-flex items-center gap-1.5 text-[0.62rem] font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${badgeStyle.badge}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${badgeStyle.dot}`} />
+                              <span>{p.estado || 'ACTIVO'}</span>
+                            </span>
+                          </div>
+
+                          {p.descripcion && (
+                            <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed font-medium">
+                              {p.descripcion}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="mt-5 pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-xs font-semibold">
+                          <div className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
+                            <DollarSign size={13} className="text-zinc-400" />
+                            <span className="font-mono font-bold">
+                              ${Number(p.presupuesto || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
+
+                          <span className="text-[0.7rem] text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 flex items-center gap-1 font-bold transition-colors">
+                            <span>Gestionar WBS</span>
+                            <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : (
             <>
