@@ -1280,9 +1280,9 @@ export const LiderDashboard = () => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="mb-6 bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200/90 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm min-w-0"
+        className="mb-6 bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200/90 dark:border-zinc-800 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5 shadow-sm min-w-0"
       >
-        <div className="min-w-0 flex-1 max-w-full md:max-w-md lg:max-w-xl">
+        <div className="min-w-0 flex-1 max-w-full">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800/80">
               Workspace del Líder
@@ -1295,10 +1295,10 @@ export const LiderDashboard = () => {
 
           <div 
             onClick={() => setModalProyectosOpen(true)}
-            className="group cursor-pointer inline-flex items-center gap-3 py-1 text-zinc-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            className="group cursor-pointer inline-flex items-center gap-3 py-1 text-zinc-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-wrap max-w-full"
             title="Haga clic para cambiar el proyecto activo"
           >
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight truncate leading-none">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight truncate leading-tight">
               {(!proyectoSeleccionado || proyectoSeleccionado?.idProyecto === 'GLOBAL') 
                 ? 'Vista Global Corporativa' 
                 : proyectoSeleccionado.nombre}
@@ -1320,7 +1320,7 @@ export const LiderDashboard = () => {
             type="button"
             onClick={() => setModalProyectosOpen(true)}
             disabled={loadingProyectos}
-            className="group flex items-center justify-between gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 rounded-2xl px-4 py-2.5 shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer min-w-[270px] sm:min-w-[340px] max-w-full disabled:opacity-60 text-left"
+            className="group flex items-center justify-between gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 rounded-2xl px-3.5 py-2.5 shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer min-w-[200px] sm:min-w-[260px] max-w-full disabled:opacity-60 text-left"
             title="Abrir menú emergente de selección y búsqueda de proyectos"
           >
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -1342,9 +1342,6 @@ export const LiderDashboard = () => {
                       Todos los proyectos ({proyectos?.length || 0})
                     </span>
                   </div>
-                  <span className="text-[0.6rem] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 ml-auto shrink-0">
-                    GLOBAL
-                  </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -1356,7 +1353,7 @@ export const LiderDashboard = () => {
                       <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 shrink-0">
                         [PRJ-00{proyectoSeleccionado?.idProyecto || 0}]
                       </span>
-                      <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate max-w-[130px] sm:max-w-[170px]" title={proyectoSeleccionado?.nombre || ''}>
+                      <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate max-w-[120px] sm:max-w-[160px]" title={proyectoSeleccionado?.nombre || ''}>
                         {proyectoSeleccionado?.nombre || 'Proyecto'}
                       </span>
                     </div>
@@ -1366,21 +1363,12 @@ export const LiderDashboard = () => {
                       </span>
                     )}
                   </div>
-                  {(() => {
-                    const estInfo = getEstadoBadgeClasses(proyectoSeleccionado?.estado);
-                    return (
-                      <span className={`hidden sm:inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full border shrink-0 ${estInfo.badge}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
-                        <span>{proyectoSeleccionado?.estado || 'ACTIVO'}</span>
-                      </span>
-                    );
-                  })()}
                 </div>
               )}
             </div>
 
             <div className="flex items-center gap-1 text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200 shrink-0 transition-colors">
-              <span className="text-[0.65rem] font-bold hidden xl:inline">Cambiar</span>
+              <span className="text-[0.65rem] font-bold hidden sm:inline">Cambiar</span>
               <ChevronDown size={15} className="group-hover:translate-y-0.5 transition-transform" />
             </div>
           </button>
