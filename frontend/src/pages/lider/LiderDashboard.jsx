@@ -177,6 +177,22 @@ const calcularDuracionProyecto = (inicioStr, finStr) => {
   }
 };
 
+const calcularDiasFaltantes = (finStr) => {
+  if (!finStr) return null;
+  try {
+    const raw = finStr.split('T')[0];
+    const [y, m, d] = raw.split('-').map(Number);
+    const target = new Date(y, m - 1, d);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const diffMs = target.getTime() - hoy.getTime();
+    if (isNaN(diffMs)) return null;
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  } catch {
+    return null;
+  }
+};
+
 
 export const LiderDashboard = () => {
   const { user } = useAuth();
@@ -516,6 +532,12 @@ export const LiderDashboard = () => {
     if (!nuevoProyectoForm.fechaInicio) errors.fechaInicio = 'La fecha de inicio es obligatoria.';
     if (!nuevoProyectoForm.fechaFinEstimada) errors.fechaFinEstimada = 'La fecha de finalización estimada es obligatoria.';
     
+    // Validar que la fecha de inicio no sea anterior a HOY
+    const hoyStr = new Date().toISOString().split('T')[0];
+    if (nuevoProyectoForm.fechaInicio && nuevoProyectoForm.fechaInicio < hoyStr) {
+      errors.fechaInicio = 'La fecha de inicio no puede ser anterior al día de hoy.';
+    }
+
     // Condición 02 de la HU-11: Validar que fechaFinEstimada >= fechaInicio
     if (nuevoProyectoForm.fechaInicio && nuevoProyectoForm.fechaFinEstimada) {
       if (new Date(nuevoProyectoForm.fechaFinEstimada) < new Date(nuevoProyectoForm.fechaInicio)) {
@@ -3062,6 +3084,7 @@ export const LiderDashboard = () => {
                     <input
                       type="date"
                       required
+                      min={new Date().toISOString().split('T')[0]}
                       value={nuevoProyectoForm.fechaInicio}
                       onChange={(e) => {
                         setNuevoProyectoForm({ ...nuevoProyectoForm, fechaInicio: e.target.value });
@@ -3079,6 +3102,7 @@ export const LiderDashboard = () => {
                     <input
                       type="date"
                       required
+                      min={nuevoProyectoForm.fechaInicio || new Date().toISOString().split('T')[0]}
                       value={nuevoProyectoForm.fechaFinEstimada}
                       onChange={(e) => {
                         setNuevoProyectoForm({ ...nuevoProyectoForm, fechaFinEstimada: e.target.value });
@@ -3091,6 +3115,41 @@ export const LiderDashboard = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Previsualización Dinámica del Cronograma Estimado */}
+                {nuevoProyectoForm.fechaInicio && nuevoProyectoForm.fechaFinEstimada && !nuevoProyectoErrors.fechaInicio && !nuevoProyectoErrors.fechaFinEstimada && (
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+                        <Calendar size={18} />
+                      </div>
+                      <div>
+                        <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
+                          CRONOGRAMA ESTIMADO
+                        </span>
+                        <div className="flex items-center gap-2 font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                          <span>{formatearFechaHumana(nuevoProyectoForm.fechaInicio)}</span>
+                          <ArrowRight size={12} className="text-zinc-400" />
+                          <span>{formatearFechaHumana(nuevoProyectoForm.fechaFinEstimada)}</span>
+                        </div>
+                        {(() => {
+                          const diasFaltantes = calcularDiasFaltantes(nuevoProyectoForm.fechaFinEstimada);
+                          if (diasFaltantes === null) return null;
+                          return (
+                            <span className="text-[0.68rem] text-blue-600 dark:text-blue-400 font-bold block mt-0.5">
+                              • {diasFaltantes > 0 ? `Faltan ${diasFaltantes} días para entrega` : diasFaltantes === 0 ? 'Entrega estimada para hoy' : `Entrega vencida por ${Math.abs(diasFaltantes)} días`}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[0.68rem] font-bold shrink-0 self-start sm:self-center">
+                      <Clock size={12} />
+                      <span>(Duración: {calcularDuracionProyecto(nuevoProyectoForm.fechaInicio, nuevoProyectoForm.fechaFinEstimada)})</span>
+                    </span>
+                  </div>
+                )}
 
                 {/* Presupuesto Inicial (Formato Moneda) */}
                 <div>
