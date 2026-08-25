@@ -194,6 +194,199 @@ const calcularDiasFaltantes = (finStr) => {
   }
 };
 
+/**
+ * Selector de Desarrolladores de Nivel Enterprise con Buscador e Indicadores de Carga Horaria (HU-12)
+ */
+const DeveloperCombobox = ({ value, onChange, desarrolladores, getDevCargaInfo, getCleanEspecialidad, placeholder = "— Seleccione un desarrollador —", required = false, error = false }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const containerRef = useRef(null);
+
+  const selectedDev = useMemo(() => {
+    if (!value) return null;
+    return desarrolladores?.find(d => String(d.idTrabajador) === String(value));
+  }, [value, desarrolladores]);
+
+  // Cerrar al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredDevs = useMemo(() => {
+    if (!searchTerm.trim()) return desarrolladores || [];
+    const term = searchTerm.toLowerCase();
+    return (desarrolladores || []).filter(dev => {
+      const nombreCompleto = `${dev.nombre || ''} ${dev.apellido || ''}`.toLowerCase();
+      const esp = (dev.especialidad || dev.profesion || '').toLowerCase();
+      return nombreCompleto.includes(term) || esp.includes(term);
+    });
+  }, [desarrolladores, searchTerm]);
+
+  const selectedCarga = selectedDev ? getDevCargaInfo(selectedDev.idTrabajador) : null;
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      {/* Botón Trigger Principal */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-zinc-900 border text-xs font-semibold shadow-2xs transition-all cursor-pointer text-left ${
+          error 
+            ? 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10' 
+            : isOpen 
+            ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20' 
+            : 'border-zinc-200 dark:border-zinc-700/80 hover:border-zinc-400 dark:hover:border-zinc-600'
+        }`}
+      >
+        {selectedDev ? (
+          <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-extrabold text-xs flex items-center justify-center border border-blue-200 dark:border-blue-800 shrink-0">
+              {selectedDev.nombre?.[0]}{selectedDev.apellido?.[0]}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                  {selectedDev.nombre} {selectedDev.apellido}
+                </span>
+              </div>
+              <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium">
+                {getCleanEspecialidad(selectedDev.especialidad, selectedDev.profesion)}
+              </span>
+            </div>
+            {selectedCarga && (
+              <span className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-bold border shrink-0 ${
+                selectedCarga.horasAsignadas >= 48
+                  ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800'
+                  : selectedCarga.horasAsignadas >= 36
+                  ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                  : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+              }`}>
+                {selectedCarga.horasAsignadas}/48h
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-zinc-400 font-medium">
+            <UserCheck size={16} className="text-zinc-400 shrink-0" />
+            <span>{placeholder}</span>
+          </div>
+        )}
+
+        <ChevronDown size={16} className={`text-zinc-400 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Desplegable Deslizante con Buscador y Lista de Tarjetas */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col p-2 space-y-2 max-h-80"
+          >
+            {/* Buscador Rápido Interno */}
+            <div className="relative shrink-0">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nombre o especialidad..."
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {/* Lista Scrollable de Desarrolladores */}
+            <div className="overflow-y-auto space-y-1.5 pr-1 max-h-60 custom-scrollbar">
+              {filteredDevs.length === 0 ? (
+                <div className="p-4 text-center text-xs text-zinc-400 font-medium">
+                  No se encontraron desarrolladores coincidentes.
+                </div>
+              ) : (
+                filteredDevs.map(dev => {
+                  const isSelected = String(dev.idTrabajador) === String(value);
+                  const carga = getDevCargaInfo(dev.idTrabajador);
+                  const horas = carga?.horasAsignadas || 0;
+                  const pct = Math.min(Math.round((horas / 48) * 100), 100);
+
+                  const estColor = horas >= 48
+                    ? { bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800', bar: 'bg-red-500', label: 'SATURADO' }
+                    : horas >= 36
+                    ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
+                    : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
+
+                  return (
+                    <div
+                      key={dev.idTrabajador}
+                      onClick={() => {
+                        onChange(String(dev.idTrabajador));
+                        setIsOpen(false);
+                        setSearchTerm('');
+                      }}
+                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? 'bg-blue-50/80 dark:bg-blue-950/50 border-blue-300 dark:border-blue-700 shadow-2xs'
+                          : 'bg-white dark:bg-zinc-900/90 border-zinc-100 dark:border-zinc-800/80 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className={`w-8 h-8 rounded-xl font-extrabold text-xs flex items-center justify-center shrink-0 border ${
+                          isSelected
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                        }`}>
+                          {dev.nombre?.[0]}{dev.apellido?.[0]}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                              {dev.nombre} {dev.apellido}
+                            </span>
+                            {isSelected && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                          </div>
+                          <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium">
+                            {getCleanEspecialidad(dev.especialidad, dev.profesion)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Capacidad Horaria Visual */}
+                      <div className="flex flex-col items-end shrink-0 gap-1">
+                        <span className={`px-2 py-0.5 rounded-lg text-[0.6rem] font-extrabold border ${estColor.bg}`}>
+                          {horas}/48h • {estColor.label}
+                        </span>
+                        <div className="w-16 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                          <div className={`h-full ${estColor.bar} transition-all`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export const LiderDashboard = () => {
   const { user } = useAuth();
@@ -2328,22 +2521,18 @@ export const LiderDashboard = () => {
 
                 <div>
                   <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Desarrollador Responsable *</label>
-                  <select
+                  <DeveloperCombobox
                     value={nuevaActividad.idDesarrollador}
-                    onChange={(e) => { setNuevaActividad({ ...nuevaActividad, idDesarrollador: e.target.value }); setFormErrors(p => ({ ...p, idDesarrollador: undefined })); }}
-                    className={`input-field py-2 font-bold ${formErrors.idDesarrollador ? 'border-red-400 dark:border-red-600' : ''}`}
-                  >
-                    <option value="">— Seleccione un desarrollador —</option>
-                    {desarrolladores?.map(dev => {
-                      const c = getDevCargaInfo(dev?.idTrabajador);
-                      const cargaTxt = c ? ` [Carga: ${c.horasAsignadas}/48h]` : '';
-                      return (
-                        <option key={dev?.idTrabajador} value={dev?.idTrabajador}>
-                          {dev?.nombre} {dev?.apellido} — {getCleanEspecialidad(dev?.especialidad, dev?.profesion)}{cargaTxt}
-                        </option>
-                      );
-                    })}
-                  </select>
+                    onChange={(idDev) => {
+                      setNuevaActividad({ ...nuevaActividad, idDesarrollador: idDev });
+                      setFormErrors(p => ({ ...p, idDesarrollador: undefined }));
+                    }}
+                    desarrolladores={desarrolladores}
+                    getDevCargaInfo={getDevCargaInfo}
+                    getCleanEspecialidad={getCleanEspecialidad}
+                    placeholder="— Seleccione un desarrollador responsable —"
+                    error={!!formErrors.idDesarrollador}
+                  />
                   {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
 
                   {nuevaActividad.idDesarrollador && (() => {
@@ -2447,26 +2636,17 @@ export const LiderDashboard = () => {
                   <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
                     Desarrollador a Vincular *
                   </label>
-                  <select
+                  <DeveloperCombobox
                     value={asignarDevForm.idDesarrollador}
-                    onChange={(e) => {
-                      setAsignarDevForm({ ...asignarDevForm, idDesarrollador: e.target.value });
+                    onChange={(idDev) => {
+                      setAsignarDevForm({ ...asignarDevForm, idDesarrollador: idDev });
                       setAsignarDevError(null);
                     }}
-                    className="input-field py-2 font-bold"
-                    required
-                  >
-                    <option value="">— Seleccione un desarrollador —</option>
-                    {desarrolladores?.map(dev => {
-                      const carga = getDevCargaInfo(dev.idTrabajador);
-                      const cargaTxt = carga ? ` [Carga: ${carga.horasAsignadas}/48h]` : '';
-                      return (
-                        <option key={dev.idTrabajador} value={dev.idTrabajador}>
-                          {dev.nombre} {dev.apellido} — {getCleanEspecialidad(dev.especialidad, dev.profesion)}{cargaTxt}
-                        </option>
-                      );
-                    })}
-                  </select>
+                    desarrolladores={desarrolladores}
+                    getDevCargaInfo={getDevCargaInfo}
+                    getCleanEspecialidad={getCleanEspecialidad}
+                    placeholder="— Seleccione un desarrollador para vincular —"
+                  />
                 </div>
 
                 {/* Previsualización de Carga del Desarrollador Seleccionado */}
