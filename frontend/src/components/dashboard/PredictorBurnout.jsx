@@ -1109,7 +1109,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
                               <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform text-blue-400" />
                             </div>
                             <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block mt-1 truncate font-semibold">
-                              {isProyectoEspecifico ? proyecto.nombre : 'Todas las iniciativas'}
+                              {isProyectoEspecifico ? (proyectoSeleccionadoLocal?.nombre || proyecto?.nombre || 'Este proyecto') : 'Todas las iniciativas'}
                             </span>
                           </div>
                         </button>
