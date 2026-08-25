@@ -1004,9 +1004,26 @@ export const LiderDashboard = () => {
               Gestión WBS & Métricas
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight truncate flex items-center gap-2">
-            Consola de Gestión del Líder
-          </h2>
+
+          <div 
+            onClick={() => setModalProyectosOpen(true)}
+            className="group cursor-pointer inline-flex items-center gap-3 py-1 text-zinc-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            title="Haga clic para cambiar el proyecto activo"
+          >
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight truncate leading-none">
+              {(!proyectoSeleccionado || proyectoSeleccionado?.idProyecto === 'GLOBAL') 
+                ? 'Vista Global Corporativa' 
+                : proyectoSeleccionado.nombre}
+            </h1>
+            {proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (
+              <span className={`inline-flex items-center gap-1.5 text-xs font-extrabold px-2.5 py-1 rounded-xl border shrink-0 ${
+                getEstadoBadgeClasses(proyectoSeleccionado.estado).badge
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${getEstadoBadgeClasses(proyectoSeleccionado.estado).dot}`} />
+                <span>{proyectoSeleccionado.estado || 'ACTIVO'}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap shrink-0 min-w-0 max-w-full">
@@ -1113,69 +1130,6 @@ export const LiderDashboard = () => {
             <span className="hidden sm:inline">Actualizar</span>
           </button>
         </div>
-      </motion.div>
-
-      {/* Banner de Contexto de Proyecto Predominante (B&W Corporate High-Contrast Persistent Banner) */}
-      <motion.div
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="w-full mb-6 p-5 sm:p-6 rounded-2xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 min-w-0"
-      >
-        <div className="flex items-center gap-3.5 min-w-0 flex-1">
-          <div className="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center shrink-0 shadow-sm border border-zinc-800 dark:border-zinc-200">
-            {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-              <Globe size={26} strokeWidth={2} />
-            ) : (
-              <FolderGit2 size={26} strokeWidth={2} />
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-[0.65rem] font-mono font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-zinc-200/80 dark:bg-zinc-700/80 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-600">
-                {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? 'Contexto Corporativo' : `Proyecto #PRJ-00${proyectoSeleccionado.idProyecto}`}
-              </span>
-              {proyectoSeleccionado?.cliente && (
-                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold truncate">
-                  • Cliente: {proyectoSeleccionado.cliente}
-                </span>
-              )}
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight truncate leading-none">
-              {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-                'Vista Global Corporativa: Todos los Proyectos'
-              ) : (
-                proyectoSeleccionado.nombre
-              )}
-            </h1>
-          </div>
-        </div>
-
-        {/* Badges de Estado y Presupuesto */}
-        {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1.5 rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 shadow-2xs">
-              <Globe size={13} />
-              <span>VISTA GLOBAL</span>
-            </span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2.5 shrink-0 flex-wrap self-start sm:self-center">
-            {proyectoSeleccionado.presupuesto && (
-              <span className="text-xs font-mono font-bold text-zinc-700 dark:text-zinc-300 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xs">
-                Presupuesto: ${Number(proyectoSeleccionado.presupuesto).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
-            )}
-            <span className={`inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1.5 rounded-xl border shadow-2xs ${
-              getEstadoBadgeClasses(proyectoSeleccionado.estado).badge
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${getEstadoBadgeClasses(proyectoSeleccionado.estado).dot}`} />
-              <span>{proyectoSeleccionado.estado || 'ACTIVO'}</span>
-            </span>
-          </div>
-        )}
       </motion.div>
 
       {/* Tarjeta de Detalles del Proyecto Seleccionado (Exclusiva de la sección WBS) */}
