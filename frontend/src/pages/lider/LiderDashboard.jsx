@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton, SkeletonCard, SkeletonTable, SkeletonMetricCard } from '../../components/ui/Skeleton';
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
+import { CustomSelect } from '../../components/ui/CustomSelect';
 
 // Variantes de animación ultra rápidas y fluidas (0.25s)
 const containerVariants = {
@@ -2202,44 +2203,42 @@ export const LiderDashboard = () => {
               </button>
             </div>
 
-            {/* Filtros Dropdown */}
+            {/* Filtros Ejecutivos con CustomSelect */}
             <div className="flex items-center gap-3 flex-wrap">
               {/* Filtro Estado */}
               <div className="flex items-center gap-2">
                 <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Estado:</span>
-                <select
+                <CustomSelect
                   value={filtroEstadoInc}
-                  onChange={(e) => setFiltroEstadoInc(e.target.value)}
-                  title="Filtrar por estado del flujo de atención"
-                  className="select-field cursor-pointer"
-                >
-                  <optgroup label="Estado de Atención">
-                    <option value="TODOS">Todos los Estados</option>
-                    <option value="REGISTRADO">Registrado</option>
-                    <option value="EN_REVISION">En Revisión</option>
-                    <option value="SOLUCIONADO">Solucionado</option>
-                  </optgroup>
-                </select>
+                  onChange={(val) => setFiltroEstadoInc(val)}
+                  options={[
+                    { value: 'TODOS', label: 'Todos los Estados' },
+                    { value: 'REGISTRADO', label: 'Registrado' },
+                    { value: 'EN_REVISION', label: 'En Revisión' },
+                    { value: 'SOLUCIONADO', label: 'Solucionado' }
+                  ]}
+                  maxWidth="max-w-[170px]"
+                />
               </div>
 
               {/* Filtro Desarrollador */}
               <div className="flex items-center gap-2">
                 <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Desarrollador:</span>
-                <select
+                <CustomSelect
                   value={filtroDevInc}
-                  onChange={(e) => setFiltroDevInc(e.target.value)}
-                  title="Filtrar reportes emitidos por un desarrollador específico"
-                  className="select-field cursor-pointer max-w-[220px]"
-                >
-                  <optgroup label="Equipo de Desarrollo">
-                    <option value="TODOS">Todos los Desarrolladores</option>
-                    {(desarrolladores || [])?.map(d => (
-                      <option key={d.idTrabajador} value={d.idTrabajador}>
-                        {d.nombre} {d.apellido} — {getCleanEspecialidad(d.especialidad, d.profesion)}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+                  onChange={(val) => setFiltroDevInc(val)}
+                  options={[
+                    { value: 'TODOS', label: 'Todos los Desarrolladores', subtitle: 'Filtrar por todo el equipo' },
+                    ...(desarrolladores || []).map(d => ({
+                      value: d.idTrabajador,
+                      label: `${d.nombre} ${d.apellido}`,
+                      subtitle: getCleanEspecialidad(d.especialidad, d.profesion)
+                    }))
+                  ]}
+                  maxWidth="max-w-[240px]"
+                  searchable={true}
+                  icon={User}
+                />
               </div>
 
               {/* Filtro por Fecha / Período */}
@@ -2248,10 +2247,9 @@ export const LiderDashboard = () => {
                   <Calendar size={11} className="text-zinc-400" />
                   Fecha:
                 </span>
-                <select
+                <CustomSelect
                   value={filtroFechaTipo}
-                  onChange={(e) => {
-                    const val = e.target.value;
+                  onChange={(val) => {
                     setFiltroFechaTipo(val);
                     if (val === 'RANGO') {
                       setTempFechaDesde(filtroFechaDesde);
@@ -2259,16 +2257,17 @@ export const LiderDashboard = () => {
                       setShowFiltroFechasModal(true);
                     }
                   }}
-                  title="Filtrar incidencias por período o rango de fechas"
-                  className="input-field py-1 px-2.5 text-xs font-bold"
-                >
-                  <option value="TODAS">Todas las Fechas</option>
-                  <option value="HOY">Hoy</option>
-                  <option value="7_DIAS">Últimos 7 Días</option>
-                  <option value="30_DIAS">Últimos 30 Días</option>
-                  <option value="ESTE_MES">Este Mes</option>
-                  <option value="RANGO">Rango Personalizado...</option>
-                </select>
+                  options={[
+                    { value: 'TODAS', label: 'Todas las Fechas' },
+                    { value: 'HOY', label: 'Hoy' },
+                    { value: '7_DIAS', label: 'Últimos 7 Días' },
+                    { value: '30_DIAS', label: 'Últimos 30 Días' },
+                    { value: 'ESTE_MES', label: 'Este Mes' },
+                    { value: 'RANGO', label: 'Rango Personalizado...' }
+                  ]}
+                  maxWidth="max-w-[190px]"
+                  icon={Calendar}
+                />
               </div>
 
               {/* Botón de Cambiar / Ajustar Fechas en Ventana Emergente */}
@@ -2674,16 +2673,15 @@ export const LiderDashboard = () => {
               <form onSubmit={handleAsignarActividad} className="space-y-4 text-xs" noValidate>
                 <div>
                   <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Etapa / Fase WBS *</label>
-                  <select
+                  <CustomSelect
                     value={nuevaActividad.idEtapa}
-                    onChange={(e) => { setNuevaActividad({ ...nuevaActividad, idEtapa: e.target.value }); setFormErrors(p => ({ ...p, idEtapa: undefined })); }}
-                    className={`input-field py-2 font-bold ${formErrors.idEtapa ? 'border-red-400 dark:border-red-600' : ''}`}
-                  >
-                    <option value="">— Seleccione una etapa —</option>
-                    {etapas?.map(et => (
-                      <option key={et?.idEtapa} value={et?.idEtapa}>{et?.nombreEtapa}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => { setNuevaActividad({ ...nuevaActividad, idEtapa: val }); setFormErrors(p => ({ ...p, idEtapa: undefined })); }}
+                    options={[
+                      { value: '', label: '— Seleccione una etapa —' },
+                      ...(etapas || []).map(et => ({ value: et?.idEtapa, label: et?.nombreEtapa }))
+                    ]}
+                    maxWidth="w-full"
+                  />
                   {formErrors.idEtapa && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idEtapa}</p>}
                 </div>
 
@@ -3182,19 +3180,21 @@ export const LiderDashboard = () => {
               <form onSubmit={handleEjecutarReasignacion} className="space-y-4 text-xs">
                 <div>
                   <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Nuevo Desarrollador Responsable *</label>
-                  <select
-                    required
+                  <CustomSelect
                     value={datosReasignacion.nuevoDesarrolladorId}
-                    onChange={(e) => setDatosReasignacion({ ...datosReasignacion, nuevoDesarrolladorId: e.target.value })}
-                    className="input-field py-2 font-bold"
-                  >
-                    <option value="">— Seleccione nuevo desarrollador —</option>
-                    {desarrolladores?.map(dev => (
-                      <option key={dev?.idTrabajador} value={dev?.idTrabajador}>
-                        {dev?.nombre} {dev?.apellido} — {getCleanEspecialidad(dev?.especialidad, dev?.profesion)}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setDatosReasignacion({ ...datosReasignacion, nuevoDesarrolladorId: val })}
+                    options={[
+                      { value: '', label: '— Seleccione nuevo desarrollador —' },
+                      ...(desarrolladores || []).map(dev => ({
+                        value: dev?.idTrabajador,
+                        label: `${dev?.nombre} ${dev?.apellido}`,
+                        subtitle: getCleanEspecialidad(dev?.especialidad, dev?.profesion)
+                      }))
+                    ]}
+                    maxWidth="w-full"
+                    searchable={true}
+                    icon={User}
+                  />
                 </div>
 
                 <div>
@@ -3313,17 +3313,16 @@ export const LiderDashboard = () => {
                   <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
                     Estado de Atención *
                   </label>
-                  <select
+                  <CustomSelect
                     value={atencionForm.estadoAtencion}
-                    disabled={['RESUELTO', 'SOLUCIONADO', 'FINALIZADO', 'CERRADO'].includes((incidenciaAAtender?.estadoAtencion || '').toUpperCase())}
-                    onChange={(e) => setAtencionForm({ ...atencionForm, estadoAtencion: e.target.value })}
-                    className="input-field py-2 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={['RESUELTO', 'SOLUCIONADO', 'FINALIZADO', 'CERRADO'].includes((incidenciaAAtender?.estadoAtencion || '').toUpperCase()) ? 'Incidencia ya resuelta y cerrada.' : 'Seleccione el nuevo estado de atención del caso'}
-                  >
-                    <option value="REGISTRADO">Registrado (En espera)</option>
-                    <option value="EN_REVISION">En Revisión (En investigación)</option>
-                    <option value="SOLUCIONADO">Solucionado / Resuelto</option>
-                  </select>
+                    onChange={(val) => setAtencionForm({ ...atencionForm, estadoAtencion: val })}
+                    options={[
+                      { value: 'REGISTRADO', label: 'Registrado (En espera)' },
+                      { value: 'EN_REVISION', label: 'En Revisión (En investigación)' },
+                      { value: 'SOLUCIONADO', label: 'Solucionado / Resuelto' }
+                    ]}
+                    maxWidth="w-full"
+                  />
                 </div>
 
                 <div>
@@ -3833,17 +3832,18 @@ export const LiderDashboard = () => {
                         <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
                           Motivo Principal de Cierre:
                         </label>
-                        <select
+                        <CustomSelect
                           value={motivoCancelacion}
-                          onChange={(e) => setMotivoCancelacion(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs"
-                        >
-                          <option value="CANCELACION_CLIENTE">1. Cancelación o desestimación por el cliente</option>
-                          <option value="REESTRUCTURACION_PROYECTO">2. Reestructurado o migrado a otro código de proyecto</option>
-                          <option value="RECHAZO_PRESUPUESTO">3. Insuficiencia presupuestaria o de recursos</option>
-                          <option value="INVIABILIDAD_TECNICA">4. Inviabilidad técnica o cambio de alcance</option>
-                          <option value="OTRO_MOTIVO">5. Otro motivo (especificar en la justificación)</option>
-                        </select>
+                          onChange={(val) => setMotivoCancelacion(val)}
+                          options={[
+                            { value: 'CANCELACION_CLIENTE', label: '1. Cancelación o desestimación por el cliente' },
+                            { value: 'REESTRUCTURACION_PROYECTO', label: '2. Reestructurado o migrado a otro código de proyecto' },
+                            { value: 'RECHAZO_PRESUPUESTO', label: '3. Insuficiencia presupuestaria o de recursos' },
+                            { value: 'INVIABILIDAD_TECNICA', label: '4. Inviabilidad técnica o cambio de alcance' },
+                            { value: 'OTRO_MOTIVO', label: '5. Otro motivo (especificar en la justificación)' }
+                          ]}
+                          maxWidth="w-full"
+                        />
                       </div>
 
                       {/* Explicación / Justificación */}
