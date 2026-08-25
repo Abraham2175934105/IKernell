@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Lock, Mail, ArrowLeft, ShieldCheck, Cpu, 
-  AlertCircle, Eye, EyeOff, Loader2, LogIn 
+  AlertCircle, Eye, EyeOff, Loader2, LogIn, Shield 
 } from 'lucide-react';
 
 export const LoginPage = () => {
