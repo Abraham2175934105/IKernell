@@ -10,7 +10,8 @@ import {
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, ChevronDown, X,
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
-  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye
+  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye,
+  ArrowRight, ArrowLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -2848,15 +2849,6 @@ export const LiderDashboard = () => {
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl space-y-6 max-h-[90dvh] overflow-y-auto my-auto relative"
             >
-              {/* Botón X de Cierre */}
-              <button
-                type="button"
-                onClick={() => setShowDetalleIncidenciaModal(false)}
-                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-
               {/* Cabecera Principal Ampliada */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5 pr-8">
                 <div className="flex items-center gap-3.5">
@@ -3259,16 +3251,6 @@ export const LiderDashboard = () => {
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl space-y-6 max-h-[90dvh] overflow-y-auto my-auto relative"
             >
-              {/* Botón de Cierre 'X' Superior */}
-              <button
-                type="button"
-                onClick={() => setShowConfirmFinalizar(false)}
-                disabled={submittingFinalizar}
-                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <X size={16} />
-              </button>
-
               {/* Cabecera Principal Ampliada */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5 pr-8">
                 <div className="flex items-center gap-3.5">
