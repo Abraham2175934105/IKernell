@@ -11,7 +11,7 @@ import {
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
   FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye,
-  ArrowRight, ArrowLeft
+  ArrowRight, ArrowLeft, Users, UserX
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -410,6 +410,8 @@ export const LiderDashboard = () => {
   const [filtroEstadoProyectoModal, setFiltroEstadoProyectoModal] = useState('TODOS');
   const [etapas, setEtapas] = useState([]);
   const [desarrolladores, setDesarrolladores] = useState([]);
+  const [desarrolladoresAsignadosProyecto, setDesarrolladoresAsignadosProyecto] = useState([]);
+  const [showNominaDevsModal, setShowNominaDevsModal] = useState(false);
   const [errores, setErrores] = useState([]);
   const [interrupciones, setInterrupciones] = useState([]);
   
@@ -530,24 +532,26 @@ export const LiderDashboard = () => {
       return;
     }
 
-    setProyectoSeleccionado(proyecto);
+      setProyectoSeleccionado(proyecto);
 
-    try {
-      setLoadingDetalle(true);
-      const [etapasRes, erroresRes, interrupcionesRes, devsRes, cargasRes] = await Promise.all([
-        api.get(`/lider/proyectos/${proyecto.idProyecto}/etapas`).catch(() => []),
-        api.get(`/lider/proyectos/${proyecto.idProyecto}/errores`).catch(() => []),
-        api.get(`/lider/proyectos/${proyecto.idProyecto}/interrupciones`).catch(() => []),
-        api.get('/lider/desarrolladores').catch(() => []),
-        api.get('/lider/desarrolladores-cargas').catch(() => [])
-      ]);
+      try {
+        setLoadingDetalle(true);
+        const [etapasRes, erroresRes, interrupcionesRes, devsRes, cargasRes, devAsignadosRes] = await Promise.all([
+          api.get(`/lider/proyectos/${proyecto.idProyecto}/etapas`).catch(() => []),
+          api.get(`/lider/proyectos/${proyecto.idProyecto}/errores`).catch(() => []),
+          api.get(`/lider/proyectos/${proyecto.idProyecto}/interrupciones`).catch(() => []),
+          api.get('/lider/desarrolladores').catch(() => []),
+          api.get('/lider/desarrolladores-cargas').catch(() => []),
+          api.get(`/lider/proyectos/${proyecto.idProyecto}/desarrolladores`).catch(() => [])
+        ]);
 
-      setEtapas(Array.isArray(etapasRes) ? etapasRes : []);
-      setErrores(Array.isArray(erroresRes) ? erroresRes : []);
-      setInterrupciones(Array.isArray(interrupcionesRes) ? interrupcionesRes : []);
-      setDesarrolladores(Array.isArray(devsRes) ? devsRes : []);
-      setDesarrolladoresCargas(Array.isArray(cargasRes) ? cargasRes : []);
-    } catch (err) {
+        setEtapas(Array.isArray(etapasRes) ? etapasRes : []);
+        setErrores(Array.isArray(erroresRes) ? erroresRes : []);
+        setInterrupciones(Array.isArray(interrupcionesRes) ? interrupcionesRes : []);
+        setDesarrolladores(Array.isArray(devsRes) ? devsRes : []);
+        setDesarrolladoresCargas(Array.isArray(cargasRes) ? cargasRes : []);
+        setDesarrolladoresAsignadosProyecto(Array.isArray(devAsignadosRes) ? devAsignadosRes : []);
+      } catch (err) {
       console.error('Error cargando detalles del proyecto:', err);
       toast.error('Error al cargar etapas y métricas del proyecto.');
     } finally {
@@ -718,12 +722,14 @@ export const LiderDashboard = () => {
       setAsignarDevError(null);
 
       // Recargar balance de cargas y nómina
-      const [cargasRes, devsRes] = await Promise.all([
+      const [cargasRes, devsRes, devAsignadosRes] = await Promise.all([
         api.get('/lider/desarrolladores-cargas').catch(() => []),
-        api.get('/lider/desarrolladores').catch(() => [])
+        api.get('/lider/desarrolladores').catch(() => []),
+        api.get(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/desarrolladores`).catch(() => [])
       ]);
       setDesarrolladoresCargas(Array.isArray(cargasRes) ? cargasRes : []);
       setDesarrolladores(Array.isArray(devsRes) ? devsRes : []);
+      setDesarrolladoresAsignadosProyecto(Array.isArray(devAsignadosRes) ? devAsignadosRes : []);
     } catch (err) {
       console.error('Error asignando desarrollador (HU-12):', err);
       const errMsg = err?.response?.data?.message || err?.message || 'Error al procesar la asignación del desarrollador.';
@@ -731,6 +737,27 @@ export const LiderDashboard = () => {
       toast.error(errMsg);
     } finally {
       setSubmittingAsignarDev(false);
+    }
+  };
+
+  // Manejador para desvincular / liberar desarrolladores del proyecto (HU-12 / RF-16)
+  const handleDesasignarDev = async (idDev, devNombre) => {
+    if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') return;
+
+    try {
+      await api.delete(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/desarrolladores/${idDev}`);
+      toast.success(`${devNombre} ha sido desvinculado del proyecto y sus horas fueron liberadas.`);
+
+      const [devAsignadosRes, cargasRes] = await Promise.all([
+        api.get(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/desarrolladores`).catch(() => []),
+        api.get('/lider/desarrolladores-cargas').catch(() => [])
+      ]);
+
+      setDesarrolladoresAsignadosProyecto(Array.isArray(devAsignadosRes) ? devAsignadosRes : []);
+      setDesarrolladoresCargas(Array.isArray(cargasRes) ? cargasRes : []);
+    } catch (err) {
+      console.error('Error desvinculando desarrollador:', err);
+      toast.error(err?.message || 'Error al desvincular desarrollador del proyecto.');
     }
   };
 
@@ -1672,9 +1699,10 @@ export const LiderDashboard = () => {
             </div>
           ) : (
             <>
-              <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {loadingDetalle ? (
                   <>
+                    <SkeletonCard />
                     <SkeletonCard />
                     <SkeletonCard />
                     <SkeletonCard />
@@ -1705,7 +1733,7 @@ export const LiderDashboard = () => {
                   </span>
                 </div>
 
-                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between sm:col-span-2 lg:col-span-1 hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200">
                   <div>
                     <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Horas de Interrupción</span>
                     <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
@@ -1715,6 +1743,30 @@ export const LiderDashboard = () => {
                   <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                     En {interrupciones?.length || 0} eventos reportados
                   </span>
+                </div>
+
+                {/* 4ta Tarjeta Ejecutiva Interactiva: Desarrolladores Asignados al Proyecto */}
+                <div 
+                  onClick={() => setShowNominaDevsModal(true)}
+                  className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-500 hover:shadow-md cursor-pointer transition-all duration-200 group relative overflow-hidden"
+                  title="Haga clic para ver la nómina completa del equipo y gestionar desarrolladores"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:bg-blue-500/10 transition-colors" />
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Equipo Reservado</span>
+                      <Users size={16} className="text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                      {desarrolladoresAsignadosProyecto?.length || 0} Integrantes
+                    </div>
+                  </div>
+                  <div className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between font-medium">
+                    <span>Total: {desarrolladoresAsignadosProyecto?.reduce((acc, curr) => acc + (curr.horasSemanales || 0), 0)}h/sem</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400 group-hover:underline flex items-center gap-0.5">
+                      Nómina <ChevronRight size={12} />
+                    </span>
+                  </div>
                 </div>
               </>
             )}
@@ -1742,19 +1794,6 @@ export const LiderDashboard = () => {
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAsignarDevForm({ idDesarrollador: '', horasSemanales: 20 });
-                      setAsignarDevError(null);
-                      setShowAsignarDevModal(true);
-                    }}
-                    disabled={!proyectoSeleccionado}
-                    className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                    title="Vincular desarrollador y definir dedicación horaria semanal"
-                  >
-                    <UserPlus size={14} /> Asignar Desarrollador
-                  </button>
                   <button
                     type="button"
                     onClick={() => setShowNuevaEtapaModal(true)}
@@ -2746,6 +2785,154 @@ export const LiderDashboard = () => {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Nómina del Equipo Asignado al Proyecto con Liberación de Horas (HU-12 / RF-16) */}
+      <AnimatePresence>
+        {showNominaDevsModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-3xl shadow-2xl max-h-[90dvh] overflow-y-auto space-y-5"
+            >
+              {/* Cabecera del Modal */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-sm shrink-0">
+                    <Users size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                      Nómina del Equipo — {proyectoSeleccionado?.nombre}
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Desarrolladores vinculados, dedicación horaria semanal y liberación de personal
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAsignarDevForm({ idDesarrollador: '', horasSemanales: 20 });
+                    setAsignarDevError(null);
+                    setShowAsignarDevModal(true);
+                  }}
+                  className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-sm shrink-0 cursor-pointer"
+                >
+                  <UserPlus size={14} /> Vincular Desarrollador
+                </button>
+              </div>
+
+              {/* Resumen de Capacidad del Equipo */}
+              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 flex flex-wrap justify-between items-center text-xs gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-zinc-600 dark:text-zinc-400">Total Desarrolladores:</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-extrabold border border-blue-200 dark:border-blue-800">
+                    {desarrolladoresAsignadosProyecto?.length || 0} Integrantes
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-zinc-600 dark:text-zinc-400">Carga Horaria Reservada:</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-extrabold border border-emerald-200 dark:border-emerald-800">
+                    {desarrolladoresAsignadosProyecto?.reduce((acc, curr) => acc + (curr.horasSemanales || 0), 0)}h / semana
+                  </span>
+                </div>
+              </div>
+
+              {/* Lista de Integrantes del Equipo */}
+              <div className="space-y-3">
+                {!desarrolladoresAsignadosProyecto || desarrolladoresAsignadosProyecto.length === 0 ? (
+                  <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/30 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 space-y-2">
+                    <Users size={32} className="mx-auto text-zinc-400" />
+                    <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      No hay desarrolladores vinculados aún a este proyecto.
+                    </p>
+                    <p className="text-[0.75rem] text-zinc-500">
+                      Utiliza el botón "Vincular Desarrollador" o asigna actividades WBS para integrar desarrolladores.
+                    </p>
+                  </div>
+                ) : (
+                  desarrolladoresAsignadosProyecto.map(item => {
+                    const dev = item.desarrollador || {};
+                    const horasPrj = item.horasSemanales || 0;
+                    const cargaGlobal = getDevCargaInfo(dev.idTrabajador);
+                    const horasGlobales = cargaGlobal?.horasAsignadas || horasPrj;
+
+                    // Tareas WBS asignadas a este dev en este proyecto
+                    const tareasDevCount = etapas.reduce((acc, et) => {
+                      const acts = Array.isArray(et.actividades) ? et.actividades : [];
+                      return acc + acts.filter(a => Number(a.desarrollador?.idTrabajador || a.idDesarrollador) === Number(dev.idTrabajador)).length;
+                    }, 0);
+
+                    return (
+                      <div 
+                        key={item.idAsignacion || dev.idTrabajador}
+                        className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 shadow-xs hover:border-zinc-300 dark:hover:border-zinc-600 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
+                            {dev.nombre?.[0]}{dev.apellido?.[0]}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                {dev.nombre} {dev.apellido}
+                              </span>
+                              <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                                {tareasDevCount} {tareasDevCount === 1 ? 'Tarea WBS' : 'Tareas WBS'}
+                              </span>
+                            </div>
+                            <span className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium mt-0.5">
+                              {getCleanEspecialidad(dev.especialidad, dev.profesion)} • {dev.email}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
+                          <div className="flex flex-col items-start sm:items-end">
+                            <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Dedicación Proyecto</span>
+                            <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-mono">
+                              {horasPrj} hrs/semana
+                            </span>
+                            <span className="text-[0.62rem] text-zinc-400 font-medium">
+                              (Carga Total Empresa: {horasGlobales}/48h)
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDesasignarDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`)}
+                            className="p-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                            title="Desvincular del proyecto y liberar dedicación horaria"
+                          >
+                            <UserX size={14} />
+                            <span className="hidden sm:inline">Desvincular</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer del Modal */}
+              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowNominaDevsModal(false)}
+                  className="outline-button px-5 py-2 text-xs font-bold cursor-pointer"
+                >
+                  Cerrar Nómina
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

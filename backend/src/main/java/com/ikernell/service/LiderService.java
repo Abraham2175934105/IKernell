@@ -378,6 +378,17 @@ public class LiderService {
         return proyectoDesarrolladorRepository.findByProyectoWithDesarrollador(proyecto);
     }
 
+    // Desvincula a un desarrollador del proyecto liberando su dedicación horaria (HU-12 / RF-16)
+    @Transactional
+    public void desasignarDesarrolladorDeProyecto(Long idProyecto, Long idDesarrollador) {
+        Proyecto proyecto = proyectoRepository.findById(idProyecto)
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+        Trabajador dev = trabajadorRepository.findById(idDesarrollador)
+                .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
+
+        proyectoDesarrolladorRepository.deleteByProyectoAndDesarrollador(proyecto, dev);
+    }
+
     // Consulta errores técnicos reportados en las fases del proyecto en 1 sola consulta (Anti N+1)
     @Transactional(readOnly = true)
     public List<Error> obtenerErroresPorProyecto(Long idProyecto) {

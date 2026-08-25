@@ -18,6 +18,8 @@ public interface ProyectoDesarrolladorRepository extends JpaRepository<ProyectoD
     
     Optional<ProyectoDesarrollador> findByProyectoAndDesarrollador(Proyecto proyecto, Trabajador desarrollador);
 
+    void deleteByProyectoAndDesarrollador(Proyecto proyecto, Trabajador desarrollador);
+
     @org.springframework.data.jpa.repository.Query("SELECT pd FROM ProyectoDesarrollador pd LEFT JOIN FETCH pd.proyecto WHERE pd.desarrollador = :desarrollador AND pd.proyecto.estado = 'ACTIVO'")
     List<ProyectoDesarrollador> findAsignacionesActivasPorDesarrollador(@org.springframework.data.repository.query.Param("desarrollador") Trabajador desarrollador);
 

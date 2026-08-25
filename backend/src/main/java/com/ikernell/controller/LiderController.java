@@ -141,6 +141,15 @@ public class LiderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(asignacion);
     }
 
+    @DeleteMapping("/proyectos/{idProyecto}/desarrolladores/{idDesarrollador}")
+    @Operation(summary = "Desvincular Desarrollador del Proyecto", description = "Libera la asignación horaria de un desarrollador en un proyecto específico (HU-12)")
+    public ResponseEntity<Void> desasignarDesarrollador(
+            @PathVariable Long idProyecto,
+            @PathVariable Long idDesarrollador) {
+        liderService.desasignarDesarrolladorDeProyecto(idProyecto, idDesarrollador);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/actividades")
     @Operation(summary = "Crear y Asignar Actividad WBS", description = "Crea una nueva actividad asignada a un desarrollador dentro de una etapa (RF-17)")
     public ResponseEntity<Actividad> crearYAsignarActividad(@RequestBody Map<String, Object> payload) {
