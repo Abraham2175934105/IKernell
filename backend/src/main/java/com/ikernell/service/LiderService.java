@@ -184,6 +184,19 @@ public class LiderService {
         etapaRepository.deleteById(idEtapa);
     }
 
+    // Actualiza los metadatos y estado de una etapa WBS
+    public Etapa actualizarEtapa(Long idEtapa, Etapa datos) {
+        Etapa etapa = etapaRepository.findById(idEtapa)
+                .orElseThrow(() -> new ResourceNotFoundException("Etapa no encontrada con ID: " + idEtapa));
+        if (datos.getNombreEtapa() != null && !datos.getNombreEtapa().isBlank()) {
+            etapa.setNombreEtapa(datos.getNombreEtapa());
+        }
+        if (datos.getEstado() != null && !datos.getEstado().isBlank()) {
+            etapa.setEstado(datos.getEstado());
+        }
+        return etapaRepository.save(etapa);
+    }
+
     // Asigna un desarrollador a la nómina de trabajo del proyecto con control de cargas de 48h (HU-12 / RF-16)
     public ProyectoDesarrollador asignarDesarrollador(Long idProyecto, Long idDesarrollador, Integer horasSemanales) {
         if (horasSemanales == null || horasSemanales <= 0) {

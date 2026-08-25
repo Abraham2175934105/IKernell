@@ -100,6 +100,13 @@ public class LiderController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/etapas/{idEtapa}")
+    @Operation(summary = "Editar Etapa WBS", description = "Actualiza el nombre y estado de una etapa WBS")
+    public ResponseEntity<Etapa> actualizarEtapa(@PathVariable Long idEtapa, @Valid @RequestBody Etapa etapa) {
+        Etapa actualizada = liderService.actualizarEtapa(idEtapa, etapa);
+        return ResponseEntity.ok(actualizada);
+    }
+
     @GetMapping("/desarrolladores")
     @Operation(summary = "Listar desarrolladores disponibles", description = "Devuelve la nómina de desarrolladores activos para asignar a etapas y tareas")
     public ResponseEntity<List<Trabajador>> listarDesarrolladores() {

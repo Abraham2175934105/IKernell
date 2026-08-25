@@ -1070,6 +1070,20 @@ export const DesarrolladorDashboard = () => {
                       <EstadoBadge estado={act.estado} />
                     </div>
 
+                    {/* Alerta de Proyecto en Pausa / Inhabilitado */}
+                    {(act.etapa?.proyecto?.estado === 'PAUSADO' || act.proyectoObj?.estado === 'PAUSADO') && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/80 mb-3 text-[0.7rem] flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                        <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 shrink-0 animate-pulse" />
+                        <span>Proyecto en Pausa (Asignación Congelada)</span>
+                      </div>
+                    )}
+                    {(act.etapa?.proyecto?.estado === 'INHABILITADO' || act.proyectoObj?.estado === 'INHABILITADO') && (
+                      <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/80 mb-3 text-[0.7rem] flex items-center gap-1.5 font-bold text-red-800 dark:text-red-300">
+                        <Lock size={14} className="text-red-600 dark:text-red-400 shrink-0" />
+                        <span>Proyecto Inhabilitado / Suspendido</span>
+                      </div>
+                    )}
+
                     {/* Alerta de Reasignación en la Tarjeta */}
                     {isReassigned && (
                       <div className="p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 mb-3 text-[0.7rem]">

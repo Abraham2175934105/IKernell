@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton, SkeletonCard, SkeletonTable, SkeletonMetricCard } from '../../components/ui/Skeleton';
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
 import { CustomSelect } from '../../components/ui/CustomSelect';
+import jsPDF from 'jspdf';
 
 // Variantes de animación ultra rápidas y fluidas (0.25s)
 const containerVariants = {
@@ -421,6 +422,33 @@ export const LiderDashboard = () => {
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [refreshingManual, setRefreshingManual] = useState(false);
   const [navReturnContext, setNavReturnContext] = useState(null);
+
+  // Estados para Edición de Etapa, Edición de Proyecto y Generación de Reportes PDF
+  const [showEditarEtapaModal, setShowEditarEtapaModal] = useState(false);
+  const [editingEtapaObj, setEditingEtapaObj] = useState(null);
+  const [editingEtapaForm, setEditingEtapaForm] = useState({ nombreEtapa: '', estado: 'PENDIENTE' });
+  const [submittingEditarEtapa, setSubmittingEditarEtapa] = useState(false);
+
+  const [showEditarProyectoModal, setShowEditarProyectoModal] = useState(false);
+  const [editingProyectoForm, setEditingProyectoForm] = useState({
+    nombre: '',
+    cliente: '',
+    presupuesto: '',
+    fechaInicio: '',
+    fechaFinEstimada: '',
+    estado: 'ACTIVO',
+    descripcion: ''
+  });
+  const [submittingEditarProyecto, setSubmittingEditarProyecto] = useState(false);
+
+  const [showGenerarReportePdfModal, setShowGenerarReportePdfModal] = useState(false);
+  const [pdfConfig, setPdfConfig] = useState({
+    nivelDetalle: 'DETALLADO',
+    incluirWbs: true,
+    incluirEquipo: true,
+    incluirIncidencias: true,
+    modoSensible: true
+  });
 
   const [showNuevoProyectoModal, setShowNuevoProyectoModal] = useState(false);
   const [submittingProyecto, setSubmittingProyecto] = useState(false);
@@ -1266,6 +1294,280 @@ export const LiderDashboard = () => {
     return { total: proyectos.length, activos, finalizados };
   }, [proyectos]);
 
+  // Handlers para Editar Etapa WBS
+  const handleAbrirEditarEtapa = (etapa) => {
+    setEditingEtapaObj(etapa);
+    setEditingEtapaForm({
+      nombreEtapa: etapa.nombreEtapa || '',
+      estado: etapa.estado || 'PENDIENTE'
+    });
+    setShowEditarEtapaModal(true);
+  };
+
+  const handleGuardarEditarEtapa = async (e) => {
+    e.preventDefault();
+    if (!editingEtapaObj || !editingEtapaObj.idEtapa) return;
+    if (!editingEtapaForm.nombreEtapa.trim()) {
+      toast.error('El nombre de la etapa no puede estar vacío.');
+      return;
+    }
+
+    setSubmittingEditarEtapa(true);
+    try {
+      const res = await api.put(`/lider/etapas/${editingEtapaObj.idEtapa}`, {
+        nombreEtapa: editingEtapaForm.nombreEtapa.trim(),
+        estado: editingEtapaForm.estado
+      });
+
+      toast.success(`Etapa "${res.nombreEtapa || 'WBS'}" actualizada correctamente.`);
+      setShowEditarEtapaModal(false);
+      setEditingEtapaObj(null);
+      
+      if (proyectoSeleccionado && proyectoSeleccionado.idProyecto) {
+        cargarDetalleProyecto(proyectoSeleccionado.idProyecto);
+      }
+    } catch (err) {
+      console.error('Error al actualizar etapa:', err);
+      toast.error('No se pudo actualizar la etapa WBS.');
+    } finally {
+      setSubmittingEditarEtapa(false);
+    }
+  };
+
+  // Handlers para Editar Proyecto
+  const handleAbrirEditarProyecto = () => {
+    if (!proyectoSeleccionado) return;
+    setEditingProyectoForm({
+      nombre: proyectoSeleccionado.nombre || '',
+      cliente: proyectoSeleccionado.cliente || '',
+      presupuesto: proyectoSeleccionado.presupuesto || '',
+      fechaInicio: proyectoSeleccionado.fechaInicio || '',
+      fechaFinEstimada: proyectoSeleccionado.fechaFinEstimada || proyectoSeleccionado.fechaEstimadaEntrega || '',
+      estado: proyectoSeleccionado.estado || 'ACTIVO',
+      descripcion: proyectoSeleccionado.descripcion || ''
+    });
+    setShowEditarProyectoModal(true);
+  };
+
+  const handleGuardarEditarProyecto = async (e) => {
+    e.preventDefault();
+    if (!proyectoSeleccionado || !proyectoSeleccionado.idProyecto) return;
+
+    if (!editingProyectoForm.nombre.trim()) {
+      toast.error('El nombre del proyecto es obligatorio.');
+      return;
+    }
+
+    setSubmittingEditarProyecto(true);
+    try {
+      const payload = {
+        nombre: editingProyectoForm.nombre.trim(),
+        cliente: editingProyectoForm.cliente.trim(),
+        presupuesto: editingProyectoForm.presupuesto ? Number(editingProyectoForm.presupuesto) : null,
+        fechaInicio: editingProyectoForm.fechaInicio || null,
+        fechaFinEstimada: editingProyectoForm.fechaFinEstimada || null,
+        estado: editingProyectoForm.estado,
+        descripcion: editingProyectoForm.descripcion.trim()
+      };
+
+      const res = await api.put(`/lider/proyectos/${proyectoSeleccionado.idProyecto}`, payload);
+
+      toast.success(`Proyecto "${res.nombre}" actualizado correctamente.`);
+      setProyectoSeleccionado(res);
+      setProyectos(prev => prev.map(p => p.idProyecto === res.idProyecto ? res : p));
+      setShowEditarProyectoModal(false);
+    } catch (err) {
+      console.error('Error al actualizar proyecto:', err);
+      toast.error('No se pudieron guardar los cambios del proyecto.');
+    } finally {
+      setSubmittingEditarProyecto(false);
+    }
+  };
+
+  // Generador de Reporte PDF del Proyecto
+  const handleGenerarReportePdf = () => {
+    if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') {
+      toast.error('Seleccione un proyecto específico para generar el reporte PDF.');
+      return;
+    }
+
+    try {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const primaryColor = [37, 99, 235]; // #2563eb
+      const darkColor = [24, 24, 27];     // #18181b
+      const lightBg = [248, 250, 252];    // #f8fafc
+
+      // 1. Banner Superior
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, 210, 24, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text('IKERNELL ENTERPRISE ARCHITECTURE', 14, 12);
+
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`REPORTE DE INGENIERÍA Y PROYECTO DE SOFTWARE | FECHA: ${new Date().toLocaleDateString('es-ES')}`, 14, 18);
+
+      // 2. Título de Proyecto
+      doc.setTextColor(...darkColor);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Proyecto: ${proyectoSeleccionado.nombre}`, 14, 34);
+
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Código: PRJ-00${proyectoSeleccionado.idProyecto} | Estado: ${proyectoSeleccionado.estado || 'ACTIVO'} | Cliente: ${proyectoSeleccionado.cliente || 'Interno'}`, 14, 40);
+
+      let yPos = 48;
+
+      // 3. Tarjeta Resumen Operativo
+      doc.setFillColor(...lightBg);
+      doc.roundedRect(14, yPos, 182, pdfConfig.modoSensible ? 28 : 22, 3, 3, 'F');
+      
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...primaryColor);
+      doc.text('RESUMEN Y DIMENSIÓN OPERATIVA', 18, yPos + 7);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...darkColor);
+      doc.text(`• Fecha de Inicio: ${formatearFechaHumana(proyectoSeleccionado.fechaInicio)}`, 18, yPos + 13);
+      doc.text(`• Entrega Estimada: ${formatearFechaHumana(proyectoSeleccionado.fechaFinEstimada)}`, 105, yPos + 13);
+      doc.text(`• Líder a Cargo: ${proyectoSeleccionado.lider ? `${proyectoSeleccionado.lider.nombre} ${proyectoSeleccionado.lider.apellido}` : 'Carlos Mendoza'}`, 18, yPos + 18);
+      doc.text(`• Duración Proyectada: ${calcularDuracionProyecto(proyectoSeleccionado.fechaInicio, proyectoSeleccionado.fechaFinEstimada)}`, 105, yPos + 18);
+
+      if (pdfConfig.modoSensible) {
+        const presForm = proyectoSeleccionado.presupuesto ? Number(proyectoSeleccionado.presupuesto).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00';
+        doc.setFont('helvetica', 'bold');
+        doc.text(`• Presupuesto Financiero Reservado (Confidencial): US$ ${presForm}`, 18, yPos + 24);
+      }
+
+      yPos += pdfConfig.modoSensible ? 36 : 30;
+
+      // Alcance del proyecto
+      if (proyectoSeleccionado.descripcion) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...darkColor);
+        doc.text('Alcance y Objetivos del Proyecto:', 14, yPos);
+        yPos += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        const splitDesc = doc.splitTextToSize(proyectoSeleccionado.descripcion, 182);
+        doc.text(splitDesc, 14, yPos);
+        yPos += (splitDesc.length * 4) + 6;
+      }
+
+      // 4. Sección WBS
+      if (pdfConfig.incluirWbs && etapas && etapas.length > 0) {
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...primaryColor);
+        doc.text('1. Estructura de Desglose de Trabajo (Fases WBS & Actividades)', 14, yPos);
+        yPos += 6;
+
+        etapas.forEach((etapa, index) => {
+          if (yPos > 260) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          doc.setFillColor(240, 244, 255);
+          doc.rect(14, yPos, 182, 7, 'F');
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...darkColor);
+          doc.text(`Fase ${index + 1}: ${etapa.nombreEtapa} [Estado: ${etapa.estado || 'PENDIENTE'}]`, 16, yPos + 5);
+          yPos += 9;
+
+          if (etapa.actividades && etapa.actividades.length > 0) {
+            etapa.actividades.forEach(act => {
+              if (yPos > 270) {
+                doc.addPage();
+                yPos = 20;
+              }
+
+              doc.setFontSize(8);
+              doc.setFont('helvetica', 'bold');
+              doc.setTextColor(30, 41, 59);
+              doc.text(`• ${act.nombreActividad}`, 18, yPos);
+              
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(100, 116, 139);
+              const devName = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin asignar';
+              doc.text(`[${act.estado || 'PENDIENTE'}] - Asignado a: ${devName} (${act.horasEstimadas || 0}h estimadas)`, 18, yPos + 4);
+              yPos += 8;
+            });
+          } else {
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(150, 150, 150);
+            doc.text('  Sin actividades registradas en esta fase.', 18, yPos);
+            yPos += 6;
+          }
+          yPos += 3;
+        });
+      }
+
+      // 5. Sección Desarrolladores
+      if (pdfConfig.incluirEquipo && desarrolladoresAsignadosProyecto && desarrolladoresAsignadosProyecto.length > 0) {
+        if (yPos > 240) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...primaryColor);
+        doc.text('2. Nómina de Desarrolladores y Capacidad Asignada (HU-12)', 14, yPos);
+        yPos += 6;
+
+        desarrolladoresAsignadosProyecto.forEach(dev => {
+          if (yPos > 270) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          const devName = dev.desarrollador ? `${dev.desarrollador.nombre} ${dev.desarrollador.apellido}` : 'Desarrollador';
+          const devEmail = dev.desarrollador?.email || '';
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...darkColor);
+          doc.text(`• ${devName} (${devEmail})`, 18, yPos);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Dedicación reservada: ${dev.horasSemanales || 40}h / semana`, 130, yPos);
+          yPos += 6;
+        });
+      }
+
+      // Pie de página
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Sistema IKernell - Reporte Oficial de Proyecto PRJ-00${proyectoSeleccionado.idProyecto} | Página ${i} de ${totalPages}`, 14, 290);
+      }
+
+      const cleanFileName = `Reporte_Proyecto_PRJ-00${proyectoSeleccionado.idProyecto}_${proyectoSeleccionado.nombre.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
+      doc.save(cleanFileName);
+      toast.success('Reporte PDF generado y descargado exitosamente.');
+      setShowGenerarReportePdfModal(false);
+    } catch (err) {
+      console.error('Error al generar PDF:', err);
+      toast.error('Ocurrió un error al construir el archivo PDF.');
+    }
+  };
+
   return (
     <DashboardLayout
       activeTab={activeTab}
@@ -1491,11 +1793,17 @@ export const LiderDashboard = () => {
                       {proyectoSeleccionado?.nombre || 'Proyecto Activo'}
                     </h3>
                     <span className={`px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase border shrink-0 ${
-                      isProyectoFinalizado
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800'
+                      proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800' :
+                      proyectoSeleccionado?.estado === 'PAUSADO'
+                        ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 animate-pulse' :
+                      proyectoSeleccionado?.estado === 'INHABILITADO'
+                        ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800'
                         : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800'
                     }`}>
-                      {isProyectoFinalizado ? 'FINALIZADO (Solo Lectura)' : (proyectoSeleccionado?.estado || 'ACTIVO')}
+                      {proyectoSeleccionado?.estado === 'PAUSADO' ? '⏸️ PROYECTO EN PAUSA' :
+                       proyectoSeleccionado?.estado === 'INHABILITADO' ? '🚫 INHABILITADO' :
+                       isProyectoFinalizado ? '✅ FINALIZADO (Solo Lectura)' : (proyectoSeleccionado?.estado || 'ACTIVO')}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
@@ -1513,6 +1821,28 @@ export const LiderDashboard = () => {
                     </span>
                   </div>
                 )}
+
+                {/* Botón: Generar Reporte PDF */}
+                <button
+                  type="button"
+                  onClick={() => setShowGenerarReportePdfModal(true)}
+                  className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer shadow-2xs"
+                  title="Generar e imprimir reporte técnico/ejecutivo del proyecto en formato PDF"
+                >
+                  <FileText size={13} className="text-blue-600 dark:text-blue-400" />
+                  <span>Generar Reporte PDF</span>
+                </button>
+
+                {/* Botón: Editar Información del Proyecto */}
+                <button
+                  type="button"
+                  onClick={handleAbrirEditarProyecto}
+                  className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs"
+                  title="Editar nombre, presupuesto, cliente, fechas y cambiar estado operativo (Activo, Pausado, Inhabilitado)"
+                >
+                  <Edit3 size={13} className="text-zinc-600 dark:text-zinc-400" />
+                  <span>Editar Proyecto</span>
+                </button>
 
                 {!isProyectoFinalizado && (
                   <button
@@ -1929,15 +2259,29 @@ export const LiderDashboard = () => {
                         </span>
                       </div>
 
-                      <span className={`text-[0.65rem] font-extrabold px-3 py-1 rounded-full border self-start sm:self-auto ${
-                        etapa?.estado === 'COMPLETADA'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' :
-                        etapa?.estado === 'EN_CURSO'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' :
-                          'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-                      }`}>
-                        {etapa?.estado || 'PENDIENTE'}
-                      </span>
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <span className={`text-[0.65rem] font-extrabold px-3 py-1 rounded-full border ${
+                          etapa?.estado === 'FINALIZADA' || etapa?.estado === 'COMPLETADA'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' :
+                          etapa?.estado === 'EN_PROGRESO' || etapa?.estado === 'EN_CURSO'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' :
+                            'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+                        }`}>
+                          {etapa?.estado || 'PENDIENTE'}
+                        </span>
+
+                        {!isProyectoFinalizado && (
+                          <button
+                            type="button"
+                            onClick={() => handleAbrirEditarEtapa(etapa)}
+                            className="p-1.5 px-2.5 rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-blue-400 transition-all cursor-pointer inline-flex items-center gap-1 text-[0.68rem] font-extrabold shadow-2xs"
+                            title="Editar nombre y estado operativo de esta etapa WBS"
+                          >
+                            <Edit3 size={13} className="text-blue-600 dark:text-blue-400" />
+                            <span>Editar Etapa</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Lista de Actividades dentro de esta Etapa */}
@@ -4518,6 +4862,351 @@ export const LiderDashboard = () => {
                 >
                   Cerrar
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+        {/* 1. Modal: Editar Etapa WBS */}
+        {showEditarEtapaModal && editingEtapaObj && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-extrabold text-base">
+                  <Edit3 size={18} className="text-blue-600 dark:text-blue-400" />
+                  <span>Editar Etapa WBS (#Etapa {editingEtapaObj.idEtapa})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowEditarEtapaModal(false)}
+                  className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleGuardarEditarEtapa} className="space-y-4 text-xs">
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                    Nombre de la Fase / Etapa WBS *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingEtapaForm.nombreEtapa}
+                    onChange={(e) => setEditingEtapaForm({ ...editingEtapaForm, nombreEtapa: e.target.value })}
+                    className="input-field w-full py-2.5 text-xs font-semibold"
+                    placeholder="Ej. Fase 1: Especificación y Arquitectura N-Capas"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                    Estado Lógico de la Etapa *
+                  </label>
+                  <select
+                    value={editingEtapaForm.estado}
+                    onChange={(e) => setEditingEtapaForm({ ...editingEtapaForm, estado: e.target.value })}
+                    className="input-field w-full py-2.5 text-xs font-bold appearance-none cursor-pointer"
+                  >
+                    <option value="PENDIENTE">PENDIENTE (Planificada)</option>
+                    <option value="EN_PROGRESO">EN_PROGRESO (En Ejecución)</option>
+                    <option value="FINALIZADA">FINALIZADA (Concluida)</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditarEtapaModal(false)}
+                    className="outline-button text-xs py-2 px-4 font-bold"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingEditarEtapa}
+                    className="gradient-button text-xs py-2 px-5 font-bold inline-flex items-center gap-1.5 shadow-md"
+                  >
+                    {submittingEditarEtapa ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                    <span>Guardar Cambios</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 2. Modal: Editar Información del Proyecto */}
+        {showEditarProyectoModal && proyectoSeleccionado && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-xl shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-extrabold text-base">
+                  <FolderGit2 size={20} className="text-blue-600 dark:text-blue-400" />
+                  <span>Editar Información del Proyecto (PRJ-00{proyectoSeleccionado.idProyecto})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowEditarProyectoModal(false)}
+                  className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleGuardarEditarProyecto} className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Nombre del Proyecto *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editingProyectoForm.nombre}
+                      onChange={(e) => setEditingProyectoForm({ ...editingProyectoForm, nombre: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-semibold"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Cliente / Organización *
+                    </label>
+                    <input
+                      type="text"
+                      value={editingProyectoForm.cliente}
+                      onChange={(e) => setEditingProyectoForm({ ...editingProyectoForm, cliente: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-semibold"
+                      placeholder="Ej. Itaú Unibanco Holding"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Presupuesto (USD)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editingProyectoForm.presupuesto}
+                      onChange={(e) => setEditingProyectoForm({ ...editingProyectoForm, presupuesto: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-mono font-bold"
+                      placeholder="120000"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Fecha Inicio
+                    </label>
+                    <input
+                      type="date"
+                      value={editingProyectoForm.fechaInicio}
+                      onChange={(e) => setEditingProyectoForm({ ...editingProyectoForm, fechaInicio: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-bold"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Entrega Estimada
+                    </label>
+                    <input
+                      type="date"
+                      value={editingProyectoForm.fechaFinEstimada}
+                      onChange={(e) => setEditingProyectoForm({ ...editingProyectoForm, fechaFinEstimada: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-bold"
+                    />
+                  </div>
+                </div>
+
+                {/* Estado Operativo Ampliado */}
+                <div className="space-y-1 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60">
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100 block">
+                    Estado Operativo del Proyecto *
+                  </label>
+                  <select
+                    value={editingProyectoForm.estado}
+                    onChange={(e) => setEditingProyectoForm({ ...editingProyectoForm, estado: e.target.value })}
+                    className="input-field w-full py-2 text-xs font-bold appearance-none cursor-pointer"
+                  >
+                    <option value="ACTIVO">⚡ ACTIVO (En Ejecución Normal)</option>
+                    <option value="PAUSADO">⏸️ PAUSADO (En Pausa Temporaria)</option>
+                    <option value="INHABILITADO">🚫 INHABILITADO (Suspendido u Operación Detenida)</option>
+                    <option value="FINALIZADO">✅ FINALIZADO (Cerrado Formalmente)</option>
+                  </select>
+                  <p className="text-[0.68rem] text-zinc-500 font-medium pt-1">
+                    Nota: Cambiar el estado a <strong>PAUSADO</strong> notificará de inmediato a todos los desarrolladores con actividades activas en este proyecto.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                    Descripción del Alcance y Objetivos
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={editingProyectoForm.descripcion}
+                    onChange={(e) => setEditingProyectoForm({ ...editingProyectoForm, descripcion: e.target.value })}
+                    className="input-field w-full py-2 text-xs font-medium"
+                    placeholder="Descripción detallada del alcance técnico y metas corporativas..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditarProyectoModal(false)}
+                    className="outline-button text-xs py-2 px-4 font-bold"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingEditarProyecto}
+                    className="gradient-button text-xs py-2 px-5 font-bold inline-flex items-center gap-1.5 shadow-md"
+                  >
+                    {submittingEditarProyecto ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                    <span>Guardar Cambios del Proyecto</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 3. Modal: Generador de Reportes PDF Configurable */}
+        {showGenerarReportePdfModal && proyectoSeleccionado && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-extrabold text-base">
+                  <FileText size={20} className="text-blue-600 dark:text-blue-400" />
+                  <span>Configurar Reporte PDF del Proyecto</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowGenerarReportePdfModal(false)}
+                  className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/80 space-y-1">
+                  <span className="font-extrabold text-blue-900 dark:text-blue-200 block text-xs">
+                    Proyecto Seleccionado: {proyectoSeleccionado.nombre}
+                  </span>
+                  <p className="text-blue-700 dark:text-blue-300 text-[0.68rem] font-medium">
+                    Selecciona el nivel de detalle e información sensible a incluir en el documento ejecutivo PDF.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                    Nivel de Detalle del Reporte *
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPdfConfig({ ...pdfConfig, nivelDetalle: 'RESUMIDO' })}
+                      className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
+                        pdfConfig.nivelDetalle === 'RESUMIDO'
+                          ? 'bg-blue-50 dark:bg-blue-950/80 border-blue-500 text-blue-900 dark:text-blue-100 font-bold'
+                          : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-600'
+                      }`}
+                    >
+                      <div className="font-extrabold text-xs">Reporte Resumido</div>
+                      <div className="text-[0.65rem] text-zinc-500 mt-0.5">Visión ejecutiva de alto nivel</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPdfConfig({ ...pdfConfig, nivelDetalle: 'DETALLADO' })}
+                      className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
+                        pdfConfig.nivelDetalle === 'DETALLADO'
+                          ? 'bg-blue-50 dark:bg-blue-950/80 border-blue-500 text-blue-900 dark:text-blue-100 font-bold'
+                          : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-600'
+                      }`}
+                    >
+                      <div className="font-extrabold text-xs">Reporte Detallado</div>
+                      <div className="text-[0.65rem] text-zinc-500 mt-0.5">Incluye Fases WBS, Horas y Equipo</div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block mb-1">
+                    Contenido a Incluir en el Documento:
+                  </label>
+
+                  <label className="flex items-center gap-2.5 cursor-pointer font-bold text-zinc-800 dark:text-zinc-200">
+                    <input
+                      type="checkbox"
+                      checked={pdfConfig.incluirWbs}
+                      onChange={(e) => setPdfConfig({ ...pdfConfig, incluirWbs: e.target.checked })}
+                      className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>Incluir Estructura WBS y Fases del Proyecto</span>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 cursor-pointer font-bold text-zinc-800 dark:text-zinc-200">
+                    <input
+                      type="checkbox"
+                      checked={pdfConfig.incluirEquipo}
+                      onChange={(e) => setPdfConfig({ ...pdfConfig, incluirEquipo: e.target.checked })}
+                      className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>Incluir Desarrolladores Asignados y Carga Horaria</span>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 cursor-pointer font-bold text-amber-800 dark:text-amber-300">
+                    <input
+                      type="checkbox"
+                      checked={pdfConfig.modoSensible}
+                      onChange={(e) => setPdfConfig({ ...pdfConfig, modoSensible: e.target.checked })}
+                      className="rounded border-zinc-300 text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>Incluir Información Sensible (Presupuesto Financiero USD)</span>
+                  </label>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowGenerarReportePdfModal(false)}
+                    className="outline-button text-xs py-2 px-4 font-bold"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGenerarReportePdf}
+                    className="gradient-button text-xs py-2 px-5 font-bold inline-flex items-center gap-1.5 shadow-md"
+                  >
+                    <Download size={14} />
+                    <span>Descargar Reporte PDF</span>
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>
