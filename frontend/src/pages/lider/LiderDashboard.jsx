@@ -1769,46 +1769,110 @@ export const LiderDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Tarjetas Resumen con Tooltips Interactivos */}
+          {/* Tarjetas Resumen con Filtrado Interactivo Directo */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Card 1: Total Reportes */}
             <div 
-              className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500/40 transition-all duration-200"
-              title="Suma total de incidencias técnicas e interrupciones operativas registradas en la base de datos"
+              onClick={() => {
+                setFiltroTipoInc('TODOS');
+                setFiltroEstadoInc('TODOS');
+                setFiltroSeveridadInc('TODAS');
+              }}
+              className={`p-5 rounded-3xl bg-white dark:bg-zinc-900 border shadow-sm h-full flex flex-col justify-between transition-all duration-200 cursor-pointer group ${
+                filtroTipoInc === 'TODOS' && filtroEstadoInc === 'TODOS' && filtroSeveridadInc === 'TODAS'
+                  ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 shadow-md'
+                  : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-400 dark:hover:border-blue-500/40'
+              }`}
+              title="Haga clic para ver el listado completo sin filtros de estado o tipo"
             >
-              <span className="text-[0.65rem] font-bold text-zinc-400 uppercase block mb-1">Total Reportes</span>
-              <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
+              <div className="flex items-center justify-between">
+                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase block">Total Reportes</span>
+                <span className="text-[0.6rem] font-bold text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Filtrar todos →
+                </span>
+              </div>
+              <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100 my-1">
                 {(errores?.length || 0) + (interrupciones?.length || 0)}
               </div>
+              <span className="text-[0.65rem] text-zinc-400 font-medium">Ver lista completa</span>
             </div>
 
+            {/* Card 2: Errores Técnicos */}
             <div 
-              className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-red-400 dark:hover:border-red-500/40 transition-all duration-200"
-              title="Nivel de gravedad del fallo que afecta al Semáforo Predictivo"
+              onClick={() => {
+                setFiltroTipoInc('ERRORES');
+                setFiltroEstadoInc('TODOS');
+                setFiltroSeveridadInc('TODAS');
+              }}
+              className={`p-5 rounded-3xl bg-white dark:bg-zinc-900 border shadow-sm h-full flex flex-col justify-between transition-all duration-200 cursor-pointer group ${
+                filtroTipoInc === 'ERRORES' && filtroSeveridadInc === 'TODAS'
+                  ? 'border-red-500 dark:border-red-400 ring-2 ring-red-500/20 shadow-md'
+                  : 'border-zinc-200 dark:border-zinc-800 hover:border-red-400 dark:hover:border-red-500/40'
+              }`}
+              title="Haga clic para filtrar exclusivamente los errores técnicos de código"
             >
-              <span className="text-[0.65rem] font-bold text-red-500 uppercase block mb-1">Errores Técnicos</span>
-              <div className="text-2xl font-black text-red-600 dark:text-red-400">
+              <div className="flex items-center justify-between">
+                <span className="text-[0.65rem] font-bold text-red-500 uppercase block">Errores Técnicos</span>
+                <span className="text-[0.6rem] font-bold text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Filtrar errores →
+                </span>
+              </div>
+              <div className="text-2xl font-black text-red-600 dark:text-red-400 my-1">
                 {errores?.length || 0}
               </div>
+              <span className="text-[0.65rem] text-zinc-400 font-medium">Ver solo errores técnicos</span>
             </div>
 
+            {/* Card 3: Contingencias (Horas) */}
             <div 
-              className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-amber-400 dark:hover:border-amber-500/40 transition-all duration-200"
-              title="Horas acumuladas de contingencia e interrupción externa que impactan el cronograma WBS"
+              onClick={() => {
+                setFiltroTipoInc('INTERRUPCIONES');
+                setFiltroEstadoInc('TODOS');
+                setFiltroSeveridadInc('TODAS');
+              }}
+              className={`p-5 rounded-3xl bg-white dark:bg-zinc-900 border shadow-sm h-full flex flex-col justify-between transition-all duration-200 cursor-pointer group ${
+                filtroTipoInc === 'INTERRUPCIONES'
+                  ? 'border-amber-500 dark:border-amber-400 ring-2 ring-amber-500/20 shadow-md'
+                  : 'border-zinc-200 dark:border-zinc-800 hover:border-amber-400 dark:hover:border-amber-500/40'
+              }`}
+              title="Haga clic para filtrar las interrupciones operativas y horas de contingencia"
             >
-              <span className="text-[0.65rem] font-bold text-amber-500 uppercase block mb-1">Contingencias (Horas)</span>
-              <div className="text-2xl font-black text-amber-600 dark:text-amber-400">
+              <div className="flex items-center justify-between">
+                <span className="text-[0.65rem] font-bold text-amber-500 uppercase block">Contingencias (Horas)</span>
+                <span className="text-[0.6rem] font-bold text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Filtrar tiempos →
+                </span>
+              </div>
+              <div className="text-2xl font-black text-amber-600 dark:text-amber-400 my-1">
                 {totalHorasContingencia}h
               </div>
+              <span className="text-[0.65rem] text-zinc-400 font-medium">Ver eventos por tiempo</span>
             </div>
 
+            {/* Card 4: Solucionados */}
             <div 
-              className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-emerald-400 dark:hover:border-emerald-500/40 transition-all duration-200"
-              title="Incidencias que han recibido resolución técnica y están cerradas en el sistema"
+              onClick={() => {
+                setFiltroEstadoInc('SOLUCIONADO');
+                setFiltroTipoInc('TODOS');
+                setFiltroSeveridadInc('TODAS');
+              }}
+              className={`p-5 rounded-3xl bg-white dark:bg-zinc-900 border shadow-sm h-full flex flex-col justify-between transition-all duration-200 cursor-pointer group ${
+                filtroEstadoInc === 'SOLUCIONADO'
+                  ? 'border-emerald-500 dark:border-emerald-400 ring-2 ring-emerald-500/20 shadow-md'
+                  : 'border-zinc-200 dark:border-zinc-800 hover:border-emerald-400 dark:hover:border-emerald-500/40'
+              }`}
+              title="Haga clic para filtrar las incidencias solucionadas y resueltas"
             >
-              <span className="text-[0.65rem] font-bold text-emerald-500 uppercase block mb-1">Solucionados</span>
-              <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                {[...(errores || []), ...(interrupciones || [])].filter(i => i.estadoAtencion === 'SOLUCIONADO').length}
+              <div className="flex items-center justify-between">
+                <span className="text-[0.65rem] font-bold text-emerald-500 uppercase block">Solucionados</span>
+                <span className="text-[0.6rem] font-bold text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Filtrar soluciones →
+                </span>
               </div>
+              <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 my-1">
+                {[...(errores || []), ...(interrupciones || [])].filter(i => i.estadoAtencion === 'SOLUCIONADO' || i.estadoAtencion === 'RESUELTO').length}
+              </div>
+              <span className="text-[0.65rem] text-zinc-400 font-medium">Ver casos resueltos</span>
             </div>
           </motion.div>
 
