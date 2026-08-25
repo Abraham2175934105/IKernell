@@ -1820,24 +1820,6 @@ export const CoordinadorDashboard = () => {
                     {solicitudes.filter(s => s.estado === 'REABIERTA').length}
                   </span>
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFiltroSolicitudes('REASIGNADA')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
-                    filtroSolicitudes === 'REASIGNADA'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 scale-[1.02]'
-                      : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 hover:bg-indigo-100'
-                  }`}
-                >
-                  <RefreshCw size={13} />
-                  <span>Reasignadas</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
-                    filtroSolicitudes === 'REASIGNADA' ? 'bg-white/20 font-extrabold' : 'bg-indigo-100 dark:bg-indigo-900/60'
-                  }`}>
-                    {solicitudes.filter(s => s.estado === 'REASIGNADA').length}
-                  </span>
-                </button>
               </div>
 
               {/* Control Integrado de Fechas Exigentes & Accesos Rápidos (Derecha) */}
