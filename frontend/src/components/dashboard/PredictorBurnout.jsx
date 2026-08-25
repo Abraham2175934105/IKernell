@@ -90,6 +90,8 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
   const [filtroSemaforo, setFiltroSemaforo] = useState('TODOS'); // 'TODOS' | 'CRITICA' | 'ALTA' | 'MEDIA' | 'BAJA'
   const [orden, setOrden] = useState('RIESGO_DESC'); // 'RIESGO_DESC' | 'RIESGO_ASC' | 'TAREAS_DESC' | 'NOMBRE_ASC'
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showTareasDevModal, setShowTareasDevModal] = useState(false);
+  const [showEvolucionModal, setShowEvolucionModal] = useState(false);
 
   // Carga lista de proyectos disponibles para el selector interactivo
   useEffect(() => {
@@ -290,8 +292,8 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
   // Mapeo reactivo de tareas asignadas por desarrollador en el proyecto activo
   const tareasPorDevEnEsteProyecto = useMemo(() => {
     const map = new Map();
-    if (!etapas || !Array.isArray(etapas)) return map;
-    etapas.forEach(etapa => {
+    if (!etapasLocal || !Array.isArray(etapasLocal)) return map;
+    etapasLocal.forEach(etapa => {
       if (Array.isArray(etapa?.actividades)) {
         etapa.actividades.forEach(act => {
           const devId = act?.desarrollador?.idTrabajador;
@@ -302,7 +304,33 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs }) => {
       }
     });
     return map;
-  }, [etapas]);
+  }, [etapasLocal]);
+
+  // Tareas reales estructuradas del desarrollador seleccionado
+  const tareasDevSeleccionado = useMemo(() => {
+    if (!selectedDev) return [];
+    const list = [];
+    const targetId = selectedDev.idTrabajador;
+
+    if (etapasLocal && Array.isArray(etapasLocal)) {
+      etapasLocal.forEach(etapa => {
+        if (Array.isArray(etapa?.actividades)) {
+          etapa.actividades.forEach(act => {
+            const devId = act?.desarrollador?.idTrabajador;
+            if (devId && String(devId) === String(targetId)) {
+              list.push({
+                ...act,
+                nombreEtapa: etapa.nombreEtapa || 'Fase General',
+                nombreProyecto: proyectoSeleccionadoLocal?.nombre || 'Proyecto Actual'
+              });
+            }
+          });
+        }
+      });
+    }
+
+    return list;
+  }, [selectedDev, etapasLocal, proyectoSeleccionadoLocal]);
 
   // Sincroniza la selección de desarrollador al cambiar filtros o proyecto
   useEffect(() => {
@@ -449,69 +477,63 @@ Generado automáticamente por el motor analítico IKernell v2.0
     <div className="w-full bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
       
       {/* ─── Encabezado Principal & Contexto ─── */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
-        <div>
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-xs font-bold uppercase tracking-wider border border-blue-200 dark:border-blue-800/60">
-              <Sparkles size={13} className="text-blue-600 dark:text-blue-400" /> Analítica Predictiva • Burnout Engine
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-6 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-black uppercase tracking-wider border border-blue-200 dark:border-blue-800">
+              <Sparkles size={13} className="text-blue-600 dark:text-blue-400" /> Analítica Predictiva • Burnout Engine (ISO/IEC 25010)
             </span>
-            
-            {/* Botón Ampliado: Selector de Proyectos y Alcance Global */}
-            <button
-              type="button"
-              onClick={() => {
-                setBusquedaProyectoModal('');
-                setFiltroEstadoProyectoModal('TODOS');
-                setModalProyectosOpen(true);
-              }}
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-zinc-100/80 dark:bg-zinc-800/80 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 text-zinc-800 dark:text-zinc-200 text-xs font-bold border border-zinc-200 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-all shadow-xs cursor-pointer group"
-              title="Abrir menú y explorador interactivo de proyectos"
-            >
-              {isProyectoEspecifico ? (
-                <>
-                  <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
-                    <FolderGit2 size={13} />
-                  </div>
-                  <span className="font-mono text-blue-600 dark:text-blue-400 font-black text-xs">
-                    [PRJ-00{proyectoSeleccionadoLocal.idProyecto}]
-                  </span>
-                  <span className="truncate max-w-[180px] sm:max-w-[280px] text-zinc-900 dark:text-zinc-100 font-extrabold">
-                    {proyectoSeleccionadoLocal.nombre}
-                  </span>
-                  <span className="text-[0.62rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
-                    {proyectoSeleccionadoLocal.estado || 'ACTIVO'}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
-                    <Globe size={13} />
-                  </div>
-                  <span className="text-blue-700 dark:text-blue-300 font-black">
-                    Alcance Corporativo Global (Todos los Proyectos)
-                  </span>
-                  <span className="text-[0.62rem] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
-                    VISTA EMPRESARIAL
-                  </span>
-                </>
-              )}
-              <ChevronDown size={14} className="text-zinc-400 group-hover:text-blue-600 group-hover:translate-y-0.5 transition-all ml-1 shrink-0" />
-            </button>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
             Predictor de Desgaste & Burnout Histórico
           </h2>
-          <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 max-w-3xl leading-relaxed">
+          <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm max-w-3xl leading-relaxed font-medium">
             Monitor de riesgo cognitivo y series temporales de 21 días (S1, S2, S3) bajo la norma ISO/IEC 25010. Detección temprana clasificada en 4 niveles homologados: Crítica, Alta, Media y Baja/Estable.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+        {/* Barra de Herramientas Principal: Selector Destacado de Proyecto + Acciones */}
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          {/* Botón Principal Prominente: Selector de Proyecto y Alcance Global */}
+          <button
+            type="button"
+            onClick={() => {
+              setBusquedaProyectoModal('');
+              setFiltroEstadoProyectoModal('TODOS');
+              setModalProyectosOpen(true);
+            }}
+            className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-black shadow-md hover:shadow-lg transition-all cursor-pointer group hover:scale-[1.02]"
+            title="Haga clic aquí para cambiar el proyecto activo o seleccionar el alcance global corporativo"
+          >
+            {isProyectoEspecifico ? (
+              <>
+                <FolderGit2 size={15} className="shrink-0 text-blue-200" />
+                <span className="font-mono text-blue-100 font-bold">
+                  [PRJ-00{proyectoSeleccionadoLocal.idProyecto}]
+                </span>
+                <span className="truncate max-w-[160px] sm:max-w-[220px] font-black">
+                  {proyectoSeleccionadoLocal.nombre}
+                </span>
+              </>
+            ) : (
+              <>
+                <Globe size={15} className="shrink-0 text-blue-200" />
+                <span className="font-black">
+                  Alcance Corporativo Global (Todos los Proyectos)
+                </span>
+              </>
+            )}
+            <span className="px-2 py-0.5 rounded-full bg-white/20 text-[0.62rem] font-bold uppercase tracking-wider ml-1">
+              Cambiar Proyecto
+            </span>
+            <ChevronDown size={14} className="text-blue-200 group-hover:translate-y-0.5 transition-transform" />
+          </button>
+
           <button
             type="button"
             onClick={() => setShowHelpModal(true)}
-            className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+            className="outline-button text-xs py-2.5 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
             title="¿Cómo funciona la clasificación de 4 niveles de riesgo?"
           >
             <HelpCircle size={14} className="text-blue-600 dark:text-blue-400" />
@@ -522,7 +544,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
             type="button"
             onClick={fetchBurnoutMetrics}
             disabled={loading}
-            className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+            className="outline-button text-xs py-2.5 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
             title="Sincronizar métricas con PostgreSQL en tiempo real"
           >
             <RefreshCw size={13} className={loading ? 'animate-spin text-blue-500' : ''} />
@@ -870,194 +892,188 @@ Generado automáticamente por el motor analítico IKernell v2.0
 
                   return (
                     <div className="p-4.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/70 space-y-3">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-[0.68rem] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                          <Briefcase size={14} className="text-blue-600 dark:text-blue-400" />
-                          Desglose de Carga: Proyecto Actual vs Global Corporativa
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <span className="text-[0.68rem] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 min-w-0">
+                          <Briefcase size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                          <span className="truncate">Desglose de Carga: Proyecto Actual vs Global Corporativa</span>
                         </span>
-                        <span className="text-[0.62rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        <span className="text-[0.62rem] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
                           Métrica Multidisciplinaria
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                        {/* Tarjeta 1: En Este Proyecto */}
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
-                          <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
-                            En este proyecto
-                          </span>
-                          <div className="font-extrabold text-sm text-blue-600 dark:text-blue-400">
-                            {tareasEsteProyecto} tareas activas
-                          </div>
-                          <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5 truncate">
-                            {isProyectoEspecifico ? proyecto.nombre : 'Todas las iniciativas'}
-                          </span>
-
-                          {/* Burbuja emergente de detalle al pasar el cursor */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                            <div className="font-extrabold text-blue-300 mb-1 flex items-center gap-1">
-                              <Briefcase size={12} className="text-blue-400" /> Carga en Proyecto Actual
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        {/* Tarjeta 1: En Este Proyecto (Interactiva) */}
+                        <button
+                          type="button"
+                          onClick={() => setShowTareasDevModal(true)}
+                          className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md text-left flex flex-col justify-between"
+                        >
+                          <div>
+                            <span className="text-[0.62rem] text-zinc-400 font-extrabold uppercase block mb-0.5">
+                              En este proyecto
+                            </span>
+                            <div className="font-black text-sm text-blue-600 dark:text-blue-400 flex items-center justify-between">
+                              <span>{tareasEsteProyecto} tareas activas</span>
+                              <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform text-blue-400" />
                             </div>
-                            <p className="font-medium text-zinc-200">
-                              El desarrollador tiene <strong>{tareasEsteProyecto} tareas activas</strong> asignadas en "{isProyectoEspecifico ? proyecto.nombre : 'este proyecto'}". Representa el {totalTareas > 0 ? Math.round((tareasEsteProyecto / totalTareas) * 100) : 0}% de sus tareas asignadas.
-                            </p>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                            <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block mt-1 truncate font-semibold">
+                              {isProyectoEspecifico ? proyecto.nombre : 'Todas las iniciativas'}
+                            </span>
                           </div>
-                        </div>
+                        </button>
 
-                        {/* Tarjeta 2: En Otros Proyectos */}
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
-                          <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
-                            En otros proyectos
-                          </span>
-                          <div className="font-extrabold text-sm text-zinc-700 dark:text-zinc-300">
-                            {tareasOtrosProyectos} tareas activas
-                          </div>
-                          <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5 truncate">
-                            Otras iniciativas corporativas
-                          </span>
-
-                          {/* Burbuja emergente de detalle */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                            <div className="font-extrabold text-amber-300 mb-1 flex items-center gap-1">
-                              <Layers size={12} className="text-amber-400" /> Concurrencia de Proyectos
+                        {/* Tarjeta 2: En Otros Proyectos (Interactiva) */}
+                        <button
+                          type="button"
+                          onClick={() => setShowTareasDevModal(true)}
+                          className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-amber-500 dark:hover:border-amber-400 hover:shadow-md text-left flex flex-col justify-between"
+                        >
+                          <div>
+                            <span className="text-[0.62rem] text-zinc-400 font-extrabold uppercase block mb-0.5">
+                              En otros proyectos
+                            </span>
+                            <div className="font-black text-sm text-zinc-800 dark:text-zinc-200 flex items-center justify-between">
+                              <span>{tareasOtrosProyectos} tareas activas</span>
+                              <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform text-amber-500" />
                             </div>
-                            <p className="font-medium text-zinc-200">
-                              Mantiene <strong>{tareasOtrosProyectos} tareas concurrentes</strong> en otros proyectos. El cambio de contexto entre proyectos incrementa el desgaste mental.
-                            </p>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                            <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block mt-1 truncate font-semibold">
+                              Otras iniciativas corporativas
+                            </span>
                           </div>
-                        </div>
+                        </button>
 
-                        {/* Tarjeta 3: Carga Global Acumulada */}
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
-                          <span className="text-[0.62rem] text-zinc-400 font-bold uppercase block mb-0.5">
-                            Carga Global Acumulada
-                          </span>
-                          <div className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
-                            {Math.round(selectedDev.promedioCarga)}% Total
-                          </div>
-                          <span className="text-[0.6rem] text-zinc-500 dark:text-zinc-400 block mt-0.5">
-                            Fatiga acumulada (21 días)
-                          </span>
-
-                          {/* Burbuja emergente de detalle */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                            <div className="font-extrabold text-emerald-300 mb-1 flex items-center gap-1">
-                              <Activity size={12} className="text-emerald-400" /> Métrica Cognitiva Global
+                        {/* Tarjeta 3: Carga Global Acumulada (Interactiva) */}
+                        <button
+                          type="button"
+                          onClick={() => setShowEvolucionModal(true)}
+                          className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-emerald-500 dark:hover:border-emerald-400 hover:shadow-md text-left flex flex-col justify-between"
+                        >
+                          <div>
+                            <span className="text-[0.62rem] text-zinc-400 font-extrabold uppercase block mb-0.5">
+                              Carga Global Acumulada
+                            </span>
+                            <div className="font-black text-sm text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                              <span>{Math.round(selectedDev.promedioCarga)}% Total</span>
+                              <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform text-emerald-500" />
                             </div>
-                            <p className="font-medium text-zinc-200">
-                              Porcentaje global de <strong>{Math.round(selectedDev.promedioCarga)}% de fatiga</strong> acumulada en 21 días. Combina tareas WBS, horas estimadas y reportes de errores.
-                            </p>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                            <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block mt-1 font-semibold">
+                              Fatiga acumulada (21 días)
+                            </span>
                           </div>
-                        </div>
+                        </button>
                       </div>
 
-                      <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 leading-relaxed italic bg-blue-50/50 dark:bg-blue-950/20 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
+                      <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 leading-relaxed italic bg-blue-50/50 dark:bg-blue-950/20 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40 font-medium">
                         Nota: El índice de Burnout evalúa la fatiga acumulada del desarrollador en todos sus proyectos asignados. Al cambiar de proyecto en el dashboard, este porcentaje se mantiene constante porque el estrés cognitivo y la capacidad humana son globales.
                       </p>
                     </div>
                   );
                 })()}
 
-                {/* 3. Grid de 4 Métricas Clave */}
+                {/* 3. Grid de 4 Métricas Clave Interactivas con Datos Reales */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {/* Tarjeta 4: Tareas Asignadas */}
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
-                    <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
-                      Tareas Asignadas
-                    </span>
-                    <div className="text-xl font-black text-zinc-900 dark:text-zinc-100">
-                      {selectedDev.tareasActivas} <span className="text-[0.65rem] font-normal text-zinc-500">WBS</span>
-                    </div>
-
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                      <div className="font-extrabold text-blue-300 mb-1 flex items-center gap-1">
-                        <FileText size={11} /> Volumen de Entregables
+                  <button
+                    type="button"
+                    onClick={() => setShowTareasDevModal(true)}
+                    className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md text-left flex flex-col justify-between"
+                    title="Hacer clic para ver el desglose detallado de actividades WBS asignadas"
+                  >
+                    <div>
+                      <span className="text-[0.62rem] uppercase font-extrabold text-zinc-400 dark:text-zinc-500 block mb-1">
+                        Tareas Asignadas
+                      </span>
+                      <div className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100 flex items-center justify-between">
+                        <span>{selectedDev.tareasActivas} <span className="text-[0.65rem] font-bold text-zinc-400">WBS</span></span>
+                        <ChevronRight size={14} className="text-blue-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                       </div>
-                      <p className="font-medium text-zinc-200">
-                        Suma de <strong>{selectedDev.tareasActivas} actividades WBS</strong> activas asignadas a este desarrollador en la base de datos de PostgreSQL.
-                      </p>
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
                     </div>
-                  </div>
+                    <span className="text-[0.6rem] font-bold text-blue-600 dark:text-blue-400 mt-1 block">
+                      Ver lista completa &rarr;
+                    </span>
+                  </button>
 
                   {/* Tarjeta 5: Carga Promedio */}
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
-                    <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
-                      Carga Promedio
-                    </span>
-                    <div className={`text-xl font-black ${
-                      normalizarEstado(selectedDev.estadoAlerta) === 'CRITICA' ? 'text-red-600 dark:text-red-400' :
-                      normalizarEstado(selectedDev.estadoAlerta) === 'ALTA' ? 'text-orange-600 dark:text-orange-400' :
-                      normalizarEstado(selectedDev.estadoAlerta) === 'MEDIA' ? 'text-amber-600 dark:text-amber-400' :
-                      'text-emerald-600 dark:text-emerald-400'
-                    }`}>
-                      {Math.round(selectedDev.promedioCarga)}%
-                    </div>
-
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                      <div className="font-extrabold text-indigo-300 mb-1 flex items-center gap-1">
-                        <Activity size={11} /> Promedio Ponderado ISO
+                  <button
+                    type="button"
+                    onClick={() => setShowEvolucionModal(true)}
+                    className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md text-left flex flex-col justify-between"
+                    title="Hacer clic para ver la radiografía de carga de los 21 días"
+                  >
+                    <div>
+                      <span className="text-[0.62rem] uppercase font-extrabold text-zinc-400 dark:text-zinc-500 block mb-1">
+                        Carga Promedio
+                      </span>
+                      <div className={`text-lg sm:text-xl font-black flex items-center justify-between ${
+                        normalizarEstado(selectedDev.estadoAlerta) === 'CRITICA' ? 'text-red-600 dark:text-red-400' :
+                        normalizarEstado(selectedDev.estadoAlerta) === 'ALTA' ? 'text-orange-600 dark:text-orange-400' :
+                        normalizarEstado(selectedDev.estadoAlerta) === 'MEDIA' ? 'text-amber-600 dark:text-amber-400' :
+                        'text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        <span>{Math.round(selectedDev.promedioCarga)}%</span>
+                        <ChevronRight size={14} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                       </div>
-                      <p className="font-medium text-zinc-200">
-                        Nivel de fatiga de <strong>{Math.round(selectedDev.promedioCarga)}%</strong>. Un porcentaje mayor al 65% indica riesgo de sobrecarga y requiere redistribución WBS.
-                      </p>
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
                     </div>
-                  </div>
+                    <span className="text-[0.6rem] font-bold text-zinc-500 dark:text-zinc-400 mt-1 block">
+                      Ver desglose ISO &rarr;
+                    </span>
+                  </button>
 
                   {/* Tarjeta 6: Pico Máximo */}
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
-                    <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
-                      Pico Máximo
-                    </span>
-                    <div className="text-xl font-black text-zinc-900 dark:text-zinc-100">
-                      {Math.max(
-                        Math.round(selectedDev.scoreSemana1 || 0),
-                        Math.round(selectedDev.scoreSemana2 || 0),
-                        Math.round(selectedDev.scoreSemana3 || 0)
-                      )}%
-                    </div>
-
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                      <div className="font-extrabold text-orange-300 mb-1 flex items-center gap-1">
-                        <TrendingUp size={11} /> Pico de Carga Histórico
+                  <button
+                    type="button"
+                    onClick={() => setShowEvolucionModal(true)}
+                    className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-orange-500 dark:hover:border-orange-400 hover:shadow-md text-left flex flex-col justify-between"
+                    title="Hacer clic para ver en qué semana ocurrió el pico de fatiga"
+                  >
+                    <div>
+                      <span className="text-[0.62rem] uppercase font-extrabold text-zinc-400 dark:text-zinc-500 block mb-1">
+                        Pico Máximo
+                      </span>
+                      <div className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100 flex items-center justify-between">
+                        <span>{Math.max(
+                          Math.round(selectedDev.scoreSemana1 || 0),
+                          Math.round(selectedDev.scoreSemana2 || 0),
+                          Math.round(selectedDev.scoreSemana3 || 0)
+                        )}%</span>
+                        <ChevronRight size={14} className="text-orange-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                       </div>
-                      <p className="font-medium text-zinc-200">
-                        Pico máximo alcanzado de <strong>{Math.max(Math.round(selectedDev.scoreSemana1 || 0), Math.round(selectedDev.scoreSemana2 || 0), Math.round(selectedDev.scoreSemana3 || 0))}%</strong> durante los 21 días analizados por acumulación de entregas o incidencias.
-                      </p>
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
                     </div>
-                  </div>
+                    <span className="text-[0.6rem] font-bold text-orange-600 dark:text-orange-400 mt-1 block">
+                      Pico de fatiga &rarr;
+                    </span>
+                  </button>
 
                   {/* Tarjeta 7: Comportamiento */}
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md">
-                    <span className="text-[0.62rem] uppercase font-bold text-zinc-400 dark:text-zinc-500 block mb-1">
-                      Comportamiento
-                    </span>
-                    {(() => {
-                      const tend = getTendenciaTemporal(selectedDev);
-                      const Icon = tend.icon;
-                      return (
-                        <div className={`text-xs font-bold flex items-center gap-1 mt-1 ${tend.color}`}>
-                          <Icon size={14} />
-                          <span className="truncate">{tend.label.split(' ')[0]}</span>
-                        </div>
-                      );
-                    })()}
-
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-2xl bg-zinc-900 text-white text-[0.68rem] leading-relaxed shadow-2xl border border-zinc-700 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-out z-50">
-                      <div className="font-extrabold text-purple-300 mb-1 flex items-center gap-1">
-                        <TrendingUp size={11} /> Tendencia de Fatiga
-                      </div>
-                      <p className="font-medium text-zinc-200">
-                        Compara la evolución entre la Semana 1 y la Semana 3 para identificar si la fatiga del perfil está en aceleración o en fase de recuperación.
-                      </p>
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900" />
+                  <button
+                    type="button"
+                    onClick={() => setShowEvolucionModal(true)}
+                    className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 relative group cursor-pointer transition-all hover:border-purple-500 dark:hover:border-purple-400 hover:shadow-md text-left flex flex-col justify-between"
+                    title="Hacer clic para ver la curva de tendencia"
+                  >
+                    <div>
+                      <span className="text-[0.62rem] uppercase font-extrabold text-zinc-400 dark:text-zinc-500 block mb-1">
+                        Comportamiento
+                      </span>
+                      {(() => {
+                        const tend = getTendenciaTemporal(selectedDev);
+                        const Icon = tend.icon;
+                        return (
+                          <div className={`text-xs font-black flex items-center justify-between mt-1 ${tend.color}`}>
+                            <span className="flex items-center gap-1 min-w-0 truncate">
+                              <Icon size={14} className="shrink-0" />
+                              <span className="truncate">{tend.label.split(' ')[0]}</span>
+                            </span>
+                            <ChevronRight size={14} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
+                          </div>
+                        );
+                      })()}
                     </div>
-                  </div>
+                    <span className="text-[0.6rem] font-bold text-purple-600 dark:text-purple-400 mt-1 block">
+                      Ver tendencia &rarr;
+                    </span>
+                  </button>
                 </div>
 
                 {/* 4. Visualizador de Series Temporales (21 Días - S1, S2, S3) */}
@@ -1660,6 +1676,195 @@ Generado automáticamente por el motor analítico IKernell v2.0
                   className="gradient-button text-xs py-2 px-6 font-bold cursor-pointer shadow-md"
                 >
                   Entendido / Cerrar Guía
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Modal 3: Detalle de Actividades WBS Asignadas en Tiempo Real ─── */}
+      <AnimatePresence>
+        {showTareasDevModal && selectedDev && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl space-y-5 max-h-[90vh] flex flex-col"
+            >
+              {/* Encabezado del Modal */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
+                    <FileText size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <span>Actividades WBS Asignadas</span>
+                      <span className="text-[0.68rem] font-mono font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        {selectedDev.tareasActivas} globales
+                      </span>
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                      Desarrollador: <strong className="text-zinc-900 dark:text-zinc-100">{selectedDev.nombreCompleto}</strong> ({selectedDev.email})
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowTareasDevModal(false)}
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Lista de Actividades Asignadas */}
+              <div className="overflow-y-auto space-y-3 pr-1 flex-1">
+                {tareasDevSeleccionado.length === 0 ? (
+                  <div className="p-8 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 text-xs text-zinc-500 font-medium">
+                    No se encontraron actividades WBS individuales cargadas directamente en esta vista de proyecto. Las tareas se contabilizan desde el motor global de la base de datos.
+                  </div>
+                ) : (
+                  tareasDevSeleccionado.map((task, idx) => (
+                    <div
+                      key={task.idActividad || idx}
+                      className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2 flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500 transition-all"
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <span className="text-[0.62rem] font-extrabold uppercase text-blue-600 dark:text-blue-400 block mb-0.5">
+                            Fase: {task.nombreEtapa}
+                          </span>
+                          <h4 className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
+                            {task.nombreActividad}
+                          </h4>
+                        </div>
+                        <span className={`text-[0.62rem] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                          task.estado === 'COMPLETADA'
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200'
+                            : task.estado === 'EN_PROGRESO'
+                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200'
+                            : 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200'
+                        }`}>
+                          {task.estado || 'PENDIENTE'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[0.68rem] text-zinc-500 font-semibold pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                        <span className="flex items-center gap-1">
+                          <FolderGit2 size={12} className="text-zinc-400" />
+                          <span>{task.nombreProyecto}</span>
+                        </span>
+                        <span className="font-mono text-zinc-700 dark:text-zinc-300 font-bold">
+                          {task.horasEstimadas || 0} horas estimadas
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Botón de Cierre */}
+              <div className="flex justify-end pt-2 shrink-0 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowTareasDevModal(false)}
+                  className="gradient-button text-xs py-2 px-6 font-bold cursor-pointer shadow-md"
+                >
+                  Cerrar Inspección
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Modal 4: Detalle de Evolución Cognitiva (21 Días) ─── */}
+      <AnimatePresence>
+        {showEvolucionModal && selectedDev && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl space-y-5 max-h-[90vh] flex flex-col"
+            >
+              {/* Encabezado */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-inner shrink-0">
+                    <Activity size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <span>Series Temporales (21 Días - ISO/IEC 25010)</span>
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                      Evolución histórica de desgaste mental para <strong className="text-zinc-900 dark:text-zinc-100">{selectedDev.nombreCompleto}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowEvolucionModal(false)}
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4 overflow-y-auto pr-1 flex-1 text-xs">
+                {/* 3 Bloques de Semanas */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-center space-y-1">
+                    <span className="text-[0.65rem] uppercase font-bold text-blue-600 dark:text-blue-400 block">Semana 1 (Días 15-21)</span>
+                    <div className="text-2xl font-black font-mono text-zinc-900 dark:text-zinc-100">
+                      {Math.round(selectedDev.scoreSemana1 || 0)}%
+                    </div>
+                    <span className="text-[0.62rem] text-zinc-500 block">Fase Inicial del Ciclo</span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/60 text-center space-y-1">
+                    <span className="text-[0.65rem] uppercase font-bold text-indigo-600 dark:text-indigo-400 block">Semana 2 (Días 8-14)</span>
+                    <div className="text-2xl font-black font-mono text-zinc-900 dark:text-zinc-100">
+                      {Math.round(selectedDev.scoreSemana2 || 0)}%
+                    </div>
+                    <span className="text-[0.62rem] text-zinc-500 block">Ventana Intermedia</span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 text-center space-y-1">
+                    <span className="text-[0.65rem] uppercase font-bold text-purple-600 dark:text-purple-400 block">Semana 3 (Últimos 7d)</span>
+                    <div className="text-2xl font-black font-mono text-zinc-900 dark:text-zinc-100">
+                      {Math.round(selectedDev.scoreSemana3 || 0)}%
+                    </div>
+                    <span className="text-[0.62rem] text-zinc-500 block">Tendencia Actual</span>
+                  </div>
+                </div>
+
+                {/* Explicación Algorítmica */}
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                  <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-xs flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-blue-500" />
+                    <span>Diagnóstico de Tendencia: {getTendenciaTemporal(selectedDev).label}</span>
+                  </h4>
+                  <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed font-medium">
+                    {getDiagnosticoClaro(selectedDev)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Botón Cierre */}
+              <div className="flex justify-end pt-2 shrink-0 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowEvolucionModal(false)}
+                  className="gradient-button text-xs py-2 px-6 font-bold cursor-pointer shadow-md"
+                >
+                  Cerrar Análisis
                 </button>
               </div>
             </motion.div>
