@@ -10,8 +10,8 @@ import {
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, ChevronDown, X,
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
-  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye,
-  ArrowRight, ArrowLeft, Users, UserX
+  FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye, EyeOff,
+  ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +19,173 @@ import { Skeleton, SkeletonCard, SkeletonTable, SkeletonMetricCard } from '../..
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
 import { CustomSelect } from '../../components/ui/CustomSelect';
 import jsPDF from 'jspdf';
+
+// Validador Estricto de Documentos de Identificación por País / Algoritmos Nacionales
+const PAISES_IDENTIFICACION = [
+  { 
+    code: 'CO', 
+    nombre: 'Colombia', 
+    docTipo: 'Cédula de Ciudadanía (CC)', 
+    flag: '🇨🇴',
+    placeholder: 'Ej. 1018459203 (6 a 10 dígitos numéricos)',
+    validate: (val) => {
+      const clean = val.trim();
+      if (!clean) return { valid: false, message: 'Ingrese la cédula de ciudadanía.' };
+      if (!/^\d+$/.test(clean)) return { valid: false, message: 'La cédula colombiana debe contener únicamente dígitos numéricos.' };
+      if (clean.length < 6 || clean.length > 10) return { valid: false, message: 'La cédula debe contener entre 6 y 10 dígitos numéricos.' };
+      return { valid: true, message: 'Cédula de Ciudadanía Válida [Colombia]' };
+    }
+  },
+  { 
+    code: 'MX', 
+    nombre: 'México', 
+    docTipo: 'CURP / INE', 
+    flag: '🇲🇽',
+    placeholder: 'Ej. VECJ880326HDFRRN09 (18 caracteres)',
+    validate: (val) => {
+      const clean = val.trim().toUpperCase();
+      if (!clean) return { valid: false, message: 'Ingrese la clave CURP.' };
+      const curpRegex = /^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d$/;
+      if (!curpRegex.test(clean)) return { valid: false, message: 'Formato de CURP inválido (4 letras + 6 números + H/M + 5 letras + homoclave).' };
+      return { valid: true, message: 'CURP Válido [México]' };
+    }
+  },
+  { 
+    code: 'ES', 
+    nombre: 'España', 
+    docTipo: 'DNI / NIE', 
+    flag: '🇪🇸',
+    placeholder: 'Ej. 12345678Z (8 números + 1 letra control)',
+    validate: (val) => {
+      const clean = val.trim().toUpperCase();
+      if (!clean) return { valid: false, message: 'Ingrese el DNI / NIE.' };
+      const dniRegex = /^\d{8}[A-Z]$/;
+      if (!dniRegex.test(clean)) return { valid: false, message: 'Formato DNI inválido (debe tener 8 números y 1 letra final de control).' };
+      const letras = 'TRWAGMYFPDXBNJZSQVHLCKE';
+      const num = parseInt(clean.substring(0, 8), 10);
+      const letraEsperada = letras[num % 23];
+      if (clean.charAt(8) !== letraEsperada) {
+        return { valid: false, message: `Letra de control incorrecta. Se esperaba '${letraEsperada}' para ese número DNI.` };
+      }
+      return { valid: true, message: 'DNI Válido [España]' };
+    }
+  },
+  { 
+    code: 'CL', 
+    nombre: 'Chile', 
+    docTipo: 'RUT / RUN', 
+    flag: '🇨🇱',
+    placeholder: 'Ej. 12345678-K (7-8 dígitos + dígito verificador)',
+    validate: (val) => {
+      const clean = val.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase();
+      if (!clean) return { valid: false, message: 'Ingrese el RUT chileno.' };
+      if (!/^\d{7,8}[0-9K]$/.test(clean)) return { valid: false, message: 'Formato RUT inválido (7 u 8 números más dígito verificador 0-9 o K).' };
+      const body = clean.slice(0, -1);
+      let dv = clean.slice(-1);
+      let suma = 0;
+      let multiplicador = 2;
+      for (let i = body.length - 1; i >= 0; i--) {
+        suma += parseInt(body.charAt(i), 10) * multiplicador;
+        multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+      }
+      const resto = 11 - (suma % 11);
+      let dvEsperado = 'K';
+      if (resto === 11) dvEsperado = '0';
+      else if (resto === 10) dvEsperado = 'K';
+      else dvEsperado = String(resto);
+
+      if (dv !== dvEsperado) return { valid: false, message: `Dígito verificador RUT inválido. Se esperaba '${dvEsperado}'.` };
+      return { valid: true, message: 'RUT Válido [Chile]' };
+    }
+  },
+  { 
+    code: 'PE', 
+    nombre: 'Perú', 
+    docTipo: 'DNI', 
+    flag: '🇵🇪',
+    placeholder: 'Ej. 72849102 (8 dígitos numéricos)',
+    validate: (val) => {
+      const clean = val.trim();
+      if (!clean) return { valid: false, message: 'Ingrese el DNI peruano.' };
+      if (!/^\d{8}$/.test(clean)) return { valid: false, message: 'El DNI peruano debe contener exactamente 8 dígitos numéricos.' };
+      return { valid: true, message: 'DNI Válido [Perú]' };
+    }
+  },
+  { 
+    code: 'AR', 
+    nombre: 'Argentina', 
+    docTipo: 'DNI', 
+    flag: '🇦🇷',
+    placeholder: 'Ej. 40182938 (7 u 8 dígitos numéricos)',
+    validate: (val) => {
+      const clean = val.trim();
+      if (!clean) return { valid: false, message: 'Ingrese el DNI argentino.' };
+      if (!/^\d{7,8}$/.test(clean)) return { valid: false, message: 'El DNI argentino debe contener entre 7 y 8 dígitos numéricos.' };
+      return { valid: true, message: 'DNI Válido [Argentina]' };
+    }
+  },
+  { 
+    code: 'US', 
+    nombre: 'Estados Unidos', 
+    docTipo: 'SSN / Tax ID', 
+    flag: '🇺🇸',
+    placeholder: 'Ej. 123-45-6789 (9 dígitos numéricos)',
+    validate: (val) => {
+      const clean = val.replace(/-/g, '').trim();
+      if (!clean) return { valid: false, message: 'Ingrese el SSN.' };
+      if (!/^\d{9}$/.test(clean)) return { valid: false, message: 'El SSN debe contener exactamente 9 dígitos numéricos.' };
+      return { valid: true, message: 'SSN / Tax ID Válido [Estados Unidos]' };
+    }
+  },
+  { 
+    code: 'INT', 
+    nombre: 'Internacional / Pasaporte', 
+    docTipo: 'Pasaporte / ID Global', 
+    flag: '🌐',
+    placeholder: 'Ej. PA8492019 (6 a 15 caracteres alfanuméricos)',
+    validate: (val) => {
+      const clean = val.trim();
+      if (!clean) return { valid: false, message: 'Ingrese el número de pasaporte.' };
+      if (!/^[a-zA-Z0-9]{6,15}$/.test(clean)) return { valid: false, message: 'El pasaporte debe contener entre 6 y 15 caracteres alfanuméricos.' };
+      return { valid: true, message: 'Pasaporte / ID Internacional Válido' };
+    }
+  }
+];
+
+const ROLE_SKILL_PROFILES = {
+  DESARROLLADOR: {
+    label: 'Desarrollador (Operatividad WBS)',
+    tituloModulo: '3. Habilidades Técnicas & Stack de Desarrollo (WBS)',
+    subtitulo: 'Tecnologías y lenguajes clave para la asignación y ejecución de actividades WBS',
+    sugerencias: [
+      'Java 17', 'Spring Boot 3', 'React.js', 'PostgreSQL', 'Docker',
+      'TypeScript', 'Tailwind CSS', 'AWS', 'Python', 'Git & GitHub',
+      'REST APIs', 'Microservicios', 'Next.js', 'Linux', 'GraphQL',
+      'CI/CD Pipelines', 'Redis', 'Kubernetes', 'Node.js', 'Jest / Testing'
+    ],
+    placeholderProfesion: 'Profesión o disciplina técnica (ej. Ingeniero de Software, Desarrollador Full Stack)',
+    placeholderEspecialidad: 'Especialidad técnica principal (ej. Backend Java, Frontend React, Cloud DevOps)',
+    badgeTag: 'Recomendado para asignación WBS',
+    badgeTagStyle: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    iconName: 'Code2'
+  },
+  LIDER: {
+    label: 'Líder de Proyecto (Gestión & Asignación)',
+    tituloModulo: '3. Competencias de Liderazgo, Gestión Ágil & Arquitectura',
+    subtitulo: 'Habilidades de gestión de proyectos, metodologías ágiles y supervisión técnica de entregables',
+    sugerencias: [
+      'Gestión de Proyectos', 'Scrum Master', 'Metodologías Ágiles', 'Planificación WBS',
+      'Liderazgo de Equipos', 'Gestión de Riesgos', 'Estimación de Esfuerzo', 'Arquitectura de Software',
+      'Code Review', 'Jira / Confluence', 'Java / Spring Boot', 'React / Frontend',
+      'CI/CD & DevOps', 'Negociación Técnica', 'Garantía de Calidad'
+    ],
+    placeholderProfesion: 'Profesión o disciplina académica (ej. Tech Lead, Scrum Master, Project Manager)',
+    placeholderEspecialidad: 'Enfoque de liderazgo o arquitectura (ej. Gestión de Proyectos Ágiles, Arquitectura Distribuida)',
+    badgeTag: 'Perfil de Liderazgo (Opcional)',
+    badgeTagStyle: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    iconName: 'Briefcase'
+  }
+};
 
 // Variantes de animación ultra rápidas y fluidas (0.25s)
 const containerVariants = {
@@ -465,16 +632,159 @@ export const LiderDashboard = () => {
   // Registro de Nuevo Colaborador por el Líder (solo LÍDER o DESARROLLADOR)
   const [showNuevoColaboradorModal, setShowNuevoColaboradorModal] = useState(false);
   const [submittingNuevoColaborador, setSubmittingNuevoColaborador] = useState(false);
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [customSkillInput, setCustomSkillInput] = useState('');
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
   const [nuevoColaboradorForm, setNuevoColaboradorForm] = useState({
+    identificacion: '',
+    paisCodigo: 'CO',
     nombre: '',
     apellido: '',
-    identificacion: '',
     email: '',
-    rol: 'ROLE_DESARROLLADOR',
-    passwordHash: '',
-    profesion: 'Ingeniero de Software',
-    especialidad: 'Full Stack Web & Cloud'
+    emailPersonal: '',
+    profesion: '',
+    especialidad: '',
+    rol: 'DESARROLLADOR',
+    passwordHash: ''
   });
+  const [formErrorsColaborador, setFormErrorsColaborador] = useState({});
+
+  // Objeto de país seleccionado para validación de algoritmo de cédula/documento
+  const paisActual = useMemo(() => {
+    return PAISES_IDENTIFICACION.find(p => p.code === (nuevoColaboradorForm.paisCodigo || 'CO')) || PAISES_IDENTIFICACION[0];
+  }, [nuevoColaboradorForm.paisCodigo]);
+
+  // Validaciones estrictas en tiempo real por campo
+  const docValidationResult = useMemo(() => {
+    const raw = (nuevoColaboradorForm.identificacion || '').trim();
+    if (!raw) return { valid: false, message: 'Ingrese el número de documento de identificación.' };
+    
+    // Verificación de duplicados en la base de datos en tiempo real
+    const existeDuplicado = (desarrolladores || []).some(t => String(t.identificacion).trim() === raw);
+    if (existeDuplicado) {
+      return { valid: false, message: `La cédula / documento (${raw}) ya está registrado en PostgreSQL.` };
+    }
+
+    return paisActual.validate(raw);
+  }, [nuevoColaboradorForm.identificacion, paisActual, desarrolladores]);
+
+  const emailValidationResult = useMemo(() => {
+    const raw = (nuevoColaboradorForm.email || '').trim().toLowerCase();
+    if (!raw) return { valid: false, message: 'El correo electrónico es obligatorio.' };
+    const rfcRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!rfcRegex.test(raw)) return { valid: false, message: 'Formato de correo electrónico corporativo no válido.' };
+    return { valid: true, message: 'Correo Corporativo Válido' };
+  }, [nuevoColaboradorForm.email]);
+
+  const nombreValidationResult = useMemo(() => {
+    const raw = (nuevoColaboradorForm.nombre || '').trim();
+    if (!raw) return { valid: false, message: 'El nombre es obligatorio.' };
+    if (raw.length < 2) return { valid: false, message: 'Debe contener al menos 2 caracteres.' };
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$/.test(raw)) return { valid: false, message: 'Solo se permiten letras, espacios y tildes.' };
+    return { valid: true, message: 'Nombre válido.' };
+  }, [nuevoColaboradorForm.nombre]);
+
+  const apellidoValidationResult = useMemo(() => {
+    const raw = (nuevoColaboradorForm.apellido || '').trim();
+    if (!raw) return { valid: false, message: 'El apellido es obligatorio.' };
+    if (raw.length < 2) return { valid: false, message: 'Debe contener al menos 2 caracteres.' };
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$/.test(raw)) return { valid: false, message: 'Solo se permiten letras, espacios y tildes.' };
+    return { valid: true, message: 'Apellido válido.' };
+  }, [nuevoColaboradorForm.apellido]);
+
+  const pwdValidity = useMemo(() => {
+    const pwd = nuevoColaboradorForm.passwordHash || '';
+    return {
+      minMax: pwd.length >= 8 && pwd.length <= 20,
+      hasUpper: /[A-Z]/.test(pwd),
+      hasLower: /[a-z]/.test(pwd),
+      hasNumber: /[0-9]/.test(pwd),
+      isValid: pwd.length >= 8 && pwd.length <= 20 && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /[0-9]/.test(pwd)
+    };
+  }, [nuevoColaboradorForm.passwordHash]);
+
+  const generarPasswordAleatoriaColaborador = () => {
+    const uppers = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lowers = 'abcdefghijkmnopqrstuvwxyz';
+    const numbers = '23456789';
+    const symbols = '!@#$%&*';
+
+    let pass = '';
+    pass += uppers.charAt(Math.floor(Math.random() * uppers.length));
+    pass += lowers.charAt(Math.floor(Math.random() * lowers.length));
+    pass += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    pass += symbols.charAt(Math.floor(Math.random() * symbols.length));
+
+    const allChars = uppers + lowers + numbers + symbols;
+    for (let i = 4; i < 12; i++) {
+      pass += allChars.charAt(Math.floor(Math.random() * allChars.length));
+    }
+
+    const shuffled = pass.split('').sort(() => 0.5 - Math.random()).join('');
+
+    setNuevoColaboradorForm(prev => ({ ...prev, passwordHash: shuffled }));
+    setShowPasswordInput(true);
+    setFormErrorsColaborador(p => ({ ...p, passwordHash: undefined }));
+    toast.success(`Clave segura generada: ${shuffled}`);
+  };
+
+  const handleToggleSkill = (skill) => {
+    setSelectedSkills(prev => 
+      prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
+    );
+  };
+
+  const handleAddCustomSkill = (e) => {
+    e?.preventDefault();
+    const clean = customSkillInput.trim();
+    if (!clean) return;
+    if (!selectedSkills.includes(clean)) {
+      setSelectedSkills(prev => [...prev, clean]);
+    }
+    setCustomSkillInput('');
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setSelectedSkills(prev => prev.filter(s => s !== skillToRemove));
+  };
+
+  // Estados y Filtros memorizados para la pestaña "Nómina & Personal"
+  const [searchQueryPersonal, setSearchQueryPersonal] = useState('');
+  const [rolFiltroPersonal, setRolFiltroPersonal] = useState('TODOS');
+  const [estadoFiltroPersonal, setEstadoFiltroPersonal] = useState('TODOS');
+
+  const personalFiltrado = useMemo(() => {
+    if (!Array.isArray(desarrolladores)) return [];
+    return desarrolladores.filter(t => {
+      // Filtro de Rol
+      if (rolFiltroPersonal !== 'TODOS') {
+        const r = t.rol ? String(t.rol).toUpperCase() : '';
+        if (rolFiltroPersonal === 'DESARROLLADOR' && !r.includes('DESARROLLADOR')) return false;
+        if (rolFiltroPersonal === 'LIDER' && !r.includes('LIDER')) return false;
+      }
+
+      // Filtro de Estado
+      if (estadoFiltroPersonal !== 'TODOS') {
+        const estBool = t.estado === true || t.estado === 'ACTIVO';
+        if (estadoFiltroPersonal === 'ACTIVO' && !estBool) return false;
+        if (estadoFiltroPersonal === 'INHABILITADO' && estBool) return false;
+      }
+
+      // Filtro por Texto
+      if (searchQueryPersonal.trim()) {
+        const q = searchQueryPersonal.trim().toLowerCase();
+        const nom = (t.nombre || '').toLowerCase();
+        const ape = (t.apellido || '').toLowerCase();
+        const email = (t.email || '').toLowerCase();
+        const doc = (t.identificacion || '').toLowerCase();
+        const prof = (t.profesion || '').toLowerCase();
+        const esp = (t.especialidad || '').toLowerCase();
+        return nom.includes(q) || ape.includes(q) || email.includes(q) || doc.includes(q) || prof.includes(q) || esp.includes(q);
+      }
+
+      return true;
+    });
+  }, [desarrolladores, rolFiltroPersonal, estadoFiltroPersonal, searchQueryPersonal]);
 
   // Filtro de Propiedad de Proyectos (Mis Proyectos vs Otros Líderes vs Todos)
   const [filtroPropiedadLider, setFiltroPropiedadLider] = useState('MIS_PROYECTOS');
@@ -1336,8 +1646,35 @@ export const LiderDashboard = () => {
   // Handler para Registrar Colaborador (Líder o Desarrollador)
   const handleCrearColaboradorPorLider = async (e) => {
     e.preventDefault();
-    if (!nuevoColaboradorForm.nombre.trim() || !nuevoColaboradorForm.apellido.trim() || !nuevoColaboradorForm.email.trim() || !nuevoColaboradorForm.identificacion.trim()) {
-      toast.error('Nombre, Apellido, Cédula y Correo Corporativo son obligatorios.');
+
+    // Validaciones estrictas previa a la sumisión
+    if (!docValidationResult.valid) {
+      toast.error(docValidationResult.message || 'Corrija el número de identificación según el país seleccionado.');
+      setFormErrorsColaborador(p => ({ ...p, identificacion: docValidationResult.message }));
+      return;
+    }
+
+    if (!nombreValidationResult.valid) {
+      toast.error(nombreValidationResult.message);
+      setFormErrorsColaborador(p => ({ ...p, nombre: nombreValidationResult.message }));
+      return;
+    }
+
+    if (!apellidoValidationResult.valid) {
+      toast.error(apellidoValidationResult.message);
+      setFormErrorsColaborador(p => ({ ...p, apellido: apellidoValidationResult.message }));
+      return;
+    }
+
+    if (!emailValidationResult.valid) {
+      toast.error(emailValidationResult.message);
+      setFormErrorsColaborador(p => ({ ...p, email: emailValidationResult.message }));
+      return;
+    }
+
+    if (!pwdValidity.isValid) {
+      toast.error('La contraseña inicial no cumple con los requisitos mínimos de seguridad.');
+      setFormErrorsColaborador(p => ({ ...p, passwordHash: 'Mínimo 8-20 caracteres con 1 mayúscula, 1 minúscula y 1 número.' }));
       return;
     }
 
@@ -1350,20 +1687,50 @@ export const LiderDashboard = () => {
       }
     }
 
+    // Combinar especialidad técnica principal con las habilidades seleccionadas
+    let especialidadFinal = nuevoColaboradorForm.especialidad.trim();
+    if (selectedSkills.length > 0) {
+      const skillsFormatted = selectedSkills.join(', ');
+      especialidadFinal = especialidadFinal 
+        ? `${especialidadFinal} • [${skillsFormatted}]` 
+        : `[${skillsFormatted}]`;
+    }
+
     setSubmittingNuevoColaborador(true);
     try {
       const res = await api.post('/lider/trabajadores', {
         ...nuevoColaboradorForm,
+        paisCodigo: nuevoColaboradorForm.paisCodigo || 'CO',
+        identificacion: nuevoColaboradorForm.identificacion.trim(),
         nombre: nuevoColaboradorForm.nombre.trim(),
         apellido: nuevoColaboradorForm.apellido.trim(),
         email: emailFinal,
         emailPersonal: nuevoColaboradorForm.emailPersonal ? nuevoColaboradorForm.emailPersonal.trim() : '',
-        identificacion: nuevoColaboradorForm.identificacion.trim()
+        profesion: nuevoColaboradorForm.profesion.trim() || 'Ingeniero de Software',
+        especialidad: especialidadFinal || 'Desarrollador General',
+        rol: nuevoColaboradorForm.rol,
+        passwordHash: nuevoColaboradorForm.passwordHash
       });
 
       const rolTexto = res.rol && res.rol.toUpperCase().includes('LIDER') ? 'Líder de Proyecto' : 'Desarrollador';
       toast.success(`Colaborador ${res.nombre} ${res.apellido} (${rolTexto}) registrado exitosamente. Credenciales temporales enviadas a ${res.emailPersonal || emailFinal}.`);
       setShowNuevoColaboradorModal(false);
+      setNuevoColaboradorForm({
+        identificacion: '',
+        paisCodigo: 'CO',
+        nombre: '',
+        apellido: '',
+        email: '',
+        emailPersonal: '',
+        profesion: '',
+        especialidad: '',
+        rol: 'DESARROLLADOR',
+        passwordHash: ''
+      });
+      setSelectedSkills([]);
+      setCustomSkillInput('');
+      setShowPasswordInput(false);
+      setFormErrorsColaborador({});
 
       // Recargar nómina
       const devsRes = await api.get('/lider/desarrolladores').catch(() => []);
@@ -2531,6 +2898,240 @@ export const LiderDashboard = () => {
               onSelectProyecto={seleccionarProyecto}
             />
           </ErrorBoundary>
+        </motion.div>
+      )}
+
+      {/* 2. SECCIÓN: GESTIÓN DE NÓMINA & PERSONAL (Líderes y Desarrolladores) */}
+      {activeTab === 'personal' && (
+        <motion.div
+          key="personal"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-6"
+        >
+          {/* Header de Gestión de Personal */}
+          <motion.div 
+            variants={itemVariants} 
+            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
+          >
+            <div>
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 block mb-1">
+                Administración de Talento Humano & Accesos
+              </span>
+              <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                <Users size={22} className="text-emerald-600 dark:text-emerald-400" />
+                Nómina & Personal Corporativo
+              </h2>
+              <p className="text-zinc-500 dark:text-zinc-400 font-medium text-xs mt-1">
+                Visualización y alta de Líderes de Proyecto y Desarrolladores de Software en la plataforma
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setNuevoColaboradorForm({
+                  identificacion: '',
+                  paisCodigo: 'CO',
+                  nombre: '',
+                  apellido: '',
+                  email: '',
+                  emailPersonal: '',
+                  profesion: '',
+                  especialidad: '',
+                  rol: 'DESARROLLADOR',
+                  passwordHash: ''
+                });
+                setSelectedSkills([]);
+                setCustomSkillInput('');
+                setShowPasswordInput(false);
+                setFormErrorsColaborador({});
+                setShowNuevoColaboradorModal(true);
+              }}
+              className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs inline-flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer shrink-0"
+              title="Dar de alta un nuevo Líder de Proyecto o Desarrollador de Software"
+            >
+              <UserPlus size={16} />
+              <span>Registrar Nuevo Colaborador</span>
+            </button>
+          </motion.div>
+
+          {/* Barra de Filtros & Búsqueda Avanzada */}
+          <motion.div variants={itemVariants} className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+              {/* Buscador */}
+              <div className="relative w-full sm:w-80">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={searchQueryPersonal}
+                  onChange={(e) => setSearchQueryPersonal(e.target.value)}
+                  placeholder="Buscar por nombre, cédula, correo o stack..."
+                  className="input-field py-2 pl-9 pr-8 text-xs w-full"
+                />
+                {searchQueryPersonal && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQueryPersonal('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Filtros Rápido de Rol */}
+              <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
+                <span className="text-[0.68rem] font-bold text-zinc-400 uppercase mr-1 hidden sm:inline">Rol:</span>
+                {[
+                  { id: 'TODOS', label: 'Todos' },
+                  { id: 'DESARROLLADOR', label: 'Desarrolladores' },
+                  { id: 'LIDER', label: 'Líderes' }
+                ].map(r => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setRolFiltroPersonal(r.id)}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer ${
+                      rolFiltroPersonal === r.id
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Filtro de Estado */}
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <span className="text-[0.68rem] font-bold text-zinc-400 uppercase mr-1 hidden sm:inline">Estado:</span>
+                {[
+                  { id: 'TODOS', label: 'Todos' },
+                  { id: 'ACTIVO', label: 'Habilitados' },
+                  { id: 'INHABILITADO', label: 'Inhabilitados' }
+                ].map(st => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => setEstadoFiltroPersonal(st.id)}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer ${
+                      estadoFiltroPersonal === st.id
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Tabla Corporativa de Personal */}
+          <motion.div variants={itemVariants} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
+            {personalFiltrado.length === 0 ? (
+              <div className="p-12 text-center text-zinc-400 space-y-2">
+                <Users size={36} className="mx-auto text-zinc-300 dark:text-zinc-700" />
+                <p className="text-sm font-bold text-zinc-600 dark:text-zinc-400">No se encontraron colaboradores</p>
+                <p className="text-xs text-zinc-400">Intenta ajustar los criterios de búsqueda o filtros seleccionados.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-[0.68rem] uppercase font-mono font-extrabold text-zinc-500 dark:text-zinc-400 tracking-wider">
+                    <tr>
+                      <th className="py-3.5 px-6">Identificación</th>
+                      <th className="py-3.5 px-6">Trabajador & Contacto</th>
+                      <th className="py-3.5 px-6">Profesión / Stack Técnico</th>
+                      <th className="py-3.5 px-6">Rol Asignado</th>
+                      <th className="py-3.5 px-6">Estado Lógico</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                    {personalFiltrado.map((t) => {
+                      const estBool = t.estado === true || t.estado === 'ACTIVO';
+                      const rolString = t.rol ? String(t.rol).toUpperCase() : '';
+                      const isLider = rolString.includes('LIDER');
+
+                      return (
+                        <tr key={t.idTrabajador || t.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors">
+                          <td className="py-4 px-6 font-mono font-extrabold text-zinc-900 dark:text-zinc-100">
+                            #{t.identificacion || t.idTrabajador || 'N/A'}
+                          </td>
+
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                                {(t.nombre ? t.nombre.charAt(0) : 'U') + (t.apellido ? t.apellido.charAt(0) : '')}
+                              </div>
+                              <div>
+                                <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                                  {t.nombre} {t.apellido}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 font-mono font-semibold">
+                                    {t.email}
+                                  </span>
+                                  {t.emailPersonal && (
+                                    <span className="text-[0.62rem] text-zinc-400 dark:text-zinc-500 font-mono italic">
+                                      ({t.emailPersonal})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-4 px-6">
+                            <div className="space-y-1">
+                              <p className="font-bold text-zinc-800 dark:text-zinc-200">
+                                {t.profesion || 'Ingeniero de Software'}
+                              </p>
+                              {t.especialidad && (
+                                <p className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 font-semibold">
+                                  {t.especialidad}
+                                </p>
+                              )}
+                            </div>
+                          </td>
+
+                          <td className="py-4 px-6">
+                            {isLider ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shadow-2xs">
+                                <Briefcase size={12} className="text-amber-600 dark:text-amber-400" />
+                                Líder de Proyecto
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                                <Code2 size={12} className="text-emerald-600 dark:text-emerald-400" />
+                                Desarrollador
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-4 px-6">
+                            {estBool ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.68rem] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Habilitado
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.68rem] font-bold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300 border border-red-200 dark:border-red-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                Inhabilitado
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </motion.div>
         </motion.div>
       )}
 
@@ -5398,200 +5999,492 @@ export const LiderDashboard = () => {
           </div>
         )}
         {/* Modal: Registro de Nuevo Colaborador (Líder o Desarrollador) */}
-        {showNuevoColaboradorModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
-            >
-              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-extrabold text-base">
-                  <UserPlus size={20} className="text-emerald-600 dark:text-emerald-400" />
-                  <span>Registrar Nuevo Colaborador</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowNuevoColaboradorModal(false)}
-                  className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+        {showNuevoColaboradorModal && (() => {
+          const currentSkillProfile = ROLE_SKILL_PROFILES[nuevoColaboradorForm.rol] || ROLE_SKILL_PROFILES.DESARROLLADOR;
+          const RoleIconComponent = nuevoColaboradorForm.rol === 'DESARROLLADOR' ? Code2 : Briefcase;
 
-              <form onSubmit={handleCrearColaboradorPorLider} className="space-y-4 text-xs">
-                <div className="p-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-200 text-[0.7rem] font-bold flex items-center gap-2">
-                  <UserCheck size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Como Líder, puedes dar de alta nuevos <strong>Líderes de Proyecto</strong> o <strong>Desarrolladores</strong> en la plataforma.</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                      Nombres *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={nuevoColaboradorForm.nombre}
-                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, nombre: e.target.value })}
-                      className="input-field w-full py-2 text-xs font-semibold"
-                      placeholder="Ej. Mateo"
-                    />
+          return (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-9 w-[96%] sm:w-full max-w-3xl shadow-2xl max-h-[90dvh] overflow-y-auto space-y-6"
+              >
+                {/* Encabezado del Modal */}
+                <div className="flex justify-between items-start pb-4 border-b border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-inner shrink-0">
+                      <UserPlus size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                        <span>Registrar Nuevo Colaborador</span>
+                        <span className={`text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-full border ${currentSkillProfile.badgeTagStyle}`}>
+                          {nuevoColaboradorForm.rol}
+                        </span>
+                      </h3>
+                      <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                        Alta corporativa en PostgreSQL, asignación de rol de seguridad y configuración de perfil profesional
+                      </p>
+                    </div>
                   </div>
-
-                  <div className="space-y-1">
-                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                      Apellidos *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={nuevoColaboradorForm.apellido}
-                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, apellido: e.target.value })}
-                      className="input-field w-full py-2 text-xs font-semibold"
-                      placeholder="Ej. Fernández"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                      Número de Identificación / Cédula *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={nuevoColaboradorForm.identificacion}
-                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, identificacion: e.target.value })}
-                      className="input-field w-full py-2 text-xs font-mono font-bold"
-                      placeholder="1098273645"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                      Rol de Seguridad *
-                    </label>
-                    <select
-                      value={nuevoColaboradorForm.rol}
-                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, rol: e.target.value })}
-                      className="input-field w-full py-2 text-xs font-bold appearance-none cursor-pointer"
-                    >
-                      <option value="ROLE_DESARROLLADOR">💻 Desarrollador de Software</option>
-                      <option value="ROLE_LIDER">👔 Líder de Proyecto</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                      Correo Electrónico Corporativo *
-                    </label>
-                    <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400">
-                      Dominio Corporativo (@ikernell.org)
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={nuevoColaboradorForm.email}
-                    onChange={(e) => {
-                      let val = e.target.value;
-                      setNuevoColaboradorForm({ ...nuevoColaboradorForm, email: val });
-                    }}
-                    onBlur={() => {
-                      if (nuevoColaboradorForm.email && !nuevoColaboradorForm.email.includes('@')) {
-                        setNuevoColaboradorForm(prev => ({ ...prev, email: `${prev.email.trim()}@ikernell.org` }));
-                      }
-                    }}
-                    className="input-field w-full py-2 text-xs font-semibold"
-                    placeholder="m.fernandez@ikernell.org (Escriba el nombre o correo)"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                    Correo Electrónico Personal / Alternativo *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={nuevoColaboradorForm.emailPersonal}
-                    onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, emailPersonal: e.target.value })}
-                    className="input-field w-full py-2 text-xs font-semibold"
-                    placeholder="m.fernandez.pers@gmail.com"
-                  />
-                  <p className="text-[0.65rem] text-zinc-500 font-medium">
-                    Las credenciales temporales de acceso inicial se enviarán a este correo alternativo.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                      Profesión / Titulación
-                    </label>
-                    <input
-                      type="text"
-                      value={nuevoColaboradorForm.profesion}
-                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, profesion: e.target.value })}
-                      className="input-field w-full py-2 text-xs font-semibold"
-                      placeholder="Ingeniero de Software"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                      Especialidad Principal
-                    </label>
-                    <input
-                      type="text"
-                      value={nuevoColaboradorForm.especialidad}
-                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, especialidad: e.target.value })}
-                      className="input-field w-full py-2 text-xs font-semibold"
-                      placeholder="Full Stack Web & Cloud"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                    Contraseña Inicial (Opcional)
-                  </label>
-                  <input
-                    type="password"
-                    value={nuevoColaboradorForm.passwordHash}
-                    onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, passwordHash: e.target.value })}
-                    className="input-field w-full py-2 text-xs font-semibold"
-                    placeholder="Por defecto: abrah1234"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                  <button
-                    type="button"
+                  <button 
                     onClick={() => setShowNuevoColaboradorModal(false)}
-                    className="outline-button text-xs py-2 px-4 font-bold"
+                    className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                   >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submittingNuevoColaborador}
-                    className="gradient-button bg-emerald-600 hover:bg-emerald-700 text-xs py-2 px-5 font-bold inline-flex items-center gap-1.5 shadow-md"
-                  >
-                    {submittingNuevoColaborador ? <Loader2 size={14} className="animate-spin" /> : <UserCheck size={14} />}
-                    <span>Registrar Colaborador</span>
+                    <X size={20} />
                   </button>
                 </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
+
+                <form onSubmit={handleCrearColaboradorPorLider} className="space-y-4 text-xs" noValidate>
+                  {/* 1. Información Personal & Identificación */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
+                        <Shield size={14} className="text-emerald-500" />
+                        <span>1. Identificación & Credenciales de Acceso</span>
+                      </div>
+                      <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        Validación Algorítmica Internacional
+                      </span>
+                    </div>
+
+                    {/* Selector de País de Emisión y Número de Identificación Validado */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                          País de Emisión / Documento *
+                        </label>
+                        <select
+                          value={nuevoColaboradorForm.paisCodigo}
+                          onChange={(e) => {
+                            setNuevoColaboradorForm({ ...nuevoColaboradorForm, paisCodigo: e.target.value });
+                            setFormErrorsColaborador(p => ({ ...p, identificacion: undefined }));
+                          }}
+                          className="input-field py-2 text-xs font-bold"
+                        >
+                          {PAISES_IDENTIFICACION.map(p => (
+                            <option key={p.code} value={p.code}>
+                              {p.flag} {p.nombre} ({p.docTipo})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="sm:col-span-2 space-y-1">
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between text-xs mb-1">
+                          <span>Número de Identificación / {paisActual.docTipo} *</span>
+                          <span className="text-[0.62rem] font-mono text-emerald-600 dark:text-emerald-400 font-extrabold">
+                            {paisActual.flag} {paisActual.nombre}
+                          </span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={nuevoColaboradorForm.identificacion}
+                            onChange={(e) => { 
+                              setNuevoColaboradorForm({ ...nuevoColaboradorForm, identificacion: e.target.value }); 
+                              setFormErrorsColaborador(p => ({ ...p, identificacion: undefined })); 
+                            }}
+                            placeholder={paisActual.placeholder}
+                            className={`input-field py-2 text-xs font-mono font-bold pr-9 ${
+                              nuevoColaboradorForm.identificacion 
+                                ? (docValidationResult.valid ? 'border-emerald-500 ring-2 ring-emerald-500/10 dark:border-emerald-500' : 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10') 
+                                : ''
+                            }`}
+                          />
+                          {nuevoColaboradorForm.identificacion && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              {docValidationResult.valid ? (
+                                <CheckCircle2 size={16} className="text-emerald-500" />
+                              ) : (
+                                <AlertTriangle size={16} className="text-red-500 animate-bounce" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Mensaje de Validación de Algoritmo de País */}
+                        {nuevoColaboradorForm.identificacion && (
+                          <p className={`text-[0.65rem] font-bold mt-1 flex items-center gap-1.5 ${
+                            docValidationResult.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                          }`}>
+                            <span>{paisActual.flag}</span>
+                            <span>{docValidationResult.message}</span>
+                          </p>
+                        )}
+                        {formErrorsColaborador.identificacion && !nuevoColaboradorForm.identificacion && (
+                          <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrorsColaborador.identificacion}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                          Nombres del Colaborador *
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={nuevoColaboradorForm.nombre}
+                            onChange={(e) => { setNewColaboradorForm({ ...nuevoColaboradorForm, nombre: e.target.value }); setFormErrorsColaborador(p => ({ ...p, nombre: undefined })); }}
+                            placeholder="Nombres del colaborador"
+                            className={`input-field py-2 text-xs ${
+                              nuevoColaboradorForm.nombre ? (nombreValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                            }`}
+                          />
+                          {nuevoColaboradorForm.nombre && (
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                              {nombreValidationResult.valid ? <CheckCircle2 size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-red-500" />}
+                            </div>
+                          )}
+                        </div>
+                        {nuevoColaboradorForm.nombre && !nombreValidationResult.valid && (
+                          <p className="text-[0.63rem] text-red-500 font-bold mt-0.5">{nombreValidationResult.message}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                          Apellidos del Colaborador *
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={nuevoColaboradorForm.apellido}
+                            onChange={(e) => { setNewColaboradorForm({ ...nuevoColaboradorForm, apellido: e.target.value }); setFormErrorsColaborador(p => ({ ...p, apellido: undefined })); }}
+                            placeholder="Apellidos del colaborador"
+                            className={`input-field py-2 text-xs ${
+                              nuevoColaboradorForm.apellido ? (apellidoValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                            }`}
+                          />
+                          {nuevoColaboradorForm.apellido && (
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                              {apellidoValidationResult.valid ? <CheckCircle2 size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-red-500" />}
+                            </div>
+                          )}
+                        </div>
+                        {nuevoColaboradorForm.apellido && !apellidoValidationResult.valid && (
+                          <p className="text-[0.63rem] text-red-500 font-bold mt-0.5">{apellidoValidationResult.message}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                          Rol de Seguridad *
+                        </label>
+                        <select
+                          value={nuevoColaboradorForm.rol}
+                          onChange={(e) => {
+                            const selectedRol = e.target.value;
+                            setNuevoColaboradorForm({ ...nuevoColaboradorForm, rol: selectedRol });
+                          }}
+                          className="input-field py-2 text-xs font-bold uppercase"
+                        >
+                          <option value="DESARROLLADOR">DESARROLLADOR (WBS)</option>
+                          <option value="LIDER">LÍDER DE PROYECTO</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                        Correo Electrónico Corporativo *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          required
+                          value={nuevoColaboradorForm.email}
+                          onChange={(e) => { setNewColaboradorForm({ ...nuevoColaboradorForm, email: e.target.value }); setFormErrorsColaborador(p => ({ ...p, email: undefined })); }}
+                          onBlur={() => {
+                            if (nuevoColaboradorForm.email && !nuevoColaboradorForm.email.includes('@')) {
+                              setNuevoColaboradorForm(prev => ({ ...prev, email: `${prev.email.trim()}@ikernell.org` }));
+                            }
+                          }}
+                          placeholder="correo.corporativo@ikernell.org"
+                          className={`input-field py-2 text-xs font-mono pr-9 ${
+                            nuevoColaboradorForm.email ? (emailValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                          }`}
+                        />
+                        {nuevoColaboradorForm.email && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {emailValidationResult.valid ? <CheckCircle2 size={16} className="text-emerald-500" /> : <AlertTriangle size={16} className="text-red-500" />}
+                          </div>
+                        )}
+                      </div>
+                      {nuevoColaboradorForm.email && (
+                        <p className={`text-[0.65rem] font-bold mt-1 ${emailValidationResult.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                          {emailValidationResult.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Correo Electrónico Personal / Alternativo */}
+                    <div>
+                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                        Correo Electrónico Personal / Alternativo *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={nuevoColaboradorForm.emailPersonal || ''}
+                        onChange={(e) => setNewColaboradorForm({ ...nuevoColaboradorForm, emailPersonal: e.target.value })}
+                        placeholder="correo.personal@gmail.com"
+                        className="input-field py-2 text-xs font-semibold"
+                      />
+                      <p className="text-[0.65rem] text-zinc-500 font-medium mt-1">
+                        Las credenciales temporales de acceso inicial se enviarán a este correo alternativo.
+                      </p>
+                    </div>
+
+                    {/* Campo de Contraseña de Acceso Inicial y Generador de Clave Segura */}
+                    <div className="space-y-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                      <div className="flex items-center justify-between">
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 text-xs">
+                          <Lock size={13} className="text-emerald-500" /> Contraseña de Acceso Inicial *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={generarPasswordAleatoriaColaborador}
+                          className="text-[0.68rem] font-extrabold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-1 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                          title="Genera una clave aleatoria que cumple todos los requisitos de seguridad"
+                        >
+                          <Sparkles size={12} className="text-amber-500" />
+                          <span>Generar Clave Segura</span>
+                        </button>
+                      </div>
+
+                      <div className="relative">
+                        <input
+                          type={showPasswordInput ? "text" : "password"}
+                          required
+                          value={nuevoColaboradorForm.passwordHash}
+                          onChange={(e) => {
+                            setNuevoColaboradorForm({ ...nuevoColaboradorForm, passwordHash: e.target.value });
+                            setFormErrorsColaborador(p => ({ ...p, passwordHash: undefined }));
+                          }}
+                          placeholder="Mínimo 8 y máximo 20 caracteres (Ej. Ikernell2026*)"
+                          className={`input-field py-2 pl-3.5 pr-10 text-xs font-mono font-bold ${formErrorsColaborador.passwordHash ? 'border-red-400 dark:border-red-600' : ''}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordInput(!showPasswordInput)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg transition-colors cursor-pointer"
+                          title={showPasswordInput ? "Ocultar contraseña" : "Ver contraseña"}
+                        >
+                          {showPasswordInput ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      </div>
+
+                      {/* Checklist de Validación en Tiempo Real */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
+                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
+                          pwdValidity.minMax ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                        }`}>
+                          {pwdValidity.minMax ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
+                          <span>8 a 20 Caracteres</span>
+                        </div>
+
+                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
+                          pwdValidity.hasUpper ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                        }`}>
+                          {pwdValidity.hasUpper ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
+                          <span>1 Mayúscula (A-Z)</span>
+                        </div>
+
+                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
+                          pwdValidity.hasLower ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                        }`}>
+                          {pwdValidity.hasLower ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
+                          <span>1 Minúscula (a-z)</span>
+                        </div>
+
+                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
+                          pwdValidity.hasNumber ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                        }`}>
+                          {pwdValidity.hasNumber ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
+                          <span>1 Número (0-9)</span>
+                        </div>
+                      </div>
+
+                      {formErrorsColaborador.passwordHash && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrorsColaborador.passwordHash}</p>}
+                    </div>
+                  </div>
+
+                  {/* 2. Perfil Profesional & Especialidad Principal */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
+                        <GraduationCap size={14} className="text-emerald-500" />
+                        <span>2. Perfil Profesional & Especialidad Principal</span>
+                      </div>
+                      <span className={`text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md border ${currentSkillProfile.badgeTagStyle}`}>
+                        {currentSkillProfile.badgeTag}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                          Profesión / Titulación
+                        </label>
+                        <input
+                          type="text"
+                          value={nuevoColaboradorForm.profesion}
+                          onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, profesion: e.target.value })}
+                          placeholder={currentSkillProfile.placeholderProfesion}
+                          className="input-field py-2 text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                          Especialidad Principal
+                        </label>
+                        <input
+                          type="text"
+                          value={nuevoColaboradorForm.especialidad}
+                          onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, especialidad: e.target.value })}
+                          placeholder={currentSkillProfile.placeholderEspecialidad}
+                          className="input-field py-2 text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Habilidades Técnicas & Competencias por Rol */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 space-y-3.5">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2 text-xs font-black text-emerald-950 dark:text-emerald-200">
+                        <RoleIconComponent size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>{currentSkillProfile.tituloModulo}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[0.65rem] font-bold font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-md">
+                          {selectedSkills.length} Habilidades
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Chip Tag List de Selección Dinámica */}
+                    <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-emerald-200/60 dark:border-emerald-800/40 min-h-[48px] items-center">
+                      {selectedSkills.length === 0 ? (
+                        <span className="text-[0.7rem] text-zinc-400 italic px-1">
+                          Ninguna habilidad agregada aún. Selecciona de las sugerencias recomendadas o escribe una personalizada.
+                        </span>
+                      ) : (
+                        selectedSkills.map(skill => (
+                          <span 
+                            key={skill}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.68rem] font-extrabold bg-emerald-600 text-white shadow-2xs animate-fadeIn"
+                          >
+                            <span>{skill}</span>
+                            <button 
+                              type="button" 
+                              onClick={() => handleRemoveSkill(skill)}
+                              className="hover:bg-emerald-700 p-0.5 rounded-full transition-colors cursor-pointer"
+                            >
+                              <X size={10} />
+                            </button>
+                          </span>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Entrada Personalizada de Skill con Tecla Enter */}
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          value={customSkillInput}
+                          onChange={(e) => setCustomSkillInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddCustomSkill(e);
+                            }
+                          }}
+                          placeholder="Escriba una habilidad o competencia y presione Enter o Agregar..."
+                          className="input-field py-1.5 text-xs pr-8"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddCustomSkill}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shrink-0 shadow-2xs inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus size={13} />
+                        <span>Agregar</span>
+                      </button>
+                    </div>
+
+                    {/* Sugerencias Rápidas Reutilizables */}
+                    <div className="space-y-1.5 pt-1">
+                      <p className="text-[0.62rem] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                        Sugerencias Rápidas para {nuevoColaboradorForm.rol} (Clic para activar/desactivar):
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {currentSkillProfile.sugerencias.map(skill => {
+                          const isSelected = selectedSkills.includes(skill);
+                          return (
+                            <button
+                              key={skill}
+                              type="button"
+                              onClick={() => handleToggleSkill(skill)}
+                              className={`px-2.5 py-1 rounded-lg text-[0.65rem] font-bold border transition-all cursor-pointer inline-flex items-center gap-1 ${
+                                isSelected
+                                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                                  : 'bg-white dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400'
+                              }`}
+                            >
+                              {isSelected ? <Check size={10} className="stroke-[3]" /> : <Plus size={10} />}
+                              <span>{skill}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Acciones Finales del Formulario */}
+                  <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setShowNuevoColaboradorModal(false)}
+                      className="px-5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-bold transition-all text-xs cursor-pointer text-center"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingNuevoColaborador}
+                      className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg shadow-emerald-600/20 transition-all text-xs inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {submittingNuevoColaborador ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>Guardando en PostgreSQL...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus size={16} />
+                          <span>Registrar Colaborador</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          );
+        })()}
       </AnimatePresence>
 
       </ErrorBoundary>
