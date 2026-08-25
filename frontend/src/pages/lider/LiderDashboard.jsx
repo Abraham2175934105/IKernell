@@ -1289,6 +1289,10 @@ export const LiderDashboard = () => {
 
   // Reasignación de actividad con registro de justificación técnica
   const handleAbrirReasignar = (actividad) => {
+    if (!isMiProyecto) {
+      toast.error('Este proyecto pertenece a otro Líder de Proyecto (Modo Lectura Exclusivo).');
+      return;
+    }
     setActividadAReasignar(actividad);
     setDatosReasignacion({
       nuevoDesarrolladorId: actividad.desarrollador?.idTrabajador || '',
@@ -2907,8 +2911,8 @@ export const LiderDashboard = () => {
                                 {act.estado}
                               </span>
 
-                              {/* Botón Reasignar Actividad (HU-25: Solo permitido para tareas en progreso o pendientes) */}
-                              {proyectoSeleccionado?.estado !== 'FINALIZADO' && proyectoSeleccionado?.estado !== 'COMPLETADO' && (
+                              {/* Botón Reasignar Actividad (HU-25: Solo permitido para el Líder propietario y en tareas en progreso o pendientes) */}
+                              {isMiProyecto && proyectoSeleccionado?.estado !== 'FINALIZADO' && proyectoSeleccionado?.estado !== 'COMPLETADO' && (
                                 (act.estado === 'FINALIZADA' || act.estado === 'COMPLETADA') ? (
                                   <button
                                     type="button"
@@ -4139,17 +4143,19 @@ export const LiderDashboard = () => {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAsignarDevForm({ idDesarrollador: '', horasSemanales: 20 });
-                    setAsignarDevError(null);
-                    setShowAsignarDevModal(true);
-                  }}
-                  className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-sm shrink-0 cursor-pointer"
-                >
-                  <UserPlus size={14} /> Vincular Desarrollador
-                </button>
+                {isMiProyecto && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAsignarDevForm({ idDesarrollador: '', horasSemanales: 20 });
+                      setAsignarDevError(null);
+                      setShowAsignarDevModal(true);
+                    }}
+                    className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-sm shrink-0 cursor-pointer"
+                  >
+                    <UserPlus size={14} /> Vincular Desarrollador
+                  </button>
+                )}
               </div>
 
               {/* Resumen de Capacidad del Equipo */}
@@ -4178,7 +4184,7 @@ export const LiderDashboard = () => {
                       No hay desarrolladores vinculados aún a este proyecto.
                     </p>
                     <p className="text-[0.75rem] text-zinc-500">
-                      Utiliza el botón "Vincular Desarrollador" o asigna actividades WBS para integrar desarrolladores.
+                      {isMiProyecto ? 'Utiliza el botón "Vincular Desarrollador" o asigna actividades WBS para integrar desarrolladores.' : 'El proyecto se encuentra en modo lectura.'}
                     </p>
                   </div>
                 ) : (
@@ -4219,53 +4225,61 @@ export const LiderDashboard = () => {
                         </div>
 
                         <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
-                          {/* Control interactivo de Horas Semanales (Steppers + Validación de 48h) */}
+                          {/* Dedicación Horaria Semanal */}
                           <div className="flex flex-col items-start sm:items-end gap-1">
                             <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">
                               Dedicación Semanal
                             </span>
 
-                            <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                              <button
-                                type="button"
-                                onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj - 1)}
-                                disabled={horasPrj <= 1 || updatingDevId === dev.idTrabajador}
-                                className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
-                                title={horasPrj <= 1 ? 'Mínimo 1 hora semanal obligatoria' : 'Reducir 1 hora semanal'}
-                              >
-                                -
-                              </button>
+                            {isMiProyecto ? (
+                              <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj - 1)}
+                                  disabled={horasPrj <= 1 || updatingDevId === dev.idTrabajador}
+                                  className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                  title={horasPrj <= 1 ? 'Mínimo 1 hora semanal obligatoria' : 'Reducir 1 hora semanal'}
+                                >
+                                  -
+                                </button>
 
-                              <div className="flex items-center gap-0.5 px-2 font-mono text-xs font-black text-blue-600 dark:text-blue-400">
-                                <span>{horasPrj}</span>
-                                <span className="text-[0.65rem] text-zinc-400 font-normal">h/sem</span>
+                                <div className="flex items-center gap-0.5 px-2 font-mono text-xs font-black text-blue-600 dark:text-blue-400">
+                                  <span>{horasPrj}</span>
+                                  <span className="text-[0.65rem] text-zinc-400 font-normal">h/sem</span>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj + 1)}
+                                  disabled={updatingDevId === dev.idTrabajador || (horasGlobales + 1 > 48)}
+                                  className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                  title={horasGlobales + 1 > 48 ? `Límite legal excedido (Acumula ${horasGlobales}/48h en la empresa)` : 'Aumentar 1 hora semanal'}
+                                >
+                                  +
+                                </button>
                               </div>
-
-                              <button
-                                type="button"
-                                onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj + 1)}
-                                disabled={updatingDevId === dev.idTrabajador || (horasGlobales + 1 > 48)}
-                                className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
-                                title={horasGlobales + 1 > 48 ? `Límite legal excedido (Acumula ${horasGlobales}/48h en la empresa)` : 'Aumentar 1 hora semanal'}
-                              >
-                                +
-                              </button>
-                            </div>
+                            ) : (
+                              <div className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-mono text-xs font-extrabold border border-zinc-200 dark:border-zinc-700">
+                                {horasPrj} h/semana
+                              </div>
+                            )}
 
                             <span className="text-[0.62rem] text-zinc-500 font-medium">
                               Carga Total Empresa: <strong className={horasGlobales >= 48 ? 'text-red-600 dark:text-red-400 font-black' : 'text-zinc-700 dark:text-zinc-300 font-bold'}>{horasGlobales}/48h</strong>
                             </span>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => handleDesasignarDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`)}
-                            className="p-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shrink-0"
-                            title="Desvincular del proyecto y liberar dedicación horaria"
-                          >
-                            <UserX size={14} />
-                            <span className="hidden sm:inline">Desvincular</span>
-                          </button>
+                          {isMiProyecto && (
+                            <button
+                              type="button"
+                              onClick={() => handleDesasignarDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`)}
+                              className="p-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+                              title="Desvincular del proyecto y liberar dedicación horaria"
+                            >
+                              <UserX size={14} />
+                              <span className="hidden sm:inline">Desvincular</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
