@@ -481,9 +481,31 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
     });
   }, [selectedDev, todasLasTareasDevMap, tareasDevSeleccionado, proyectosList]);
 
-  // Tareas estructuradas y agrupadas por proyecto para el resumen ejecutivo
+  // Lista de tareas filtradas para el modal según el botón seleccionado (Este proyecto / Otros proyectos / Todas)
+  const tareasFiltradasModal = useMemo(() => {
+    if (!desarolladorTareasList || !Array.isArray(desarolladorTareasList)) return [];
+
+    const targetIdStr = String(proyectoSeleccionadoLocal?.idProyecto || proyecto?.idProyecto || (desarolladorTareasList[0]?.idProyecto ?? ''));
+    const targetNameStr = proyectoSeleccionadoLocal?.nombre || proyecto?.nombre || desarolladorTareasList[0]?.nombreProyecto || '';
+
+    if (devTaskModalFilter === 'THIS_PROJECT') {
+      return desarolladorTareasList.filter(t => 
+        (targetIdStr && String(t.idProyecto) === targetIdStr) || 
+        (targetNameStr && t.nombreProyecto === targetNameStr)
+      );
+    }
+    if (devTaskModalFilter === 'OTHER_PROJECTS') {
+      return desarolladorTareasList.filter(t => 
+        (!targetIdStr || String(t.idProyecto) !== targetIdStr) && 
+        (!targetNameStr || t.nombreProyecto !== targetNameStr)
+      );
+    }
+    return desarolladorTareasList;
+  }, [desarolladorTareasList, devTaskModalFilter, proyectoSeleccionadoLocal, proyecto]);
+
+  // Tareas estructuradas y agrupadas por proyecto para el resumen del modal
   const tareasAgrupadasPorProyecto = useMemo(() => {
-    const tasks = desarolladorTareasList;
+    const tasks = tareasFiltradasModal;
     const map = new Map();
 
     tasks.forEach(t => {
@@ -504,25 +526,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
     });
 
     return Array.from(map.values());
-  }, [desarolladorTareasList, proyectosList]);
-
-  // Lista de tareas filtradas para el modal según el botón seleccionado (Este proyecto / Otros proyectos / Todas)
-  const tareasFiltradasModal = useMemo(() => {
-    if (!desarolladorTareasList || !Array.isArray(desarolladorTareasList)) return [];
-    if (devTaskModalFilter === 'THIS_PROJECT') {
-      return desarolladorTareasList.filter(t => 
-        String(t.idProyecto) === String(proyectoSeleccionadoLocal?.idProyecto) || 
-        t.nombreProyecto === proyectoSeleccionadoLocal?.nombre
-      );
-    }
-    if (devTaskModalFilter === 'OTHER_PROJECTS') {
-      return desarolladorTareasList.filter(t => 
-        String(t.idProyecto) !== String(proyectoSeleccionadoLocal?.idProyecto) && 
-        t.nombreProyecto !== proyectoSeleccionadoLocal?.nombre
-      );
-    }
-    return desarolladorTareasList;
-  }, [desarolladorTareasList, devTaskModalFilter, proyectoSeleccionadoLocal]);
+  }, [tareasFiltradasModal, proyectosList]);
 
   // Manejador de navegación con auto-filtrado y redirección automática al WBS
   const handleIrAProyectoWbs = (proyectoTarget) => {
@@ -1153,9 +1157,18 @@ Generado automáticamente por el motor analítico IKernell v2.0
 
                 {/* ── Desglose de Carga: Proyecto Actual vs Global Corporativa ── */}
                 {(() => {
-                  const tareasEsteProyecto = tareasPorDevEnEsteProyecto.get(selectedDev.idTrabajador) || 0;
-                  const totalTareas = selectedDev.tareasActivas || 0;
-                  const tareasOtrosProyectos = Math.max(0, totalTareas - tareasEsteProyecto);
+                  const targetIdStr = String(proyectoSeleccionadoLocal?.idProyecto || proyecto?.idProyecto || (desarolladorTareasList[0]?.idProyecto ?? ''));
+                  const targetNameStr = proyectoSeleccionadoLocal?.nombre || proyecto?.nombre || desarolladorTareasList[0]?.nombreProyecto || '';
+
+                  const tareasEsteProyecto = desarolladorTareasList.filter(t => 
+                    (targetIdStr && String(t.idProyecto) === targetIdStr) || 
+                    (targetNameStr && t.nombreProyecto === targetNameStr)
+                  ).length;
+
+                  const tareasOtrosProyectos = Math.max(0, desarolladorTareasList.length - tareasEsteProyecto);
+                  const nombreProyectoActualLabel = isProyectoEspecifico 
+                    ? (proyectoSeleccionadoLocal?.nombre || proyecto?.nombre || 'Este proyecto') 
+                    : (desarolladorTareasList[0]?.nombreProyecto || 'Proyecto Principal');
 
                   return (
                     <div className="p-4.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/70 space-y-3">
@@ -1187,8 +1200,8 @@ Generado automáticamente por el motor analítico IKernell v2.0
                               <span>{tareasEsteProyecto} tareas activas</span>
                               <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform text-blue-400" />
                             </div>
-                            <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block mt-1 truncate font-semibold">
-                              {isProyectoEspecifico ? (proyectoSeleccionadoLocal?.nombre || proyecto?.nombre || 'Este proyecto') : 'Todas las iniciativas'}
+                            <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block mt-1 truncate font-semibold" title={nombreProyectoActualLabel}>
+                              {nombreProyectoActualLabel}
                             </span>
                           </div>
                         </button>
@@ -1977,10 +1990,12 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     <FileText size={24} />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 flex-wrap">
                       <span>Actividades WBS Asignadas</span>
                       <span className="text-[0.68rem] font-mono font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        {selectedDev.tareasActivas} globales
+                        {devTaskModalFilter === 'THIS_PROJECT' ? `En este proyecto (${tareasFiltradasModal.length})` :
+                         devTaskModalFilter === 'OTHER_PROJECTS' ? `En otros proyectos (${tareasFiltradasModal.length})` :
+                         `${tareasFiltradasModal.length} globales`}
                       </span>
                     </h3>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">
