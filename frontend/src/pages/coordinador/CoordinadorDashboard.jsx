@@ -163,6 +163,9 @@ export const CoordinadorDashboard = () => {
   const [techsSeleccionadas, setTechsSeleccionadas] = useState([]); // [] = Todas
   const [estadoSeleccionado, setEstadoSeleccionado] = useState('TODOS'); // 'TODOS' | 'ACTIVO' | 'INHABILITADO'
   const [filtroSolicitudes, setFiltroSolicitudes] = useState('TODAS'); // 'TODAS' | 'PENDIENTE' | 'ATENDIDA' | 'REABIERTA' | 'EN_PROCESO'
+  const [searchSolicitudQuery, setSearchSolicitudQuery] = useState('');
+  const [fechaInicioSolicitud, setFechaInicioSolicitud] = useState('');
+  const [fechaFinSolicitud, setFechaFinSolicitud] = useState('');
 
   // Estados de Paginación Inteligente (Por cantidad y por hojas)
   const [currentPage, setCurrentPage] = useState(1);
@@ -602,6 +605,84 @@ export const CoordinadorDashboard = () => {
   });
 
   const activeFiltersCount = (searchQuery ? 1 : 0) + (rolSeleccionado !== 'TODOS' ? 1 : 0) + techsSeleccionadas.length + (estadoSeleccionado !== 'TODOS' ? 1 : 0);
+
+  // Cálculo Exigente de la Primera y Última Fecha de Solicitud en el Sistema
+  const rangoFechasSolicitudes = React.useMemo(() => {
+    if (!solicitudes || !Array.isArray(solicitudes) || solicitudes.length === 0) {
+      return { primera: '', ultima: '', primeraFormateada: 'Sin registros', ultimaFormateada: 'Sin registros' };
+    }
+
+    let minTimestamp = Infinity;
+    let maxTimestamp = -Infinity;
+
+    solicitudes.forEach(s => {
+      const dateVal = s.fechaEnvio || s.fechaCreacion || s.createdAt;
+      if (!dateVal) return;
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return;
+
+      if (d.getTime() < minTimestamp) minTimestamp = d.getTime();
+      if (d.getTime() > maxTimestamp) maxTimestamp = d.getTime();
+    });
+
+    if (minTimestamp === Infinity || maxTimestamp === -Infinity) {
+      return { primera: '', ultima: '', primeraFormateada: 'Sin fecha', ultimaFormateada: 'Sin fecha' };
+    }
+
+    const minDate = new Date(minTimestamp);
+    const maxDate = new Date(maxTimestamp);
+
+    return {
+      primera: minDate.toISOString().split('T')[0],
+      ultima: maxDate.toISOString().split('T')[0],
+      primeraFormateada: minDate.toLocaleDateString(),
+      ultimaFormateada: maxDate.toLocaleDateString()
+    };
+  }, [solicitudes]);
+
+  // Filtrado Estricto por Estado, Búsqueda Avanzada y Rango de Fechas
+  const solicitudesFiltradas = React.useMemo(() => {
+    if (!Array.isArray(solicitudes)) return [];
+
+    return solicitudes.filter(sol => {
+      // 1. Estado
+      const est = sol.estado || (sol.atendido ? 'ATENDIDA' : 'PENDIENTE');
+      if (filtroSolicitudes !== 'TODAS' && est !== filtroSolicitudes) return false;
+
+      // 2. Búsqueda Texto Completo
+      if (searchSolicitudQuery.trim()) {
+        const q = searchSolicitudQuery.toLowerCase().trim();
+        const matchCode = String(sol.idSolicitud).includes(q) || `sol-00${sol.idSolicitud}`.toLowerCase().includes(q);
+        const matchAsunto = sol.asunto?.toLowerCase().includes(q);
+        const matchRemitente = sol.nombreRemitente?.toLowerCase().includes(q);
+        const matchEmail = sol.emailRemitente?.toLowerCase().includes(q);
+        const matchTel = sol.telefono?.toLowerCase().includes(q);
+        const matchMsg = sol.mensaje?.toLowerCase().includes(q);
+        const matchNotas = sol.notasAtencion?.toLowerCase().includes(q);
+        if (!matchCode && !matchAsunto && !matchRemitente && !matchEmail && !matchTel && !matchMsg && !matchNotas) {
+          return false;
+        }
+      }
+
+      // 3. Rango de Fechas Estricto
+      const dateVal = sol.fechaEnvio || sol.fechaCreacion || sol.createdAt;
+      if (dateVal) {
+        const fechaObj = new Date(dateVal);
+        if (!isNaN(fechaObj.getTime())) {
+          if (fechaInicioSolicitud) {
+            const startObj = new Date(`${fechaInicioSolicitud}T00:00:00`);
+            if (fechaObj < startObj) return false;
+          }
+          if (fechaFinSolicitud) {
+            const endObj = new Date(`${fechaFinSolicitud}T23:59:59`);
+            if (fechaObj > endObj) return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [solicitudes, filtroSolicitudes, searchSolicitudQuery, fechaInicioSolicitud, fechaFinSolicitud]);
 
   // Cálculos de Paginación Inteligente
   const totalFilteredCount = filteredTrabajadores.length;
@@ -1257,86 +1338,219 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Filtros Rápidos por Estado de Solicitud */}
-          <motion.div variants={itemVariants} className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setFiltroSolicitudes('TODAS')}
-              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                filtroSolicitudes === 'TODAS'
-                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
-                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-              }`}
-            >
-              <span>Todas</span>
-              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20 dark:bg-black/10">
-                {solicitudes.length}
-              </span>
-            </button>
+          {/* Consola Única de Búsqueda y Filtrado Estricto por Fechas */}
+          <motion.div 
+            variants={itemVariants}
+            className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5"
+          >
+            {/* 1. Barra de Búsqueda por Texto Libre */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={searchSolicitudQuery}
+                  onChange={(e) => setSearchSolicitudQuery(e.target.value)}
+                  placeholder="Buscar por código (SOL-001), cliente, correo, asunto o contenido..."
+                  className="w-full pl-11 pr-10 py-3 text-xs sm:text-sm rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                />
+                {searchSolicitudQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchSolicitudQuery('')}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
 
-            <button
-              type="button"
-              onClick={() => setFiltroSolicitudes('PENDIENTE')}
-              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                filtroSolicitudes === 'PENDIENTE'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-              <span>Pendientes</span>
-              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
-                {solicitudes.filter(s => (s.estado === 'PENDIENTE' || (!s.estado && !s.atendido))).length}
-              </span>
-            </button>
+              {/* Contador de Filtros Activos y Botón de Limpieza */}
+              {(searchSolicitudQuery || fechaInicioSolicitud || fechaFinSolicitud || filtroSolicitudes !== 'TODAS') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchSolicitudQuery('');
+                    setFechaInicioSolicitud('');
+                    setFechaFinSolicitud('');
+                    setFiltroSolicitudes('TODAS');
+                  }}
+                  className="px-4 py-3 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 text-xs font-bold transition-all hover:bg-red-100 cursor-pointer inline-flex items-center justify-center gap-1.5 shrink-0"
+                  title="Reiniciar todos los filtros de búsqueda, estado y fechas"
+                >
+                  <X size={14} />
+                  <span>Limpiar Filtros</span>
+                </button>
+              )}
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setFiltroSolicitudes('EN_PROCESO')}
-              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                filtroSolicitudes === 'EN_PROCESO'
-                  ? 'bg-amber-600 text-white shadow-sm'
-                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              <span>En Proceso</span>
-              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
-                {solicitudes.filter(s => s.estado === 'EN_PROCESO').length}
-              </span>
-            </button>
+            {/* 2. Sección de Filtrado Estricto por Fechas (Fechas Exigentes de Primera y Última Solicitud) */}
+            <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60 space-y-3">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <Calendar size={16} className="text-blue-600 dark:text-blue-400" />
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
+                    Filtrado Estricto por Rango de Fechas
+                  </span>
+                </div>
 
-            <button
-              type="button"
-              onClick={() => setFiltroSolicitudes('ATENDIDA')}
-              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                filtroSolicitudes === 'ATENDIDA'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span>Atendidas</span>
-              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
-                {solicitudes.filter(s => s.estado === 'ATENDIDA' || (s.atendido && !s.estado)).length}
-              </span>
-            </button>
+                {rangoFechasSolicitudes.primera && (
+                  <div className="flex items-center gap-2 text-[0.68rem] font-bold text-zinc-500 dark:text-zinc-400 flex-wrap">
+                    <span className="px-2.5 py-0.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                      Primera Solicitud: <strong className="text-blue-600 dark:text-blue-400 font-mono">{rangoFechasSolicitudes.primeraFormateada}</strong>
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                      Última Solicitud: <strong className="text-blue-600 dark:text-blue-400 font-mono">{rangoFechasSolicitudes.ultimaFormateada}</strong>
+                    </span>
+                  </div>
+                )}
+              </div>
 
-            <button
-              type="button"
-              onClick={() => setFiltroSolicitudes('REABIERTA')}
-              className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                filtroSolicitudes === 'REABIERTA'
-                  ? 'bg-purple-600 text-white shadow-sm'
-                  : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'
-              }`}
-            >
-              <RotateCcw size={12} />
-              <span>Reabiertas</span>
-              <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
-                {solicitudes.filter(s => s.estado === 'REABIERTA').length}
-              </span>
-            </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                {/* Selector Fecha Inicio */}
+                <div>
+                  <label className="text-[0.65rem] font-extrabold uppercase text-zinc-500 dark:text-zinc-400 block mb-1">
+                    Desde (Primera Solicitud)
+                  </label>
+                  <input
+                    type="date"
+                    value={fechaInicioSolicitud}
+                    min={rangoFechasSolicitudes.primera}
+                    max={rangoFechasSolicitudes.ultima}
+                    onChange={(e) => setFechaInicioSolicitud(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium"
+                  />
+                </div>
+
+                {/* Selector Fecha Fin */}
+                <div>
+                  <label className="text-[0.65rem] font-extrabold uppercase text-zinc-500 dark:text-zinc-400 block mb-1">
+                    Hasta (Última Solicitud)
+                  </label>
+                  <input
+                    type="date"
+                    value={fechaFinSolicitud}
+                    min={rangoFechasSolicitudes.primera}
+                    max={rangoFechasSolicitudes.ultima}
+                    onChange={(e) => setFechaFinSolicitud(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium"
+                  />
+                </div>
+
+                {/* Accesos Rápidos de Rango */}
+                <div className="sm:col-span-2 lg:col-span-2 flex items-center gap-2 flex-wrap pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFechaInicioSolicitud('');
+                      setFechaFinSolicitud('');
+                    }}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer border ${
+                      !fechaInicioSolicitud && !fechaFinSolicitud
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
+                    }`}
+                  >
+                    Todo el Historial
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (rangoFechasSolicitudes.primera && rangoFechasSolicitudes.ultima) {
+                        setFechaInicioSolicitud(rangoFechasSolicitudes.primera);
+                        setFechaFinSolicitud(rangoFechasSolicitudes.ultima);
+                      }
+                    }}
+                    className="text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer border bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                  >
+                    Rango Exigente Completo
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Filtros Rápidos por Estado de Solicitud */}
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('TODAS')}
+                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                  filtroSolicitudes === 'TODAS'
+                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                <span>Todas</span>
+                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20 dark:bg-black/10">
+                  {solicitudes.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('PENDIENTE')}
+                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                  filtroSolicitudes === 'PENDIENTE'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100'
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                <span>Pendientes</span>
+                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                  {solicitudes.filter(s => (s.estado === 'PENDIENTE' || (!s.estado && !s.atendido))).length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('EN_PROCESO')}
+                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                  filtroSolicitudes === 'EN_PROCESO'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100'
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                <span>En Proceso</span>
+                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                  {solicitudes.filter(s => s.estado === 'EN_PROCESO').length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('ATENDIDA')}
+                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                  filtroSolicitudes === 'ATENDIDA'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span>Atendidas</span>
+                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                  {solicitudes.filter(s => s.estado === 'ATENDIDA' || (s.atendido && !s.estado)).length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('REABIERTA')}
+                className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                  filtroSolicitudes === 'REABIERTA'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'
+                }`}
+              >
+                <RotateCcw size={12} />
+                <span>Reabiertas</span>
+                <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
+                  {solicitudes.filter(s => s.estado === 'REABIERTA').length}
+                </span>
+              </button>
+            </div>
           </motion.div>
 
           <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -1348,26 +1562,17 @@ export const CoordinadorDashboard = () => {
               </>
             )}
 
-            {!loading && (solicitudes.length === 0 || (filtroSolicitudes !== 'TODAS' && solicitudes.filter(s => {
-              const est = s.estado || (s.atendido ? 'ATENDIDA' : 'PENDIENTE');
-              return est === filtroSolicitudes;
-            }).length === 0)) && (
+            {!loading && solicitudesFiltradas.length === 0 && (
               <div className="col-span-full">
                 <EmptyState
                   icon={Inbox}
-                  title="No hay solicitudes en esta categoría"
-                  description="No se encontraron registros que coincidan con el filtro seleccionado."
+                  title="No se encontraron solicitudes"
+                  description="No hay registros que coincidan con la búsqueda o el rango de fechas seleccionado."
                 />
               </div>
             )}
 
-            {!loading && solicitudes
-              .filter(s => {
-                const est = s.estado || (s.atendido ? 'ATENDIDA' : 'PENDIENTE');
-                if (filtroSolicitudes === 'TODAS') return true;
-                return est === filtroSolicitudes;
-              })
-              .map(sol => {
+            {!loading && solicitudesFiltradas.map(sol => {
                 const estInfo = getEstadoSolicitudInfo(sol);
                 const isReabierta = sol.estado === 'REABIERTA' || (sol.contadorReaperturas && sol.contadorReaperturas > 0);
 
