@@ -123,8 +123,12 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onNavigateIn
 
   const currentLevel = normalizarNivelSemaforo(metrics?.nivel);
   const totalHoras = metrics?.totalHorasPerdidas ?? 0;
-  const erroresCriticos = metrics?.cantidadErroresCriticos ?? 0;
-  const totalErrores = metrics?.totalErrores ?? 0;
+  const erroresCriticosCount = Number(metrics?.severityCount?.CRITICA || 0);
+  const erroresAltosCount = Number(metrics?.severityCount?.ALTA || 0);
+  const erroresCriticosAltos = (erroresCriticosCount + erroresAltosCount) || (metrics?.cantidadErroresCriticos ?? 0);
+  const erroresMedios = Number(metrics?.severityCount?.MEDIA || 0);
+  const erroresBajos = Number(metrics?.severityCount?.BAJA || 0);
+  const totalErrores = metrics?.totalErrores ?? (erroresCriticosAltos + erroresMedios + erroresBajos);
   const totalInterrupciones = metrics?.totalInterrupciones ?? 0;
 
   // Configuración de estilos, puntos de estado CSS animados y badges ejecutivos (100% Cero Emojis)
@@ -245,9 +249,10 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onNavigateIn
         </div>
       ) : (
         <div className="space-y-8">
+          {/* Fila Superior: Tarjeta Hero de Salud (Izquierda) + Gráfico de Severidad y Resumen (Derecha) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-stretch">
             
-            {/* 1. Tarjeta Principal del Semáforo (Nivel Visual Ampliado en Modo Global) */}
+            {/* 1. Tarjeta Principal del Semáforo (Nivel Visual) */}
             <div className={`${isGlobal ? 'lg:col-span-5 p-8 md:p-10' : 'lg:col-span-5 p-6 md:p-8'} border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col justify-center items-center text-center bg-white dark:bg-zinc-900 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all relative overflow-hidden group`}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:bg-blue-500/10 transition-colors" />
               
@@ -269,109 +274,160 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onNavigateIn
               </p>
             </div>
 
-            {/* 2. Grid de Indicadores Cuantitativos Ampliados & Gráfico */}
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              
-              {/* Horas de Contingencia Interactivas */}
-              <div 
-                onClick={() => onNavigateIncidencias?.({ tipo: 'INTERRUPCIONES' })}
-                className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:shadow-md transition-all cursor-pointer"
-                title="Haga clic para ver el detalle de interrupciones y contingencias en la Consola de Incidencias"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    <Clock size={16} className="text-blue-600 dark:text-blue-400" />
-                    {isGlobal ? 'Horas Corporativas Perdidas' : 'Horas de Contingencia'}
+            {/* 2. Gráfico de Distribución Real de Severidad */}
+            <div className="lg:col-span-7 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all justify-between">
+              {pieData.length > 0 ? (
+                <>
+                  <div className="w-full sm:w-1/2 h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={38}
+                          outerRadius={62}
+                          paddingAngle={4}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip 
+                          contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '12px', color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}
+                          itemStyle={{ color: '#ffffff' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                  <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Ver lista →
-                  </span>
-                </div>
-                <div className="my-3">
-                  <span className={`${isGlobal ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl'} font-black text-zinc-900 dark:text-zinc-100 font-mono`}>
-                    {totalHoras}h
-                  </span>
-                </div>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
-                  {totalInterrupciones} eventos de contingencia registrados
-                </span>
-              </div>
-
-              {/* Errores Críticos / Altos Interactivos */}
-              <div 
-                onClick={() => onNavigateIncidencias?.({ tipo: 'ERRORES', severidad: 'CRITICA_ALTA' })}
-                className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-red-500 dark:hover:border-red-400 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:shadow-md transition-all cursor-pointer"
-                title="Haga clic para ir a la Consola de Incidencias y filtrar los Errores Críticos / Altos"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                    <Bug size={16} className="text-red-600 dark:text-red-400" />
-                    Errores Críticos / Altos
-                  </div>
-                  <span className="text-[0.65rem] font-bold text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Ver lista →
-                  </span>
-                </div>
-                <div className="my-3">
-                  <span className={`${isGlobal ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl'} font-black text-zinc-900 dark:text-zinc-100 font-mono`}>
-                    {erroresCriticos}
-                  </span>
-                </div>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
-                  de {totalErrores} errores totales evaluados
-                </span>
-              </div>
-
-              {/* Gráfico de Distribución Real de Severidad */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl sm:col-span-2 p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all">
-                {pieData.length > 0 ? (
-                  <>
-                    <div className="w-full sm:w-1/2 h-40">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={32}
-                            outerRadius={52}
-                            paddingAngle={4}
-                            dataKey="value"
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <RechartsTooltip 
-                            contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '12px', color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}
-                            itemStyle={{ color: '#ffffff' }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="w-full sm:w-1/2 flex flex-col justify-center gap-2 text-xs">
-                      <h5 className="font-extrabold text-zinc-900 dark:text-white uppercase tracking-wider mb-1">
-                        Distribución Real de Severidad
-                      </h5>
-                      {pieData.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between py-1 border-b border-zinc-100 dark:border-zinc-800">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                            <span className="font-medium text-zinc-600 dark:text-zinc-400">{item.name}:</span>
-                          </div>
-                          <span className="font-bold text-zinc-900 dark:text-white font-mono">{item.value}</span>
+                  <div className="w-full sm:w-1/2 flex flex-col justify-center gap-2.5 text-xs">
+                    <h5 className="font-extrabold text-zinc-900 dark:text-white uppercase tracking-wider mb-1">
+                      Distribución Real de Severidad
+                    </h5>
+                    {pieData.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between py-1.5 border-b border-zinc-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                          <span className="font-medium text-zinc-600 dark:text-zinc-400">{item.name}:</span>
                         </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="w-full text-center text-zinc-500 dark:text-zinc-400 text-xs py-6 font-medium">
-                    No hay incidencias reportadas en el alcance seleccionado.
+                        <span className="font-black text-zinc-900 dark:text-white font-mono text-sm">{item.value}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
-
+                </>
+              ) : (
+                <div className="w-full text-center text-zinc-500 dark:text-zinc-400 text-xs py-8 font-medium">
+                  No hay incidencias reportadas en el alcance seleccionado.
+                </div>
+              )}
             </div>
+
+          </div>
+
+          {/* Cuadrícula de 4 Cuadros Grandes de Métricas Cuantitativas por Severidad de Incidencias */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            
+            {/* 1. Horas de Contingencia */}
+            <div 
+              onClick={() => onNavigateIncidencias?.({ tipo: 'INTERRUPCIONES' })}
+              className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              title="Haga clic para ver el detalle de interrupciones y contingencias en la Consola de Incidencias"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-extrabold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <Clock size={16} className="text-blue-600 dark:text-blue-400" />
+                  {isGlobal ? 'Horas Perdidas' : 'Horas Contingencia'}
+                </div>
+                <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Ver lista →
+                </span>
+              </div>
+              <div className="my-3">
+                <span className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-zinc-100 font-mono">
+                  {totalHoras}h
+                </span>
+              </div>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
+                {totalInterrupciones} eventos en PostgreSQL
+              </span>
+            </div>
+
+            {/* 2. Errores Críticos / Altos */}
+            <div 
+              onClick={() => onNavigateIncidencias?.({ tipo: 'ERRORES', severidad: 'CRITICA_ALTA' })}
+              className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-red-500 dark:hover:border-red-400 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              title="Haga clic para ir a la Consola de Incidencias y filtrar los Errores Críticos / Altos"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-extrabold uppercase tracking-wider group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                  <Bug size={16} className="text-red-600 dark:text-red-400" />
+                  Errores Críticos / Altos
+                </div>
+                <span className="text-[0.65rem] font-bold text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Ver lista →
+                </span>
+              </div>
+              <div className="my-3">
+                <span className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-zinc-100 font-mono">
+                  {erroresCriticosAltos}
+                </span>
+              </div>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
+                de {totalErrores} errores totales evaluados
+              </span>
+            </div>
+
+            {/* 3. Incidencias Severidad Media */}
+            <div 
+              onClick={() => onNavigateIncidencias?.({ tipo: 'ERRORES', severidad: 'MEDIA' })}
+              className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-amber-500 dark:hover:border-amber-400 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              title="Haga clic para ir a la Consola de Incidencias y filtrar las Incidencias de Severidad Media"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-extrabold uppercase tracking-wider group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                  <AlertTriangle size={16} className="text-amber-500 dark:text-amber-400" />
+                  Severidad Media
+                </div>
+                <span className="text-[0.65rem] font-bold text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Ver lista →
+                </span>
+              </div>
+              <div className="my-3">
+                <span className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-zinc-100 font-mono">
+                  {erroresMedios}
+                </span>
+              </div>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
+                Riesgo moderado en flujo operativo
+              </span>
+            </div>
+
+            {/* 4. Incidencias Severidad Baja */}
+            <div 
+              onClick={() => onNavigateIncidencias?.({ tipo: 'ERRORES', severidad: 'BAJA' })}
+              className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 dark:hover:border-emerald-400 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              title="Haga clic para ir a la Consola de Incidencias y filtrar las Incidencias de Severidad Baja"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-extrabold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
+                  Severidad Baja
+                </div>
+                <span className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Ver lista →
+                </span>
+              </div>
+              <div className="my-3">
+                <span className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-zinc-100 font-mono">
+                  {erroresBajos}
+                </span>
+              </div>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
+                Ajustes menores y optimizaciones
+              </span>
+            </div>
+
           </div>
 
           {/* MATRIZ EXCLUSIVA EN VISTA GLOBAL: Salud y Nivel de Riesgo por Proyecto */}
