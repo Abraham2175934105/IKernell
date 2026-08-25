@@ -64,10 +64,8 @@ export const Navbar = () => {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled 
-        ? 'bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 shadow-md py-3' 
-        : 'bg-white/20 dark:bg-black/30 backdrop-blur-md border-b border-white/10 shadow-sm py-4'
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white dark:bg-zinc-950 border-b border-zinc-200/90 dark:border-zinc-800/90 ${
+      scrolled ? 'shadow-md py-3' : 'shadow-sm py-4'
     }`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex items-center justify-between">
         
