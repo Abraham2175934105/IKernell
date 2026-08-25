@@ -1532,17 +1532,6 @@ export const CoordinadorDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => { 
-                      setShowCreateModal(false); 
-                      setFormErrors({}); 
-                      setSelectedSkills([]); 
-                      setCustomSkillInput(''); 
-                    }} 
-                    className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  >
-                    <X size={20} />
-                  </button>
                 </div>
 
                 <form onSubmit={handleCrearTrabajador} className="space-y-4 text-xs" noValidate>
@@ -1837,12 +1826,6 @@ export const CoordinadorDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setSelectedSolicitudModal(null)} 
-                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               {/* Consulta Original del Lead */}

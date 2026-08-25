@@ -982,17 +982,8 @@ export const LiderDashboard = () => {
               Gestión WBS & Métricas
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight truncate flex items-center gap-2" title={proyectoSeleccionado?.nombre}>
-            {proyectoSeleccionado?.idProyecto === 'GLOBAL' ? (
-              <span className="flex items-center gap-2 truncate">
-                <Globe size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                <span>Vista Global Corporativa</span>
-              </span>
-            ) : (
-              <span className="truncate">
-                {proyectoSeleccionado?.nombre || (loadingProyectos ? 'Cargando proyectos...' : 'Panel del Líder')}
-              </span>
-            )}
+          <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight truncate flex items-center gap-2">
+            Consola de Gestión del Líder
           </h2>
         </div>
 
@@ -2254,9 +2245,6 @@ export const LiderDashboard = () => {
                 <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <UserCheck size={20} /> Asignar Tarea a Desarrollador
                 </h3>
-                <button onClick={() => { setShowAsignarModal(false); setFormErrors({}); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
-                  <X size={20} />
-                </button>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-[0.7rem] text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4 flex items-start gap-2">
@@ -2384,12 +2372,6 @@ export const LiderDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => { setShowAsignarDevModal(false); setAsignarDevError(null); }} 
-                  className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               {/* Banner de error si backend rechaza por sobreasignación (HTTP 400) */}
@@ -2539,9 +2521,6 @@ export const LiderDashboard = () => {
                 <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <Layers size={20} /> Registrar Nueva Etapa WBS
                 </h3>
-                <button onClick={() => setShowNuevaEtapaModal(false)} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
-                  <X size={20} />
-                </button>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-[0.7rem] text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4 flex items-start gap-2">
@@ -2602,9 +2581,6 @@ export const LiderDashboard = () => {
                 <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <RotateCcw size={20} /> Reasignar Tarea a Desarrollador
                 </h3>
-                <button onClick={() => setShowReasignarModal(false)} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
-                  <X size={20} />
-                </button>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs mb-4">
@@ -2709,9 +2685,6 @@ export const LiderDashboard = () => {
                     </span>
                   </div>
                 </div>
-                <button onClick={() => setShowAtenderModal(false)} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
-                  <X size={20} />
-                </button>
               </div>
 
               {/* Detalle del Reporte Original */}
@@ -3041,12 +3014,6 @@ export const LiderDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => { setShowNuevoProyectoModal(false); setNuevoProyectoErrors({}); }} 
-                  className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               <form onSubmit={handleCrearProyecto} className="space-y-4 text-xs" noValidate>
@@ -3491,14 +3458,6 @@ export const LiderDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setModalProyectosOpen(false)}
-                  className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  title="Cerrar (Esc)"
-                >
-                  <X size={18} />
-                </button>
               </div>
 
               {/* Barra de Búsqueda y Filtros Rápidos */}
@@ -3746,13 +3705,6 @@ export const LiderDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowFiltroFechasModal(false)}
-                  className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
               </div>
 
               {/* Preajustes Rápidos */}
@@ -3891,13 +3843,6 @@ export const LiderDashboard = () => {
                   <HelpCircle size={18} />
                   <span>Guía Rápida: Resolver Casos en 3 Pasos</span>
                 </div>
-                <button 
-                  type="button"
-                  onClick={() => setShowGuiaModal(false)} 
-                  className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors cursor-pointer"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               <div className="space-y-3.5 text-xs">
