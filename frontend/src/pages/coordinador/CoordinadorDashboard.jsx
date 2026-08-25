@@ -721,6 +721,13 @@ export const CoordinadorDashboard = () => {
         dot: 'bg-amber-500'
       };
     }
+    if (est === 'REASIGNADA') {
+      return {
+        label: 'REASIGNADA',
+        badge: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800',
+        dot: 'bg-indigo-500'
+      };
+    }
     return {
       label: 'PENDIENTE',
       badge: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800',
@@ -1813,6 +1820,24 @@ export const CoordinadorDashboard = () => {
                     {solicitudes.filter(s => s.estado === 'REABIERTA').length}
                   </span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltroSolicitudes('REASIGNADA')}
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
+                    filtroSolicitudes === 'REASIGNADA'
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 scale-[1.02]'
+                      : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 hover:bg-indigo-100'
+                  }`}
+                >
+                  <RefreshCw size={13} />
+                  <span>Reasignadas</span>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                    filtroSolicitudes === 'REASIGNADA' ? 'bg-white/20 font-extrabold' : 'bg-indigo-100 dark:bg-indigo-900/60'
+                  }`}>
+                    {solicitudes.filter(s => s.estado === 'REASIGNADA').length}
+                  </span>
+                </button>
               </div>
 
               {/* Control Integrado de Fechas Exigentes & Accesos Rápidos (Derecha) */}
@@ -1965,6 +1990,27 @@ export const CoordinadorDashboard = () => {
                       <div className="flex flex-col gap-1 text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">
                         <div className="flex items-center gap-1.5 truncate"><Mail size={12} className="shrink-0 text-zinc-400" /> <span className="truncate">{sol.emailRemitente}</span></div>
                         {sol.telefono && <div className="flex items-center gap-1.5"><Phone size={12} className="shrink-0 text-zinc-400" /> <span>{sol.telefono}</span></div>}
+                      </div>
+
+                      {/* Badge Destacado: Coordinador Atención / Auditoría de Responsable */}
+                      <div className="pt-2 pb-1 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                        <span className="text-[0.62rem] font-bold uppercase text-zinc-400 font-mono">
+                          Coordinador Responsable:
+                        </span>
+                        {sol.coordinador ? (
+                          <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2.5 py-0.5 rounded-xl">
+                            <div className="w-4 h-4 rounded-full bg-blue-600 text-white font-extrabold text-[0.55rem] flex items-center justify-center">
+                              {getInitials(sol.coordinador.nombre, sol.coordinador.apellido)}
+                            </div>
+                            <span className="text-[0.68rem] font-extrabold text-blue-700 dark:text-blue-300">
+                              {sol.coordinador.nombre} {sol.coordinador.apellido}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[0.65rem] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-xl border border-amber-200 dark:border-amber-800">
+                            <Clock size={10} /> Sin Asignar (Pendiente)
+                          </span>
+                        )}
                       </div>
 
                       {/* Bloque Informativo: Notas de Atención Registradas */}
