@@ -486,6 +486,13 @@ export const CoordinadorDashboard = () => {
     setSelectedSkills(prev => prev.filter(s => s !== skillToRemove));
   };
 
+  // Modal de Reasignación Obligatoria de Proyectos al inhabilitar un Líder
+  const [showReasignarLiderModal, setShowReasignarLiderModal] = useState(false);
+  const [liderAInhabilitar, setLiderAInhabilitar] = useState(null);
+  const [proyectosDelLiderAfectado, setProyectosDelLiderAfectado] = useState([]);
+  const [nuevoLiderTargetId, setNuevoLiderTargetId] = useState('');
+  const [submittingReasignacionLider, setSubmittingReasignacionLider] = useState(false);
+
   // Manejadores de eventos (Handlers) - Soft Delete / Toggle Estado Lógico
   const handleInhabilitar = async (id) => {
     // Regla de Negocio: Bloqueo de auto-inhabilitación del usuario autenticado
