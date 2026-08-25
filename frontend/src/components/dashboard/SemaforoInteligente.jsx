@@ -20,11 +20,12 @@ const normalizarNivelSemaforo = (nivel) => {
   return 'VERDE';
 };
 
-const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportSuccess }) => {
+const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onNavigateIncidencias, onEtlExportSuccess, onSelectProyecto }) => {
   const api = useApi();
   
   // Estados locales
   const [metrics, setMetrics] = useState(null);
+  const [listaProyectosGlobal, setListaProyectosGlobal] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [etlResult, setEtlResult] = useState(null);
@@ -44,11 +45,17 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
   const cargarMetricas = useCallback(async () => {
     try {
       setLoading(true);
-      const url = isGlobal 
-        ? '/lider/proyectos/global/metricas-semaforo' 
-        : `/lider/proyectos/${targetId}/metricas-semaforo`;
-      const data = await api.get(url);
-      setMetrics(data && typeof data === 'object' ? data : null);
+      if (isGlobal) {
+        const [data, listProyectos] = await Promise.all([
+          api.get('/lider/proyectos/global/metricas-semaforo').catch(() => null),
+          api.get('/lider/proyectos').catch(() => [])
+        ]);
+        setMetrics(data && typeof data === 'object' ? data : null);
+        setListaProyectosGlobal(Array.isArray(listProyectos) ? listProyectos : []);
+      } else {
+        const data = await api.get(`/lider/proyectos/${targetId}/metricas-semaforo`);
+        setMetrics(data && typeof data === 'object' ? data : null);
+      }
     } catch (err) {
       console.error('Error cargando métricas del Semáforo:', err);
       toast.error('Error al sincronizar métricas predictivas desde PostgreSQL.');
@@ -237,131 +244,198 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-stretch">
-          
-          {/* 1. Tarjeta Principal del Semáforo (Nivel Visual) */}
-          <div className="lg:col-span-5 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 md:p-8 flex flex-col justify-center items-center text-center bg-white dark:bg-zinc-900 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-md ${nivelConfig.iconBg}`}>
-              <LevelIcon size={38} />
-            </div>
-
-            <span className={`inline-flex items-center gap-2 text-xs font-black tracking-wider uppercase px-3.5 py-1.5 rounded-full border mb-2 shadow-2xs ${nivelConfig.badge}`}>
-              <span className={`w-3 h-3 rounded-full ${nivelConfig.dotColor} shrink-0`} />
-              <span>{nivelConfig.label}</span>
-            </span>
-
-            <h4 className="text-xl font-extrabold mb-1.5 text-zinc-900 dark:text-zinc-100">
-              {metrics?.titulo || (isGlobal ? 'Salud Organizacional Estable' : 'Proyecto Estable')}
-            </h4>
-
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium max-w-xs leading-relaxed">
-              Cálculo automatizado sobre <strong>{totalErrores + totalInterrupciones}</strong> métricas operativas persistidas en PostgreSQL.
-            </p>
-          </div>
-
-          {/* 2. Grid de Indicadores Cuantitativos & Gráfico */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-stretch">
             
-            {/* Horas de Contingencia Interactivas */}
-            <div 
-              onClick={() => onNavigateIncidencias?.({ tipo: 'INTERRUPCIONES' })}
-              className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-3xl flex flex-col justify-between p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
-              title="Haga clic para ver el detalle de interrupciones y contingencias en la Consola de Incidencias"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  <Clock size={15} className="text-blue-600 dark:text-blue-400" />
-                  {isGlobal ? 'Horas Corporativas Perdidas' : 'Horas de Contingencia'}
-                </div>
-                <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Ver lista →
-                </span>
+            {/* 1. Tarjeta Principal del Semáforo (Nivel Visual Ampliado en Modo Global) */}
+            <div className={`${isGlobal ? 'lg:col-span-5 p-8 md:p-10' : 'lg:col-span-5 p-6 md:p-8'} border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col justify-center items-center text-center bg-white dark:bg-zinc-900 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all relative overflow-hidden group`}>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:bg-blue-500/10 transition-colors" />
+              
+              <div className={`${isGlobal ? 'w-24 h-24 sm:w-28 sm:h-28' : 'w-20 h-20'} rounded-full flex items-center justify-center mb-4 shadow-md ${nivelConfig.iconBg} relative`}>
+                <LevelIcon size={isGlobal ? 48 : 38} />
               </div>
-              <div className="my-2">
-                <span className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-zinc-100">
-                  {totalHoras}h
-                </span>
-              </div>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
-                {totalInterrupciones} eventos registrados en PostgreSQL
+
+              <span className={`inline-flex items-center gap-2 text-xs font-black tracking-wider uppercase px-4 py-1.5 rounded-full border mb-3 shadow-2xs ${nivelConfig.badge}`}>
+                <span className={`w-3 h-3 rounded-full ${nivelConfig.dotColor} shrink-0`} />
+                <span>{nivelConfig.label}</span>
               </span>
+
+              <h4 className={`${isGlobal ? 'text-2xl sm:text-3xl' : 'text-xl'} font-extrabold mb-1.5 text-zinc-900 dark:text-zinc-100 tracking-tight`}>
+                {metrics?.titulo || (isGlobal ? 'Salud Organizacional Estable' : 'Proyecto Estable')}
+              </h4>
+
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium max-w-xs leading-relaxed">
+                Cálculo automatizado sobre <strong>{totalErrores + totalInterrupciones}</strong> métricas operativas en PostgreSQL.
+              </p>
             </div>
 
-            {/* Errores Críticos / Altos Interactivos */}
-            <div 
-              onClick={() => onNavigateIncidencias?.({ tipo: 'ERRORES', severidad: 'CRITICA_ALTA' })}
-              className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-red-500 dark:hover:border-red-400 rounded-3xl flex flex-col justify-between p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
-              title="Haga clic para ir a la Consola de Incidencias y filtrar los Errores Críticos / Altos"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                  <Bug size={15} className="text-red-600 dark:text-red-400" />
-                  Errores Críticos / Altos
-                </div>
-                <span className="text-[0.65rem] font-bold text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Ver lista →
-                </span>
-              </div>
-              <div className="my-2">
-                <span className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-zinc-100">
-                  {erroresCriticos}
-                </span>
-              </div>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
-                de {totalErrores} errores totales evaluados
-              </span>
-            </div>
-
-            {/* Gráfico de Distribución Real de Severidad */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl sm:col-span-2 p-5 flex flex-col sm:flex-row items-center gap-6 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all">
-              {pieData.length > 0 ? (
-                <>
-                  <div className="w-full sm:w-1/2 h-36">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={28}
-                          outerRadius={46}
-                          paddingAngle={4}
-                          dataKey="value"
-                        >
-                          {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip 
-                          contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '12px', color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}
-                          itemStyle={{ color: '#ffffff' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+            {/* 2. Grid de Indicadores Cuantitativos Ampliados & Gráfico */}
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              
+              {/* Horas de Contingencia Interactivas */}
+              <div 
+                onClick={() => onNavigateIncidencias?.({ tipo: 'INTERRUPCIONES' })}
+                className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                title="Haga clic para ver el detalle de interrupciones y contingencias en la Consola de Incidencias"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <Clock size={16} className="text-blue-600 dark:text-blue-400" />
+                    {isGlobal ? 'Horas Corporativas Perdidas' : 'Horas de Contingencia'}
                   </div>
-                  <div className="w-full sm:w-1/2 flex flex-col justify-center gap-2 text-xs">
-                    <h5 className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider mb-1">
-                      Distribución Real de Severidad
-                    </h5>
-                    {pieData.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between py-1 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                          <span className="font-medium text-zinc-600 dark:text-zinc-400">{item.name}:</span>
+                  <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Ver lista →
+                  </span>
+                </div>
+                <div className="my-3">
+                  <span className={`${isGlobal ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl'} font-black text-zinc-900 dark:text-zinc-100 font-mono`}>
+                    {totalHoras}h
+                  </span>
+                </div>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
+                  {totalInterrupciones} eventos de contingencia registrados
+                </span>
+              </div>
+
+              {/* Errores Críticos / Altos Interactivos */}
+              <div 
+                onClick={() => onNavigateIncidencias?.({ tipo: 'ERRORES', severidad: 'CRITICA_ALTA' })}
+                className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-red-500 dark:hover:border-red-400 rounded-3xl flex flex-col justify-between p-6 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                title="Haga clic para ir a la Consola de Incidencias y filtrar los Errores Críticos / Altos"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                    <Bug size={16} className="text-red-600 dark:text-red-400" />
+                    Errores Críticos / Altos
+                  </div>
+                  <span className="text-[0.65rem] font-bold text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Ver lista →
+                  </span>
+                </div>
+                <div className="my-3">
+                  <span className={`${isGlobal ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl'} font-black text-zinc-900 dark:text-zinc-100 font-mono`}>
+                    {erroresCriticos}
+                  </span>
+                </div>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
+                  de {totalErrores} errores totales evaluados
+                </span>
+              </div>
+
+              {/* Gráfico de Distribución Real de Severidad */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl sm:col-span-2 p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all">
+                {pieData.length > 0 ? (
+                  <>
+                    <div className="w-full sm:w-1/2 h-40">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={32}
+                            outerRadius={52}
+                            paddingAngle={4}
+                            dataKey="value"
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip 
+                            contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '12px', color: '#ffffff', fontSize: '12px', fontWeight: 'bold' }}
+                            itemStyle={{ color: '#ffffff' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="w-full sm:w-1/2 flex flex-col justify-center gap-2 text-xs">
+                      <h5 className="font-extrabold text-zinc-900 dark:text-white uppercase tracking-wider mb-1">
+                        Distribución Real de Severidad
+                      </h5>
+                      {pieData.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between py-1 border-b border-zinc-100 dark:border-zinc-800">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                            <span className="font-medium text-zinc-600 dark:text-zinc-400">{item.name}:</span>
+                          </div>
+                          <span className="font-bold text-zinc-900 dark:text-white font-mono">{item.value}</span>
                         </div>
-                        <span className="font-bold text-zinc-900 dark:text-white font-mono">{item.value}</span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full text-center text-zinc-500 dark:text-zinc-400 text-xs py-6 font-medium">
+                    No hay incidencias reportadas en el alcance seleccionado.
                   </div>
-                </>
-              ) : (
-                <div className="w-full text-center text-zinc-500 dark:text-zinc-400 text-xs py-6 font-medium">
-                  No hay incidencias reportadas en el alcance seleccionado.
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
+            </div>
           </div>
+
+          {/* MATRIZ EXCLUSIVA EN VISTA GLOBAL: Salud y Nivel de Riesgo por Proyecto */}
+          {isGlobal && listaProyectosGlobal && listaProyectosGlobal.length > 0 && (
+            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <h4 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <Activity size={18} className="text-blue-600 dark:text-blue-400" />
+                    Monitoreo Individual de Salud por Proyecto
+                  </h4>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                    Supervisión consolidada de los {listaProyectosGlobal.length} proyectos activos en la plataforma.
+                  </p>
+                </div>
+                <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-mono">
+                  {listaProyectosGlobal.length} Proyectos Evaluados
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {listaProyectosGlobal.map((p) => {
+                  const isFin = p.estado === 'FINALIZADO' || p.estado === 'COMPLETADO';
+                  return (
+                    <div
+                      key={p.idProyecto}
+                      onClick={() => onSelectProyecto && onSelectProyecto(p)}
+                      className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-3 group"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <span className="text-[0.65rem] font-mono font-black text-blue-600 dark:text-blue-400">
+                            #PRJ-00{p.idProyecto}
+                          </span>
+                          <span className={`text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-full border ${
+                            isFin 
+                              ? 'bg-zinc-100 text-zinc-600 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-400' 
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                          }`}>
+                            {p.estado || 'ACTIVO'}
+                          </span>
+                        </div>
+                        <h5 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
+                          {p.nombre}
+                        </h5>
+                        <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium truncate mt-0.5">
+                          {p.cliente || 'Organización Interna'}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+                        <span className="font-mono text-zinc-600 dark:text-zinc-400 text-[0.7rem] font-bold">
+                          ${Number(p.presupuesto || 0).toLocaleString('en-US')}
+                        </span>
+                        <span className="text-[0.68rem] font-bold text-blue-600 dark:text-blue-400 group-hover:underline flex items-center gap-1">
+                          Inspeccionar →
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

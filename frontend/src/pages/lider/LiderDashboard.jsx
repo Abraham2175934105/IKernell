@@ -1994,6 +1994,7 @@ export const LiderDashboard = () => {
               idProyecto={proyectoSeleccionado?.idProyecto || 'GLOBAL'} 
               proyectoNombre={proyectoSeleccionado?.nombre || 'Todos los Proyectos'}
               onNavigateIncidencias={handleNavigateIncidencias}
+              onSelectProyecto={seleccionarProyecto}
             />
           </ErrorBoundary>
         </motion.div>
