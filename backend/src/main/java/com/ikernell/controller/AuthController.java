@@ -18,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 // Controlador de autenticación pública y recepción de solicitudes de contacto
@@ -33,17 +34,20 @@ public class AuthController {
     private final SolicitudContactoRepository solicitudContactoRepository;
 
     private final TokenBlacklistService tokenBlacklistService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(AuthenticationManager authenticationManager, 
                           JwtUtils jwtUtils, 
                           TrabajadorRepository trabajadorRepository,
                           SolicitudContactoRepository solicitudContactoRepository,
-                          TokenBlacklistService tokenBlacklistService) {
+                          TokenBlacklistService tokenBlacklistService,
+                          PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.trabajadorRepository = trabajadorRepository;
         this.solicitudContactoRepository = solicitudContactoRepository;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // Valida las credenciales del usuario y emite un token JWT si son correctas
@@ -70,7 +74,65 @@ public class AuthController {
                 trabajador.getNombre(),
                 trabajador.getApellido(),
                 trabajador.getEmail(),
-                trabajador.getRol()
+                trabajador.getEmailPersonal(),
+                trabajador.getIdentificacion(),
+                trabajador.getProfesion(),
+                trabajador.getEspecialidad(),
+                trabajador.getRol(),
+                trabajador.getPrimerLogin()
+        );
+
+        return ResponseEntity.ok(authResponse);
+    }
+
+    // Completa la verificación obligatoria de datos y el cambio de clave en el primer inicio de sesión
+    @PostMapping("/completar-primer-login")
+    @Operation(summary = "Verificar datos y cambiar clave obligatoria en primer acceso", description = "Permite actualizar perfil (salvo correo corporativo), establece contraseña definitiva y desactiva primerLogin")
+    public ResponseEntity<AuthResponse> completarPrimerLogin(@Valid @RequestBody com.ikernell.dto.PrimerLoginRequest request) {
+        Trabajador trabajador = trabajadorRepository.findById(request.getIdTrabajador())
+                .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + request.getIdTrabajador()));
+
+        // Actualizar datos permitidos (el correo corporativo es INMUTABLE)
+        trabajador.setNombre(request.getNombre().trim());
+        trabajador.setApellido(request.getApellido().trim());
+        trabajador.setIdentificacion(request.getIdentificacion().trim());
+        if (request.getEmailPersonal() != null) {
+            trabajador.setEmailPersonal(request.getEmailPersonal().trim());
+        }
+        if (request.getProfesion() != null) {
+            trabajador.setProfesion(request.getProfesion().trim());
+        }
+        if (request.getEspecialidad() != null) {
+            trabajador.setEspecialidad(request.getEspecialidad().trim());
+        }
+
+        // Establecer contraseña definitiva
+        trabajador.setPasswordHash(passwordEncoder.encode(request.getNuevaPassword().trim()));
+        trabajador.setPrimerLogin(false);
+
+        Trabajador guardado = trabajadorRepository.save(trabajador);
+
+        // Re-autenticar o generar nuevo token
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                guardado.getEmail(),
+                null,
+                java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + guardado.getRol().name()))
+        );
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        String jwt = jwtUtils.generateToken(authenticationToken);
+
+        AuthResponse authResponse = new AuthResponse(
+                jwt,
+                guardado.getIdTrabajador(),
+                guardado.getNombre(),
+                guardado.getApellido(),
+                guardado.getEmail(),
+                guardado.getEmailPersonal(),
+                guardado.getIdentificacion(),
+                guardado.getProfesion(),
+                guardado.getEspecialidad(),
+                guardado.getRol(),
+                false
         );
 
         return ResponseEntity.ok(authResponse);

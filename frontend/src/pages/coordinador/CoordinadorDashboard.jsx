@@ -618,12 +618,22 @@ export const CoordinadorDashboard = () => {
           : `[${skillsFormatted}]`;
       }
 
+      let emailFinal = newTrabajador.email.trim();
+      if (!emailFinal.toLowerCase().endsWith('@ikernell.org')) {
+        if (emailFinal.includes('@')) {
+          emailFinal = emailFinal.substring(0, emailFinal.indexOf('@')) + '@ikernell.org';
+        } else {
+          emailFinal = emailFinal + '@ikernell.org';
+        }
+      }
+
       const nuevo = await api.post('/coordinador/trabajadores', {
         ...newTrabajador,
         identificacion: newTrabajador.identificacion.trim(),
         nombre: newTrabajador.nombre.trim(),
         apellido: newTrabajador.apellido.trim(),
-        email: newTrabajador.email.trim(),
+        email: emailFinal,
+        emailPersonal: newTrabajador.emailPersonal ? newTrabajador.emailPersonal.trim() : '',
         profesion: newTrabajador.profesion.trim() || 'Ingeniero de Software',
         especialidad: especialidadFinal || 'Desarrollador General',
         rol: newTrabajador.rol,
@@ -631,13 +641,14 @@ export const CoordinadorDashboard = () => {
       });
 
       setTrabajadores([nuevo, ...trabajadores]);
-      toast.success(`Colaborador ${nuevo.nombre} ${nuevo.apellido} registrado exitosamente en PostgreSQL.`);
+      toast.success(`Colaborador ${nuevo.nombre} ${nuevo.apellido} registrado exitosamente. Credenciales temporales enviadas a ${nuevo.emailPersonal || emailFinal}.`);
       setShowCreateModal(false);
       setNewTrabajador({
         identificacion: '',
         nombre: '',
         apellido: '',
         email: '',
+        emailPersonal: '',
         profesion: '',
         especialidad: '',
         rol: 'DESARROLLADOR',
@@ -2202,10 +2213,15 @@ export const CoordinadorDashboard = () => {
                       </label>
                       <div className="relative">
                         <input
-                          type="email"
+                          type="text"
                           required
                           value={newTrabajador.email}
                           onChange={(e) => { setNewTrabajador({ ...newTrabajador, email: e.target.value }); setFormErrors(p => ({ ...p, email: undefined })); }}
+                          onBlur={() => {
+                            if (newTrabajador.email && !newTrabajador.email.includes('@')) {
+                              setNewTrabajador(prev => ({ ...prev, email: `${prev.email.trim()}@ikernell.org` }));
+                            }
+                          }}
                           placeholder="correo.corporativo@ikernell.org"
                           className={`input-field py-2 text-xs font-mono pr-9 ${
                             newTrabajador.email ? (emailValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
@@ -2222,6 +2238,24 @@ export const CoordinadorDashboard = () => {
                           {emailValidationResult.message}
                         </p>
                       )}
+                    </div>
+
+                    {/* Correo Electrónico Personal / Alternativo */}
+                    <div>
+                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                        Correo Electrónico Personal / Alternativo *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={newTrabajador.emailPersonal || ''}
+                        onChange={(e) => setNewTrabajador({ ...newTrabajador, emailPersonal: e.target.value })}
+                        placeholder="correo.personal@gmail.com"
+                        className="input-field py-2 text-xs font-semibold"
+                      />
+                      <p className="text-[0.65rem] text-zinc-500 font-medium mt-1">
+                        Las credenciales temporales de acceso inicial se enviarán a este correo alternativo.
+                      </p>
                     </div>
 
                     {/* Campo de Contraseña de Acceso Inicial y Generador de Clave Segura */}

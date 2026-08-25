@@ -48,6 +48,12 @@ public class Trabajador {
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 
+    @Column(name = "email_personal", length = 100)
+    private String emailPersonal;
+
+    @Column(name = "primer_login", nullable = false)
+    private Boolean primerLogin = true;
+
     @com.fasterxml.jackson.annotation.JsonIgnore
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
@@ -182,6 +188,22 @@ public class Trabajador {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getEmailPersonal() {
+        return emailPersonal;
+    }
+
+    public void setEmailPersonal(String emailPersonal) {
+        this.emailPersonal = emailPersonal;
+    }
+
+    public Boolean getPrimerLogin() {
+        return primerLogin;
+    }
+
+    public void setPrimerLogin(Boolean primerLogin) {
+        this.primerLogin = primerLogin;
     }
 
     public String getPasswordHash() {

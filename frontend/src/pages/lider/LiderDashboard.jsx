@@ -1341,18 +1341,28 @@ export const LiderDashboard = () => {
       return;
     }
 
+    let emailFinal = nuevoColaboradorForm.email.trim();
+    if (!emailFinal.toLowerCase().endsWith('@ikernell.org')) {
+      if (emailFinal.includes('@')) {
+        emailFinal = emailFinal.substring(0, emailFinal.indexOf('@')) + '@ikernell.org';
+      } else {
+        emailFinal = emailFinal + '@ikernell.org';
+      }
+    }
+
     setSubmittingNuevoColaborador(true);
     try {
       const res = await api.post('/lider/trabajadores', {
         ...nuevoColaboradorForm,
         nombre: nuevoColaboradorForm.nombre.trim(),
         apellido: nuevoColaboradorForm.apellido.trim(),
-        email: nuevoColaboradorForm.email.trim(),
+        email: emailFinal,
+        emailPersonal: nuevoColaboradorForm.emailPersonal ? nuevoColaboradorForm.emailPersonal.trim() : '',
         identificacion: nuevoColaboradorForm.identificacion.trim()
       });
 
       const rolTexto = res.rol && res.rol.toUpperCase().includes('LIDER') ? 'Líder de Proyecto' : 'Desarrollador';
-      toast.success(`Colaborador ${res.nombre} ${res.apellido} (${rolTexto}) registrado exitosamente.`);
+      toast.success(`Colaborador ${res.nombre} ${res.apellido} (${rolTexto}) registrado exitosamente. Credenciales temporales enviadas a ${res.emailPersonal || emailFinal}.`);
       setShowNuevoColaboradorModal(false);
 
       // Recargar nómina
@@ -5477,17 +5487,47 @@ export const LiderDashboard = () => {
                 </div>
 
                 <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Correo Electrónico Corporativo *
+                    </label>
+                    <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400">
+                      Dominio Corporativo (@ikernell.org)
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={nuevoColaboradorForm.email}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      setNuevoColaboradorForm({ ...nuevoColaboradorForm, email: val });
+                    }}
+                    onBlur={() => {
+                      if (nuevoColaboradorForm.email && !nuevoColaboradorForm.email.includes('@')) {
+                        setNuevoColaboradorForm(prev => ({ ...prev, email: `${prev.email.trim()}@ikernell.org` }));
+                      }
+                    }}
+                    className="input-field w-full py-2 text-xs font-semibold"
+                    placeholder="m.fernandez@ikernell.org (Escriba el nombre o correo)"
+                  />
+                </div>
+
+                <div className="space-y-1">
                   <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                    Correo Electrónico Corporativo *
+                    Correo Electrónico Personal / Alternativo *
                   </label>
                   <input
                     type="email"
                     required
-                    value={nuevoColaboradorForm.email}
-                    onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, email: e.target.value })}
+                    value={nuevoColaboradorForm.emailPersonal}
+                    onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, emailPersonal: e.target.value })}
                     className="input-field w-full py-2 text-xs font-semibold"
-                    placeholder="m.fernandez@ikernell.com"
+                    placeholder="m.fernandez.pers@gmail.com"
                   />
+                  <p className="text-[0.65rem] text-zinc-500 font-medium">
+                    Las credenciales temporales de acceso inicial se enviarán a este correo alternativo.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -44,6 +44,23 @@ public class CoordinadorService {
 
     // Registra un nuevo empleado cifrando la contraseña con BCrypt
     public Trabajador registrarTrabajador(Trabajador trabajador) {
+        // Auto-completado de dominio corporativo si falta @ikernell.org
+        if (trabajador.getEmail() != null) {
+            String cleanEmail = trabajador.getEmail().trim();
+            if (!cleanEmail.toLowerCase().endsWith("@ikernell.org")) {
+                if (cleanEmail.contains("@")) {
+                    cleanEmail = cleanEmail.substring(0, cleanEmail.indexOf("@")) + "@ikernell.org";
+                } else {
+                    cleanEmail = cleanEmail + "@ikernell.org";
+                }
+            }
+            trabajador.setEmail(cleanEmail);
+        }
+
+        if (trabajador.getEmailPersonal() != null) {
+            trabajador.setEmailPersonal(trabajador.getEmailPersonal().trim());
+        }
+
         // Validaciones
         String rawPassword = (trabajador.getPasswordHash() != null && !trabajador.getPasswordHash().isBlank())
                 ? trabajador.getPasswordHash()
@@ -52,6 +69,7 @@ public class CoordinadorService {
         // Persistencia
         trabajador.setPasswordHash(passwordEncoder.encode(rawPassword));
         trabajador.setEstado(true);
+        trabajador.setPrimerLogin(true);
         return trabajadorRepository.save(trabajador);
     }
 

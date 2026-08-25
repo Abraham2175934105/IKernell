@@ -49,9 +49,26 @@ public class LiderService {
         if (trabajador.getRol() == null) {
             throw new IllegalArgumentException("El rol del trabajador es obligatorio.");
         }
-        String rolNorm = trabajador.getRol().trim().toUpperCase();
+        String rolNorm = trabajador.getRol().name().toUpperCase();
         if (!rolNorm.contains("LIDER") && !rolNorm.contains("DESARROLLADOR")) {
             throw new IllegalArgumentException("Los líderes solo tienen autorización para registrar colaboradores con rol Líder o Desarrollador.");
+        }
+
+        // Auto-completado de dominio corporativo si falta @ikernell.org
+        if (trabajador.getEmail() != null) {
+            String cleanEmail = trabajador.getEmail().trim();
+            if (!cleanEmail.toLowerCase().endsWith("@ikernell.org")) {
+                if (cleanEmail.contains("@")) {
+                    cleanEmail = cleanEmail.substring(0, cleanEmail.indexOf("@")) + "@ikernell.org";
+                } else {
+                    cleanEmail = cleanEmail + "@ikernell.org";
+                }
+            }
+            trabajador.setEmail(cleanEmail);
+        }
+
+        if (trabajador.getEmailPersonal() != null) {
+            trabajador.setEmailPersonal(trabajador.getEmailPersonal().trim());
         }
 
         String rawPassword = (trabajador.getPasswordHash() != null && !trabajador.getPasswordHash().isBlank())
@@ -60,6 +77,7 @@ public class LiderService {
 
         trabajador.setPasswordHash(passwordEncoder.encode(rawPassword));
         trabajador.setEstado(true);
+        trabajador.setPrimerLogin(true);
         return trabajadorRepository.save(trabajador);
     }
 

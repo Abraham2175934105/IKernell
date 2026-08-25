@@ -1,6 +1,7 @@
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AppRouter } from './router/AppRouter';
+import { PrimerLoginModal } from './components/auth/PrimerLoginModal';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           },
         }}
       />
+      <PrimerLoginModal />
       <AppRouter />
     </>
   );
