@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
@@ -7,7 +7,7 @@ import {
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
-  ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key
+  ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -63,6 +63,138 @@ const ROLE_SKILL_PROFILES = {
     iconName: 'Shield'
   }
 };
+
+// Validador Estricto de Documentos de Identificación por País / Algoritmos Nacionales
+const PAISES_IDENTIFICACION = [
+  { 
+    code: 'CO', 
+    nombre: 'Colombia', 
+    docTipo: 'Cédula de Ciudadanía (CC)', 
+    flag: '🇨🇴',
+    placeholder: 'Ej. 1018459203 (6 a 10 dígitos numéricos)',
+    validate: (val) => {
+      const clean = val.trim();
+      if (!clean) return { valid: false, message: 'Ingrese la cédula de ciudadanía.' };
+      if (!/^\d+$/.test(clean)) return { valid: false, message: 'La cédula colombiana debe contener únicamente dígitos numéricos.' };
+      if (clean.length < 6 || clean.length > 10) return { valid: false, message: 'La cédula debe contener entre 6 y 10 dígitos numéricos.' };
+      return { valid: true, message: 'Cédula de Ciudadanía Válida [Colombia]' };
+    }
+  },
+  { 
+    code: 'MX', 
+    nombre: 'México', 
+    docTipo: 'CURP / INE', 
+    flag: '🇲🇽',
+    placeholder: 'Ej. VECJ880326HDFRRN09 (18 caracteres)',
+    validate: (val) => {
+      const clean = val.trim().toUpperCase();
+      if (!clean) return { valid: false, message: 'Ingrese la clave CURP.' };
+      const curpRegex = /^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d$/;
+      if (!curpRegex.test(clean)) return { valid: false, message: 'Formato de CURP inválido (4 letras + 6 números + H/M + 5 letras + homoclave).' };
+      return { valid: true, message: 'CURP Válido [México]' };
+    }
+  },
+  { 
+    code: 'ES', 
+    nombre: 'España', 
+    docTipo: 'DNI / NIE', 
+    flag: '🇪🇸',
+    placeholder: 'Ej. 12345678Z (8 números + 1 letra control)',
+    validate: (val) => {
+      const clean = val.trim().toUpperCase();
+      if (!clean) return { valid: false, message: 'Ingrese el DNI / NIE.' };
+      const dniRegex = /^\d{8}[A-Z]$/;
+      if (!dniRegex.test(clean)) return { valid: false, message: 'Formato DNI inválido (debe tener 8 números y 1 letra final de control).' };
+      const letras = 'TRWAGMYFPDXBNJZSQVHLCKE';
+      const num = parseInt(clean.substring(0, 8), 10);
+      const letraEsperada = letras[num % 23];
+      if (clean.charAt(8) !== letraEsperada) {
+        return { valid: false, message: `Letra de control incorrecta. Se esperaba '${letraEsperada}' para ese número DNI.` };
+      }
+      return { valid: true, message: 'DNI Válido [España]' };
+    }
+  },
+  { 
+    code: 'CL', 
+    nombre: 'Chile', 
+    docTipo: 'RUT / RUN', 
+    flag: '🇨🇱',
+    placeholder: 'Ej. 12345678-K (7-8 dígitos + dígito verificador)',
+    validate: (val) => {
+      const clean = val.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase();
+      if (!clean) return { valid: false, message: 'Ingrese el RUT chileno.' };
+      if (!/^\d{7,8}[0-9K]$/.test(clean)) return { valid: false, message: 'Formato RUT inválido (7 u 8 números más dígito verificador 0-9 o K).' };
+      const body = clean.slice(0, -1);
+      let dv = clean.slice(-1);
+      let suma = 0;
+      let multiplicador = 2;
+      for (let i = body.length - 1; i >= 0; i--) {
+        suma += parseInt(body.charAt(i), 10) * multiplicador;
+        multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+      }
+      const resto = 11 - (suma % 11);
+      let dvEsperado = 'K';
+      if (resto === 11) dvEsperado = '0';
+      else if (resto === 10) dvEsperado = 'K';
+      else dvEsperado = String(resto);
+
+      if (dv !== dvEsperado) return { valid: false, message: `Dígito verificador RUT inválido. Se esperaba '${dvEsperado}'.` };
+      return { valid: true, message: 'RUT Válido [Chile]' };
+    }
+  },
+  { 
+    code: 'PE', 
+    nombre: 'Perú', 
+    docTipo: 'DNI', 
+    flag: '🇵🇪',
+    placeholder: 'Ej. 72849102 (8 dígitos numéricos)',
+    validate: (val) => {
+      const clean = val.trim();
+      if (!clean) return { valid: false, message: 'Ingrese el DNI peruano.' };
+      if (!/^\d{8}$/.test(clean)) return { valid: false, message: 'El DNI peruano debe contener exactamente 8 dígitos numéricos.' };
+      return { valid: true, message: 'DNI Válido [Perú]' };
+    }
+  },
+  { 
+    code: 'AR', 
+    nombre: 'Argentina', 
+    docTipo: 'DNI', 
+    flag: '🇦🇷',
+    placeholder: 'Ej. 40182938 (7 u 8 dígitos numéricos)',
+    validate: (val) => {
+      const clean = val.trim();
+      if (!clean) return { valid: false, message: 'Ingrese el DNI argentino.' };
+      if (!/^\d{7,8}$/.test(clean)) return { valid: false, message: 'El DNI argentino debe contener entre 7 y 8 dígitos numéricos.' };
+      return { valid: true, message: 'DNI Válido [Argentina]' };
+    }
+  },
+  { 
+    code: 'US', 
+    nombre: 'Estados Unidos', 
+    docTipo: 'SSN / Tax ID', 
+    flag: '🇺🇸',
+    placeholder: 'Ej. 123-45-6789 (9 dígitos numéricos)',
+    validate: (val) => {
+      const clean = val.replace(/-/g, '').trim();
+      if (!clean) return { valid: false, message: 'Ingrese el SSN.' };
+      if (!/^\d{9}$/.test(clean)) return { valid: false, message: 'El SSN debe contener exactamente 9 dígitos numéricos.' };
+      return { valid: true, message: 'SSN / Tax ID Válido [Estados Unidos]' };
+    }
+  },
+  { 
+    code: 'INT', 
+    nombre: 'Internacional / Pasaporte', 
+    docTipo: 'Pasaporte / ID Global', 
+    flag: '🌐',
+    placeholder: 'Ej. PA8492019 (6 a 15 caracteres alfanuméricos)',
+    validate: (val) => {
+      const clean = val.trim();
+      if (!clean) return { valid: false, message: 'Ingrese el número de pasaporte.' };
+      if (!/^[a-zA-Z0-9]{6,15}$/.test(clean)) return { valid: false, message: 'El pasaporte debe contener entre 6 y 15 caracteres alfanuméricos.' };
+      return { valid: true, message: 'Pasaporte / ID Internacional Válido' };
+    }
+  }
+];
 
 // Variantes de animación de alto rendimiento y ultra rápidas (0.25s)
 const containerVariants = {
@@ -212,6 +344,7 @@ export const CoordinadorDashboard = () => {
 
   const [newTrabajador, setNewTrabajador] = useState({
     identificacion: '',
+    paisCodigo: 'CO',
     nombre: '',
     apellido: '',
     email: '',
@@ -222,8 +355,56 @@ export const CoordinadorDashboard = () => {
   });
   const [formErrors, setFormErrors] = useState({});
 
+  // Objeto de país seleccionado para validación de algoritmo de cédula/documento
+  const paisActual = useMemo(() => {
+    return PAISES_IDENTIFICACION.find(p => p.code === (newTrabajador.paisCodigo || 'CO')) || PAISES_IDENTIFICACION[0];
+  }, [newTrabajador.paisCodigo]);
+
+  // Validaciones estrictas en tiempo real por campo
+  const docValidationResult = useMemo(() => {
+    const raw = (newTrabajador.identificacion || '').trim();
+    if (!raw) return { valid: false, message: 'Ingrese el número de documento de identificación.' };
+    
+    // Verificación de duplicados en la base de datos en tiempo real
+    const existeDuplicado = (trabajadores || []).some(t => String(t.identificacion).trim() === raw);
+    if (existeDuplicado) {
+      return { valid: false, message: `La cédula / documento (${raw}) ya está registrado en PostgreSQL.` };
+    }
+
+    return paisActual.validate(raw);
+  }, [newTrabajador.identificacion, paisActual, trabajadores]);
+
+  const emailValidationResult = useMemo(() => {
+    const raw = (newTrabajador.email || '').trim().toLowerCase();
+    if (!raw) return { valid: false, message: 'El correo electrónico es obligatorio.' };
+    const rfcRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!rfcRegex.test(raw)) return { valid: false, message: 'Formato de correo electrónico inválido (ej. usuario@dominio.com).' };
+    
+    const existeEmail = (trabajadores || []).some(t => String(t.email || '').trim().toLowerCase() === raw);
+    if (existeEmail) {
+      return { valid: false, message: `El correo (${raw}) ya pertenece a otro colaborador registrado.` };
+    }
+    return { valid: true, message: 'Correo electrónico válido y disponible.' };
+  }, [newTrabajador.email, trabajadores]);
+
+  const nombreValidationResult = useMemo(() => {
+    const raw = (newTrabajador.nombre || '').trim();
+    if (!raw) return { valid: false, message: 'El nombre es obligatorio.' };
+    if (raw.length < 2) return { valid: false, message: 'Debe contener al menos 2 caracteres.' };
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$/.test(raw)) return { valid: false, message: 'Solo se permiten letras, espacios y tildes.' };
+    return { valid: true, message: 'Nombre válido.' };
+  }, [newTrabajador.nombre]);
+
+  const apellidoValidationResult = useMemo(() => {
+    const raw = (newTrabajador.apellido || '').trim();
+    if (!raw) return { valid: false, message: 'El apellido es obligatorio.' };
+    if (raw.length < 2) return { valid: false, message: 'Debe contener al menos 2 caracteres.' };
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$/.test(raw)) return { valid: false, message: 'Solo se permiten letras, espacios y tildes.' };
+    return { valid: true, message: 'Apellido válido.' };
+  }, [newTrabajador.apellido]);
+
   // Cálculo memorizado de requisitos de contraseña
-  const pwdValidity = React.useMemo(() => {
+  const pwdValidity = useMemo(() => {
     const pwd = newTrabajador.passwordHash || '';
     return {
       minMax: pwd.length >= 8 && pwd.length <= 20,
@@ -338,11 +519,18 @@ export const CoordinadorDashboard = () => {
 
   const validarFormulario = (data) => {
     const errors = {};
-    if (!data.identificacion?.trim()) errors.identificacion = 'La identificación es obligatoria';
-    if (!data.nombre?.trim()) errors.nombre = 'El nombre es obligatorio';
-    if (!data.apellido?.trim()) errors.apellido = 'El apellido es obligatorio';
-    if (!data.email?.trim() || !data.email.includes('@')) {
-      errors.email = 'Ingrese un correo electrónico corporativo válido';
+
+    if (!docValidationResult.valid) {
+      errors.identificacion = docValidationResult.message;
+    }
+    if (!nombreValidationResult.valid) {
+      errors.nombre = nombreValidationResult.message;
+    }
+    if (!apellidoValidationResult.valid) {
+      errors.apellido = apellidoValidationResult.message;
+    }
+    if (!emailValidationResult.valid) {
+      errors.email = emailValidationResult.message;
     }
 
     const pwd = data.passwordHash || '';
@@ -1801,30 +1989,143 @@ export const CoordinadorDashboard = () => {
                 <form onSubmit={handleCrearTrabajador} className="space-y-4 text-xs" noValidate>
                   {/* 1. Información Personal & Identificación */}
                   <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3.5">
-                    <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
-                      <Shield size={14} className="text-blue-500" />
-                      <span>1. Identificación & Credenciales de Acceso</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
+                        <Shield size={14} className="text-blue-500" />
+                        <span>1. Identificación & Credenciales de Acceso</span>
+                      </div>
+                      <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        Validación Algorítmica Internacional
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* Selector de País de Emisión / Nacionalidad y Número de Identificación Validado */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                       <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                          Número de Identificación / Cédula *
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                          País de Emisión / Documento *
                         </label>
-                        <input
-                          type="text"
-                          required
-                          value={newTrabajador.identificacion}
-                          onChange={(e) => { setNewTrabajador({ ...newTrabajador, identificacion: e.target.value }); setFormErrors(p => ({ ...p, identificacion: undefined })); }}
-                          placeholder="Número de documento o cédula de identidad"
-                          className={`input-field py-2 text-xs font-mono ${formErrors.identificacion ? 'border-red-400 dark:border-red-600' : ''}`}
-                        />
-                        {formErrors.identificacion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.identificacion}</p>}
+                        <select
+                          value={newTrabajador.paisCodigo}
+                          onChange={(e) => {
+                            setNewTrabajador({ ...newTrabajador, paisCodigo: e.target.value });
+                            setFormErrors(p => ({ ...p, identificacion: undefined }));
+                          }}
+                          className="input-field py-2 text-xs font-bold"
+                        >
+                          {PAISES_IDENTIFICACION.map(p => (
+                            <option key={p.code} value={p.code}>
+                              {p.flag} {p.nombre} ({p.docTipo})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="sm:col-span-2 space-y-1">
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between text-xs mb-1">
+                          <span>Número de Identificación / {paisActual.docTipo} *</span>
+                          <span className="text-[0.62rem] font-mono text-blue-600 dark:text-blue-400 font-extrabold">
+                            {paisActual.flag} {paisActual.nombre}
+                          </span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={newTrabajador.identificacion}
+                            onChange={(e) => { 
+                              setNewTrabajador({ ...newTrabajador, identificacion: e.target.value }); 
+                              setFormErrors(p => ({ ...p, identificacion: undefined })); 
+                            }}
+                            placeholder={paisActual.placeholder}
+                            className={`input-field py-2 text-xs font-mono font-bold pr-9 ${
+                              newTrabajador.identificacion 
+                                ? (docValidationResult.valid ? 'border-emerald-500 ring-2 ring-emerald-500/10 dark:border-emerald-500' : 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10') 
+                                : ''
+                            }`}
+                          />
+                          {newTrabajador.identificacion && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              {docValidationResult.valid ? (
+                                <CheckCircle2 size={16} className="text-emerald-500" />
+                              ) : (
+                                <AlertTriangle size={16} className="text-red-500 animate-bounce" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Mensaje de Validación de Algoritmo de País */}
+                        {newTrabajador.identificacion && (
+                          <p className={`text-[0.65rem] font-bold mt-1 flex items-center gap-1.5 ${
+                            docValidationResult.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                          }`}>
+                            <span>{paisActual.flag}</span>
+                            <span>{docValidationResult.message}</span>
+                          </p>
+                        )}
+                        {formErrors.identificacion && !newTrabajador.identificacion && (
+                          <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.identificacion}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                          Nombres del Colaborador *
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={newTrabajador.nombre}
+                            onChange={(e) => { setNewTrabajador({ ...newTrabajador, nombre: e.target.value }); setFormErrors(p => ({ ...p, nombre: undefined })); }}
+                            placeholder="Nombres del colaborador"
+                            className={`input-field py-2 text-xs ${
+                              newTrabajador.nombre ? (nombreValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                            }`}
+                          />
+                          {newTrabajador.nombre && (
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                              {nombreValidationResult.valid ? <CheckCircle2 size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-red-500" />}
+                            </div>
+                          )}
+                        </div>
+                        {newTrabajador.nombre && !nombreValidationResult.valid && (
+                          <p className="text-[0.63rem] text-red-500 font-bold mt-0.5">{nombreValidationResult.message}</p>
+                        )}
                       </div>
 
                       <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                          Rol de Seguridad en el Sistema *
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                          Apellidos del Colaborador *
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={newTrabajador.apellido}
+                            onChange={(e) => { setNewTrabajador({ ...newTrabajador, apellido: e.target.value }); setFormErrors(p => ({ ...p, apellido: undefined })); }}
+                            placeholder="Apellidos del colaborador"
+                            className={`input-field py-2 text-xs ${
+                              newTrabajador.apellido ? (apellidoValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                            }`}
+                          />
+                          {newTrabajador.apellido && (
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                              {apellidoValidationResult.valid ? <CheckCircle2 size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-red-500" />}
+                            </div>
+                          )}
+                        </div>
+                        {newTrabajador.apellido && !apellidoValidationResult.valid && (
+                          <p className="text-[0.63rem] text-red-500 font-bold mt-0.5">{apellidoValidationResult.message}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
+                          Rol de Seguridad *
                         </label>
                         <select
                           value={newTrabajador.rol}
@@ -1834,58 +2135,39 @@ export const CoordinadorDashboard = () => {
                           }}
                           className="input-field py-2 text-xs font-bold uppercase"
                         >
-                          <option value="DESARROLLADOR">Desarrollador (Operatividad WBS)</option>
-                          <option value="LIDER">Líder de Proyecto (Gestión & Asignación)</option>
-                          <option value="COORDINADOR">Coordinador (Administración Global)</option>
+                          <option value="DESARROLLADOR">DESARROLLADOR (WBS)</option>
+                          <option value="LIDER">LÍDER DE PROYECTO</option>
+                          <option value="COORDINADOR">COORDINADOR GLOBAL</option>
                         </select>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                          Nombres del Colaborador *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={newTrabajador.nombre}
-                          onChange={(e) => { setNewTrabajador({ ...newTrabajador, nombre: e.target.value }); setFormErrors(p => ({ ...p, nombre: undefined })); }}
-                          placeholder="Nombres del colaborador"
-                          className={`input-field py-2 text-xs ${formErrors.nombre ? 'border-red-400 dark:border-red-600' : ''}`}
-                        />
-                        {formErrors.nombre && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.nombre}</p>}
-                      </div>
-
-                      <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                          Apellidos del Colaborador *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={newTrabajador.apellido}
-                          onChange={(e) => { setNewTrabajador({ ...newTrabajador, apellido: e.target.value }); setFormErrors(p => ({ ...p, apellido: undefined })); }}
-                          placeholder="Apellidos del colaborador"
-                          className={`input-field py-2 text-xs ${formErrors.apellido ? 'border-red-400 dark:border-red-600' : ''}`}
-                        />
-                        {formErrors.apellido && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.apellido}</p>}
-                      </div>
-                    </div>
-
                     <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
                         Correo Electrónico Corporativo *
                       </label>
-                      <input
-                        type="email"
-                        required
-                        value={newTrabajador.email}
-                        onChange={(e) => { setNewTrabajador({ ...newTrabajador, email: e.target.value }); setFormErrors(p => ({ ...p, email: undefined })); }}
-                        placeholder="correo.corporativo@ikernell.org"
-                        className={`input-field py-2 text-xs font-mono ${formErrors.email ? 'border-red-400 dark:border-red-600' : ''}`}
-                      />
-                      {formErrors.email && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.email}</p>}
+                      <div className="relative">
+                        <input
+                          type="email"
+                          required
+                          value={newTrabajador.email}
+                          onChange={(e) => { setNewTrabajador({ ...newTrabajador, email: e.target.value }); setFormErrors(p => ({ ...p, email: undefined })); }}
+                          placeholder="correo.corporativo@ikernell.org"
+                          className={`input-field py-2 text-xs font-mono pr-9 ${
+                            newTrabajador.email ? (emailValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                          }`}
+                        />
+                        {newTrabajador.email && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {emailValidationResult.valid ? <CheckCircle2 size={16} className="text-emerald-500" /> : <AlertTriangle size={16} className="text-red-500" />}
+                          </div>
+                        )}
+                      </div>
+                      {newTrabajador.email && (
+                        <p className={`text-[0.65rem] font-bold mt-1 ${emailValidationResult.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                          {emailValidationResult.message}
+                        </p>
+                      )}
                     </div>
 
                     {/* Campo de Contraseña de Acceso Inicial y Generador de Clave Segura */}
