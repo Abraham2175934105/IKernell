@@ -412,6 +412,7 @@ export const LiderDashboard = () => {
   const [desarrolladores, setDesarrolladores] = useState([]);
   const [desarrolladoresAsignadosProyecto, setDesarrolladoresAsignadosProyecto] = useState([]);
   const [showNominaDevsModal, setShowNominaDevsModal] = useState(false);
+  const [updatingDevId, setUpdatingDevId] = useState(null);
   const [errores, setErrores] = useState([]);
   const [interrupciones, setInterrupciones] = useState([]);
   
@@ -748,6 +749,59 @@ export const LiderDashboard = () => {
     } catch (err) {
       console.error('Error desvinculando desarrollador:', err);
       toast.error(err?.message || 'Error al desvincular desarrollador del proyecto.');
+    }
+  };
+
+  // Manejador para actualizar horas dedicadas de un desarrollador en el proyecto con validaciones (HU-12 / RF-16)
+  const handleCambiarHorasDev = async (idDev, devNombre, nuevasHoras) => {
+    if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') return;
+
+    const valHoras = parseInt(nuevasHoras);
+    if (isNaN(valHoras) || valHoras < 1) {
+      toast.error('La dedicación del desarrollador no puede ser menor a 1 hora semanal.');
+      return;
+    }
+
+    if (valHoras > 48) {
+      toast.error('La asignación de horas en un único proyecto no puede superar el máximo de 48h semanales.');
+      return;
+    }
+
+    // Validar límite legal de 48 horas acumuladas en la empresa
+    const devCarga = getDevCargaInfo(idDev);
+    const asignacionActual = desarrolladoresAsignadosProyecto.find(a => Number(a.desarrollador?.idTrabajador) === Number(idDev));
+    const horasActualesEnEsteProyecto = asignacionActual?.horasSemanales || 0;
+    const horasEnOtrosProyectos = (devCarga?.horasAsignadas || 0) - horasActualesEnEsteProyecto;
+    const totalProyectado = horasEnOtrosProyectos + valHoras;
+
+    if (totalProyectado > 48) {
+      toast.error(`Sobreasignación: ${devNombre} ya tiene ${horasEnOtrosProyectos}h en otros proyectos. Ajustar a ${valHoras}h sumaría ${totalProyectado}h (máximo legal: 48h).`);
+      return;
+    }
+
+    try {
+      setUpdatingDevId(idDev);
+      await api.post(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/asignar`, {
+        idDesarrollador: parseInt(idDev),
+        horasSemanales: valHoras
+      });
+
+      toast.success(`Dedicación horaria de ${devNombre} actualizada a ${valHoras} h/semana.`);
+
+      // Recargar asignaciones y balance de cargas
+      const [devAsignadosRes, cargasRes] = await Promise.all([
+        api.get(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/desarrolladores`).catch(() => []),
+        api.get('/lider/desarrolladores-cargas').catch(() => [])
+      ]);
+
+      setDesarrolladoresAsignadosProyecto(Array.isArray(devAsignadosRes) ? devAsignadosRes : []);
+      setDesarrolladoresCargas(Array.isArray(cargasRes) ? cargasRes : []);
+    } catch (err) {
+      console.error('Error actualizando horas del desarrollador:', err);
+      const errMsg = err?.response?.data?.message || err?.message || 'Error al actualizar las horas del desarrollador.';
+      toast.error(errMsg);
+    } finally {
+      setUpdatingDevId(null);
     }
   };
 
@@ -2891,20 +2945,48 @@ export const LiderDashboard = () => {
                         </div>
 
                         <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
-                          <div className="flex flex-col items-start sm:items-end">
-                            <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Dedicación Proyecto</span>
-                            <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-mono">
-                              {horasPrj} hrs/semana
+                          {/* Control interactivo de Horas Semanales (Steppers + Validación de 48h) */}
+                          <div className="flex flex-col items-start sm:items-end gap-1">
+                            <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">
+                              Dedicación Semanal
                             </span>
-                            <span className="text-[0.62rem] text-zinc-400 font-medium">
-                              (Carga Total Empresa: {horasGlobales}/48h)
+
+                            <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                              <button
+                                type="button"
+                                onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj - 1)}
+                                disabled={horasPrj <= 1 || updatingDevId === dev.idTrabajador}
+                                className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                title={horasPrj <= 1 ? 'Mínimo 1 hora semanal obligatoria' : 'Reducir 1 hora semanal'}
+                              >
+                                -
+                              </button>
+
+                              <div className="flex items-center gap-0.5 px-2 font-mono text-xs font-black text-blue-600 dark:text-blue-400">
+                                <span>{horasPrj}</span>
+                                <span className="text-[0.65rem] text-zinc-400 font-normal">h/sem</span>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj + 1)}
+                                disabled={updatingDevId === dev.idTrabajador || (horasGlobales + 1 > 48)}
+                                className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                title={horasGlobales + 1 > 48 ? `Límite legal excedido (Acumula ${horasGlobales}/48h en la empresa)` : 'Aumentar 1 hora semanal'}
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <span className="text-[0.62rem] text-zinc-500 font-medium">
+                              Carga Total Empresa: <strong className={horasGlobales >= 48 ? 'text-red-600 dark:text-red-400 font-black' : 'text-zinc-700 dark:text-zinc-300 font-bold'}>{horasGlobales}/48h</strong>
                             </span>
                           </div>
 
                           <button
                             type="button"
                             onClick={() => handleDesasignarDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`)}
-                            className="p-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                            className="p-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shrink-0"
                             title="Desvincular del proyecto y liberar dedicación horaria"
                           >
                             <UserX size={14} />

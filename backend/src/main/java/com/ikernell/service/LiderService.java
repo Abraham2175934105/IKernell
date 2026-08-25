@@ -187,7 +187,7 @@ public class LiderService {
     // Asigna un desarrollador a la nómina de trabajo del proyecto con control de cargas de 48h (HU-12 / RF-16)
     public ProyectoDesarrollador asignarDesarrollador(Long idProyecto, Long idDesarrollador, Integer horasSemanales) {
         if (horasSemanales == null || horasSemanales <= 0) {
-            horasSemanales = 40;
+            throw new IllegalArgumentException("La dedicación semanal debe ser de al menos 1 hora.");
         }
         if (horasSemanales > 48) {
             throw new IllegalArgumentException("La asignación semanal (" + horasSemanales + "h) no puede exceder el límite legal máximo de 48 horas semanales.");
