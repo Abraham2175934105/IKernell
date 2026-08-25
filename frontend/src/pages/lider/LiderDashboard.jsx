@@ -3953,57 +3953,57 @@ export const LiderDashboard = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 max-w-3xl w-full shadow-2xl space-y-4 max-h-[90dvh] flex flex-col"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-6xl xl:max-w-7xl w-[95vw] shadow-2xl space-y-5 max-h-[92dvh] flex flex-col"
             >
               {/* Encabezado del Menú */}
-              <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-inner">
-                    <FolderGit2 size={20} />
+              <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4 shrink-0">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs">
+                    <FolderGit2 size={22} />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2.5">
                       <span>Explorador de Proyectos</span>
-                      <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-mono">
-                        {proyectos?.length || 0} proyectos
+                      <span className="text-[0.7rem] font-extrabold px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-mono border border-zinc-200 dark:border-zinc-700">
+                        {proyectos?.length || 0} proyectos registrados
                       </span>
                     </h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                      Filtra, busca y cambia rápidamente el proyecto activo del panel
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                      Filtra, busca y conmuta rápidamente el contexto activo de la plataforma
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Barra de Búsqueda y Filtros Rápidos */}
-              <div className="space-y-2.5 shrink-0">
+              <div className="space-y-3 shrink-0">
                 <div className="relative">
-                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
                   <input
                     type="text"
                     value={busquedaProyectoModal}
                     onChange={(e) => setBusquedaProyectoModal(e.target.value)}
-                    placeholder="Buscar proyecto por nombre, cliente, código PRJ..."
-                    className="input-field pl-10 pr-9 py-2.5 text-xs font-medium w-full"
+                    placeholder="Buscar proyecto por nombre, cliente, código PRJ, tecnologías..."
+                    className="input-field pl-11 pr-10 py-3 text-xs sm:text-sm font-medium w-full rounded-2xl shadow-xs"
                     autoFocus
                   />
                   {busquedaProyectoModal && (
                     <button
                       type="button"
                       onClick={() => setBusquedaProyectoModal('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     >
-                      <X size={14} />
+                      <X size={15} />
                     </button>
                   )}
                 </div>
 
                 {/* Filtros Rápidos de Estado */}
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2.5 flex-wrap">
                   <button
                     type="button"
                     onClick={() => setFiltroEstadoProyectoModal('TODOS')}
-                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                    className={`text-xs py-2 px-3.5 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-2 ${
                       filtroEstadoProyectoModal === 'TODOS'
                         ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -4018,13 +4018,13 @@ export const LiderDashboard = () => {
                   <button
                     type="button"
                     onClick={() => setFiltroEstadoProyectoModal('ACTIVO')}
-                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                    className={`text-xs py-2 px-3.5 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-2 ${
                       filtroEstadoProyectoModal === 'ACTIVO'
                         ? 'bg-emerald-600 text-white shadow-sm'
                         : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100'
                     }`}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
                     <span>Activos</span>
                     <span className="text-[0.65rem] font-mono px-1.5 py-0.2 rounded-full bg-white/20">
                       {statsProyectos.activos}
@@ -4034,7 +4034,7 @@ export const LiderDashboard = () => {
                   <button
                     type="button"
                     onClick={() => setFiltroEstadoProyectoModal('FINALIZADO')}
-                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                    className={`text-xs py-2 px-3.5 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-2 ${
                       filtroEstadoProyectoModal === 'FINALIZADO'
                         ? 'bg-zinc-700 text-white shadow-sm'
                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -4049,20 +4049,20 @@ export const LiderDashboard = () => {
                   <button
                     type="button"
                     onClick={() => setFiltroEstadoProyectoModal('GLOBAL')}
-                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                    className={`text-xs py-2 px-3.5 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-2 ${
                       filtroEstadoProyectoModal === 'GLOBAL'
                         ? 'bg-blue-600 text-white shadow-sm'
                         : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 hover:bg-blue-100'
                     }`}
                   >
-                    <Globe size={12} />
+                    <Globe size={13} />
                     <span>Vista Global</span>
                   </button>
                 </div>
               </div>
 
-              {/* Lista / Grid de Proyectos */}
-              <div className="overflow-y-auto flex-1 pr-1 space-y-2.5 max-h-[380px]">
+              {/* Lista / Grid de Proyectos con Scroll Ampliado */}
+              <div className="overflow-y-auto flex-1 pr-1.5 space-y-3.5 max-h-[60vh]">
                 {/* Opción Especial: Vista Global Corporativa (Disponible en todas las pestañas) */}
                 {(filtroEstadoProyectoModal === 'TODOS' || filtroEstadoProyectoModal === 'GLOBAL') && !busquedaProyectoModal && (
                   <div
@@ -4070,32 +4070,32 @@ export const LiderDashboard = () => {
                       seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
                       setModalProyectosOpen(false);
                     }}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
                       (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL')
                         ? 'bg-blue-50/80 dark:bg-blue-950/50 border-blue-300 dark:border-blue-700 shadow-md ring-2 ring-blue-500/20'
                         : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/80 hover:border-blue-400 hover:bg-blue-50/30'
                     }`}
                   >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm">
-                        <Globe size={18} />
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs">
+                        <Globe size={20} />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
+                          <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
                             [Vista Global Corporativa] Todos los Proyectos
                           </span>
-                          <span className="text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          <span className="text-[0.62rem] font-black uppercase px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                             GLOBAL
                           </span>
                         </div>
-                        <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                           Consolida el catálogo completo de proyectos, riesgos y métricas de la organización.
                         </p>
                       </div>
                     </div>
                     {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-blue-600 dark:text-blue-400 shrink-0">
                         <CheckCircle2 size={16} /> Activo
                       </span>
                     ) : (
@@ -4106,9 +4106,9 @@ export const LiderDashboard = () => {
                   </div>
                 )}
 
-                {/* Grid de Proyectos */}
+                {/* Grid Ampliado de Proyectos (3 Columnas en Pantallas Medianas/Grandes) */}
                 {proyectosModalFiltrados.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                     {proyectosModalFiltrados.map(p => {
                       const isSelected = proyectoSeleccionado?.idProyecto === p.idProyecto;
                       const estInfo = getEstadoBadgeClasses(p.estado);
@@ -4120,16 +4120,16 @@ export const LiderDashboard = () => {
                             seleccionarProyecto(p);
                             setModalProyectosOpen(false);
                           }}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                             isSelected
-                              ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 shadow-md ring-2 ring-blue-500/20'
-                              : 'bg-zinc-50/60 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/70 hover:border-blue-400 hover:bg-white dark:hover:bg-zinc-800 hover:shadow-sm'
+                              ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 shadow-md ring-2 ring-blue-500/20'
+                              : 'bg-zinc-50/70 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/70 hover:border-blue-400 hover:bg-white dark:hover:bg-zinc-800 hover:shadow-sm'
                           }`}
                         >
                           <div>
                             {/* Cabecera de la tarjeta */}
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60">
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="font-mono text-[0.7rem] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60">
                                 PRJ-00{p.idProyecto}
                               </span>
                               <span className={`inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full border ${estInfo.badge}`}>
@@ -4139,27 +4139,27 @@ export const LiderDashboard = () => {
                             </div>
 
                             {/* Nombre del Proyecto */}
-                            <h4 className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 line-clamp-1" title={p.nombre}>
+                            <h4 className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 line-clamp-1 leading-snug" title={p.nombre}>
                               {p.nombre}
                             </h4>
 
                             {/* Cliente o Descripción */}
-                            <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5 font-medium">
                               {p.cliente ? `Cliente: ${p.cliente}` : (p.descripcion || 'Sin descripción')}
                             </p>
                           </div>
 
                           {/* Footer de la tarjeta con presupuesto y estado de selección */}
-                          <div className="pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 flex items-center justify-between text-xs">
-                            <span className="text-[0.68rem] font-bold text-zinc-600 dark:text-zinc-400 font-mono">
+                          <div className="pt-2.5 border-t border-zinc-200/60 dark:border-zinc-700/60 flex items-center justify-between text-xs">
+                            <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 font-mono">
                               {p.presupuesto ? `$${Number(p.presupuesto).toLocaleString()}` : '$0.00'}
                             </span>
                             {isSelected ? (
-                              <span className="inline-flex items-center gap-1 text-[0.68rem] font-bold text-blue-600 dark:text-blue-400">
-                                <Check size={13} /> Activo
+                              <span className="inline-flex items-center gap-1 text-xs font-extrabold text-blue-600 dark:text-blue-400">
+                                <Check size={14} /> Activo
                               </span>
                             ) : (
-                              <span className="text-[0.68rem] font-bold text-zinc-400 hover:text-blue-600">
+                              <span className="text-xs font-bold text-zinc-400 group-hover:text-blue-600 transition-colors">
                                 Seleccionar →
                               </span>
                             )}
@@ -4169,10 +4169,10 @@ export const LiderDashboard = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="p-8 text-center text-zinc-400 text-xs flex flex-col items-center justify-center space-y-2 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
-                    <FolderGit2 size={24} className="text-zinc-400" />
-                    <p className="font-bold text-zinc-700 dark:text-zinc-300">No se encontraron proyectos</p>
-                    <p className="text-[0.7rem]">Intenta con otro término de búsqueda o cambia el filtro de estado.</p>
+                  <div className="p-10 text-center text-zinc-400 text-xs flex flex-col items-center justify-center space-y-2 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                    <FolderGit2 size={28} className="text-zinc-400" />
+                    <p className="font-bold text-zinc-700 dark:text-zinc-300 text-sm">No se encontraron proyectos</p>
+                    <p className="text-xs">Intenta con otro término de búsqueda o cambia el filtro de estado.</p>
                   </div>
                 )}
               </div>
