@@ -3,7 +3,7 @@ import {
   ShieldAlert, Activity, TrendingUp, AlertTriangle, CheckCircle2, 
   User, RefreshCw, Sparkles, Lock, Layers, Users,
   Briefcase, Check, Info, Search, X, HelpCircle, Download,
-  TrendingDown, Minus, Clock, Globe, FolderGit2, ChevronDown,
+  TrendingDown, Minus, Clock, Globe, FolderGit2, ChevronDown, ChevronRight,
   ShieldCheck, FileText, Filter, DollarSign, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
