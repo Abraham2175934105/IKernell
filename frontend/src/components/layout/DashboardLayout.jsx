@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { ROUTES } from '../../config/routes';
 import { ChatCorporativo } from '../tools/ChatCorporativo';
 import { BibliotecaDigital } from '../tools/BibliotecaDigital';
 import { TutorialesInduccion } from '../tools/TutorialesInduccion';
@@ -249,7 +250,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                       onClick={() => {
                         setCurrentTool(null);
                         if (setActiveTab) setActiveTab(item.id);
-                        const roleHome = user?.rol === 'COORDINADOR' ? '/coordinador' : user?.rol === 'LIDER' ? '/lider' : '/desarrollador';
+                        const roleHome = user?.rol === 'COORDINADOR' ? ROUTES.COORDINADOR : user?.rol === 'LIDER' ? ROUTES.LIDER : ROUTES.DESARROLLADOR;
                         if (location.pathname !== roleHome) {
                           navigate(roleHome);
                         }

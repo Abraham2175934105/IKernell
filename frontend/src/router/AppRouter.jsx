@@ -1,10 +1,11 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { PublicLayout } from '../components/layout/PublicLayout';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
+import { ROUTES } from '../config/routes';
 import { Cpu } from 'lucide-react';
 
 // Lazy Loading y Code-Splitting de rutas
@@ -57,19 +58,22 @@ export const AppRouter = () => {
               <Routes>
                 {/* Módulo Público (con Navbar & Footer corporativo) */}
                 <Route element={<PublicLayout />}>
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/contacto" element={<ContactPage />} />
-                  <Route path="/faqs" element={<FaqPage />} />
-                  <Route path="/login" element={<LoginPage />} />
+                  <Route path={ROUTES.PUBLIC_HOME} element={<LandingPage />} />
+                  <Route path={ROUTES.PUBLIC_CONTACT} element={<ContactPage />} />
+                  <Route path={ROUTES.PUBLIC_FAQS} element={<FaqPage />} />
+                  <Route path={ROUTES.PUBLIC_LOGIN} element={<LoginPage />} />
                 </Route>
 
                 {/* Rutas Privadas Protegidas por Rol (RBAC con DashboardLayout) */}
                 <Route element={<ProtectedRoute allowedRoles={['COORDINADOR']} />}>
-                  <Route path="/coordinador" element={
+                  {/* Ruta Encriptada/Ofuscada principal */}
+                  <Route path={ROUTES.COORDINADOR} element={
                     <ErrorBoundary title="Error en Panel de Coordinador">
                       <CoordinadorDashboard />
                     </ErrorBoundary>
                   } />
+                  {/* Alias de compatibilidad previa con auto-redireccion a la URL protegida */}
+                  <Route path={ROUTES.LEGACY_COORDINADOR} element={<Navigate to={ROUTES.COORDINADOR} replace />} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['LIDER']} />}>

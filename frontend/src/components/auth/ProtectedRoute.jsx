@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { ROUTES } from '../../config/routes';
 
 export const ProtectedRoute = ({ allowedRoles }) => {
   const { user, isAuthenticated } = useAuth();
@@ -10,7 +11,7 @@ export const ProtectedRoute = ({ allowedRoles }) => {
   useEffect(() => {
     const handlePopState = () => {
       if (!isAuthenticated || !user) {
-        window.history.pushState(null, '', '/login');
+        window.history.pushState(null, '', ROUTES.PUBLIC_LOGIN);
       }
     };
 
@@ -25,14 +26,14 @@ export const ProtectedRoute = ({ allowedRoles }) => {
   }, [isAuthenticated, user, location.pathname]);
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to={ROUTES.PUBLIC_LOGIN} replace state={{ from: location }} />;
   }
 
   if (allowedRoles && (!user.rol || !allowedRoles.includes(user.rol))) {
     // Redirección segura basada en el rol existente sin caídas
-    if (user.rol === 'COORDINADOR') return <Navigate to="/coordinador" replace />;
-    if (user.rol === 'LIDER') return <Navigate to="/lider" replace />;
-    return <Navigate to="/desarrollador" replace />;
+    if (user.rol === 'COORDINADOR') return <Navigate to={ROUTES.COORDINADOR} replace />;
+    if (user.rol === 'LIDER') return <Navigate to={ROUTES.LIDER} replace />;
+    return <Navigate to={ROUTES.DESARROLLADOR} replace />;
   }
 
   return <Outlet />;

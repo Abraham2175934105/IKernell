@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Cpu, Lock, Mail, LogIn, AlertCircle, Shield, ArrowLeft, KeyRound, CheckCircle2, Loader2, UserCheck, Briefcase, Code } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ROUTES } from '../../config/routes';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Lock, Mail, ArrowLeft, ShieldCheck, Cpu, 
+  AlertCircle, Eye, EyeOff, Loader2 
+} from 'lucide-react';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeDemo, setActiveDemo] = useState('');
@@ -19,9 +24,9 @@ export const LoginPage = () => {
   // Redirección automática si el usuario ya cuenta con sesión activa
   React.useEffect(() => {
     if (isAuthenticated && user?.rol) {
-      if (user.rol === 'COORDINADOR') navigate('/coordinador', { replace: true });
-      else if (user.rol === 'LIDER') navigate('/lider', { replace: true });
-      else navigate('/desarrollador', { replace: true });
+      if (user.rol === 'COORDINADOR') navigate(ROUTES.COORDINADOR, { replace: true });
+      else if (user.rol === 'LIDER') navigate(ROUTES.LIDER, { replace: true });
+      else navigate(ROUTES.DESARROLLADOR, { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -40,13 +45,10 @@ export const LoginPage = () => {
     setError('');
 
     try {
-      // 1. Llamada al endpoint absoluto de autenticación en Spring Boot
       const data = await authService.login(trimmedEmail, trimmedPassword);
 
-      // 2. Actualizar el estado global en AuthContext (RNF-08 a RNF-10)
       login(data);
 
-      // 3. Alerta de Bienvenida rápida y elegante (Toast)
       toast.success(`Bienvenido de nuevo, ${data.nombre || 'Usuario'}`, {
         duration: 3500,
         style: {
@@ -59,18 +61,16 @@ export const LoginPage = () => {
         }
       });
 
-      // 4. Redirección basada en el rol del usuario autenticado (RBAC)
       if (data.rol === 'COORDINADOR') {
-        navigate('/coordinador', { replace: true });
+        navigate(ROUTES.COORDINADOR, { replace: true });
       } else if (data.rol === 'LIDER') {
-        navigate('/lider', { replace: true });
+        navigate(ROUTES.LIDER, { replace: true });
       } else {
-        navigate('/desarrollador', { replace: true });
+        navigate(ROUTES.DESARROLLADOR, { replace: true });
       }
 
     } catch (err) {
       console.error('[IKernell Auth Error]:', err);
-      // Feedback visual obligatorio en pantalla
       setError(err.message || 'Error de autenticación. Verifique sus credenciales o la conexión con el servidor.');
     } finally {
       setLoading(false);

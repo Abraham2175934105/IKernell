@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Cpu, Menu, X, LogIn, Mail, Sun, Moon, LogOut, User } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { ROUTES } from '../../config/routes';
 
 export const Navbar = () => {
   // Estados locales
@@ -56,10 +57,10 @@ export const Navbar = () => {
 
   // Redirige al panel correspondiente según el rol del usuario autenticado
   const getDashboardRoute = () => {
-    if (!user) return '/';
-    if (user.rol === 'COORDINADOR') return '/coordinador';
-    if (user.rol === 'LIDER') return '/lider';
-    return '/desarrollador';
+    if (!user) return ROUTES.PUBLIC_HOME;
+    if (user.rol === 'COORDINADOR') return ROUTES.COORDINADOR;
+    if (user.rol === 'LIDER') return ROUTES.LIDER;
+    return ROUTES.DESARROLLADOR;
   };
 
   return (
