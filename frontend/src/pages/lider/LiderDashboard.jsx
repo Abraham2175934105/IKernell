@@ -1568,6 +1568,8 @@ export const LiderDashboard = () => {
     }
   };
 
+  const isProyectoFinalizado = proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO';
+
   return (
     <DashboardLayout
       activeTab={activeTab}
