@@ -118,6 +118,28 @@ public class CoordinadorService {
         trabajadorRepository.save(trabajador);
     }
 
+    // Inhabilita a un Líder y transfiere todos sus proyectos activos a un nuevo Líder asignado
+    public Trabajador inhabilitarLiderYReasignarProyectos(Long idLiderInhabilitar, Long idNuevoLiderTarget) {
+        Trabajador liderSaliente = obtenerPorId(idLiderInhabilitar);
+        Trabajador nuevoLider = obtenerPorId(idNuevoLiderTarget);
+
+        if (!Boolean.TRUE.equals(nuevoLider.getEstado())) {
+            throw new IllegalArgumentException("El nuevo líder seleccionado no se encuentra activo en la empresa.");
+        }
+
+        // 1. Reasignar todos los proyectos del líder saliente al nuevo líder
+        List<Proyecto> proyectosAfectados = proyectoRepository.findByLider(liderSaliente);
+        for (Proyecto p : proyectosAfectados) {
+            p.setLider(nuevoLider);
+            p.setReasignado(true);
+            proyectoRepository.save(p);
+        }
+
+        // 2. Inhabilitar acceso del líder saliente
+        liderSaliente.setEstado(false);
+        return trabajadorRepository.save(liderSaliente);
+    }
+
     // Asigna un desarrollador al equipo general de un proyecto
     public ProyectoDesarrollador asignarProyectoADesarrollador(Long idProyecto, Long idDesarrollador) {
         // Validaciones

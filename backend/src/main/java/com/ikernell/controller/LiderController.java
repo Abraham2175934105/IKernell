@@ -37,6 +37,13 @@ public class LiderController {
         this.etlAutomationService = etlAutomationService;
     }
 
+    @PostMapping("/trabajadores")
+    @Operation(summary = "Registrar nuevo trabajador (Líder o Desarrollador)", description = "Permite al Líder registrar nuevos colaboradores únicamente con rol Líder o Desarrollador")
+    public ResponseEntity<Trabajador> registrarTrabajadorPorLider(@Valid @RequestBody Trabajador trabajador) {
+        Trabajador nuevo = liderService.registrarTrabajadorPorLider(trabajador);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
+    }
+
     @GetMapping("/proyectos")
     @Operation(summary = "Listar todos los proyectos disponibles", description = "Devuelve el listado completo de proyectos para el panel del líder")
     public ResponseEntity<List<Proyecto>> listarProyectos() {

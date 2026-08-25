@@ -38,6 +38,9 @@ public class Proyecto {
     @Column(name = "estado", nullable = false, length = 20)
     private String estado;
 
+    @Column(name = "reasignado")
+    private Boolean reasignado = false;
+
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "proyectosLiderados", "actividades", "errores", "interrupciones"})
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "lider_id", nullable = false)
@@ -151,6 +154,14 @@ public class Proyecto {
 
     public void setEtapas(List<Etapa> etapas) {
         this.etapas = etapas;
+    }
+
+    public Boolean getReasignado() {
+        return reasignado != null ? reasignado : false;
+    }
+
+    public void setReasignado(Boolean reasignado) {
+        this.reasignado = reasignado;
     }
 
     public List<Trabajador> getDesarrolladores() {

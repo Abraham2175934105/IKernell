@@ -24,6 +24,7 @@ public class LiderService {
     private final InterrupcionRepository interrupcionRepository;
     private final TrabajadorRepository trabajadorRepository;
     private final ProyectoDesarrolladorRepository proyectoDesarrolladorRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public LiderService(ProyectoRepository proyectoRepository,
                         EtapaRepository etapaRepository,
@@ -31,7 +32,8 @@ public class LiderService {
                         ErrorRepository errorRepository,
                         InterrupcionRepository interrupcionRepository,
                         TrabajadorRepository trabajadorRepository,
-                        ProyectoDesarrolladorRepository proyectoDesarrolladorRepository) {
+                        ProyectoDesarrolladorRepository proyectoDesarrolladorRepository,
+                        org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.proyectoRepository = proyectoRepository;
         this.etapaRepository = etapaRepository;
         this.actividadRepository = actividadRepository;
@@ -39,6 +41,26 @@ public class LiderService {
         this.interrupcionRepository = interrupcionRepository;
         this.trabajadorRepository = trabajadorRepository;
         this.proyectoDesarrolladorRepository = proyectoDesarrolladorRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    // Registra un nuevo colaborador (solo LIDER o DESARROLLADOR) por un Líder
+    public Trabajador registrarTrabajadorPorLider(Trabajador trabajador) {
+        if (trabajador.getRol() == null) {
+            throw new IllegalArgumentException("El rol del trabajador es obligatorio.");
+        }
+        String rolNorm = trabajador.getRol().trim().toUpperCase();
+        if (!rolNorm.contains("LIDER") && !rolNorm.contains("DESARROLLADOR")) {
+            throw new IllegalArgumentException("Los líderes solo tienen autorización para registrar colaboradores con rol Líder o Desarrollador.");
+        }
+
+        String rawPassword = (trabajador.getPasswordHash() != null && !trabajador.getPasswordHash().isBlank())
+                ? trabajador.getPasswordHash()
+                : "abrah1234";
+
+        trabajador.setPasswordHash(passwordEncoder.encode(rawPassword));
+        trabajador.setEstado(true);
+        return trabajadorRepository.save(trabajador);
     }
 
     // Registra un nuevo proyecto en estado ACTIVO y lo vincula con el líder asignado (HU-11 / RF-13 / RF-14)

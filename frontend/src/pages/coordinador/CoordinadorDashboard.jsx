@@ -502,6 +502,26 @@ export const CoordinadorDashboard = () => {
       return;
     }
 
+    // Si el usuario es un LÍDER activo, verificar si administra proyectos activos
+    const isLider = targetUser && targetUser.rol && targetUser.rol.toUpperCase().includes('LIDER');
+    const isActivo = targetUser && (targetUser.estado === true || targetUser.estado === 'ACTIVO');
+
+    if (isLider && isActivo) {
+      const proyectosAfectados = (proyectos || []).filter(p => p.lider?.idTrabajador === id || String(p.lider?.idTrabajador) === String(id));
+      if (proyectosAfectados.length > 0) {
+        setLiderAInhabilitar(targetUser);
+        setProyectosDelLiderAfectado(proyectosAfectados);
+        
+        // Precargar con el primer otro líder activo disponible
+        const otrosLideres = trabajadores.filter(t => t.idTrabajador !== id && t.estado && t.rol && t.rol.toUpperCase().includes('LIDER'));
+        setNuevoLiderTargetId(otrosLideres.length > 0 ? String(otrosLideres[0].idTrabajador) : '');
+        
+        setShowReasignarLiderModal(true);
+        return;
+      }
+    }
+
+    // Ejecutar inhabilitación directa si no posee proyectos a su cargo
     try {
       setTogglingId(id);
       const updated = await api.patch(`/coordinador/trabajadores/${id}/estado`);
@@ -514,6 +534,40 @@ export const CoordinadorDashboard = () => {
       toast.error(err.message || 'Error al actualizar el estado del trabajador.');
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleConfirmarReasignacionEInhabilitar = async (e) => {
+    e.preventDefault();
+    if (!liderAInhabilitar || !nuevoLiderTargetId) {
+      toast.error('Debe seleccionar a qué líder activo transferir los proyectos.');
+      return;
+    }
+
+    setSubmittingReasignacionLider(true);
+    try {
+      await api.put(`/coordinador/trabajadores/${liderAInhabilitar.idTrabajador}/inhabilitar-reasignar?idNuevoLiderTarget=${nuevoLiderTargetId}`);
+
+      const nuevoLiderObj = trabajadores.find(t => String(t.idTrabajador) === String(nuevoLiderTargetId));
+      const nombreNuevoLider = nuevoLiderObj ? `${nuevoLiderObj.nombre} ${nuevoLiderObj.apellido}` : 'nuevo Líder';
+
+      toast.success(`Portafolio de ${proyectosDelLiderAfectado.length} proyecto(s) reasignado a ${nombreNuevoLider} y líder ${liderAInhabilitar.nombre} inhabilitado.`);
+      setShowReasignarLiderModal(false);
+      setLiderAInhabilitar(null);
+
+      // Recargar trabajadores y proyectos
+      const [trabRes, proyRes] = await Promise.all([
+        api.get('/coordinador/trabajadores').catch(() => []),
+        api.get('/coordinador/proyectos').catch(() => [])
+      ]);
+
+      setTrabajadores(Array.isArray(trabRes) ? trabRes : []);
+      setProyectos(Array.isArray(proyRes) ? proyRes : []);
+    } catch (err) {
+      console.error('Error al reasignar proyectos e inhabilitar:', err);
+      toast.error(err?.message || 'Error al procesar la reasignación de proyectos.');
+    } finally {
+      setSubmittingReasignacionLider(false);
     }
   };
 
@@ -2629,6 +2683,96 @@ export const CoordinadorDashboard = () => {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+        {/* Modal: Reasignación Obligatoria de Proyectos al Inhabilitar Líder */}
+        {showReasignarLiderModal && liderAInhabilitar && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-extrabold text-base">
+                  <AlertTriangle size={20} className="text-amber-500" />
+                  <span>Reasignación Obligatoria de Proyectos</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowReasignarLiderModal(false)}
+                  className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 space-y-2 text-amber-900 dark:text-amber-200">
+                  <strong className="block text-xs font-black">
+                    Líder Afectado: {liderAInhabilitar.nombre} {liderAInhabilitar.apellido} ({liderAInhabilitar.email})
+                  </strong>
+                  <p className="text-[0.7rem] leading-relaxed">
+                    Este Líder administra actualmente <strong>{proyectosDelLiderAfectado.length} proyecto(s) activo(s)</strong>. Para inhabilitar su acceso, debes reasignar su portafolio a otro Líder activo disponible en la empresa.
+                  </p>
+                </div>
+
+                {/* Lista de Proyectos que serán reasignados */}
+                <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                  <span className="text-[0.65rem] font-extrabold text-zinc-400 uppercase tracking-wider block">
+                    Proyectos que cambiarán de supervisión:
+                  </span>
+                  {proyectosDelLiderAfectado.map((p) => (
+                    <div key={p.idProyecto} className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-[0.7rem] flex items-center justify-between">
+                      <span className="font-bold text-zinc-800 dark:text-zinc-200 truncate">{p.nombre}</span>
+                      <span className="font-mono text-zinc-500 shrink-0">PRJ-00{p.idProyecto}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <form onSubmit={handleConfirmarReasignacionEInhabilitar} className="space-y-4 pt-2">
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block">
+                      Seleccionar Nuevo Líder Receptor *
+                    </label>
+                    <select
+                      required
+                      value={nuevoLiderTargetId}
+                      onChange={(e) => setNuevoLiderTargetId(e.target.value)}
+                      className="input-field w-full py-2.5 text-xs font-bold appearance-none cursor-pointer"
+                    >
+                      <option value="">— Seleccione un Líder Activo —</option>
+                      {trabajadores
+                        .filter(t => t.idTrabajador !== liderAInhabilitar.idTrabajador && t.estado && t.rol && t.rol.toUpperCase().includes('LIDER'))
+                        .map(l => (
+                          <option key={l.idTrabajador} value={l.idTrabajador}>
+                            {l.nombre} {l.apellido} ({l.profesion || 'Líder de Proyecto'}) &bull; {l.email}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setShowReasignarLiderModal(false)}
+                      className="outline-button text-xs py-2 px-4 font-bold"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingReasignacionLider || !nuevoLiderTargetId}
+                      className="gradient-button text-xs py-2 px-5 font-bold inline-flex items-center gap-1.5 shadow-md disabled:opacity-50"
+                    >
+                      {submittingReasignacionLider ? <Loader2 size={14} className="animate-spin" /> : <UserCheck size={14} />}
+                      <span>Reasignar Proyectos e Inhabilitar</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </div>
         )}

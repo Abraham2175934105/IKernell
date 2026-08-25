@@ -462,6 +462,23 @@ export const LiderDashboard = () => {
   });
   const [nuevoProyectoErrors, setNuevoProyectoErrors] = useState({});
 
+  // Registro de Nuevo Colaborador por el Líder (solo LÍDER o DESARROLLADOR)
+  const [showNuevoColaboradorModal, setShowNuevoColaboradorModal] = useState(false);
+  const [submittingNuevoColaborador, setSubmittingNuevoColaborador] = useState(false);
+  const [nuevoColaboradorForm, setNuevoColaboradorForm] = useState({
+    nombre: '',
+    apellido: '',
+    identificacion: '',
+    email: '',
+    rol: 'ROLE_DESARROLLADOR',
+    passwordHash: '',
+    profesion: 'Ingeniero de Software',
+    especialidad: 'Full Stack Web & Cloud'
+  });
+
+  // Filtro de Propiedad de Proyectos (Mis Proyectos vs Otros Líderes vs Todos)
+  const [filtroPropiedadLider, setFiltroPropiedadLider] = useState('MIS_PROYECTOS');
+
   const [showAsignarModal, setShowAsignarModal] = useState(false);
   const [showAsignarDevModal, setShowAsignarDevModal] = useState(false);
   const [submittingAsignarDev, setSubmittingAsignarDev] = useState(false);
@@ -1263,28 +1280,91 @@ export const LiderDashboard = () => {
     return Math.round(suma / proyectos.length);
   }, [proyectos]);
 
-  // Proyectos filtrados para el menú emergente / explorador
+  // Proyectos filtrados para el menú emergente / explorador con segregación por propiedad
   const proyectosModalFiltrados = useMemo(() => {
     if (!Array.isArray(proyectos)) return [];
     
+    const userDevId = user?.idTrabajador || user?.id;
+    const userEmail = (user?.email || '').toLowerCase();
+
     return proyectos.filter(p => {
-      // Filtro de Estado
+      // 1. Filtro por Propiedad de Líder
+      if (filtroPropiedadLider === 'MIS_PROYECTOS') {
+        const pLiderId = p.lider?.idTrabajador || p.lider?.id;
+        const pLiderEmail = (p.lider?.email || '').toLowerCase();
+        const isMine = (userDevId && String(pLiderId) === String(userDevId)) || (userEmail && pLiderEmail && userEmail === pLiderEmail);
+        if (!isMine) return false;
+      } else if (filtroPropiedadLider === 'OTROS_LIDERES') {
+        const pLiderId = p.lider?.idTrabajador || p.lider?.id;
+        const pLiderEmail = (p.lider?.email || '').toLowerCase();
+        const isMine = (userDevId && String(pLiderId) === String(userDevId)) || (userEmail && pLiderEmail && userEmail === pLiderEmail);
+        if (isMine) return false;
+      }
+
+      // 2. Filtro de Estado
       if (filtroEstadoProyectoModal === 'ACTIVO' && p.estado !== 'ACTIVO') return false;
       if (filtroEstadoProyectoModal === 'FINALIZADO' && p.estado !== 'FINALIZADO' && p.estado !== 'COMPLETADO') return false;
 
-      // Filtro de Búsqueda
+      // 3. Filtro de Búsqueda
       if (busquedaProyectoModal.trim()) {
         const query = busquedaProyectoModal.toLowerCase().trim();
         const matchNombre = p.nombre?.toLowerCase().includes(query);
         const matchCliente = p.cliente?.toLowerCase().includes(query);
         const matchId = String(p.idProyecto).includes(query) || `prj-00${p.idProyecto}`.toLowerCase().includes(query);
         const matchDesc = p.descripcion?.toLowerCase().includes(query);
-        if (!matchNombre && !matchCliente && !matchId && !matchDesc) return false;
+        const matchLider = p.lider && `${p.lider.nombre} ${p.lider.apellido}`.toLowerCase().includes(query);
+        if (!matchNombre && !matchCliente && !matchId && !matchDesc && !matchLider) return false;
       }
 
       return true;
     });
-  }, [proyectos, busquedaProyectoModal, filtroEstadoProyectoModal]);
+  }, [proyectos, busquedaProyectoModal, filtroEstadoProyectoModal, filtroPropiedadLider, user]);
+
+  // Propiedad sobre el proyecto seleccionado (Determinante para Modo Lectura vs Modo Edición)
+  const isMiProyecto = useMemo(() => {
+    if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') return true;
+    if (!proyectoSeleccionado.lider) return true;
+    if (!user) return true;
+    const userDevId = user.idTrabajador || user.id;
+    const userEmail = (user.email || '').toLowerCase();
+    const projLiderId = proyectoSeleccionado.lider.idTrabajador || proyectoSeleccionado.lider.id;
+    const projLiderEmail = (proyectoSeleccionado.lider.email || '').toLowerCase();
+
+    return (userDevId && String(userDevId) === String(projLiderId)) || (userEmail && projLiderEmail && userEmail === projLiderEmail);
+  }, [proyectoSeleccionado, user]);
+
+  // Handler para Registrar Colaborador (Líder o Desarrollador)
+  const handleCrearColaboradorPorLider = async (e) => {
+    e.preventDefault();
+    if (!nuevoColaboradorForm.nombre.trim() || !nuevoColaboradorForm.apellido.trim() || !nuevoColaboradorForm.email.trim() || !nuevoColaboradorForm.identificacion.trim()) {
+      toast.error('Nombre, Apellido, Cédula y Correo Corporativo son obligatorios.');
+      return;
+    }
+
+    setSubmittingNuevoColaborador(true);
+    try {
+      const res = await api.post('/lider/trabajadores', {
+        ...nuevoColaboradorForm,
+        nombre: nuevoColaboradorForm.nombre.trim(),
+        apellido: nuevoColaboradorForm.apellido.trim(),
+        email: nuevoColaboradorForm.email.trim(),
+        identificacion: nuevoColaboradorForm.identificacion.trim()
+      });
+
+      const rolTexto = res.rol && res.rol.toUpperCase().includes('LIDER') ? 'Líder de Proyecto' : 'Desarrollador';
+      toast.success(`Colaborador ${res.nombre} ${res.apellido} (${rolTexto}) registrado exitosamente.`);
+      setShowNuevoColaboradorModal(false);
+
+      // Recargar nómina
+      const devsRes = await api.get('/lider/desarrolladores').catch(() => []);
+      setDesarrolladores(Array.isArray(devsRes) ? devsRes : []);
+    } catch (err) {
+      console.error('Error al registrar colaborador por líder:', err);
+      toast.error(err?.message || 'Error al guardar el nuevo colaborador.');
+    } finally {
+      setSubmittingNuevoColaborador(false);
+    }
+  };
 
   // Conteo de proyectos por estado para los botones de filtro rápido
   const statsProyectos = useMemo(() => {
@@ -1717,6 +1797,29 @@ export const LiderDashboard = () => {
             <span>Nuevo Proyecto</span>
           </button>
 
+          {/* Botón: Nuevo Colaborador (Líder o Desarrollador) */}
+          <button
+            type="button"
+            onClick={() => {
+              setNuevoColaboradorForm({
+                nombre: '',
+                apellido: '',
+                identificacion: '',
+                email: '',
+                rol: 'ROLE_DESARROLLADOR',
+                passwordHash: '',
+                profesion: 'Ingeniero de Software',
+                especialidad: 'Full Stack Web & Cloud'
+              });
+              setShowNuevoColaboradorModal(true);
+            }}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+            title="Registrar un nuevo colaborador (Líder o Desarrollador) en la plataforma"
+          >
+            <UserPlus size={14} />
+            <span>Nuevo Colaborador</span>
+          </button>
+
           {/* Botón de Actualización Minimalista Outline */}
           <button
             type="button"
@@ -1784,6 +1887,27 @@ export const LiderDashboard = () => {
             transition={{ duration: 0.25, ease: 'easeOut' }}
             className="mb-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 shadow-sm space-y-4 min-w-0"
           >
+            {/* Banner de Proyecto Reasignado por Coordinación */}
+            {proyectoSeleccionado?.reasignado && (
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white text-xs font-black flex items-center justify-between shadow-md animate-pulse">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={16} className="text-amber-300 shrink-0" />
+                  <span>PROYECTO NUEVO ASIGNADO / REASIGNADO POR COORDINACIÓN CORPORATIVA</span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-lg bg-white/20 text-[0.65rem] uppercase tracking-wider font-mono">
+                  Asignación Reciente
+                </span>
+              </div>
+            )}
+
+            {/* Banner de Modo Lectura Exclusivo para Proyectos de Otros Líderes */}
+            {!isMiProyecto && (
+              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center gap-2">
+                <Lock size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>Modo Lectura Exclusivo: Este proyecto es supervisado por {proyectoSeleccionado.lider ? `${proyectoSeleccionado.lider.nombre} ${proyectoSeleccionado.lider.apellido}` : 'otro Líder'}. Solo su Líder responsable posee permisos de edición y gestión.</span>
+              </div>
+            )}
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80 pb-4 min-w-0">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-sm">
@@ -1824,7 +1948,7 @@ export const LiderDashboard = () => {
                   </div>
                 )}
 
-                {/* Botón: Generar Reporte PDF */}
+                {/* Botón: Generar Reporte PDF (Disponible para todos) */}
                 <button
                   type="button"
                   onClick={() => setShowGenerarReportePdfModal(true)}
@@ -1835,27 +1959,31 @@ export const LiderDashboard = () => {
                   <span>Generar Reporte PDF</span>
                 </button>
 
-                {/* Botón: Editar Información del Proyecto */}
-                <button
-                  type="button"
-                  onClick={handleAbrirEditarProyecto}
-                  className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs"
-                  title="Editar nombre, presupuesto, cliente, fechas y cambiar estado operativo (Activo, Pausado, Inhabilitado)"
-                >
-                  <Edit3 size={13} className="text-zinc-600 dark:text-zinc-400" />
-                  <span>Editar Proyecto</span>
-                </button>
+                {/* Acciones Exclusivas del Líder Propietario (Modo Edición) */}
+                {isMiProyecto && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleAbrirEditarProyecto}
+                      className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs"
+                      title="Editar nombre, presupuesto, cliente, fechas y cambiar estado operativo"
+                    >
+                      <Edit3 size={13} className="text-zinc-600 dark:text-zinc-400" />
+                      <span>Editar Proyecto</span>
+                    </button>
 
-                {!isProyectoFinalizado && (
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmFinalizar(true)}
-                    className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer shadow-2xs"
-                    title="Cerrar formalmente el ciclo de vida del proyecto, congelar su WBS y liberar la carga de desarrolladores"
-                  >
-                    <CheckCircle2 size={13} className="text-red-500" />
-                    <span>Finalizar Proyecto</span>
-                  </button>
+                    {!isProyectoFinalizado && (
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmFinalizar(true)}
+                        className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer shadow-2xs"
+                        title="Cerrar formalmente el ciclo de vida del proyecto"
+                      >
+                        <CheckCircle2 size={13} className="text-red-500" />
+                        <span>Finalizar Proyecto</span>
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -2200,7 +2328,12 @@ export const LiderDashboard = () => {
                 </p>
               </div>
 
-              {(proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO') ? (
+              {!isMiProyecto ? (
+                <div className="p-2.5 px-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2 font-medium">
+                  <Lock size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>Modo Lectura Activo (Proyecto Supervisado por otro Líder)</span>
+                </div>
+              ) : (proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO') ? (
                 <div className="p-2.5 px-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2 font-medium">
                   <Lock size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
                   <span>WBS Congelada (Modo Solo Lectura)</span>
@@ -2272,7 +2405,7 @@ export const LiderDashboard = () => {
                           {etapa?.estado || 'PENDIENTE'}
                         </span>
 
-                        {!isProyectoFinalizado && (
+                        {isMiProyecto && !isProyectoFinalizado && (
                           <button
                             type="button"
                             onClick={() => handleAbrirEditarEtapa(etapa)}
@@ -4473,6 +4606,47 @@ export const LiderDashboard = () => {
                   )}
                 </div>
 
+                {/* Selector Estricto de Propiedad (Mis Proyectos vs Otros Líderes) */}
+                <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80">
+                  <button
+                    type="button"
+                    onClick={() => setFiltroPropiedadLider('MIS_PROYECTOS')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 ${
+                      filtroPropiedadLider === 'MIS_PROYECTOS'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <User size={13} />
+                    <span>Mis Proyectos</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltroPropiedadLider('OTROS_LIDERES')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 ${
+                      filtroPropiedadLider === 'OTROS_LIDERES'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <Users size={13} />
+                    <span>Proyectos de Otros Líderes</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltroPropiedadLider('TODOS')}
+                    className={`py-2 px-3 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 ${
+                      filtroPropiedadLider === 'TODOS'
+                        ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span>Todos</span>
+                  </button>
+                </div>
+
                 {/* Filtros Rápidos de Estado */}
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <button
@@ -5210,6 +5384,171 @@ export const LiderDashboard = () => {
                   </button>
                 </div>
               </div>
+            </motion.div>
+          </div>
+        )}
+        {/* Modal: Registro de Nuevo Colaborador (Líder o Desarrollador) */}
+        {showNuevoColaboradorModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-extrabold text-base">
+                  <UserPlus size={20} className="text-emerald-600 dark:text-emerald-400" />
+                  <span>Registrar Nuevo Colaborador</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowNuevoColaboradorModal(false)}
+                  className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCrearColaboradorPorLider} className="space-y-4 text-xs">
+                <div className="p-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-200 text-[0.7rem] font-bold flex items-center gap-2">
+                  <UserCheck size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Como Líder, puedes dar de alta nuevos <strong>Líderes de Proyecto</strong> o <strong>Desarrolladores</strong> en la plataforma.</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Nombres *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={nuevoColaboradorForm.nombre}
+                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, nombre: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-semibold"
+                      placeholder="Ej. Mateo"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Apellidos *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={nuevoColaboradorForm.apellido}
+                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, apellido: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-semibold"
+                      placeholder="Ej. Fernández"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Número de Identificación / Cédula *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={nuevoColaboradorForm.identificacion}
+                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, identificacion: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-mono font-bold"
+                      placeholder="1098273645"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Rol de Seguridad *
+                    </label>
+                    <select
+                      value={nuevoColaboradorForm.rol}
+                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, rol: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-bold appearance-none cursor-pointer"
+                    >
+                      <option value="ROLE_DESARROLLADOR">💻 Desarrollador de Software</option>
+                      <option value="ROLE_LIDER">👔 Líder de Proyecto</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                    Correo Electrónico Corporativo *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={nuevoColaboradorForm.email}
+                    onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, email: e.target.value })}
+                    className="input-field w-full py-2 text-xs font-semibold"
+                    placeholder="m.fernandez@ikernell.com"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Profesión / Titulación
+                    </label>
+                    <input
+                      type="text"
+                      value={nuevoColaboradorForm.profesion}
+                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, profesion: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-semibold"
+                      placeholder="Ingeniero de Software"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                      Especialidad Principal
+                    </label>
+                    <input
+                      type="text"
+                      value={nuevoColaboradorForm.especialidad}
+                      onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, especialidad: e.target.value })}
+                      className="input-field w-full py-2 text-xs font-semibold"
+                      placeholder="Full Stack Web & Cloud"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
+                    Contraseña Inicial (Opcional)
+                  </label>
+                  <input
+                    type="password"
+                    value={nuevoColaboradorForm.passwordHash}
+                    onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, passwordHash: e.target.value })}
+                    className="input-field w-full py-2 text-xs font-semibold"
+                    placeholder="Por defecto: abrah1234"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowNuevoColaboradorModal(false)}
+                    className="outline-button text-xs py-2 px-4 font-bold"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingNuevoColaborador}
+                    className="gradient-button bg-emerald-600 hover:bg-emerald-700 text-xs py-2 px-5 font-bold inline-flex items-center gap-1.5 shadow-md"
+                  >
+                    {submittingNuevoColaborador ? <Loader2 size={14} className="animate-spin" /> : <UserCheck size={14} />}
+                    <span>Registrar Colaborador</span>
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

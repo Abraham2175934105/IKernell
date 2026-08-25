@@ -86,6 +86,15 @@ public class CoordinadorController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/trabajadores/{idLider}/inhabilitar-reasignar")
+    @Operation(summary = "Inhabilitar Líder y reasignar sus proyectos", description = "Inhabilita la cuenta de un Líder y transfiere todo su portafolio de proyectos a un nuevo Líder asignado")
+    public ResponseEntity<Trabajador> inhabilitarLiderYReasignarProyectos(
+            @PathVariable Long idLider,
+            @RequestParam Long idNuevoLiderTarget) {
+        Trabajador inhabilitado = coordinadorService.inhabilitarLiderYReasignarProyectos(idLider, idNuevoLiderTarget);
+        return ResponseEntity.ok(inhabilitado);
+    }
+
     @PostMapping("/proyectos/{idProyecto}/asignar/{idDesarrollador}")
     @Operation(summary = "Asignación operativa", description = "Vincula a un desarrollador a la planilla general de un proyecto (RF-12)")
     public ResponseEntity<ProyectoDesarrollador> asignarProyectoInicial(
