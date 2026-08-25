@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { 
   ShieldAlert, AlertTriangle, CheckCircle2, Clock, Bug, RefreshCw, 
-  FileText, Send, Zap, X, Loader2, Globe, Target, Sparkles, FolderGit2
+  FileText, Send, Zap, X, Loader2, Globe, Target, Sparkles, FolderGit2, Activity
 } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useApi } from '../../hooks/useApi';
@@ -150,7 +150,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
       label: 'Operación Estable - Umbral Adecuado',
       Icon: CheckCircle2
     }
-  }[nivelSemaforo] || {
+  }[currentLevel] || {
     dotColor: 'bg-zinc-400',
     badge: 'bg-zinc-100 text-zinc-700 border-zinc-200',
     iconBg: 'bg-zinc-100 text-zinc-700',
