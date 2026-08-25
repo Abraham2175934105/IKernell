@@ -14,8 +14,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Servicio de negocio para la Biblioteca Digital de Documentos Técnicos (RF-33).
- * Soporta búsqueda predictiva, filtros por categoría y previsualización de especificaciones.
+ * Servicio de arquitectura de negocio para la Biblioteca Digital de Documentos Técnicos.
+ * Proporciona soporte para la consulta por coincidencia parcial, filtrado multidimensional por categoría
+ * y resolución predictiva de documentos técnicos para el visor dual A4 de la plataforma IKernell.
  */
 @Service
 @Transactional

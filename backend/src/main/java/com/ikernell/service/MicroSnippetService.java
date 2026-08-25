@@ -9,8 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Servicio de negocio para el motor de inyección de snippets técnicos (RF-36).
- * Utiliza búsqueda difusa (fuzzy search) sobre trigramas de PostgreSQL (pg_trgm).
+ * Servicio de arquitectura de negocio para el motor Snippet.inject.
+ * Implementa la consulta difusa (Fuzzy Match) aprovechando la extensión pg_trgm en PostgreSQL
+ * y la función de similitud trigonométrica para inyección interactiva de soluciones de código.
  */
 @Service
 @Transactional
