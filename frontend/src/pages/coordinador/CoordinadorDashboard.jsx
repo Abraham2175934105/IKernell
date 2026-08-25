@@ -286,6 +286,7 @@ export const CoordinadorDashboard = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [trabajadores, setTrabajadores] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
+  const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState(null);
   const [togglingSolicitudId, setTogglingSolicitudId] = useState(null);
@@ -445,13 +446,15 @@ export const CoordinadorDashboard = () => {
   const cargarDatos = useCallback(async () => {
     try {
       setLoading(true);
-      const [trabajadoresRes, solicitudesRes] = await Promise.all([
-        api.get('/coordinador/trabajadores'),
-        api.get('/coordinador/solicitudes')
+      const [trabajadoresRes, solicitudesRes, proyectosRes] = await Promise.all([
+        api.get('/coordinador/trabajadores').catch(() => []),
+        api.get('/coordinador/solicitudes').catch(() => []),
+        api.get('/coordinador/proyectos').catch(() => [])
       ]);
 
       setTrabajadores(Array.isArray(trabajadoresRes) ? trabajadoresRes : []);
       setSolicitudes(Array.isArray(solicitudesRes) ? solicitudesRes : []);
+      setProyectos(Array.isArray(proyectosRes) ? proyectosRes : []);
     } catch (err) {
       console.error('Error cargando datos del coordinador:', err);
       toast.error('Error al sincronizar datos desde PostgreSQL.');
@@ -509,18 +512,40 @@ export const CoordinadorDashboard = () => {
       return;
     }
 
-    // Si el usuario es un LÍDER activo, verificar si administra proyectos activos
-    const isLider = targetUser && targetUser.rol && targetUser.rol.toUpperCase().includes('LIDER');
+    // Normalizar rol
+    const rolString = targetUser && targetUser.rol ? String(targetUser.rol).toUpperCase() : '';
+    const isLider = rolString.includes('LIDER');
     const isActivo = targetUser && (targetUser.estado === true || targetUser.estado === 'ACTIVO');
 
     if (isLider && isActivo) {
-      const proyectosAfectados = (proyectos || []).filter(p => p.lider?.idTrabajador === id || String(p.lider?.idTrabajador) === String(id));
+      // Consultar lista actualizada de proyectos
+      let listaProyectos = proyectos;
+      if (!listaProyectos || listaProyectos.length === 0) {
+        try {
+          const proyFetch = await api.get('/coordinador/proyectos');
+          listaProyectos = Array.isArray(proyFetch) ? proyFetch : [];
+          setProyectos(listaProyectos);
+        } catch (e) {
+          listaProyectos = [];
+        }
+      }
+
+      const proyectosAfectados = (listaProyectos || []).filter(p => 
+        (p.lider?.idTrabajador && String(p.lider.idTrabajador) === String(id)) ||
+        (p.lider?.id && String(p.lider.id) === String(id))
+      );
+
       if (proyectosAfectados.length > 0) {
         setLiderAInhabilitar(targetUser);
         setProyectosDelLiderAfectado(proyectosAfectados);
         
         // Precargar con el primer otro líder activo disponible
-        const otrosLideres = trabajadores.filter(t => t.idTrabajador !== id && t.estado && t.rol && t.rol.toUpperCase().includes('LIDER'));
+        const otrosLideres = trabajadores.filter(t => 
+          String(t.idTrabajador) !== String(id) && 
+          t.estado && 
+          t.rol && 
+          String(t.rol).toUpperCase().includes('LIDER')
+        );
         setNuevoLiderTargetId(otrosLideres.length > 0 ? String(otrosLideres[0].idTrabajador) : '');
         
         setShowReasignarLiderModal(true);

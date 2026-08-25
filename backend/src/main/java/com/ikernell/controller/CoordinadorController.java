@@ -1,5 +1,6 @@
 package com.ikernell.controller;
 
+import com.ikernell.model.Proyecto;
 import com.ikernell.model.ProyectoDesarrollador;
 import com.ikernell.model.SolicitudContacto;
 import com.ikernell.model.Trabajador;
@@ -49,6 +50,12 @@ public class CoordinadorController {
     @Operation(summary = "Listar todos los trabajadores", description = "Retorna el listado completo del personal (RF-10)")
     public ResponseEntity<List<Trabajador>> listarTrabajadores() {
         return ResponseEntity.ok(coordinadorService.listarTodosTrabajadores());
+    }
+
+    @GetMapping("/proyectos")
+    @Operation(summary = "Listar todos los proyectos de la empresa", description = "Devuelve el listado completo de proyectos para la gestión corporativa del coordinador")
+    public ResponseEntity<List<Proyecto>> listarProyectos() {
+        return ResponseEntity.ok(coordinadorService.listarTodosProyectos());
     }
 
     @GetMapping("/trabajadores/paginado")

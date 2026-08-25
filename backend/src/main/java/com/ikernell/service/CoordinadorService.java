@@ -79,6 +79,12 @@ public class CoordinadorService {
         return trabajadorRepository.findAll();
     }
 
+    // Consulta el listado completo de proyectos corporativos
+    @Transactional(readOnly = true)
+    public List<Proyecto> listarTodosProyectos() {
+        return proyectoRepository.findAll();
+    }
+
     // Consulta paginada para listas de personal extensas
     @Transactional(readOnly = true)
     public Page<Trabajador> listarTrabajadoresPaginado(Pageable pageable) {
