@@ -95,6 +95,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
   const [showTareasDevModal, setShowTareasDevModal] = useState(false);
   const [showEvolucionModal, setShowEvolucionModal] = useState(false);
   const [previousNavigationContext, setPreviousNavigationContext] = useState(null);
+  const [devTaskModalFilter, setDevTaskModalFilter] = useState('ALL'); // 'ALL' | 'THIS_PROJECT' | 'OTHER_PROJECTS'
 
   // Carga lista de proyectos disponibles para el selector interactivo
   useEffect(() => {
@@ -505,6 +506,24 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
     return Array.from(map.values());
   }, [desarolladorTareasList, proyectosList]);
 
+  // Lista de tareas filtradas para el modal según el botón seleccionado (Este proyecto / Otros proyectos / Todas)
+  const tareasFiltradasModal = useMemo(() => {
+    if (!desarolladorTareasList || !Array.isArray(desarolladorTareasList)) return [];
+    if (devTaskModalFilter === 'THIS_PROJECT') {
+      return desarolladorTareasList.filter(t => 
+        String(t.idProyecto) === String(proyectoSeleccionadoLocal?.idProyecto) || 
+        t.nombreProyecto === proyectoSeleccionadoLocal?.nombre
+      );
+    }
+    if (devTaskModalFilter === 'OTHER_PROJECTS') {
+      return desarolladorTareasList.filter(t => 
+        String(t.idProyecto) !== String(proyectoSeleccionadoLocal?.idProyecto) && 
+        t.nombreProyecto !== proyectoSeleccionadoLocal?.nombre
+      );
+    }
+    return desarolladorTareasList;
+  }, [desarolladorTareasList, devTaskModalFilter, proyectoSeleccionadoLocal]);
+
   // Manejador de navegación con auto-filtrado y redirección automática al WBS
   const handleIrAProyectoWbs = (proyectoTarget) => {
     // Guardar contexto previo para permitir "Volver con 1 Clic"
@@ -526,7 +545,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
     }
 
     if (onNavigateToWbs) {
-      onNavigateToWbs();
+      onNavigateToWbs(proyectoTarget, selectedDev);
     }
 
     toast.success(`Navegando a "${proyectoTarget?.nombre || 'Proyecto'}". Usa el botón "Volver a inspección" para retornar.`);
@@ -1154,7 +1173,10 @@ Generado automáticamente por el motor analítico IKernell v2.0
                         {/* Tarjeta 1: En Este Proyecto (Interactiva) */}
                         <button
                           type="button"
-                          onClick={() => setShowTareasDevModal(true)}
+                          onClick={() => {
+                            setDevTaskModalFilter('THIS_PROJECT');
+                            setShowTareasDevModal(true);
+                          }}
                           className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md text-left flex flex-col justify-between"
                         >
                           <div>
@@ -1174,7 +1196,10 @@ Generado automáticamente por el motor analítico IKernell v2.0
                         {/* Tarjeta 2: En Otros Proyectos (Interactiva) */}
                         <button
                           type="button"
-                          onClick={() => setShowTareasDevModal(true)}
+                          onClick={() => {
+                            setDevTaskModalFilter('OTHER_PROJECTS');
+                            setShowTareasDevModal(true);
+                          }}
                           className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-amber-500 dark:hover:border-amber-400 hover:shadow-md text-left flex flex-col justify-between"
                         >
                           <div>
@@ -1194,7 +1219,10 @@ Generado automáticamente por el motor analítico IKernell v2.0
                         {/* Tarjeta 3: Carga Global Acumulada (Interactiva) */}
                         <button
                           type="button"
-                          onClick={() => setShowEvolucionModal(true)}
+                          onClick={() => {
+                            setDevTaskModalFilter('ALL');
+                            setShowTareasDevModal(true);
+                          }}
                           className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative group cursor-pointer transition-all hover:border-emerald-500 dark:hover:border-emerald-400 hover:shadow-md text-left flex flex-col justify-between"
                         >
                           <div>
@@ -2016,15 +2044,77 @@ Generado automáticamente por el motor analítico IKernell v2.0
                 </div>
               </div>
 
+              {/* Selector de Filtro por Ámbito de Proyecto (Este Proyecto vs Otros Proyectos vs Todas) */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 shrink-0">
+                <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setDevTaskModalFilter('THIS_PROJECT')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
+                      devTaskModalFilter === 'THIS_PROJECT'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span>En este proyecto</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[0.62rem] font-mono bg-white/20 font-extrabold">
+                      {desarolladorTareasList.filter(t => String(t.idProyecto) === String(proyectoSeleccionadoLocal?.idProyecto) || t.nombreProyecto === proyectoSeleccionadoLocal?.nombre).length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDevTaskModalFilter('OTHER_PROJECTS')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
+                      devTaskModalFilter === 'OTHER_PROJECTS'
+                        ? 'bg-amber-600 text-white shadow-xs'
+                        : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span>En otros proyectos</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[0.62rem] font-mono bg-white/20 font-extrabold">
+                      {desarolladorTareasList.filter(t => String(t.idProyecto) !== String(proyectoSeleccionadoLocal?.idProyecto) && t.nombreProyecto !== proyectoSeleccionadoLocal?.nombre).length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDevTaskModalFilter('ALL')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
+                      devTaskModalFilter === 'ALL'
+                        ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
+                        : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span>Ver Todas</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[0.62rem] font-mono bg-white/20 font-extrabold">
+                      {desarolladorTareasList.length}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
               {/* 2. Listado Detallado de Actividades con Botón Directo */}
               <div className="overflow-y-auto space-y-3 pr-1 flex-1">
                 {loadingDevTasks ? (
                   <div className="p-8 text-center text-xs text-zinc-400 space-y-2">
                     <Loader2 size={24} className="animate-spin text-blue-500 mx-auto" />
-                    <p className="font-medium">Consolidando actividades asignadas en los 19 proyectos corporativos...</p>
+                    <p className="font-medium">Consolidando actividades asignadas...</p>
+                  </div>
+                ) : tareasFiltradasModal.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-zinc-400 space-y-2 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                    <Briefcase size={28} className="mx-auto text-zinc-300 dark:text-zinc-600" />
+                    <p className="font-bold text-zinc-600 dark:text-zinc-300">Sin actividades asignadas en este filtro.</p>
+                    <button
+                      type="button"
+                      onClick={() => setDevTaskModalFilter('ALL')}
+                      className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    >
+                      Ver todas las tareas globales ({desarolladorTareasList.length})
+                    </button>
                   </div>
                 ) : (
-                  desarolladorTareasList.map((task, idx) => (
+                  tareasFiltradasModal.map((task, idx) => (
                     <div
                       key={task.idActividad || idx}
                       className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2.5 flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500 transition-all"

@@ -420,6 +420,7 @@ export const LiderDashboard = () => {
   const [loadingProyectos, setLoadingProyectos] = useState(true);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [refreshingManual, setRefreshingManual] = useState(false);
+  const [navReturnContext, setNavReturnContext] = useState(null);
 
   const [showNuevoProyectoModal, setShowNuevoProyectoModal] = useState(false);
   const [submittingProyecto, setSubmittingProyecto] = useState(false);
@@ -1425,6 +1426,44 @@ export const LiderDashboard = () => {
           </button>
         </div>
       </motion.div>
+
+      {/* Banner Flotante de Retorno Rápido (Volver al Predictor de Burnout en 1 Clic) */}
+      {navReturnContext && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white p-4 rounded-3xl shadow-lg flex items-center justify-between gap-3 border border-blue-400/40"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0 shadow-inner">
+              <RotateCcw size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-extrabold tracking-tight truncate">
+                Navegación Directa a WBS: Proyecto "{proyectoSeleccionado?.nombre || 'Seleccionado'}"
+              </p>
+              <p className="text-[0.68rem] sm:text-xs text-blue-100 font-medium truncate mt-0.5">
+                Redireccionado tras inspeccionar a <strong className="text-white underline decoration-white/40">{navReturnContext.dev?.nombreCompleto || navReturnContext.dev?.nombre || 'Colaborador'}</strong>.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (navReturnContext.fromTab) {
+                setActiveTab(navReturnContext.fromTab);
+              }
+              setNavReturnContext(null);
+              toast.success(`Retornaste al Predictor de Burnout.`);
+            }}
+            className="bg-white text-blue-700 hover:bg-blue-50 text-xs font-black py-2.5 px-4 sm:px-5 rounded-2xl shadow-md transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 hover:scale-105"
+          >
+            <ArrowLeft size={16} className="stroke-[3]" />
+            <span>Volver al Predictor de Burnout</span>
+          </button>
+        </motion.div>
+      )}
 
       {/* Tarjeta de Detalles del Proyecto Seleccionado (Exclusiva de la sección WBS) */}
       {activeTab === 'wbs' && proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (() => {
@@ -2639,7 +2678,14 @@ export const LiderDashboard = () => {
             <PredictorBurnout 
               proyecto={proyectoSeleccionado} 
               etapas={etapas} 
-              onNavigateToWbs={() => setActiveTab('wbs')} 
+              onNavigateToWbs={(targetProj, devObj) => {
+                setNavReturnContext({
+                  dev: devObj,
+                  fromTab: 'burnout',
+                  proyectoAnterior: proyectoSeleccionado
+                });
+                setActiveTab('wbs');
+              }} 
               onSelectProyecto={(p) => seleccionarProyecto(p)}
             />
           </ErrorBoundary>
