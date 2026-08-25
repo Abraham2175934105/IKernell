@@ -7,7 +7,7 @@ import {
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -208,6 +208,7 @@ export const CoordinadorDashboard = () => {
 
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [customSkillInput, setCustomSkillInput] = useState('');
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
 
   const [newTrabajador, setNewTrabajador] = useState({
     identificacion: '',
@@ -217,9 +218,47 @@ export const CoordinadorDashboard = () => {
     profesion: '',
     especialidad: '',
     rol: 'DESARROLLADOR',
-    passwordHash: 'abrah1234'
+    passwordHash: ''
   });
   const [formErrors, setFormErrors] = useState({});
+
+  // Cálculo memorizado de requisitos de contraseña
+  const pwdValidity = React.useMemo(() => {
+    const pwd = newTrabajador.passwordHash || '';
+    return {
+      minMax: pwd.length >= 8 && pwd.length <= 20,
+      hasUpper: /[A-Z]/.test(pwd),
+      hasLower: /[a-z]/.test(pwd),
+      hasNumber: /[0-9]/.test(pwd),
+      isValid: pwd.length >= 8 && pwd.length <= 20 && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /[0-9]/.test(pwd)
+    };
+  }, [newTrabajador.passwordHash]);
+
+  // Generador de clave segura aleatoria (Cumple mín 1 Mayúscula, 1 Minúscula, 1 Número, 1 Símbolo)
+  const generarPasswordAleatoria = () => {
+    const uppers = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lowers = 'abcdefghijkmnopqrstuvwxyz';
+    const numbers = '23456789';
+    const symbols = '!@#$%&*';
+
+    let pass = '';
+    pass += uppers.charAt(Math.floor(Math.random() * uppers.length));
+    pass += lowers.charAt(Math.floor(Math.random() * lowers.length));
+    pass += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    pass += symbols.charAt(Math.floor(Math.random() * symbols.length));
+
+    const allChars = uppers + lowers + numbers + symbols;
+    for (let i = 4; i < 12; i++) {
+      pass += allChars.charAt(Math.floor(Math.random() * allChars.length));
+    }
+
+    const shuffled = pass.split('').sort(() => 0.5 - Math.random()).join('');
+
+    setNewTrabajador(prev => ({ ...prev, passwordHash: shuffled }));
+    setShowPasswordInput(true);
+    setFormErrors(p => ({ ...p, passwordHash: undefined }));
+    toast.success(`Clave segura generada: ${shuffled}`);
+  };
 
   // Peticiones API
   const cargarDatos = useCallback(async () => {
@@ -305,6 +344,18 @@ export const CoordinadorDashboard = () => {
     if (!data.email?.trim() || !data.email.includes('@')) {
       errors.email = 'Ingrese un correo electrónico corporativo válido';
     }
+
+    const pwd = data.passwordHash || '';
+    if (!pwd || pwd.length < 8 || pwd.length > 20) {
+      errors.passwordHash = 'La contraseña debe tener entre 8 y 20 caracteres';
+    } else if (!/[A-Z]/.test(pwd)) {
+      errors.passwordHash = 'La contraseña debe incluir al menos 1 letra mayúscula (A-Z)';
+    } else if (!/[a-z]/.test(pwd)) {
+      errors.passwordHash = 'La contraseña debe incluir al menos 1 letra minúscula (a-z)';
+    } else if (!/[0-9]/.test(pwd)) {
+      errors.passwordHash = 'La contraseña debe incluir al menos 1 número (0-9)';
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -334,7 +385,7 @@ export const CoordinadorDashboard = () => {
         profesion: newTrabajador.profesion.trim() || 'Ingeniero de Software',
         especialidad: especialidadFinal || 'Desarrollador General',
         rol: newTrabajador.rol,
-        passwordHash: 'abrah1234'
+        passwordHash: newTrabajador.passwordHash
       });
 
       setTrabajadores([nuevo, ...trabajadores]);
@@ -348,10 +399,11 @@ export const CoordinadorDashboard = () => {
         profesion: '',
         especialidad: '',
         rol: 'DESARROLLADOR',
-        passwordHash: 'abrah1234'
+        passwordHash: ''
       });
       setSelectedSkills([]);
       setCustomSkillInput('');
+      setShowPasswordInput(false);
       setFormErrors({});
     } catch (err) {
       console.error('Error creando trabajador:', err);
@@ -1834,6 +1886,79 @@ export const CoordinadorDashboard = () => {
                         className={`input-field py-2 text-xs font-mono ${formErrors.email ? 'border-red-400 dark:border-red-600' : ''}`}
                       />
                       {formErrors.email && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.email}</p>}
+                    </div>
+
+                    {/* Campo de Contraseña de Acceso Inicial y Generador de Clave Segura */}
+                    <div className="space-y-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                      <div className="flex items-center justify-between">
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 text-xs">
+                          <Lock size={13} className="text-blue-500" /> Contraseña de Acceso Inicial *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={generarPasswordAleatoria}
+                          className="text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-950/80 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800/80 px-2.5 py-1 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                          title="Genera una clave aleatoria que cumple todos los requisitos de seguridad"
+                        >
+                          <Sparkles size={12} className="text-amber-500" />
+                          <span>Generar Clave Segura</span>
+                        </button>
+                      </div>
+
+                      <div className="relative">
+                        <input
+                          type={showPasswordInput ? "text" : "password"}
+                          required
+                          value={newTrabajador.passwordHash}
+                          onChange={(e) => {
+                            setNewTrabajador({ ...newTrabajador, passwordHash: e.target.value });
+                            setFormErrors(p => ({ ...p, passwordHash: undefined }));
+                          }}
+                          placeholder="Mínimo 8 y máximo 20 caracteres (Ej. Ikernell2026*)"
+                          className={`input-field py-2 pl-3.5 pr-10 text-xs font-mono font-bold ${formErrors.passwordHash ? 'border-red-400 dark:border-red-600' : ''}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordInput(!showPasswordInput)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg transition-colors cursor-pointer"
+                          title={showPasswordInput ? "Ocultar contraseña" : "Ver contraseña"}
+                        >
+                          {showPasswordInput ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      </div>
+
+                      {/* Checklist de Validación en Tiempo Real (Mín 1 Mayúscula, 1 Minúscula, 1 Número, 8-20 Caracteres) */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
+                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
+                          pwdValidity.minMax ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                        }`}>
+                          {pwdValidity.minMax ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
+                          <span>8 a 20 Caracteres</span>
+                        </div>
+
+                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
+                          pwdValidity.hasUpper ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                        }`}>
+                          {pwdValidity.hasUpper ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
+                          <span>1 Mayúscula (A-Z)</span>
+                        </div>
+
+                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
+                          pwdValidity.hasLower ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                        }`}>
+                          {pwdValidity.hasLower ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
+                          <span>1 Minúscula (a-z)</span>
+                        </div>
+
+                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
+                          pwdValidity.hasNumber ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                        }`}>
+                          {pwdValidity.hasNumber ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
+                          <span>1 Número (0-9)</span>
+                        </div>
+                      </div>
+
+                      {formErrors.passwordHash && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.passwordHash}</p>}
                     </div>
                   </div>
 
