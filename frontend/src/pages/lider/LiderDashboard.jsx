@@ -2641,6 +2641,7 @@ export const LiderDashboard = () => {
               proyecto={proyectoSeleccionado} 
               etapas={etapas} 
               onNavigateToWbs={() => setActiveTab('wbs')} 
+              onSelectProyecto={(p) => seleccionarProyecto(p)}
             />
           </ErrorBoundary>
         </motion.div>
