@@ -201,57 +201,7 @@ export const LoginPage = () => {
             </button>
           </form>
 
-          {/* Quick Roles Assistant */}
-          <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                <KeyRound size={14} /> Accesos Rápidos de Prueba:
-              </div>
-              {activeDemo && (
-                <span className="inline-flex items-center gap-1 text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                  <CheckCircle2 size={12} /> {activeDemo} cargado
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setDemoCredentials('carlos.lider@ikernell.org', 'Líder')}
-                className={`p-2.5 text-center rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                  activeDemo === 'Líder'
-                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-md'
-                    : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 shadow-sm'
-                }`}
-              >
-                Líder
-              </button>
-              <button
-                type="button"
-                onClick={() => setDemoCredentials('diego.dev@ikernell.org', 'Desarrollador')}
-                className={`p-2.5 text-center rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                  activeDemo === 'Desarrollador'
-                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-md'
-                    : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 shadow-sm'
-                }`}
-              >
-                Desarrollador
-              </button>
-              <button
-                type="button"
-                onClick={() => setDemoCredentials('ana.coordinador@ikernell.org', 'Coordinador')}
-                className={`p-2.5 text-center rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                  activeDemo === 'Coordinador'
-                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-md'
-                    : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 shadow-sm'
-                }`}
-              >
-                Coordinador
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 text-center">
+          <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800 text-center">
             <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium flex items-center justify-center gap-1.5">
               <Shield size={12} /> Cifrado unidireccional BCrypt (RNF-10) • Acceso Restringido
             </p>
