@@ -579,14 +579,13 @@ export const LiderDashboard = () => {
       setProyectos(list);
 
       if (list.length > 0) {
-        const actual = (proyectoSeleccionado && proyectoSeleccionado.idProyecto === 'GLOBAL')
-          ? { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' }
-          : proyectoSeleccionado 
-            ? list.find(p => p.idProyecto === proyectoSeleccionado.idProyecto) || list[0]
-            : list[0];
+        const actual = proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL'
+          ? list.find(p => p.idProyecto === proyectoSeleccionado.idProyecto) || { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' }
+          : { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' };
         seleccionarProyecto(actual);
       } else {
-        setProyectoSeleccionado(null);
+        setProyectoSeleccionado({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+        seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
       }
     } catch (err) {
       console.error('Error cargando proyectos del líder:', err);
@@ -595,15 +594,6 @@ export const LiderDashboard = () => {
       setLoadingProyectos(false);
     }
   }, [api, proyectoSeleccionado, seleccionarProyecto]);
-
-  // Forzar contexto de proyecto individual al navegar a WBS o ETL
-  useEffect(() => {
-    if ((activeTab === 'wbs' || activeTab === 'etl') && proyectoSeleccionado?.idProyecto === 'GLOBAL') {
-      if (proyectos && proyectos.length > 0) {
-        seleccionarProyecto(proyectos[0]);
-      }
-    }
-  }, [activeTab, proyectoSeleccionado, proyectos, seleccionarProyecto]);
 
   // Manejador para refrescar manualmente con animación en el botón
   const handleManualRefresh = async () => {
@@ -1341,6 +1331,23 @@ export const LiderDashboard = () => {
             </div>
           </button>
 
+          {/* Botón Destacado: Ver Todos los Proyectos / Vista Global Corporativa */}
+          <button
+            type="button"
+            onClick={() => seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' })}
+            className={`px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer border ${
+              proyectoSeleccionado?.idProyecto === 'GLOBAL'
+                ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20'
+                : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+            }`}
+            title="Ver el portafolio completo y métricas consolidadas de todos los proyectos de la compañía"
+          >
+            <Globe size={14} className={proyectoSeleccionado?.idProyecto === 'GLOBAL' ? 'text-blue-600 dark:text-blue-400 animate-pulse' : 'text-zinc-500'} />
+            <span className="hidden md:inline">
+              {proyectoSeleccionado?.idProyecto === 'GLOBAL' ? 'Vista Global Activa' : 'Ver Todos los Proyectos'}
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={() => {
@@ -1561,32 +1568,19 @@ export const LiderDashboard = () => {
           className="space-y-6"
         >
           {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-            <div className="space-y-8">
-              {/* Componente Empty State Premium para Vista Global WBS */}
-              <div className="p-10 bg-zinc-50 dark:bg-zinc-900/30 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 text-center flex flex-col items-center justify-center space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-400 shadow-xs">
-                  <Globe size={48} className="text-zinc-400" />
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white mb-2 tracking-tight">
-                    Vista Global Corporativa Activa
-                  </h3>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-2xl mx-auto leading-relaxed font-medium">
-                    Seleccione un proyecto específico en el menú superior para gestionar su Estructura de Desglose de Trabajo (WBS) y asignar actividades. La estructura de desglose de trabajo (fases, etapas y asignación de tareas a desarrolladores) requiere el contexto de un proyecto individual y no puede operarse de forma consolidada.
-                  </p>
-                </div>
-              </div>
-
+            <div className="space-y-6">
               {/* Catálogo Corporativo de Selección Directa de Proyectos */}
               <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                   <h4 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    <FolderGit2 size={18} className="text-zinc-700 dark:text-zinc-300" />
+                    <FolderGit2 size={18} className="text-blue-600 dark:text-blue-400" />
                     Catálogo Corporativo de Proyectos
+                    <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-mono">
+                      {proyectos?.length || 0} proyectos en sistema
+                    </span>
                   </h4>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                    Haga clic en cualquiera de los proyectos a continuación para ingresar al desglose WBS correspondiente.
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                    Haga clic en cualquiera de las tarjetas a continuación para ingresar al desglose WBS y supervisar sus métricas.
                   </p>
                 </div>
 
@@ -3981,27 +3975,25 @@ export const LiderDashboard = () => {
                     </span>
                   </button>
 
-                  {(activeTab === 'semaforo' || activeTab === 'incidencias') && (
-                    <button
-                      type="button"
-                      onClick={() => setFiltroEstadoProyectoModal('GLOBAL')}
-                      className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                        filtroEstadoProyectoModal === 'GLOBAL'
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 hover:bg-blue-100'
-                      }`}
-                    >
-                      <Globe size={12} />
-                      <span>Vista Global</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setFiltroEstadoProyectoModal('GLOBAL')}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoModal === 'GLOBAL'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 hover:bg-blue-100'
+                    }`}
+                  >
+                    <Globe size={12} />
+                    <span>Vista Global</span>
+                  </button>
                 </div>
               </div>
 
               {/* Lista / Grid de Proyectos */}
               <div className="overflow-y-auto flex-1 pr-1 space-y-2.5 max-h-[380px]">
-                {/* Opción Especial: Vista Global Corporativa (Solo en Semáforo e Incidencias) */}
-                {(activeTab === 'semaforo' || activeTab === 'incidencias') && (filtroEstadoProyectoModal === 'TODOS' || filtroEstadoProyectoModal === 'GLOBAL') && !busquedaProyectoModal && (
+                {/* Opción Especial: Vista Global Corporativa (Disponible en todas las pestañas) */}
+                {(filtroEstadoProyectoModal === 'TODOS' || filtroEstadoProyectoModal === 'GLOBAL') && !busquedaProyectoModal && (
                   <div
                     onClick={() => {
                       seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
@@ -4027,7 +4019,7 @@ export const LiderDashboard = () => {
                           </span>
                         </div>
                         <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                          Consolida las métricas predictivas de riesgo y la totalidad de incidencias de la compañía.
+                          Consolida el catálogo completo de proyectos, riesgos y métricas de la organización.
                         </p>
                       </div>
                     </div>
