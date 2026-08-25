@@ -150,7 +150,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
       label: 'Operación Estable - Umbral Adecuado',
       Icon: CheckCircle2
     }
-  }[currentLevel] || {
+  }[nivelSemaforo] || {
     dotColor: 'bg-zinc-400',
     badge: 'bg-zinc-100 text-zinc-700 border-zinc-200',
     iconBg: 'bg-zinc-100 text-zinc-700',
@@ -215,12 +215,12 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
             onClick={handleExportEtlBrasil}
             disabled={exporting}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl whitespace-nowrap text-xs font-bold inline-flex items-center gap-2 transition-all shadow-sm cursor-pointer disabled:opacity-50"
-            title="Generar archivo plano bajo norma ISO 8601 UTC para Alianza Estratégica Brasil"
+            title="Transmitir lote ETL bajo norma ISO 8601 UTC a Alianza Estratégica Brasil"
           >
             {exporting ? (
-              <><Loader2 size={14} className="animate-spin" /> Procesando ETL...</>
+              <><Loader2 size={14} className="animate-spin" /> Transmitiendo ETL...</>
             ) : (
-              <><FileText size={14} /> Exportar ETL Brasil (ISO 8601)</>
+              <><Send size={14} /> Enviar ETL Brasil (ISO 8601)</>
             )}
           </button>
         </div>
@@ -262,11 +262,20 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
           {/* 2. Grid de Indicadores Cuantitativos & Gráfico */}
           <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             
-            {/* Horas de Contingencia */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col justify-between p-5 shadow-sm hover:border-blue-400 dark:hover:border-blue-500/40 transition-all">
-              <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
-                <Clock size={15} className="text-blue-600 dark:text-blue-400" />
-                {isGlobal ? 'Horas Corporativas Perdidas' : 'Horas de Contingencia'}
+            {/* Horas de Contingencia Interactivas */}
+            <div 
+              onClick={() => onNavigateIncidencias?.({ tipo: 'INTERRUPCIONES' })}
+              className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-3xl flex flex-col justify-between p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              title="Haga clic para ver el detalle de interrupciones y contingencias en la Consola de Incidencias"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <Clock size={15} className="text-blue-600 dark:text-blue-400" />
+                  {isGlobal ? 'Horas Corporativas Perdidas' : 'Horas de Contingencia'}
+                </div>
+                <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Ver lista →
+                </span>
               </div>
               <div className="my-2">
                 <span className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-zinc-100">
@@ -278,11 +287,20 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onEtlExportS
               </span>
             </div>
 
-            {/* Errores Críticos / Altos */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex flex-col justify-between p-5 shadow-sm hover:border-red-400 dark:hover:border-red-500/40 transition-all">
-              <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
-                <Bug size={15} className="text-red-600 dark:text-red-400" />
-                Errores Críticos / Altos
+            {/* Errores Críticos / Altos Interactivos */}
+            <div 
+              onClick={() => onNavigateIncidencias?.({ tipo: 'ERRORES', severidad: 'CRITICA_ALTA' })}
+              className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-red-500 dark:hover:border-red-400 rounded-3xl flex flex-col justify-between p-5 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              title="Haga clic para ir a la Consola de Incidencias y filtrar los Errores Críticos / Altos"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                  <Bug size={15} className="text-red-600 dark:text-red-400" />
+                  Errores Críticos / Altos
+                </div>
+                <span className="text-[0.65rem] font-bold text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Ver lista →
+                </span>
               </div>
               <div className="my-2">
                 <span className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-zinc-100">

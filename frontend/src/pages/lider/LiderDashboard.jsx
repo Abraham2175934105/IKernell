@@ -265,7 +265,15 @@ export const LiderDashboard = () => {
     resolucionNota: ''
   });
   const [filtroTipoInc, setFiltroTipoInc] = useState('TODOS');
+  const [filtroSeveridadInc, setFiltroSeveridadInc] = useState('TODAS');
   const [filtroEstadoInc, setFiltroEstadoInc] = useState('TODOS');
+
+  const handleNavigateIncidencias = useCallback(({ tipo, severidad } = {}) => {
+    setActiveTab('incidencias');
+    if (tipo) setFiltroTipoInc(tipo);
+    if (severidad) setFiltroSeveridadInc(severidad);
+    else setFiltroSeveridadInc('TODAS');
+  }, [setActiveTab]);
   const [filtroDevInc, setFiltroDevInc] = useState('TODOS');
   const [filtroFechaTipo, setFiltroFechaTipo] = useState('TODAS');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
@@ -814,6 +822,12 @@ export const LiderDashboard = () => {
     if (filtroTipoInc === 'ERRORES') combined = combined.filter(c => c._tipo === 'ERROR');
     if (filtroTipoInc === 'INTERRUPCIONES') combined = combined.filter(c => c._tipo === 'INTERRUPCION');
 
+    if (filtroSeveridadInc === 'CRITICA_ALTA') {
+      combined = combined.filter(c => c._tipo === 'ERROR' && (c.severidad === 'CRITICA' || c.severidad === 'ALTA'));
+    } else if (filtroSeveridadInc !== 'TODAS') {
+      combined = combined.filter(c => c.severidad === filtroSeveridadInc);
+    }
+
     if (filtroEstadoInc !== 'TODOS') {
       combined = combined.filter(c => (c.estadoAtencion || 'REGISTRADO') === filtroEstadoInc);
     }
@@ -867,7 +881,7 @@ export const LiderDashboard = () => {
     }
 
     return combined;
-  }, [errores, interrupciones, filtroTipoInc, filtroEstadoInc, filtroDevInc, filtroFechaTipo, filtroFechaDesde, filtroFechaHasta, proyectoSeleccionado]);
+  }, [errores, interrupciones, filtroTipoInc, filtroSeveridadInc, filtroEstadoInc, filtroDevInc, filtroFechaTipo, filtroFechaDesde, filtroFechaHasta, proyectoSeleccionado]);
 
   // Alias para retrocompatibilidad
   const listaIncidenciasUnificada = incidenciasFiltradas;
@@ -1701,6 +1715,7 @@ export const LiderDashboard = () => {
             <SemaforoInteligente 
               idProyecto={proyectoSeleccionado?.idProyecto || 'GLOBAL'} 
               proyectoNombre={proyectoSeleccionado?.nombre || 'Todos los Proyectos'}
+              onNavigateIncidencias={handleNavigateIncidencias}
             />
           </ErrorBoundary>
         </motion.div>
