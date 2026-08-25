@@ -432,15 +432,6 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
               {isDark ? <Sun size={17} /> : <Moon size={17} className="text-zinc-700 dark:text-zinc-300" />}
             </button>
 
-            {/* Botón Salir Rápido */}
-            <button
-              onClick={handleLogout}
-              title="Cerrar Sesión"
-              className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer shadow-sm"
-            >
-              <LogOut size={14} /> Salir
-            </button>
-
           </div>
 
         </header>
