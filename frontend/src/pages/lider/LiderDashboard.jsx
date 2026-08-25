@@ -3163,7 +3163,7 @@ export const LiderDashboard = () => {
 
                         {/* Contenedor Adaptativo de Evidencia WBS */}
                         <div className="max-h-56 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                          {evidenciaWbsFinalizacion.etapasIncompletas.map(et => (
+                          {(evidenciaWbsFinalizacion?.etapasIncompletas || []).map(et => (
                             <div 
                               key={et.idEtapa} 
                               className="p-3 rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200/80 dark:border-amber-800/60 space-y-2 shadow-2xs"

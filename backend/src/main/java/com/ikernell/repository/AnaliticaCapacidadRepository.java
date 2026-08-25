@@ -112,7 +112,7 @@ public interface AnaliticaCapacidadRepository extends JpaRepository<Actividad, L
                 d.email,
                 COALESCE(d.especialidad, 'Ingeniería de Software')          AS especialidad,
                 COALESCE(w.tareas_activas, 0)                               AS tareas_activas,
-                LEAST(45.0, (COALESCE(w.tareas_activas, 0) + 0.5) * 8.0)  AS carga_base_wbs,
+                LEAST(45.0, COALESCE(w.tareas_activas, 0) * 8.0)          AS carga_base_wbs,
                 COALESCE(mp.errores_s1, 0)                                  AS errores_s1,
                 COALESCE(mp.errores_s2, 0)                                  AS errores_s2,
                 COALESCE(mp.errores_s3, 0)                                  AS errores_s3,

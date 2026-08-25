@@ -114,8 +114,7 @@ public class EtlAutomationService {
         // Registro de Errores Técnicos con estandarización UTC estricta
         for (Error err : errores) {
             LocalDateTime fechaReg = err.getFechaRegistro() != null ? err.getFechaRegistro() : LocalDateTime.now(ZoneId.of("UTC"));
-            String isoDate = fechaReg.atZone(ZoneId.systemDefault())
-                    .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
+            String isoDate = fechaReg.atZone(ZoneId.of("UTC")).format(ISO_FORMATTER);
 
             Long stageId = (err.getEtapa() != null) ? err.getEtapa().getIdEtapa() : 0L;
             String stageName = (err.getEtapa() != null && err.getEtapa().getNombreEtapa() != null) ? err.getEtapa().getNombreEtapa() : "WBS";
@@ -136,8 +135,7 @@ public class EtlAutomationService {
         // Registro de Contingencias e Interrupciones Operativas con estandarización UTC estricta
         for (Interrupcion intp : interrupciones) {
             LocalDateTime fechaOcurr = intp.getFechaOcurrencia() != null ? intp.getFechaOcurrencia() : LocalDateTime.now(ZoneId.of("UTC"));
-            String isoDate = fechaOcurr.atZone(ZoneId.systemDefault())
-                    .withZoneSameInstant(ZoneId.of("UTC")).format(ISO_FORMATTER);
+            String isoDate = fechaOcurr.atZone(ZoneId.of("UTC")).format(ISO_FORMATTER);
 
             Long stageId = (intp.getEtapa() != null) ? intp.getEtapa().getIdEtapa() : 0L;
             String stageName = (intp.getEtapa() != null && intp.getEtapa().getNombreEtapa() != null) ? intp.getEtapa().getNombreEtapa() : "WBS";

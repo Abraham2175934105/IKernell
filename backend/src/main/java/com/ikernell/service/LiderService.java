@@ -564,7 +564,7 @@ public class LiderService {
 
         return new SemaforoMetricsDto(
                 null,
-                "🌐 Salud Global Corporativa (Todos los Proyectos)",
+                "Salud Global Corporativa (Todos los Proyectos)",
                 nivel,
                 titulo,
                 recomendacion,
@@ -578,19 +578,14 @@ public class LiderService {
         );
     }
 
-    // Bandeja de reportes consolidados (errores e interrupciones) del equipo
+    // Bandeja de reportes consolidados (errores e interrupciones) del equipo optimizada (Anti N+1)
     @Transactional(readOnly = true)
     public Map<String, Object> obtenerReportesConsolidadosProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
-        List<Error> errores = new ArrayList<>();
-        List<Interrupcion> interrupciones = new ArrayList<>();
-
-        for (Etapa e : etapas) {
-            errores.addAll(errorRepository.findByEtapa(e));
-            interrupciones.addAll(interrupcionRepository.findByEtapa(e));
-        }
+        
+        List<Error> errores = errorRepository.findByProyectoWithDetails(proyecto);
+        List<Interrupcion> interrupciones = interrupcionRepository.findByProyectoWithDetails(proyecto);
 
         Map<String, Object> respuesta = new HashMap<>();
         respuesta.put("proyectoId", idProyecto);
