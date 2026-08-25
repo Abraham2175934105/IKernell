@@ -231,36 +231,36 @@ const DeveloperCombobox = ({ value, onChange, desarrolladores, getDevCargaInfo, 
   const selectedCarga = selectedDev ? getDevCargaInfo(selectedDev.idTrabajador) : null;
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} className="w-full space-y-2">
       {/* Botón Trigger Principal */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-zinc-900 border text-xs font-semibold shadow-2xs transition-all cursor-pointer text-left ${
+        className={`w-full flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border text-xs font-semibold shadow-2xs transition-all cursor-pointer text-left ${
           error 
             ? 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10' 
             : isOpen 
-            ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20' 
+            ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 bg-blue-50/30 dark:bg-blue-950/20' 
             : 'border-zinc-200 dark:border-zinc-700/80 hover:border-zinc-400 dark:hover:border-zinc-600'
         }`}
       >
         {selectedDev ? (
           <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-extrabold text-xs flex items-center justify-center border border-blue-200 dark:border-blue-800 shrink-0">
+            <div className="w-9 h-9 rounded-2xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-sm shrink-0">
               {selectedDev.nombre?.[0]}{selectedDev.apellido?.[0]}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate">
                   {selectedDev.nombre} {selectedDev.apellido}
                 </span>
               </div>
-              <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium">
+              <span className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium">
                 {getCleanEspecialidad(selectedDev.especialidad, selectedDev.profesion)}
               </span>
             </div>
             {selectedCarga && (
-              <span className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-bold border shrink-0 ${
+              <span className={`px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${
                 selectedCarga.horasAsignadas >= 48
                   ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800'
                   : selectedCarga.horasAsignadas >= 36
@@ -272,52 +272,57 @@ const DeveloperCombobox = ({ value, onChange, desarrolladores, getDevCargaInfo, 
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-zinc-400 font-medium">
-            <UserCheck size={16} className="text-zinc-400 shrink-0" />
-            <span>{placeholder}</span>
+          <div className="flex items-center gap-2.5 text-zinc-400 font-medium text-xs">
+            <UserCheck size={18} className="text-blue-500 shrink-0" />
+            <span className="font-semibold text-zinc-600 dark:text-zinc-400">{placeholder}</span>
           </div>
         )}
 
-        <ChevronDown size={16} className={`text-zinc-400 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+        <div className="flex items-center gap-1.5 text-zinc-400 shrink-0">
+          <span className="text-[0.68rem] font-bold text-blue-600 dark:text-blue-400">
+            {isOpen ? 'Ocultar lista' : 'Desplegar lista'}
+          </span>
+          <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''}`} />
+        </div>
       </button>
 
-      {/* Desplegable Deslizante con Buscador y Lista de Tarjetas */}
+      {/* Panel Desplegable Integrado Inline (Cero Recorte de Pantalla) */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col p-2 space-y-2 max-h-80"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="overflow-hidden bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl p-3 space-y-3 shadow-inner"
           >
             {/* Buscador Rápido Interno */}
-            <div className="relative shrink-0">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+            <div className="relative">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por nombre o especialidad..."
-                className="w-full pl-9 pr-8 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Filtrar por nombre, apellido o especialidad técnica..."
+                className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
                 autoFocus
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
                 >
-                  <X size={13} />
+                  <X size={14} />
                 </button>
               )}
             </div>
 
-            {/* Lista Scrollable de Desarrolladores */}
-            <div className="overflow-y-auto space-y-1.5 pr-1 max-h-60 custom-scrollbar">
+            {/* Lista Amplia y Desplegada de Tarjetas de Desarrolladores */}
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
               {filteredDevs.length === 0 ? (
-                <div className="p-4 text-center text-xs text-zinc-400 font-medium">
-                  No se encontraron desarrolladores coincidentes.
+                <div className="p-4 text-center text-xs text-zinc-400 font-medium bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/60 dark:border-zinc-800">
+                  No se encontraron desarrolladores coincidentes con la búsqueda.
                 </div>
               ) : (
                 filteredDevs.map(dev => {
@@ -340,39 +345,43 @@ const DeveloperCombobox = ({ value, onChange, desarrolladores, getDevCargaInfo, 
                         setIsOpen(false);
                         setSearchTerm('');
                       }}
-                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                         isSelected
-                          ? 'bg-blue-50/80 dark:bg-blue-950/50 border-blue-300 dark:border-blue-700 shadow-2xs'
-                          : 'bg-white dark:bg-zinc-900/90 border-zinc-100 dark:border-zinc-800/80 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700'
+                          ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 shadow-sm ring-1 ring-blue-500/20'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-700/80 hover:bg-blue-50/40 dark:hover:bg-zinc-800/80 hover:border-blue-300 dark:hover:border-blue-700 shadow-2xs'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className={`w-8 h-8 rounded-xl font-extrabold text-xs flex items-center justify-center shrink-0 border ${
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`w-9 h-9 rounded-2xl font-black text-xs flex items-center justify-center shrink-0 border ${
                           isSelected
-                            ? 'bg-blue-600 text-white border-blue-600'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
                             : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
                         }`}>
                           {dev.nombre?.[0]}{dev.apellido?.[0]}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate">
                               {dev.nombre} {dev.apellido}
                             </span>
-                            {isSelected && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                            {isSelected && (
+                              <span className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-600 text-white">
+                                <Check size={12} /> SELECCIONADO
+                              </span>
+                            )}
                           </div>
-                          <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium">
+                          <span className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium mt-0.5">
                             {getCleanEspecialidad(dev.especialidad, dev.profesion)}
                           </span>
                         </div>
                       </div>
 
-                      {/* Capacidad Horaria Visual */}
-                      <div className="flex flex-col items-end shrink-0 gap-1">
-                        <span className={`px-2 py-0.5 rounded-lg text-[0.6rem] font-extrabold border ${estColor.bg}`}>
+                      {/* Capacidad Horaria Visual Amplia */}
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0 gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
+                        <span className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-black border ${estColor.bg}`}>
                           {horas}/48h • {estColor.label}
                         </span>
-                        <div className="w-16 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div className="w-24 h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                           <div className={`h-full ${estColor.bar} transition-all`} style={{ width: `${pct}%` }} />
                         </div>
                       </div>
@@ -2601,7 +2610,7 @@ export const LiderDashboard = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90dvh] overflow-y-auto space-y-4"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-xl sm:max-w-2xl shadow-2xl max-h-[90dvh] overflow-y-auto space-y-4"
             >
               <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
                 <div className="flex items-center gap-2.5">
