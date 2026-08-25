@@ -1678,24 +1678,26 @@ export const LiderDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {proyectosCatalogoFiltrados.map((p) => {
                     const badgeStyle = getEstadoBadgeClasses(p.estado);
+                    const presupuestoFormateado = p.presupuesto ? Number(p.presupuesto).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00';
+
                     return (
                       <div
                         key={p.idProyecto}
                         onClick={() => seleccionarProyecto(p)}
-                        className="group bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-900 dark:hover:border-zinc-100 shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                        className="group bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 shadow-xs hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4"
                       >
                         <div className="space-y-3">
                           <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="w-9 h-9 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-extrabold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-black text-xs flex items-center justify-center shrink-0 shadow-sm font-mono">
                                 #{p.idProyecto}
                               </div>
                               <div className="min-w-0">
-                                <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-900 dark:group-hover:text-white truncate">
+                                <h4 className="font-black text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                                   {p.nombre}
                                 </h4>
-                                <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-semibold flex items-center gap-1 truncate">
-                                  <Building2 size={11} className="shrink-0 text-zinc-400" />
+                                <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-semibold flex items-center gap-1 truncate mt-0.5">
+                                  <Building2 size={12} className="shrink-0 text-zinc-400" />
                                   <span>{p.cliente || 'Cliente Interno'}</span>
                                 </p>
                               </div>
@@ -1708,23 +1710,26 @@ export const LiderDashboard = () => {
                           </div>
 
                           {p.descripcion && (
-                            <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed font-medium">
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed font-medium">
                               {p.descripcion}
                             </p>
                           )}
                         </div>
 
-                        <div className="mt-5 pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-xs font-semibold">
-                          <div className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
-                            <DollarSign size={13} className="text-zinc-400" />
-                            <span className="font-mono font-bold">
-                              ${Number(p.presupuesto || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {/* Inversión Financiera Destacada */}
+                        <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between gap-2 text-xs font-semibold">
+                          <div className="flex flex-col">
+                            <span className="text-[0.62rem] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">
+                              Presupuesto Total
+                            </span>
+                            <span className="font-mono text-sm font-black text-emerald-600 dark:text-emerald-400">
+                              ${presupuestoFormateado}
                             </span>
                           </div>
 
-                          <span className="text-[0.7rem] text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 flex items-center gap-1 font-bold transition-colors">
+                          <span className="text-[0.72rem] font-extrabold text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
                             <span>Gestionar WBS</span>
-                            <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                            <ChevronRight size={14} />
                           </span>
                         </div>
                       </div>
@@ -2513,28 +2518,105 @@ export const LiderDashboard = () => {
           className="space-y-6"
         >
           {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-            <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-10 sm:p-14 text-center max-w-2xl mx-auto shadow-sm my-4">
-              <div className="w-16 h-16 rounded-3xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
-                <FileText size={32} />
+            <div className="space-y-6">
+              {/* Banner Informativo y Catálogo de Proyectos para Exportación ETL */}
+              <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+                      Exportación ETL Brasil (ISO 8601 UTC)
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <span>Seleccione un Proyecto para Generar y Transmitir el Lote ETL</span>
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl mt-1">
+                    La transmisión de datos a Brasil requiere un proyecto activo específico. Seleccione uno del catálogo para continuar.
+                  </p>
+                </div>
+                
+                <div className="relative flex-1 md:w-72">
+                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  <input
+                    type="text"
+                    value={busquedaCatalogoProyecto}
+                    onChange={(e) => setBusquedaCatalogoProyecto(e.target.value)}
+                    placeholder="Buscar por proyecto o cliente..."
+                    className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                  />
+                  {busquedaCatalogoProyecto && (
+                    <button
+                      type="button"
+                      onClick={() => setBusquedaCatalogoProyecto('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
               </div>
-              <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-2">
-                Vista Global Activa. Seleccione un proyecto específico en el menú superior para exportar el lote ETL Brasil.
-              </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 max-w-lg mx-auto">
-                La exportación bajo norma ISO 8601 UTC para la Alianza Estratégica Brasil requiere empaquetar los registros operativos de un proyecto individual y no está disponible en la vista global.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {proyectos?.map(p => (
-                  <button
-                    key={p.idProyecto}
-                    type="button"
-                    onClick={() => seleccionarProyecto(p)}
-                    className="outline-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
-                  >
-                    <FolderGit2 size={13} className="text-blue-500" />
-                    <span>{p.nombre}</span>
-                  </button>
-                ))}
+
+              {/* Grilla 3 Columnas Organizada con Presupuestos Destacados */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {proyectosCatalogoFiltrados.map((p) => {
+                  const badgeStyle = getEstadoBadgeClasses(p.estado);
+                  const presupuestoFormateado = p.presupuesto ? Number(p.presupuesto).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00';
+
+                  return (
+                    <div
+                      key={p.idProyecto}
+                      onClick={() => seleccionarProyecto(p)}
+                      className="group bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 shadow-xs hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4 relative overflow-hidden"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-black text-xs flex items-center justify-center shrink-0 shadow-sm font-mono">
+                              #{p.idProyecto}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="font-black text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                                {p.nombre}
+                              </h4>
+                              <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-semibold flex items-center gap-1 truncate mt-0.5">
+                                <Building2 size={12} className="shrink-0 text-zinc-400" />
+                                <span>{p.cliente || 'Cliente Interno'}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <span className={`inline-flex items-center gap-1.5 text-[0.62rem] font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${badgeStyle.badge}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${badgeStyle.dot}`} />
+                            <span>{p.estado || 'ACTIVO'}</span>
+                          </span>
+                        </div>
+
+                        {p.descripcion && (
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed font-medium">
+                            {p.descripcion}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Inversión Financiera Destacada */}
+                      <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between gap-2 text-xs font-semibold">
+                        <div className="flex flex-col">
+                          <span className="text-[0.62rem] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">
+                            Presupuesto Total
+                          </span>
+                          <span className="font-mono text-sm font-black text-emerald-600 dark:text-emerald-400">
+                            ${presupuestoFormateado}
+                          </span>
+                        </div>
+
+                        <span className="text-[0.72rem] font-extrabold text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                          <span>Exportar ETL</span>
+                          <ChevronRight size={14} />
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ) : (
