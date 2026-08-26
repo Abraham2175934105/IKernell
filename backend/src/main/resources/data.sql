@@ -1177,7 +1177,7 @@ IKernell implementa un modelo de autorización estricto de menor privilegio (*Pr
 ```text
 [Cliente React] --(1) POST /api/auth/login (email, password)--> [Spring Boot Auth]
 [Cliente React] <--(2) 200 OK + JWT Token (HMAC-SHA256, 24h)--- [Spring Boot Auth]
-[Cliente React] --(3) GET /api/coordinador/* + [Bearer Token]--> [JwtAuthFilter]
+[Cliente React] --(3) GET /api/coordinador/proyectos + [Bearer Token]--> [JwtAuthFilter]
 [Cliente React] <--(4) Valida Firma & Claims -> Ejecuta Controller-- [SecurityContext]
 ```
 
