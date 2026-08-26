@@ -2037,21 +2037,24 @@ export const CoordinadorDashboard = () => {
                 )}
               </div>
 
-              {/* Filtro por Líder de Proyecto */}
-              <div className="flex items-center gap-2">
-                <span className="text-[0.65rem] font-black uppercase text-zinc-400 shrink-0">Filtrar por Líder:</span>
+              {/* Filtro por Líder de Proyecto Embellecido */}
+              <div className="flex items-center gap-2.5 bg-zinc-50 dark:bg-zinc-800/80 p-2 px-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+                <Crown size={16} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                <span className="text-[0.68rem] font-mono font-extrabold uppercase text-zinc-500 dark:text-zinc-400 shrink-0">
+                  Filtrar por Líder:
+                </span>
                 <select
                   value={filtroProyectoLider}
                   onChange={(e) => {
                     setFiltroProyectoLider(e.target.value);
                     setCurrentProyectoPage(1);
                   }}
-                  className="px-3 py-2 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold"
+                  className="bg-transparent text-xs font-extrabold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer pr-2"
                 >
-                  <option value="TODOS">👥 Todos los Líderes ({lideresActivos.length})</option>
+                  <option value="TODOS">👑 Todos los Líderes ({lideresActivos.length})</option>
                   {lideresActivos.map(lider => (
                     <option key={lider.idTrabajador} value={lider.idTrabajador}>
-                      {lider.nombre} {lider.apellido} ({lider.email})
+                      {lider.nombre} {lider.apellido} &bull; [{lider.email}]
                     </option>
                   ))}
                 </select>
@@ -2113,7 +2116,7 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Grilla Corporativa de Proyectos */}
+          {/* Grilla Corporativa de Proyectos Rediseñada (Nivel Superior) */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
@@ -2131,7 +2134,7 @@ export const CoordinadorDashboard = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {proyectosPaginados.map(prj => {
                 const presupuestoFmt = Number(prj.presupuesto || 0).toLocaleString('es-CO');
                 const isCompletado = prj.estado === 'COMPLETADO' || prj.estado === 'FINALIZADO';
@@ -2141,20 +2144,20 @@ export const CoordinadorDashboard = () => {
                 return (
                   <motion.div
                     key={prj.idProyecto}
-                    whileHover={{ y: -3 }}
+                    whileHover={{ y: -4, scale: 1.01 }}
                     onClick={() => {
                       if (isHighlighted) {
                         setHighlightedProyectoId(null);
                         handleAbrirDetalleProyecto(prj);
                       }
                     }}
-                    className={`bg-white dark:bg-zinc-900 p-5 rounded-3xl border shadow-sm flex flex-col justify-between gap-4 transition-all duration-300 ${
+                    className={`bg-white dark:bg-zinc-900 p-6 rounded-3xl border shadow-sm flex flex-col justify-between gap-5 transition-all duration-300 ${
                       isHighlighted
                         ? 'ring-4 ring-blue-500 animate-pulse border-blue-600 bg-blue-50/50 dark:bg-blue-950/50 shadow-2xl scale-[1.02] cursor-pointer'
-                        : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-400 dark:hover:border-blue-500/50'
+                        : 'border-zinc-200/90 dark:border-zinc-800 hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md'
                     }`}
                   >
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {isHighlighted && (
                         <div className="bg-blue-600 text-white text-[0.68rem] font-black px-3 py-1.5 rounded-2xl flex items-center justify-between gap-1 -mx-2 -mt-2 mb-2 shadow-md">
                           <span className="flex items-center gap-1.5">
@@ -2167,38 +2170,38 @@ export const CoordinadorDashboard = () => {
 
                       {/* Cabecera de la Tarjeta */}
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[0.65rem] font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                        <span className="font-mono font-extrabold text-[0.68rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
                           PRJ-00{prj.idProyecto}
                         </span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold uppercase border ${
+                        <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase border ${
                           isCompletado ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' :
                           isPausado ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 animate-pulse' :
                           'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
                         }`}>
-                          {prj.estado || 'EN_PROGRESO'}
+                          {prj.estado || 'ACTIVO'}
                         </span>
                       </div>
 
                       {/* Título y Cliente */}
-                      <div>
-                        <h4 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2">
+                      <div className="space-y-1.5">
+                        <h4 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                           {prj.nombre}
                         </h4>
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">
-                          <Building2 size={13} className="shrink-0 text-zinc-400" />
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                          <Building2 size={13} className="shrink-0 text-blue-500" />
                           <span className="truncate">{prj.cliente || 'Cliente Corporativo'}</span>
                         </div>
                       </div>
 
-                      {/* Líder Asignado (Badge de Trazabilidad de Dirección) */}
-                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-7 h-7 rounded-xl bg-blue-600 text-white font-extrabold text-[0.65rem] flex items-center justify-center shrink-0">
+                      {/* Líder Asignado */}
+                      <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
                             {prj.lider ? getInitials(prj.lider.nombre, prj.lider.apellido) : 'SD'}
                           </div>
                           <div className="min-w-0">
-                            <span className="text-[0.62rem] font-bold text-zinc-400 block uppercase font-mono">Líder Asignado:</span>
-                            <span className="text-xs font-black text-zinc-800 dark:text-zinc-200 truncate block">
+                            <span className="text-[0.6rem] font-extrabold text-zinc-400 block uppercase font-mono tracking-wider">Líder Asignado:</span>
+                            <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate block">
                               {prj.lider ? `${prj.lider.nombre} ${prj.lider.apellido}` : 'Sin Líder Asignado'}
                             </span>
                           </div>
@@ -2213,34 +2216,36 @@ export const CoordinadorDashboard = () => {
 
                       {/* Fechas e Inversión */}
                       <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                        <div className="bg-zinc-50/50 dark:bg-zinc-800/30 p-2 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                          <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase">Presupuesto:</span>
-                          <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">${presupuestoFmt}</span>
+                        <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-0.5">
+                          <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono">Presupuesto:</span>
+                          <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">${presupuestoFmt}</span>
                         </div>
-                        <div className="bg-zinc-50/50 dark:bg-zinc-800/30 p-2 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                          <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase">Fin Estimado:</span>
-                          <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300">{prj.fechaFinEstimada || '2027-12-31'}</span>
+                        <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-0.5">
+                          <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono">Fin Estimado:</span>
+                          <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300 text-xs">{prj.fechaFinEstimada || '2027-12-31'}</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Botones de Acción Interactivas */}
-                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                    {/* Botones de Acción Claros & Explicitos (Reasignar Líder Rediseñado) */}
+                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => handleAbrirDetalleProyecto(prj)}
-                        className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer shadow-2xs flex-1 justify-center"
+                        className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-xs flex-1 justify-center rounded-xl cursor-pointer"
                       >
-                        <Eye size={13} /> Ver WBS & Detalle
+                        <Eye size={14} />
+                        <span>Ver WBS & Detalle</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => handleAbrirReasignarLiderPrj(prj)}
-                        className="p-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-50 text-zinc-700 dark:text-zinc-300 hover:text-blue-600 border border-zinc-200 dark:border-zinc-700 transition-colors cursor-pointer shrink-0"
-                        title="Reasignar la dirección de este proyecto a otro Líder"
+                        className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50/50 hover:bg-purple-100 dark:bg-purple-950/40 cursor-pointer rounded-xl shrink-0"
+                        title="Reasignar la dirección de este proyecto a otro Líder con registro de auditoría"
                       >
                         <RotateCcw size={14} />
+                        <span>Reasignar Líder</span>
                       </button>
                     </div>
                   </motion.div>
@@ -3713,65 +3718,104 @@ export const CoordinadorDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal: Reasignar Líder a Proyecto Específico */}
+      {/* Modal: Reasignar Líder a Proyecto Específico (Con Justificación de Auditoría) */}
       <AnimatePresence>
         {showReasignarLiderModalPrj && proyectoAReasignar && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl space-y-6"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-xl shadow-2xl space-y-6"
             >
-              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <RotateCcw size={20} className="text-blue-600 dark:text-blue-400" /> Reasignar Dirección de Proyecto
-                </h3>
-                <button onClick={() => setShowReasignarLiderModalPrj(false)} className="text-zinc-400 hover:text-zinc-600">
-                  <X size={18} />
-                </button>
+              <div className="flex items-center gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div className="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-200 dark:border-purple-800 shadow-xs">
+                  <RotateCcw size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                    Reasignar Dirección de Proyecto
+                  </h3>
+                  <p className="text-xs text-zinc-500 font-medium">
+                    Asigna un nuevo Líder responsable con registro de auditoría en la plataforma
+                  </p>
+                </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 space-y-1 font-medium">
-                <span className="font-bold block">Proyecto Target: {proyectoAReasignar.nombre} (PRJ-00{proyectoAReasignar.idProyecto})</span>
-                <span>Líder Actual: <strong>{proyectoAReasignar.lider ? `${proyectoAReasignar.lider.nombre} ${proyectoAReasignar.lider.apellido}` : 'Sin Líder'}</strong></span>
+              {/* Ficha Resumen del Proyecto Afectado */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 to-purple-50/80 dark:from-blue-950/40 dark:to-purple-950/40 border border-blue-200/80 dark:border-blue-800/80 text-xs space-y-1.5 font-medium">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-extrabold text-blue-700 dark:text-blue-300 text-[0.7rem]">
+                    PRJ-00{proyectoAReasignar.idProyecto}
+                  </span>
+                  <span className="text-[0.62rem] font-bold text-zinc-500">Cliente: {proyectoAReasignar.cliente || 'Corporativo'}</span>
+                </div>
+                <strong className="block text-sm font-extrabold text-zinc-900 dark:text-zinc-100">
+                  {proyectoAReasignar.nombre}
+                </strong>
+                <div className="pt-1 text-[0.7rem] text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5">
+                  <span>Líder Saliente:</span>
+                  <strong className="text-purple-700 dark:text-purple-300">
+                    {proyectoAReasignar.lider ? `${proyectoAReasignar.lider.nombre} ${proyectoAReasignar.lider.apellido}` : 'Sin Líder Asignado'}
+                  </strong>
+                </div>
               </div>
 
               <form onSubmit={handleEjecutarReasignarLiderPrj} className="space-y-4 text-xs">
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Seleccionar Nuevo Líder de Proyecto *</label>
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block text-xs">
+                    Seleccionar Nuevo Líder Receptor *
+                  </label>
                   <select
                     required
                     value={targetNuevoLiderPrjId}
                     onChange={(e) => setTargetNuevoLiderPrjId(e.target.value)}
-                    className="input-field py-2.5 font-bold"
+                    className="input-field w-full py-3 px-3.5 text-xs font-bold appearance-none cursor-pointer rounded-xl border-2 border-zinc-200 dark:border-zinc-700 focus:border-blue-500"
                   >
-                    <option value="">-- Seleccione un Líder de la Lista --</option>
+                    <option value="">— Seleccionar un Líder Activo de la Lista —</option>
                     {lideresActivos
                       .filter(l => l.idTrabajador !== proyectoAReasignar.lider?.idTrabajador)
                       .map(lider => (
                         <option key={lider.idTrabajador} value={lider.idTrabajador}>
-                          {lider.nombre} {lider.apellido} ({lider.email})
+                          {lider.nombre} {lider.apellido} — ({lider.profesion || 'Líder de Proyecto'}) &bull; [{lider.email}]
                         </option>
                       ))}
                   </select>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block text-xs flex items-center justify-between">
+                    <span>Motivo / Justificación del Cambio (Registro de Auditoría):</span>
+                    <span className="text-[0.62rem] text-zinc-400 font-normal">Opcional</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={motivoReasignacionPrj}
+                    onChange={(e) => setMotivoReasignacionPrj(e.target.value)}
+                    placeholder="Describe la razón técnica u operativa de la reasignación (ej. Reorganización de carga directiva, vacaciones, especialización)..."
+                    className="input-field w-full p-3 text-xs font-medium rounded-xl border-2 border-zinc-200 dark:border-zinc-700 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                   <button
                     type="button"
                     onClick={() => setShowReasignarLiderModalPrj(false)}
                     disabled={submittingReasignarLiderPrj}
-                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer"
+                    className="outline-button text-xs py-2.5 px-5 font-bold cursor-pointer rounded-2xl"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={submittingReasignarLiderPrj || !targetNuevoLiderPrjId}
-                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                    className="gradient-button text-xs py-2.5 px-6 font-bold cursor-pointer inline-flex items-center gap-2 rounded-2xl shadow-md disabled:opacity-50"
                   >
-                    {submittingReasignarLiderPrj ? <><Loader2 size={14} className="animate-spin" /> Transfiriendo...</> : 'Confirmar Reasignación'}
+                    {submittingReasignarLiderPrj ? (
+                      <><Loader2 size={15} className="animate-spin" /> Transfiriendo...</>
+                    ) : (
+                      <><CheckCircle2 size={15} /> Confirmar Reasignación con Auditoría</>
+                    )}
                   </button>
                 </div>
               </form>
@@ -3780,109 +3824,142 @@ export const CoordinadorDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal: Detalle Completo de Proyecto & Supervisión WBS para Coordinador */}
+      {/* Modal: Detalle Completo de Proyecto & Supervisión WBS (Vista Amplia Executiva sin Botón X) */}
       <AnimatePresence>
         {selectedProyectoModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-[95%] sm:w-full max-w-4xl shadow-2xl max-h-[90dvh] overflow-y-auto space-y-6"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-10 w-full max-w-5xl shadow-2xl max-h-[92dvh] overflow-y-auto space-y-7"
             >
-              {/* Encabezado */}
-              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[0.65rem] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-                      PRJ-00{selectedProyectoModal.idProyecto}
-                    </span>
-                    <span className="text-xs font-bold text-zinc-500">
-                      Cliente: {selectedProyectoModal.cliente || 'Corporativo'}
+              {/* Encabezado Principal (Sin Botón X por Regla de Diseño) */}
+              <div className="border-b border-zinc-100 dark:border-zinc-800 pb-5">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="font-mono font-extrabold text-xs px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    PRJ-00{selectedProyectoModal.idProyecto}
+                  </span>
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-medium">
+                    <Building2 size={14} className="text-blue-500" />
+                    <span>Cliente: <strong>{selectedProyectoModal.cliente || 'Cliente Corporativo'}</strong></span>
+                  </div>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mt-2">
+                  {selectedProyectoModal.nombre}
+                </h3>
+              </div>
+
+              {/* Ficha Resumen Ejecutivo de 3 Tarjetas */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                  <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Líder Directivo a Cargo:</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-[0.6rem] flex items-center justify-center shrink-0">
+                      {selectedProyectoModal.lider ? getInitials(selectedProyectoModal.lider.nombre, selectedProyectoModal.lider.apellido) : 'SD'}
+                    </div>
+                    <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm truncate">
+                      {selectedProyectoModal.lider ? `${selectedProyectoModal.lider.nombre} ${selectedProyectoModal.lider.apellido}` : 'Sin Líder Asignado'}
                     </span>
                   </div>
-                  <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mt-1">
-                    {selectedProyectoModal.nombre}
-                  </h3>
                 </div>
 
-                <button onClick={() => setSelectedProyectoModal(null)} className="text-zinc-400 hover:text-zinc-600 p-1">
-                  <X size={20} />
-                </button>
-              </div>
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                  <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Presupuesto Asignado:</span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <DollarSign size={16} className="text-emerald-500 shrink-0" />
+                    <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                      ${Number(selectedProyectoModal.presupuesto || 0).toLocaleString('es-CO')} COP
+                    </span>
+                  </div>
+                </div>
 
-              {/* Ficha Resumen */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80">
-                  <span className="text-[0.62rem] font-bold uppercase text-zinc-400 block">Líder Directivo:</span>
-                  <span className="font-extrabold text-zinc-800 dark:text-zinc-200">
-                    {selectedProyectoModal.lider ? `${selectedProyectoModal.lider.nombre} ${selectedProyectoModal.lider.apellido}` : 'Sin Asignar'}
-                  </span>
-                </div>
-                <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80">
-                  <span className="text-[0.62rem] font-bold uppercase text-zinc-400 block">Presupuesto Asignado:</span>
-                  <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">
-                    ${Number(selectedProyectoModal.presupuesto || 0).toLocaleString('es-CO')}
-                  </span>
-                </div>
-                <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80">
-                  <span className="text-[0.62rem] font-bold uppercase text-zinc-400 block">Estado Operativo:</span>
-                  <span className="font-bold text-blue-600 dark:text-blue-400 uppercase">
-                    {selectedProyectoModal.estado || 'EN_PROGRESO'}
-                  </span>
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                  <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Estado Operativo:</span>
+                  <div className="mt-1">
+                    <span className="px-3 py-1 rounded-full text-xs font-black uppercase inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      {selectedProyectoModal.estado || 'ACTIVO'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Secciones de WBS y Equipo */}
+              {/* Registro de Auditoría & Trazabilidad de Dirección */}
+              <div className="p-4.5 rounded-2xl bg-gradient-to-r from-purple-50/70 via-indigo-50/70 to-blue-50/70 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-blue-950/30 border border-purple-200/80 dark:border-purple-800/60 text-xs space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={16} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                  <span className="font-extrabold text-purple-950 dark:text-purple-200 uppercase tracking-wider text-[0.68rem] font-mono">
+                    📜 Historial de Auditoría & Trazabilidad Directiva:
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed pl-6">
+                  Supervisión actual asignada formalmente. Registro activo en PostgreSQL bajo la gobernanza del Coordinador <strong>{user?.nombre} {user?.apellido}</strong> ({user?.email}).
+                </p>
+              </div>
+
+              {/* Secciones de WBS y Desglose de Actividades */}
               {loadingProyectoDetalle ? (
-                <div className="space-y-3 py-6">
-                  <div className="h-20 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-2xl" />
-                  <div className="h-20 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-2xl" />
+                <div className="space-y-4 py-6">
+                  <div className="h-24 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+                  <div className="h-24 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
                 </div>
               ) : (
                 <div className="space-y-6">
                   {/* Desglose de Etapas WBS */}
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                      <Layers size={16} className="text-blue-600" /> Estructura de Desglose WBS ({proyectoEtapasModal.length} Etapas)
-                    </h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                      <h4 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                        <Layers size={18} className="text-blue-600 dark:text-blue-400" />
+                        <span>Estructura de Desglose WBS ({proyectoEtapasModal.length} Etapas Operativas)</span>
+                      </h4>
+                      <span className="text-[0.65rem] font-bold text-zinc-400 font-mono">
+                        Supervisión WBS Sincronizada
+                      </span>
+                    </div>
 
                     {proyectoEtapasModal.length === 0 ? (
-                      <div className="p-6 text-center text-xs text-zinc-400 bg-zinc-50 dark:bg-zinc-800/40 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700">
-                        Sin etapas WBS registradas para este proyecto.
+                      <div className="p-8 text-center text-xs text-zinc-400 bg-zinc-50 dark:bg-zinc-800/40 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-700 space-y-2">
+                        <Layers size={32} className="mx-auto text-zinc-400" />
+                        <p className="font-bold">Sin etapas WBS registradas para este proyecto.</p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {proyectoEtapasModal.map(etapa => (
-                          <div key={etapa.idEtapa} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="font-extrabold text-xs text-zinc-800 dark:text-zinc-200">
+                          <div key={etapa.idEtapa} className="p-5 rounded-3xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 space-y-3 shadow-2xs">
+                            <div className="flex justify-between items-center flex-wrap gap-2">
+                              <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
                                 {etapa.nombreEtapa}
                               </span>
-                              <span className="text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-                                {etapa.estado || 'PENDIENTE'}
+                              <span className="text-[0.65rem] font-black uppercase px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                {etapa.estado || 'EN_PROGRESO'}
                               </span>
                             </div>
 
-                            {/* Actividades */}
+                            {/* Actividades de la Etapa */}
                             {etapa.actividades && etapa.actividades.length > 0 ? (
-                              <div className="space-y-1.5 pt-1">
+                              <div className="space-y-2 pt-1">
                                 {etapa.actividades.map(act => (
-                                  <div key={act.idActividad} className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 flex justify-between items-center text-xs">
-                                    <span className="font-medium text-zinc-700 dark:text-zinc-300">{act.descripcion}</span>
-                                    <div className="flex items-center gap-2">
+                                  <div key={act.idActividad} className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 flex justify-between items-center text-xs gap-3 shadow-2xs hover:border-blue-300 transition-colors">
+                                    <span className="font-semibold text-zinc-800 dark:text-zinc-200 leading-snug">
+                                      {act.descripcion}
+                                    </span>
+                                    <div className="flex items-center gap-2.5 shrink-0">
                                       {act.desarrollador && (
-                                        <span className="text-[0.65rem] font-bold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
+                                        <span className="text-[0.68rem] font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center gap-1.5">
+                                          <Code2 size={12} className="text-emerald-500" />
                                           {act.desarrollador.nombre} {act.desarrollador.apellido}
                                         </span>
                                       )}
-                                      <span className="text-[0.6rem] font-extrabold uppercase text-emerald-600">{act.estado}</span>
+                                      <span className="text-[0.62rem] font-black uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                                        {act.estado || 'COMPLETADA'}
+                                      </span>
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <div className="text-[0.7rem] text-zinc-400 italic">No hay actividades asignadas aún a esta etapa.</div>
+                              <div className="text-[0.72rem] text-zinc-400 italic py-1">No hay actividades asignadas aún a esta etapa WBS.</div>
                             )}
                           </div>
                         ))}
@@ -3892,13 +3969,14 @@ export const CoordinadorDashboard = () => {
                 </div>
               )}
 
-              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+              {/* Footer con Botón de Cierre Holgado (Sin Botón X en la Esquina Superior) */}
+              <div className="pt-5 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
                 <button
                   type="button"
                   onClick={() => setSelectedProyectoModal(null)}
-                  className="outline-button px-5 py-2 text-xs font-bold cursor-pointer"
+                  className="gradient-button px-7 py-3 text-xs font-extrabold cursor-pointer rounded-2xl shadow-md"
                 >
-                  Cerrar Vista
+                  Cerrar Vista WBS
                 </button>
               </div>
             </motion.div>
