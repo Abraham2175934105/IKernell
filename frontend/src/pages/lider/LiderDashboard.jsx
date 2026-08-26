@@ -2801,7 +2801,7 @@ export const LiderDashboard = () => {
             </motion.button>
           )}
 
-          {/* Botón: Nuevo Colaborador (Exclusivo de Nómina y Personal) */}
+          {/* Botón: Nuevo Desarrollador (Exclusivo de Nómina y Personal) */}
           {(activeTab === 'personal' || activeTab === 'nomina') && (
             <motion.button
               whileHover={{ scale: 1.04, y: -2 }}
@@ -2814,18 +2814,18 @@ export const LiderDashboard = () => {
                   apellido: '',
                   identificacion: '',
                   email: '',
-                  rol: 'ROLE_DESARROLLADOR',
+                  rol: 'DESARROLLADOR',
                   passwordHash: '',
                   profesion: 'Ingeniero de Software',
                   especialidad: 'Full Stack Web & Cloud'
                 });
                 setShowNuevoColaboradorModal(true);
               }}
-              className="group px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/35 transition-all"
-              title="Registrar un nuevo colaborador (Líder o Desarrollador) en la plataforma"
+              className="group px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/35 transition-all"
+              title="Registrar un nuevo desarrollador de software en la plataforma"
             >
               <UserPlus size={15} className="group-hover:scale-115 group-hover:rotate-12 transition-transform duration-300" />
-              <span>Nuevo Colaborador</span>
+              <span>Nuevo Desarrollador</span>
             </motion.button>
           )}
 
@@ -3764,12 +3764,12 @@ export const LiderDashboard = () => {
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
             <div>
-              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 block mb-1">
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-1">
                 Administración de Talento Humano & Accesos
               </span>
               <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
-                <Users size={22} className="text-emerald-600 dark:text-emerald-400" />
-                Nómina & Personal Corporativo
+                <Users size={22} className="text-blue-600 dark:text-blue-400" />
+                Nómina & Desarrolladores Corporativos
               </h2>
               <p className="text-zinc-500 dark:text-zinc-400 font-medium text-xs mt-1">
                 Visualización y registro de desarrolladores de software asignados a los proyectos en la plataforma
@@ -3777,8 +3777,8 @@ export const LiderDashboard = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[0.68rem] font-extrabold font-mono px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                {personalFiltrado.length} Colaboradores Registrados
+              <span className="text-[0.68rem] font-extrabold font-mono px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                {personalFiltrado.length} Desarrolladores Registrados
               </span>
             </div>
           </motion.div>
@@ -3788,13 +3788,13 @@ export const LiderDashboard = () => {
             <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
               {/* Buscador */}
               <div className="relative w-full sm:w-80">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />
                 <input
                   type="text"
                   value={searchQueryPersonal}
                   onChange={(e) => setSearchQueryPersonal(e.target.value)}
                   placeholder="Buscar por nombre, cédula, correo o stack..."
-                  className="input-field py-2 pl-9 pr-8 text-xs w-full"
+                  className="input-field py-2 pl-9 pr-8 text-xs w-full focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
                 />
                 {searchQueryPersonal && (
                   <button
@@ -3807,13 +3807,12 @@ export const LiderDashboard = () => {
                 )}
               </div>
 
-              {/* Filtros Rápidos de Rol */}
+              {/* Filtros Rápidos de Rol (Exclusivo Desarrolladores) */}
               <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
                 <span className="text-[0.68rem] font-bold text-zinc-400 uppercase mr-1 hidden sm:inline">Rol:</span>
                 {[
                   { id: 'DESARROLLADOR', label: 'Desarrolladores' },
-                  { id: 'TODOS', label: 'Todos' },
-                  { id: 'LIDER', label: 'Líderes' }
+                  { id: 'TODOS', label: 'Todos los Desarrolladores' }
                 ].map(r => (
                   <button
                     key={r.id}
@@ -3821,7 +3820,7 @@ export const LiderDashboard = () => {
                     onClick={() => setRolFiltroPersonal(r.id)}
                     className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer ${
                       rolFiltroPersonal === r.id
-                        ? 'bg-emerald-600 text-white shadow-xs'
+                        ? 'bg-blue-600 text-white shadow-xs'
                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                     }`}
                   >
@@ -3844,7 +3843,7 @@ export const LiderDashboard = () => {
                     onClick={() => setEstadoFiltroPersonal(st.id)}
                     className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer ${
                       estadoFiltroPersonal === st.id
-                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs'
+                        ? 'bg-blue-600 text-white shadow-xs'
                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                     }`}
                   >
@@ -7201,18 +7200,18 @@ export const LiderDashboard = () => {
                 {/* Encabezado del Modal */}
                 <div className="flex justify-between items-start pb-4 border-b border-zinc-200 dark:border-zinc-800">
                   <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-inner shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
                       <UserPlus size={24} />
                     </div>
                     <div>
                       <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
-                        <span>Registrar Nuevo Colaborador</span>
-                        <span className={`text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-full border ${currentSkillProfile.badgeTagStyle}`}>
-                          {nuevoColaboradorForm.rol}
+                        <span>Registrar Nuevo Desarrollador</span>
+                        <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          DESARROLLADOR (WBS)
                         </span>
                       </h3>
                       <p className="text-xs text-zinc-500 font-medium mt-0.5">
-                        Alta corporativa en PostgreSQL, asignación de rol de seguridad y configuración de perfil profesional
+                        Alta corporativa en PostgreSQL y configuración del perfil técnico del desarrollador de software
                       </p>
                     </div>
                   </div>
@@ -7229,10 +7228,10 @@ export const LiderDashboard = () => {
                   <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
-                        <Shield size={14} className="text-emerald-500" />
+                        <Shield size={14} className="text-blue-500" />
                         <span>1. Identificación & Credenciales de Acceso</span>
                       </div>
-                      <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         Validación Algorítmica Internacional
                       </span>
                     </div>
@@ -7253,7 +7252,7 @@ export const LiderDashboard = () => {
                         >
                           {PAISES_IDENTIFICACION.map(p => (
                             <option key={p.code} value={p.code}>
-                              {p.flag} {p.nombre} ({p.docTipo})
+                              {p.nombre} ({p.docTipo})
                             </option>
                           ))}
                         </select>
@@ -7262,8 +7261,8 @@ export const LiderDashboard = () => {
                       <div className="sm:col-span-2 space-y-1">
                         <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between text-xs mb-1">
                           <span>Número de Identificación / {paisActual.docTipo} *</span>
-                          <span className="text-[0.62rem] font-mono text-emerald-600 dark:text-emerald-400 font-extrabold">
-                            {paisActual.flag} {paisActual.nombre}
+                          <span className="text-[0.62rem] font-mono text-blue-600 dark:text-blue-400 font-extrabold">
+                            {paisActual.nombre}
                           </span>
                         </label>
                         <div className="relative">
@@ -7278,14 +7277,14 @@ export const LiderDashboard = () => {
                             placeholder={paisActual.placeholder}
                             className={`input-field py-2 text-xs font-mono font-bold pr-9 ${
                               nuevoColaboradorForm.identificacion 
-                                ? (docValidationResult.valid ? 'border-emerald-500 ring-2 ring-emerald-500/10 dark:border-emerald-500' : 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10') 
+                                ? (docValidationResult.valid ? 'border-blue-500 ring-2 ring-blue-500/10 dark:border-blue-500' : 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10') 
                                 : ''
                             }`}
                           />
                           {nuevoColaboradorForm.identificacion && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
                               {docValidationResult.valid ? (
-                                <CheckCircle2 size={16} className="text-emerald-500" />
+                                <CheckCircle2 size={16} className="text-blue-500" />
                               ) : (
                                 <AlertTriangle size={16} className="text-red-500 animate-bounce" />
                               )}
@@ -7296,9 +7295,8 @@ export const LiderDashboard = () => {
                         {/* Mensaje de Validación de Algoritmo de País */}
                         {nuevoColaboradorForm.identificacion && (
                           <p className={`text-[0.65rem] font-bold mt-1 flex items-center gap-1.5 ${
-                            docValidationResult.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                            docValidationResult.valid ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400'
                           }`}>
-                            <span>{paisActual.flag}</span>
                             <span>{docValidationResult.message}</span>
                           </p>
                         )}
@@ -7311,7 +7309,7 @@ export const LiderDashboard = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                       <div>
                         <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
-                          Nombres del Colaborador *
+                          Nombres del Desarrollador *
                         </label>
                         <div className="relative">
                           <input
@@ -7319,14 +7317,14 @@ export const LiderDashboard = () => {
                             required
                             value={nuevoColaboradorForm.nombre}
                             onChange={(e) => { setNewColaboradorForm({ ...nuevoColaboradorForm, nombre: e.target.value }); setFormErrorsColaborador(p => ({ ...p, nombre: undefined })); }}
-                            placeholder="Nombres del colaborador"
+                            placeholder="Nombres del desarrollador"
                             className={`input-field py-2 text-xs ${
-                              nuevoColaboradorForm.nombre ? (nombreValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                              nuevoColaboradorForm.nombre ? (nombreValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
                             }`}
                           />
                           {nuevoColaboradorForm.nombre && (
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                              {nombreValidationResult.valid ? <CheckCircle2 size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-red-500" />}
+                              {nombreValidationResult.valid ? <CheckCircle2 size={14} className="text-blue-500" /> : <AlertTriangle size={14} className="text-red-500" />}
                             </div>
                           )}
                         </div>
@@ -7337,7 +7335,7 @@ export const LiderDashboard = () => {
 
                       <div>
                         <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
-                          Apellidos del Colaborador *
+                          Apellidos del Desarrollador *
                         </label>
                         <div className="relative">
                           <input
@@ -7345,14 +7343,14 @@ export const LiderDashboard = () => {
                             required
                             value={nuevoColaboradorForm.apellido}
                             onChange={(e) => { setNewColaboradorForm({ ...nuevoColaboradorForm, apellido: e.target.value }); setFormErrorsColaborador(p => ({ ...p, apellido: undefined })); }}
-                            placeholder="Apellidos del colaborador"
+                            placeholder="Apellidos del desarrollador"
                             className={`input-field py-2 text-xs ${
-                              nuevoColaboradorForm.apellido ? (apellidoValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                              nuevoColaboradorForm.apellido ? (apellidoValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
                             }`}
                           />
                           {nuevoColaboradorForm.apellido && (
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                              {apellidoValidationResult.valid ? <CheckCircle2 size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-red-500" />}
+                              {apellidoValidationResult.valid ? <CheckCircle2 size={14} className="text-blue-500" /> : <AlertTriangle size={14} className="text-red-500" />}
                             </div>
                           )}
                         </div>
@@ -7363,19 +7361,12 @@ export const LiderDashboard = () => {
 
                       <div>
                         <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
-                          Rol de Seguridad *
+                          Rol de Seguridad Asignado *
                         </label>
-                        <select
-                          value={nuevoColaboradorForm.rol}
-                          onChange={(e) => {
-                            const selectedRol = e.target.value;
-                            setNuevoColaboradorForm({ ...nuevoColaboradorForm, rol: selectedRol });
-                          }}
-                          className="input-field py-2 text-xs font-bold uppercase"
-                        >
-                          <option value="DESARROLLADOR">DESARROLLADOR (WBS)</option>
-                          <option value="LIDER">LÍDER DE PROYECTO</option>
-                        </select>
+                        <div className="input-field py-2 text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50/70 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800 flex items-center justify-between">
+                          <span>DESARROLLADOR (WBS)</span>
+                          <CheckCircle2 size={14} className="text-blue-600 dark:text-blue-400" />
+                        </div>
                       </div>
                     </div>
 
@@ -7396,17 +7387,17 @@ export const LiderDashboard = () => {
                           }}
                           placeholder="correo.corporativo@ikernell.org"
                           className={`input-field py-2 text-xs font-mono pr-9 ${
-                            nuevoColaboradorForm.email ? (emailValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                            nuevoColaboradorForm.email ? (emailValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
                           }`}
                         />
                         {nuevoColaboradorForm.email && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            {emailValidationResult.valid ? <CheckCircle2 size={16} className="text-emerald-500" /> : <AlertTriangle size={16} className="text-red-500" />}
+                            {emailValidationResult.valid ? <CheckCircle2 size={16} className="text-blue-500" /> : <AlertTriangle size={16} className="text-red-500" />}
                           </div>
                         )}
                       </div>
                       {nuevoColaboradorForm.email && (
-                        <p className={`text-[0.65rem] font-bold mt-1 ${emailValidationResult.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                        <p className={`text-[0.65rem] font-bold mt-1 ${emailValidationResult.valid ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400'}`}>
                           {emailValidationResult.message}
                         </p>
                       )}
@@ -7434,12 +7425,12 @@ export const LiderDashboard = () => {
                     <div className="space-y-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
                       <div className="flex items-center justify-between">
                         <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 text-xs">
-                          <Lock size={13} className="text-emerald-500" /> Contraseña de Acceso Inicial *
+                          <Lock size={13} className="text-blue-500" /> Contraseña de Acceso Inicial *
                         </label>
                         <button
                           type="button"
                           onClick={generarPasswordAleatoriaColaborador}
-                          className="text-[0.68rem] font-extrabold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-1 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                          className="text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-950/80 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800/80 px-2.5 py-1 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
                           title="Genera una clave aleatoria que cumple todos los requisitos de seguridad"
                         >
                           <Sparkles size={12} className="text-amber-500" />
@@ -7472,28 +7463,28 @@ export const LiderDashboard = () => {
                       {/* Checklist de Validación en Tiempo Real */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
                         <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                          pwdValidity.minMax ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                          pwdValidity.minMax ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
                         }`}>
                           {pwdValidity.minMax ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
                           <span>8 a 20 Caracteres</span>
                         </div>
 
                         <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                          pwdValidity.hasUpper ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                          pwdValidity.hasUpper ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
                         }`}>
                           {pwdValidity.hasUpper ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
                           <span>1 Mayúscula (A-Z)</span>
                         </div>
 
                         <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                          pwdValidity.hasLower ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                          pwdValidity.hasLower ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
                         }`}>
                           {pwdValidity.hasLower ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
                           <span>1 Minúscula (a-z)</span>
                         </div>
 
                         <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                          pwdValidity.hasNumber ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
+                          pwdValidity.hasNumber ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
                         }`}>
                           {pwdValidity.hasNumber ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
                           <span>1 Número (0-9)</span>
@@ -7508,11 +7499,11 @@ export const LiderDashboard = () => {
                   <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
-                        <GraduationCap size={14} className="text-emerald-500" />
+                        <GraduationCap size={14} className="text-blue-500" />
                         <span>2. Perfil Profesional & Especialidad Principal</span>
                       </div>
-                      <span className={`text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md border ${currentSkillProfile.badgeTagStyle}`}>
-                        {currentSkillProfile.badgeTag}
+                      <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        Perfil Desarrollador WBS
                       </span>
                     </div>
 
@@ -7525,7 +7516,7 @@ export const LiderDashboard = () => {
                           type="text"
                           value={nuevoColaboradorForm.profesion}
                           onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, profesion: e.target.value })}
-                          placeholder={currentSkillProfile.placeholderProfesion}
+                          placeholder="Ej. Ingeniero de Software"
                           className="input-field py-2 text-xs"
                         />
                       </div>
@@ -7538,29 +7529,29 @@ export const LiderDashboard = () => {
                           type="text"
                           value={nuevoColaboradorForm.especialidad}
                           onChange={(e) => setNuevoColaboradorForm({ ...nuevoColaboradorForm, especialidad: e.target.value })}
-                          placeholder={currentSkillProfile.placeholderEspecialidad}
+                          placeholder="Ej. Full Stack Web & Cloud"
                           className="input-field py-2 text-xs"
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* 3. Habilidades Técnicas & Competencias por Rol */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 space-y-3.5">
+                  {/* 3. Habilidades Técnicas & Competencias */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/40 space-y-3.5">
                     <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-2 text-xs font-black text-emerald-950 dark:text-emerald-200">
-                        <RoleIconComponent size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span>{currentSkillProfile.tituloModulo}</span>
+                      <div className="flex items-center gap-2 text-xs font-black text-blue-950 dark:text-blue-200">
+                        <Code2 size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span>Habilidades Técnicas & Stack de Desarrollo (WBS)</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[0.65rem] font-bold font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-md">
+                        <span className="text-[0.65rem] font-bold font-mono text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-md">
                           {selectedSkills.length} Habilidades
                         </span>
                       </div>
                     </div>
 
                     {/* Chip Tag List de Selección Dinámica */}
-                    <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-emerald-200/60 dark:border-emerald-800/40 min-h-[48px] items-center">
+                    <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-blue-200/60 dark:border-blue-800/40 min-h-[48px] items-center">
                       {selectedSkills.length === 0 ? (
                         <span className="text-[0.7rem] text-zinc-400 italic px-1">
                           Ninguna habilidad agregada aún. Selecciona de las sugerencias recomendadas o escribe una personalizada.
@@ -7569,13 +7560,13 @@ export const LiderDashboard = () => {
                         selectedSkills.map(skill => (
                           <span 
                             key={skill}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.68rem] font-extrabold bg-emerald-600 text-white shadow-2xs animate-fadeIn"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.68rem] font-extrabold bg-blue-600 text-white shadow-2xs animate-fadeIn"
                           >
                             <span>{skill}</span>
                             <button 
                               type="button" 
                               onClick={() => handleRemoveSkill(skill)}
-                              className="hover:bg-emerald-700 p-0.5 rounded-full transition-colors cursor-pointer"
+                              className="hover:bg-blue-700 p-0.5 rounded-full transition-colors cursor-pointer"
                             >
                               <X size={10} />
                             </button>
@@ -7604,7 +7595,7 @@ export const LiderDashboard = () => {
                       <button
                         type="button"
                         onClick={handleAddCustomSkill}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shrink-0 shadow-2xs inline-flex items-center gap-1 cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors shrink-0 shadow-2xs inline-flex items-center gap-1 cursor-pointer"
                       >
                         <Plus size={13} />
                         <span>Agregar</span>
@@ -7614,7 +7605,7 @@ export const LiderDashboard = () => {
                     {/* Sugerencias Rápidas Reutilizables */}
                     <div className="space-y-1.5 pt-1">
                       <p className="text-[0.62rem] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Sugerencias Rápidas para {nuevoColaboradorForm.rol} (Clic para activar/desactivar):
+                        Sugerencias Rápidas para Desarrollador (Clic para activar/desactivar):
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {currentSkillProfile.sugerencias.map(skill => {
@@ -7626,8 +7617,8 @@ export const LiderDashboard = () => {
                               onClick={() => handleToggleSkill(skill)}
                               className={`px-2.5 py-1 rounded-lg text-[0.65rem] font-bold border transition-all cursor-pointer inline-flex items-center gap-1 ${
                                 isSelected
-                                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                                  : 'bg-white dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400'
+                                  ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                                  : 'bg-white dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400'
                               }`}
                             >
                               {isSelected ? <Check size={10} className="stroke-[3]" /> : <Plus size={10} />}
@@ -7651,7 +7642,7 @@ export const LiderDashboard = () => {
                     <button
                       type="submit"
                       disabled={submittingNuevoColaborador}
-                      className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg shadow-emerald-600/20 transition-all text-xs inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold shadow-lg shadow-blue-600/20 transition-all text-xs inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {submittingNuevoColaborador ? (
                         <>
@@ -7661,7 +7652,7 @@ export const LiderDashboard = () => {
                       ) : (
                         <>
                           <UserPlus size={16} />
-                          <span>Registrar Colaborador</span>
+                          <span>Registrar Desarrollador</span>
                         </>
                       )}
                     </button>
