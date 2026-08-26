@@ -932,8 +932,9 @@ export const LiderDashboard = () => {
     });
   }, [desarrolladores, rolFiltroPersonal, estadoFiltroPersonal, searchQueryPersonal]);
 
-  // Filtro de Propiedad de Proyectos (Mis Proyectos vs Otros Líderes vs Todos)
+  // Filtro de Propiedad de Proyectos (Mis Proyectos vs Otros Líderes vs Todos) y Estado
   const [filtroPropiedadLider, setFiltroPropiedadLider] = useState('MIS_PROYECTOS');
+  const [filtroEstadoCatalogo, setFiltroEstadoCatalogo] = useState('TODOS');
 
   const [showAsignarModal, setShowAsignarModal] = useState(false);
   const [showAsignarDevModal, setShowAsignarDevModal] = useState(false);
@@ -1412,7 +1413,7 @@ export const LiderDashboard = () => {
     }
   };
 
-  // Filtrado reactivo para la grilla del catálogo de proyectos con segregación por propiedad de Líder
+  // Filtrado reactivo para la grilla del catálogo de proyectos con segregación por propiedad de Líder y Estado
   const proyectosCatalogoFiltrados = useMemo(() => {
     if (!proyectos || !Array.isArray(proyectos)) return [];
     const userDevId = user?.idTrabajador || user?.id;
@@ -1439,7 +1440,26 @@ export const LiderDashboard = () => {
         if (isMine) return false;
       }
 
-      // 2. Búsqueda por Texto
+      // 2. Filtro por Estado / Categoría Específica
+      if (filtroEstadoCatalogo !== 'TODOS') {
+        const estUpper = (p.estado || '').toUpperCase();
+        if (filtroEstadoCatalogo === 'ACTIVO') {
+          if (estUpper !== 'ACTIVO') return false;
+        } else if (filtroEstadoCatalogo === 'EN_PLANIFICACION') {
+          if (!estUpper.includes('PLANIFICACION')) return false;
+        } else if (filtroEstadoCatalogo === 'PAUSADO') {
+          if (estUpper !== 'PAUSADO' && estUpper !== 'SUSPENDIDO' && estUpper !== 'INHABILITADO') return false;
+        } else if (filtroEstadoCatalogo === 'FINALIZADO') {
+          if (estUpper !== 'FINALIZADO' && estUpper !== 'COMPLETADO') return false;
+        } else if (filtroEstadoCatalogo === 'REASIGNADO') {
+          if (!p.reasignado) return false;
+        } else if (filtroEstadoCatalogo === 'NUEVO') {
+          const isNuevoPrj = !p.reasignado && (p.fechaInicio || p.createdAt) && getHoursSinceReassignment(p.fechaInicio || p.createdAt) <= 72;
+          if (!isNuevoPrj) return false;
+        }
+      }
+
+      // 3. Búsqueda por Texto
       if (busquedaCatalogoProyecto && busquedaCatalogoProyecto.trim()) {
         const q = busquedaCatalogoProyecto.trim().toLowerCase();
         const mNom = p.nombre && p.nombre.toLowerCase().includes(q);
@@ -1451,7 +1471,7 @@ export const LiderDashboard = () => {
 
       return true;
     });
-  }, [proyectos, busquedaCatalogoProyecto, filtroPropiedadLider, user]);
+  }, [proyectos, busquedaCatalogoProyecto, filtroPropiedadLider, filtroEstadoCatalogo, user]);
 
   // Efectos (Hooks)
   useEffect(() => {
@@ -3257,8 +3277,8 @@ export const LiderDashboard = () => {
                 </div>
               </div>
 
-              {/* Selector Destacado de Filtro: Mis Proyectos vs Otros Líderes vs Todos */}
-              <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
+              {/* Selector Destacado de Filtro: Mis Proyectos vs Otros Líderes vs Todos + Filtro por Estado */}
+              <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 font-mono tracking-wider mr-1">
                     Visualizar:
@@ -3300,6 +3320,38 @@ export const LiderDashboard = () => {
                   >
                     <span>Todos ({proyectos?.length || 0})</span>
                   </button>
+                </div>
+
+                {/* Filtro Secundario por Estado / Categoría */}
+                <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 lg:pb-0">
+                  <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 font-mono tracking-wider shrink-0">
+                    Estado:
+                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[
+                      { id: 'TODOS', label: 'Todos' },
+                      { id: 'ACTIVO', label: 'Activos', color: 'bg-emerald-500' },
+                      { id: 'EN_PLANIFICACION', label: 'En Planificación', color: 'bg-blue-500' },
+                      { id: 'PAUSADO', label: 'Pausados', color: 'bg-amber-500' },
+                      { id: 'FINALIZADO', label: 'Finalizados', color: 'bg-purple-500' },
+                      { id: 'REASIGNADO', label: 'Reasignados', color: 'bg-amber-600' },
+                      { id: 'NUEVO', label: 'Nuevos (3D)', color: 'bg-emerald-400' }
+                    ].map(st => (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => setFiltroEstadoCatalogo(st.id)}
+                        className={`px-2.5 py-1.5 rounded-lg text-[0.68rem] font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 border ${
+                          filtroEstadoCatalogo === st.id
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-2xs'
+                            : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700/80'
+                        }`}
+                      >
+                        {st.color && <span className={`w-2 h-2 rounded-full ${st.color}`} />}
+                        <span>{st.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
