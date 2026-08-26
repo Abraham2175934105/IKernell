@@ -3251,14 +3251,14 @@ export const CoordinadorDashboard = () => {
                             placeholder={paisActual.placeholder}
                             className={`input-field py-2 text-xs font-mono font-bold pr-9 ${
                               newTrabajador.identificacion 
-                                ? (docValidationResult.valid ? 'border-emerald-500 ring-2 ring-emerald-500/10 dark:border-emerald-500' : 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10') 
+                                ? (docValidationResult.valid ? 'border-blue-500 ring-2 ring-blue-500/10 dark:border-blue-500' : 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10') 
                                 : ''
                             }`}
                           />
                           {newTrabajador.identificacion && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
                               {docValidationResult.valid ? (
-                                <CheckCircle2 size={16} className="text-emerald-500" />
+                                <CheckCircle2 size={16} className="text-blue-500" />
                               ) : (
                                 <AlertTriangle size={16} className="text-red-500 animate-bounce" />
                               )}
@@ -3269,9 +3269,8 @@ export const CoordinadorDashboard = () => {
                         {/* Mensaje de Validación de Algoritmo de País */}
                         {newTrabajador.identificacion && (
                           <p className={`text-[0.65rem] font-bold mt-1 flex items-center gap-1.5 ${
-                            docValidationResult.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                            docValidationResult.valid ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400'
                           }`}>
-                            <span>{paisActual.flag}</span>
                             <span>{docValidationResult.message}</span>
                           </p>
                         )}
@@ -3294,12 +3293,12 @@ export const CoordinadorDashboard = () => {
                             onChange={(e) => { setNewTrabajador({ ...newTrabajador, nombre: e.target.value }); setFormErrors(p => ({ ...p, nombre: undefined })); }}
                             placeholder="Nombres del colaborador"
                             className={`input-field py-2 text-xs ${
-                              newTrabajador.nombre ? (nombreValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                              newTrabajador.nombre ? (nombreValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
                             }`}
                           />
                           {newTrabajador.nombre && (
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                              {nombreValidationResult.valid ? <CheckCircle2 size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-red-500" />}
+                              {nombreValidationResult.valid ? <CheckCircle2 size={14} className="text-blue-500" /> : <AlertTriangle size={14} className="text-red-500" />}
                             </div>
                           )}
                         </div>
@@ -3320,12 +3319,12 @@ export const CoordinadorDashboard = () => {
                             onChange={(e) => { setNewTrabajador({ ...newTrabajador, apellido: e.target.value }); setFormErrors(p => ({ ...p, apellido: undefined })); }}
                             placeholder="Apellidos del colaborador"
                             className={`input-field py-2 text-xs ${
-                              newTrabajador.apellido ? (apellidoValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                              newTrabajador.apellido ? (apellidoValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
                             }`}
                           />
                           {newTrabajador.apellido && (
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                              {apellidoValidationResult.valid ? <CheckCircle2 size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-red-500" />}
+                              {apellidoValidationResult.valid ? <CheckCircle2 size={14} className="text-blue-500" /> : <AlertTriangle size={14} className="text-red-500" />}
                             </div>
                           )}
                         </div>
@@ -3370,17 +3369,17 @@ export const CoordinadorDashboard = () => {
                           }}
                           placeholder="correo.corporativo@ikernell.org"
                           className={`input-field py-2 text-xs font-mono pr-9 ${
-                            newTrabajador.email ? (emailValidationResult.valid ? 'border-emerald-500' : 'border-red-400 dark:border-red-600') : ''
+                            newTrabajador.email ? (emailValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
                           }`}
                         />
                         {newTrabajador.email && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            {emailValidationResult.valid ? <CheckCircle2 size={16} className="text-emerald-500" /> : <AlertTriangle size={16} className="text-red-500" />}
+                            {emailValidationResult.valid ? <CheckCircle2 size={16} className="text-blue-500" /> : <AlertTriangle size={16} className="text-red-500" />}
                           </div>
                         )}
                       </div>
                       {newTrabajador.email && (
-                        <p className={`text-[0.65rem] font-bold mt-1 ${emailValidationResult.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                        <p className={`text-[0.65rem] font-bold mt-1 ${emailValidationResult.valid ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400'}`}>
                           {emailValidationResult.message}
                         </p>
                       )}
