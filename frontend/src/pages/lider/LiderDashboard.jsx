@@ -2670,28 +2670,36 @@ export const LiderDashboard = () => {
         etapas.forEach((etapa, index) => {
           if (yPos > 260) { doc.addPage(); yPos = 20; }
 
+          let rawEtapaNombre = etapa.nombreEtapa || `Fase ${index + 1}`;
+          rawEtapaNombre = rawEtapaNombre.replace(/^(Fase\s+\d+:\s*)+/i, '');
+          const tituloFaseLimpio = `Fase ${index + 1}: ${rawEtapaNombre}`;
+
           doc.setFillColor(240, 244, 255);
           doc.rect(14, yPos, 182, 7, 'F');
           doc.setFontSize(8.5);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(...darkColor);
-          doc.text(`Fase ${index + 1}: ${etapa.nombreEtapa} [Estado: ${etapa.estado || 'PENDIENTE'}]`, 16, yPos + 5);
+          doc.text(`${tituloFaseLimpio} [Estado: ${etapa.estado || 'PENDIENTE'}]`, 16, yPos + 5);
           yPos += 9;
 
           if (etapa.actividades && etapa.actividades.length > 0) {
             etapa.actividades.forEach(act => {
               if (yPos > 270) { doc.addPage(); yPos = 20; }
 
+              const actNombre = act.nombreActividad || act.descripcion || 'Actividad WBS';
               doc.setFontSize(8);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(30, 41, 59);
-              doc.text(`• ${act.nombreActividad}`, 18, yPos);
+
+              const splitTask = doc.splitTextToSize(`• ${actNombre}`, 178);
+              doc.text(splitTask, 18, yPos);
+              yPos += (splitTask.length * 3.8);
 
               doc.setFont('helvetica', 'normal');
               doc.setTextColor(100, 116, 139);
               const devName = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin asignar';
-              doc.text(`[${act.estado || 'PENDIENTE'}] - Asignado: ${devName} (${act.horasEstimadas || 0}h estimadas)`, 18, yPos + 4);
-              yPos += 8;
+              doc.text(`[${act.estado || 'PENDIENTE'}] - Asignado: ${devName} (${act.horasEstimadas || 0}h estimadas)`, 18, yPos);
+              yPos += 5.5;
             });
           } else {
             doc.setFontSize(8);

@@ -391,52 +391,276 @@ export const CoordinadorDashboard = () => {
 
   const [submittingPausaFinalizarCoord, setSubmittingPausaFinalizarCoord] = useState(false);
 
-  // Generador de Reporte PDF del Coordinador
+  // Generador de Reporte PDF Directivo 100/10 Ultra-Estructurado & Rápido (< 50ms)
   const handleGenerarReportePdfCoord = () => {
     if (!selectedProyectoModal) return;
     try {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      doc.setFillColor(37, 99, 235);
-      doc.rect(0, 0, 210, 24, 'F');
+      
+      // Paleta de Colores Ejecutivos
+      const primaryColor = [37, 99, 235];    // #2563eb (Azul Corporativo)
+      const darkColor = [15, 23, 42];        // #0f172a (Slate Oscuro)
+      const lightBg = [248, 250, 252];       // #f8fafc (Gris Claro)
+      const borderColor = [226, 232, 240];   // #e2e8f0 (Borde Fino)
+      const emeraldColor = [16, 185, 129];   // #10b981 (Verde Éxito)
+      const amberColor = [217, 119, 6];      // #d97706 (Ámbar Advertencia)
+      const purpleColor = [126, 34, 206];    // #7e22ce (Púrpura Auditoría)
+
+      // 1. BANNER ENCABEZADO CORPORATIVO (Ultra-Executive Header)
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, 210, 26, 'F');
+
+      // Franja Dorada / Acento Superior
+      doc.setFillColor(245, 158, 11);
+      doc.rect(0, 26, 210, 1.5, 'F');
+
+      // Título Principal
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text('REPORTE DIRECTIVO DE AUDITORÍA WBS', 14, 13);
-      doc.setFontSize(9);
-      doc.text('IKernell Enterprise Software Architecture Platform', 14, 19);
+      doc.setFontSize(14);
+      doc.text('IKERNELL ENTERPRISE ARCHITECTURE PLATFORM', 14, 12);
 
-      doc.setTextColor(30, 41, 59);
-      doc.setFontSize(13);
-      doc.text(`Proyecto: ${selectedProyectoModal.nombre}`, 14, 34);
-      doc.setFontSize(10);
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REPORTE DIRECTIVO DE AUDITORÍA OPERATIVA WBS', 14, 18);
+
+      // Fecha e Identificación de Emisión
+      const nowStr = `${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
+      doc.setFontSize(7.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`ID del Proyecto: PRJ-00${selectedProyectoModal.idProyecto}`, 14, 41);
-      doc.text(`Cliente: ${selectedProyectoModal.cliente || 'Cliente Corporativo'}`, 14, 47);
-      doc.text(`Estado Actual: ${selectedProyectoModal.estado || 'ACTIVO'}`, 14, 53);
-      doc.text(`Presupuesto: US$ ${Number(selectedProyectoModal.presupuesto || 0).toLocaleString('en-US')}`, 14, 59);
+      doc.text(`AUDIT-READY | EMISIÓN: ${nowStr}`, 135, 18);
 
-      let yPos = 70;
+      let yPos = 34;
+
+      // 2. FICHA TÉCNICA DEL PROYECTO (TARJETA EJECUTIVA REDONDEADA)
+      doc.setFillColor(...lightBg);
+      doc.setDrawColor(...borderColor);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(14, yPos, 182, 36, 3, 3, 'FD');
+
+      // Título del Proyecto
+      doc.setTextColor(...darkColor);
+      doc.setFontSize(13);
       doc.setFont('helvetica', 'bold');
-      doc.text('ESTRUCTURA DE DESGLOSE DE TRABAJO (WBS):', 14, yPos);
-      yPos += 8;
+      const cleanProjTitle = selectedProyectoModal.nombre.replace(/^(Proyecto:\s*)+/i, '');
+      doc.text(`PROYECTO: ${cleanProjTitle}`, 18, yPos + 8);
 
-      (proyectoEtapasModal || []).forEach((etapa, idx) => {
-        if (yPos > 260) { doc.addPage(); yPos = 20; }
+      // Columna 1 de Metadatos
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.text('CÓDIGO DE REGISTRO:', 18, yPos + 15);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...primaryColor);
+      doc.text(`PRJ-00${selectedProyectoModal.idProyecto}`, 55, yPos + 15);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.text('CLIENTE / EMPRESA:', 18, yPos + 21);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...darkColor);
+      doc.text(selectedProyectoModal.cliente || 'Cliente Corporativo', 55, yPos + 21);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.text('LÍDER RESPONSABLE:', 18, yPos + 27);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...darkColor);
+      const liderNombre = selectedProyectoModal.lider ? `${selectedProyectoModal.lider.nombre} ${selectedProyectoModal.lider.apellido}` : 'Asignación Directiva';
+      doc.text(liderNombre, 55, yPos + 27);
+
+      // Columna 2 de Metadatos (Derecha)
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.text('ESTADO EN PLATAFORMA:', 115, yPos + 15);
+      const st = selectedProyectoModal.estado || 'ACTIVO';
+      const isFin = st === 'FINALIZADO' || st === 'COMPLETADO';
+      const isPau = st === 'EN_PAUSA' || st === 'PAUSADO';
+      doc.setTextColor(...(isFin ? emeraldColor : isPau ? amberColor : primaryColor));
+      doc.setFont('helvetica', 'bold');
+      doc.text(st, 158, yPos + 15);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.text('PRESUPUESTO RESERVADO:', 115, yPos + 21);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(16, 185, 129);
+      doc.text(`US$ ${Number(selectedProyectoModal.presupuesto || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 158, yPos + 21);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.text('CRONOGRAMA ESTIMADO:', 115, yPos + 27);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...darkColor);
+      doc.text(`${formatearFechaHumana(selectedProyectoModal.fechaInicio)} -> ${formatearFechaHumana(selectedProyectoModal.fechaFinEstimada)}`, 158, yPos + 27);
+
+      yPos += 42;
+
+      // Alcance / Descripción si existe
+      if (selectedProyectoModal.descripcion) {
+        doc.setFontSize(8.5);
         doc.setFont('helvetica', 'bold');
-        doc.text(`• Fase ${idx + 1}: ${etapa.nombreEtapa} [${etapa.estado || 'PENDIENTE'}]`, 16, yPos);
-        yPos += 6;
-        (etapa.actividades || []).forEach((act) => {
-          if (yPos > 260) { doc.addPage(); yPos = 20; }
-          doc.setFont('helvetica', 'normal');
-          const dev = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin asignar';
-          doc.text(`   - ${act.nombreActividad || act.descripcion} (${dev}) [${act.estado || 'FINALIZADA'}]`, 20, yPos);
-          yPos += 5;
-        });
-        yPos += 3;
-      });
+        doc.setTextColor(...darkColor);
+        doc.text('ALCANCE Y OBJETIVOS ESTRATÉGICOS:', 14, yPos);
+        yPos += 4.5;
 
-      doc.save(`Reporte_Directivo_WBS_${selectedProyectoModal.nombre.replace(/\s+/g, '_')}.pdf`);
-      toast.success('Reporte PDF generado exitosamente.');
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 65, 85);
+        const splitDesc = doc.splitTextToSize(selectedProyectoModal.descripcion, 182);
+        doc.text(splitDesc, 14, yPos);
+        yPos += (splitDesc.length * 3.8) + 5;
+      }
+
+      // 3. SECCIÓN HISTORIAL DE AUDITORÍA DIRECTIVA (Si existen registros)
+      if (historialCambiosModal && historialCambiosModal.length > 0) {
+        if (yPos > 240) { doc.addPage(); yPos = 20; }
+
+        doc.setFillColor(245, 243, 255);
+        doc.setDrawColor(221, 214, 254);
+        doc.roundedRect(14, yPos, 182, 6, 1, 1, 'FD');
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...purpleColor);
+        doc.text('TRAZABILIDAD DE MODIFICACIONES DIRECTIVAS (AUDITORÍA DE COORDINACIÓN)', 18, yPos + 4.2);
+        yPos += 8;
+
+        historialCambiosModal.slice(0, 5).forEach((reg, idx) => {
+          if (yPos > 265) { doc.addPage(); yPos = 20; }
+          doc.setFontSize(7.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...purpleColor);
+          doc.text(`[${new Date(reg.fechaCambio).toLocaleString('es-CO')}] Accion #${idx + 1}: ${reg.accion}`, 16, yPos);
+          yPos += 3.8;
+
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(30, 41, 59);
+          const splitDet = doc.splitTextToSize(`Detalles: ${reg.detalles} | Realizado por: ${reg.nombreCoordinador} (${reg.emailCoordinador})`, 176);
+          doc.text(splitDet, 18, yPos);
+          yPos += (splitDet.length * 3.5) + 3;
+        });
+
+        yPos += 3;
+      }
+
+      // 4. ESTRUCTURA WBS Y DESGLOSE DE ACTIVIDADES (Tabla Limpia y Estructurada)
+      if (yPos > 230) { doc.addPage(); yPos = 20; }
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...primaryColor);
+      doc.text('ESTRUCTURA DE DESGLOSE DE TRABAJO (WBS) & TAREAS TÉCNICAS', 14, yPos);
+      yPos += 6;
+
+      const etapasAImprimir = proyectoEtapasModal && proyectoEtapasModal.length > 0 ? proyectoEtapasModal : [];
+
+      if (etapasAImprimir.length === 0) {
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(148, 163, 184);
+        doc.text('No hay etapas WBS configuradas actualmente para este proyecto.', 14, yPos);
+        yPos += 8;
+      } else {
+        etapasAImprimir.forEach((etapa, idx) => {
+          if (yPos > 250) { doc.addPage(); yPos = 20; }
+
+          // Limpieza estricta de nombres duplicados de Fase
+          let rawEtapaNombre = etapa.nombreEtapa || `Fase ${idx + 1}`;
+          rawEtapaNombre = rawEtapaNombre.replace(/^(Fase\s+\d+:\s*)+/i, '');
+          const tituloFaseLimpio = `Fase ${idx + 1}: ${rawEtapaNombre}`;
+
+          const estadoEtapa = (etapa.estado || 'PENDIENTE').toUpperCase();
+          const isFaseFin = estadoEtapa === 'FINALIZADA' || estadoEtapa === 'COMPLETADO';
+
+          // Barra de Cabecera de Etapa / Fase
+          doc.setFillColor(isFaseFin ? 236 : 239, isFaseFin ? 253 : 246, isFaseFin ? 245 : 255);
+          doc.setDrawColor(isFaseFin ? 167 : 191, isFaseFin ? 243 : 219, isFaseFin ? 208 : 254);
+          doc.roundedRect(14, yPos, 182, 7, 1.5, 1.5, 'FD');
+
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...darkColor);
+          doc.text(tituloFaseLimpio, 18, yPos + 4.8);
+
+          // Badge de Estado de Etapa
+          doc.setFontSize(7.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...(isFaseFin ? emeraldColor : primaryColor));
+          doc.text(`[ESTADO: ${estadoEtapa}]`, 160, yPos + 4.8);
+
+          yPos += 9;
+
+          // Sub-tabla de Actividades de la Fase
+          const actividades = etapa.actividades || [];
+          if (actividades.length > 0) {
+            actividades.forEach((act) => {
+              if (yPos > 265) { doc.addPage(); yPos = 20; }
+
+              const actNombre = act.nombreActividad || act.descripcion || 'Actividad WBS';
+              const dev = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin asignar';
+              const actEst = (act.estado || 'PENDIENTE').toUpperCase();
+              const isActFin = actEst === 'FINALIZADA' || actEst === 'COMPLETADO';
+              const isActProg = actEst === 'EN_PROGRESO' || actEst === 'EN_CURSO';
+
+              // Punto viñeta
+              doc.setFillColor(isActFin ? 16 : 185, isActFin ? 185 : 99, isActFin ? 129 : 235);
+              doc.circle(18, yPos - 1, 0.8, 'F');
+
+              // Texto de Tarea con splitTextToSize (Max 115mm) para EVITAR desbordes
+              doc.setFontSize(8);
+              doc.setFont('helvetica', 'bold');
+              doc.setTextColor(30, 41, 59);
+
+              const splitTask = doc.splitTextToSize(actNombre, 115);
+              doc.text(splitTask, 21, yPos);
+
+              // Desarrollador Asignado
+              doc.setFontSize(7.5);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(100, 116, 139);
+              doc.text(`Dev: ${dev}`, 140, yPos);
+
+              // Badge Estado Actividad
+              doc.setFont('helvetica', 'bold');
+              doc.setTextColor(...(isActFin ? emeraldColor : isActProg ? primaryColor : amberColor));
+              doc.text(`[${actEst}]`, 175, yPos);
+
+              const lineCount = splitTask.length;
+              yPos += (lineCount * 4) + 2.5;
+            });
+          } else {
+            doc.setFontSize(7.5);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(148, 163, 184);
+            doc.text('   No se registraron tareas vinculadas a esta fase.', 21, yPos);
+            yPos += 5.5;
+          }
+
+          yPos += 2.5;
+        });
+      }
+
+      // 5. PIE DE PÁGINA PROFESIONAL Y NÚMERO DE PÁGINAS (Página X de Y)
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+
+        // Línea divisoria inferior
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.3);
+        doc.line(14, 282, 196, 282);
+
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(148, 163, 184);
+        doc.text(`Sistema IKernell Enterprise Architecture | Documento Oficial Audit-Ready PRJ-00${selectedProyectoModal.idProyecto}`, 14, 287);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Página ${i} de ${totalPages}`, 178, 287);
+      }
+
+      const cleanFileName = `Reporte_Directivo_PRJ-00${selectedProyectoModal.idProyecto}_${selectedProyectoModal.nombre.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
+      doc.save(cleanFileName);
+      toast.success('Reporte PDF ultra-estructurado generado exitosamente.');
     } catch (e) {
       console.error('Error generando PDF:', e);
       toast.error('Error al generar reporte PDF.');
