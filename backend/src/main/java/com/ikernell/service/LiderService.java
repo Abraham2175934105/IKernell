@@ -266,13 +266,23 @@ public class LiderService {
         Etapa etapa = etapaRepository.findById(idEtapa)
                 .orElseThrow(() -> new ResourceNotFoundException("Etapa no encontrada con ID: " + idEtapa));
         if (datos.getNombreEtapa() != null && !datos.getNombreEtapa().isBlank()) {
-            etapa.setNombreEtapa(datos.getNombreEtapa());
+            etapa.setNombreEtapa(datos.getNombreEtapa().trim());
         }
         if (datos.getEstado() != null && !datos.getEstado().isBlank()) {
-            etapa.setEstado(datos.getEstado());
+            etapa.setEstado(datos.getEstado().trim());
         }
         Etapa guardada = etapaRepository.save(etapa);
-        if (guardada.getActividades() != null) guardada.getActividades().size();
+        if (guardada.getProyecto() != null) {
+            org.hibernate.Hibernate.initialize(guardada.getProyecto());
+        }
+        if (guardada.getActividades() != null) {
+            org.hibernate.Hibernate.initialize(guardada.getActividades());
+            for (Actividad act : guardada.getActividades()) {
+                if (act.getDesarrollador() != null) {
+                    org.hibernate.Hibernate.initialize(act.getDesarrollador());
+                }
+            }
+        }
         return guardada;
     }
 

@@ -28,7 +28,7 @@ public class Etapa {
     @Column(name = "estado", nullable = false, length = 20)
     private String estado;
 
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"etapa"})
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"etapa", "hibernateLazyInitializer", "handler"})
     @OneToMany(mappedBy = "etapa", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Actividad> actividades = new ArrayList<>();
 

@@ -14,7 +14,7 @@ public class Actividad {
     @Column(name = "id_actividad")
     private Long idActividad;
 
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "actividades", "errores", "interrupciones"})
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"actividades", "errores", "interrupciones", "hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "etapa_id", nullable = false)
     private Etapa etapa;
