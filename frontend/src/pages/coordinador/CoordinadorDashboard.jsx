@@ -3883,45 +3883,53 @@ export const CoordinadorDashboard = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-[95%] sm:w-full transition-all duration-300 shadow-2xl max-h-[90dvh] overflow-y-auto space-y-6 ${
-                showTrabajosSubpanel ? 'max-w-5xl' : 'max-w-xl'
+                showTrabajosSubpanel && selectedTrabajadorModal.rol?.toUpperCase().includes('LIDER') 
+                  ? 'max-w-5xl' 
+                  : 'max-w-2xl'
               }`}
             >
               {/* Encabezado Principal */}
               <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white font-black text-lg flex items-center justify-center shadow-md">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg shrink-0">
                     {getInitials(selectedTrabajadorModal.nombre, selectedTrabajadorModal.apellido)}
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                      {selectedTrabajadorModal.nombre} {selectedTrabajadorModal.apellido}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100">
+                        {selectedTrabajadorModal.nombre} {selectedTrabajadorModal.apellido}
+                      </h3>
                       <RoleBadge rol={selectedTrabajadorModal.rol} />
-                    </h3>
-                    <p className="text-xs text-zinc-500 font-medium">
-                      Identificación Corporativa: #{selectedTrabajadorModal.identificacion || selectedTrabajadorModal.idTrabajador}
-                    </p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500 font-medium flex-wrap">
+                      <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md font-bold text-zinc-600 dark:text-zinc-400">
+                        ID: #{selectedTrabajadorModal.identificacion || selectedTrabajadorModal.idTrabajador}
+                      </span>
+                      <span>&bull;</span>
+                      <span>Tipo Contrato: <strong>{selectedTrabajadorModal.tipoTrabajador || 'PLANTA'}</strong></span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Grid Dual: Panel de Datos Sensibles + Subpanel Lateral de Proyectos */}
-              <div className={`grid gap-6 ${showTrabajosSubpanel ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
-                {/* Panel Izquierdo: Información Personal & Datos Sensibles */}
+              {/* Grid Dual: Panel de Datos Sensibles + Subpanel Lateral de Proyectos (Solo para Líderes) */}
+              <div className={`grid gap-6 ${showTrabajosSubpanel && !selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR') ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+                {/* Panel Izquierdo: Información Personal, Credenciales & Stack Técnico */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
                     <Shield size={16} className="text-blue-600" />
                     <h4 className="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-                      Ficha Personal & Credenciales de Acceso
+                      Ficha Personal, Credenciales & Stack Técnico
                     </h4>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-2 text-xs">
+                  <div className="grid grid-cols-1 gap-3 text-xs">
                     {/* Correo Corporativo (No editable por regla de negocio) */}
-                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
-                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo (Principal):</span>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Mail size={13} className="text-blue-600 shrink-0" />
-                        <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 truncate">
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo Principal:</span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Mail size={14} className="text-blue-600 shrink-0" />
+                        <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-sm truncate">
                           {selectedTrabajadorModal.email}
                         </span>
                         <Lock size={12} className="text-zinc-400 ml-auto shrink-0" title="Correo Corporativo Protegido" />
@@ -3929,65 +3937,85 @@ export const CoordinadorDashboard = () => {
                     </div>
 
                     {/* Correo Personal Alternativo (Para credenciales temporales) */}
-                    <div className="p-3 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60">
+                    <div className="p-3.5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60">
                       <span className="text-[0.62rem] font-extrabold uppercase text-purple-700 dark:text-purple-300 block font-mono">
                         Correo Personal Alternativo (Credenciales Temporales):
                       </span>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Mail size={13} className="text-purple-600 shrink-0" />
-                        <span className="font-mono font-bold text-purple-900 dark:text-purple-200 truncate">
+                      <div className="flex items-center gap-2 mt-1">
+                        <Mail size={14} className="text-purple-600 shrink-0" />
+                        <span className="font-mono font-bold text-purple-900 dark:text-purple-200 text-xs truncate">
                           {selectedTrabajadorModal.correoPersonal || selectedTrabajadorModal.emailPersonal || 'No registrado / Asignado al crear'}
                         </span>
                       </div>
                     </div>
 
-                    {/* Profesión & Especialidad */}
-                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
-                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Profesión & Disciplina Técnica:</span>
-                      <span className="font-bold text-zinc-800 dark:text-zinc-200 block mt-0.5">
-                        {selectedTrabajadorModal.profesion || 'Ingeniero de Sistemas'}
+                    {/* Profesión & Especialidad Desglosada en Tech Pills */}
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2">
+                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Profesión & Competencias Técnicas:</span>
+                      <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm block">
+                        {selectedTrabajadorModal.profesion || 'Ingeniero de Software'}
                       </span>
-                      <span className="text-[0.7rem] text-zinc-500 font-medium block mt-1">
-                        Especialidad: {selectedTrabajadorModal.especialidad || 'Desarrollo de Software'}
-                      </span>
+                      
+                      {/* Tech Pills Parser */}
+                      <div className="pt-1">
+                        <span className="text-[0.65rem] font-bold text-zinc-500 block mb-1.5">Tecnologías & Disciplinas Destacadas:</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(selectedTrabajadorModal.especialidad || 'Desarrollo de Software')
+                            .replace(/\[|\]/g, '')
+                            .split(/[,•]/)
+                            .map(item => item.trim())
+                            .filter(item => item.length > 0)
+                            .map((tech, idx) => (
+                              <span 
+                                key={idx}
+                                className="px-2.5 py-1 rounded-lg text-[0.65rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs"
+                              >
+                                {tech}
+                              </span>
+                            ))}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Estado Lógico & Tipo Contrato */}
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* Estado Lógico & Primer Login */}
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
                         <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Estado en Plataforma:</span>
-                        <span className={`font-bold mt-0.5 inline-block ${selectedTrabajadorModal.estado ? 'text-emerald-600' : 'text-red-500'}`}>
-                          {selectedTrabajadorModal.estado ? '● HABILITADO' : '○ INHABILITADO'}
+                        <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-1.5 ${selectedTrabajadorModal.estado ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                          <span className={`w-2 h-2 rounded-full ${selectedTrabajadorModal.estado ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                          {selectedTrabajadorModal.estado ? 'HABILITADO' : 'INHABILITADO'}
                         </span>
                       </div>
                       <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
-                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Primer Login Realizado:</span>
-                        <span className="font-bold text-zinc-800 dark:text-zinc-200 block mt-0.5">
-                          {selectedTrabajadorModal.primerLoginRealizado ? 'Sí (Datos validados)' : 'Pendiente primera sesión'}
+                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Primer Login:</span>
+                        <span className="font-extrabold text-zinc-800 dark:text-zinc-200 text-xs block mt-1">
+                          {selectedTrabajadorModal.primerLoginRealizado ? 'Sí (Credenciales Validadas)' : 'Pendiente Primera Sesión'}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Botón Inferior de Despliegue de Proyectos */}
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowTrabajosSubpanel(prev => !prev)}
-                      className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-md w-full justify-center"
-                    >
-                      <FolderGit2 size={16} />
-                      <span>
-                        {showTrabajosSubpanel 
-                          ? '◄ Ocultar Proyectos Asociados' 
-                          : `Desplegar Proyectos Asociados (${workerProyectos.length}) ►`}
-                      </span>
-                    </button>
-                  </div>
+                  {/* Botón Inferior de Despliegue de Proyectos (SOLO PARA LÍDERES O COORDINADORES) */}
+                  {!selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR') && (
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowTrabajosSubpanel(prev => !prev)}
+                        className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-md w-full justify-center"
+                      >
+                        <FolderGit2 size={16} />
+                        <span>
+                          {showTrabajosSubpanel 
+                            ? '◄ Ocultar Proyectos Asociados' 
+                            : `Desplegar Proyectos Asociados (${workerProyectos.length}) ►`}
+                        </span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {/* Panel Derecho (Subpanel Lateral Desplegable de Proyectos Asociados) */}
-                {showTrabajosSubpanel && (
+                {/* Panel Derecho (Subpanel Lateral Desplegable de Proyectos - Solo para Líderes / Coordinadores) */}
+                {showTrabajosSubpanel && !selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR') && (
                   <motion.div 
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -4009,12 +4037,15 @@ export const CoordinadorDashboard = () => {
                       <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/40 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 space-y-2 text-xs text-zinc-500">
                         <FolderGit2 size={32} className="mx-auto text-zinc-400" />
                         <p className="font-bold">Sin proyectos asociados actualmente.</p>
-                        <p className="text-[0.7rem]">Este trabajador no está registrado como Líder ni vinculado como Desarrollador a ningún proyecto.</p>
+                        <p className="text-[0.7rem]">Este Líder no posee proyectos bajo su dirección en este momento.</p>
                       </div>
                     ) : (
                       <div className="space-y-3 max-h-[60dvh] overflow-y-auto pr-1">
                         {workerProyectos.map(prj => {
-                          const isLider = prj.lider && Number(prj.lider.idTrabajador) === Number(selectedTrabajadorModal.idTrabajador);
+                          const isLider = prj.lider && (
+                            String(prj.lider.idTrabajador) === String(selectedTrabajadorModal.idTrabajador) ||
+                            (prj.lider.email && prj.lider.email.toLowerCase() === selectedTrabajadorModal.email?.toLowerCase())
+                          );
 
                           return (
                             <div 
