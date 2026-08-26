@@ -871,7 +871,11 @@ export const CoordinadorDashboard = () => {
       const dev = trabajadores.find(t => String(t.idTrabajador) === String(targetDevIdReasignarCoord));
       const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${targetDevIdReasignarCoord}`;
 
-      await api.patch(`/lider/actividades/${actividadAReasignarCoord.idActividad}/reasignar?idNuevoDesarrollador=${targetDevIdReasignarCoord}`);
+      await api.patch(`/lider/actividades/${actividadAReasignarCoord.idActividad}/reasignar?idNuevoDesarrollador=${targetDevIdReasignarCoord}`, {
+        idDesarrollador: Number(targetDevIdReasignarCoord),
+        idNuevoDesarrollador: Number(targetDevIdReasignarCoord),
+        motivo: motivoReasignarCoord.trim()
+      });
 
       const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
       setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);

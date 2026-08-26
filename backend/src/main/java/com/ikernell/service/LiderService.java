@@ -226,6 +226,7 @@ public class LiderService {
     }
 
     // Registra una fase WBS inicializándola en PENDIENTE por defecto
+    @Transactional
     public Etapa registrarEtapa(Long idProyecto, Etapa etapa) {
         // Validaciones
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
@@ -237,11 +238,16 @@ public class LiderService {
         
         // Persistencia
         etapa.setProyecto(proyecto);
-        etapa.setEstado("PENDIENTE");
-        return etapaRepository.save(etapa);
+        if (etapa.getEstado() == null || etapa.getEstado().isBlank()) {
+            etapa.setEstado("PENDIENTE");
+        }
+        Etapa guardada = etapaRepository.save(etapa);
+        if (guardada.getActividades() != null) guardada.getActividades().size();
+        return guardada;
     }
 
     // Elimina una fase del desglose WBS
+    @Transactional
     public void eliminarEtapa(Long idEtapa) {
         if (!etapaRepository.existsById(idEtapa)) {
             throw new ResourceNotFoundException("Etapa no encontrada con ID: " + idEtapa);
@@ -255,6 +261,7 @@ public class LiderService {
     }
 
     // Actualiza los metadatos y estado de una etapa WBS
+    @Transactional
     public Etapa actualizarEtapa(Long idEtapa, Etapa datos) {
         Etapa etapa = etapaRepository.findById(idEtapa)
                 .orElseThrow(() -> new ResourceNotFoundException("Etapa no encontrada con ID: " + idEtapa));
@@ -264,7 +271,9 @@ public class LiderService {
         if (datos.getEstado() != null && !datos.getEstado().isBlank()) {
             etapa.setEstado(datos.getEstado());
         }
-        return etapaRepository.save(etapa);
+        Etapa guardada = etapaRepository.save(etapa);
+        if (guardada.getActividades() != null) guardada.getActividades().size();
+        return guardada;
     }
 
     // Asigna un desarrollador a la nómina de trabajo del proyecto con control de cargas de 48h (HU-12 / RF-16)
@@ -314,6 +323,7 @@ public class LiderService {
     }
 
     // Asigna una tarea a un desarrollador estableciendo PENDIENTE como estado inicial
+    @Transactional
     public Actividad asignarActividad(Long idEtapa, Long idDesarrollador, Actividad actividad) {
         // Validaciones
         Etapa etapa = etapaRepository.findById(idEtapa)
@@ -336,6 +346,7 @@ public class LiderService {
     }
 
     // Reasigna la actividad a otro desarrollador registrando el motivo en la descripción (HU-25)
+    @Transactional
     public Actividad reasignarActividad(Long idActividad, Long nuevoDesarrolladorId, String motivo) {
         // Validaciones
         Actividad actividad = actividadRepository.findById(idActividad)

@@ -139,7 +139,7 @@ public class LiderController {
 
     @PutMapping("/etapas/{idEtapa}")
     @Operation(summary = "Editar Etapa WBS", description = "Actualiza el nombre y estado de una etapa WBS")
-    public ResponseEntity<Etapa> actualizarEtapa(@PathVariable Long idEtapa, @Valid @RequestBody Etapa etapa) {
+    public ResponseEntity<Etapa> actualizarEtapa(@PathVariable Long idEtapa, @RequestBody Etapa etapa) {
         Etapa actualizada = liderService.actualizarEtapa(idEtapa, etapa);
         return ResponseEntity.ok(actualizada);
     }
@@ -223,10 +223,31 @@ public class LiderController {
     @Operation(summary = "Reasignar Actividad a otro Desarrollador", description = "Permite transferir la responsabilidad de una tarea a otro desarrollador registrando la justificación (RF-17)")
     public ResponseEntity<Actividad> reasignarActividad(
             @PathVariable Long idActividad, 
-            @RequestBody Map<String, Object> payload) {
-        Long idDesarrollador = Long.valueOf(payload.get("idDesarrollador").toString());
-        String motivo = (String) payload.get("motivo");
-        Actividad actualizada = liderService.reasignarActividad(idActividad, idDesarrollador, motivo);
+            @RequestBody(required = false) Map<String, Object> payload,
+            @RequestParam(required = false) Long idNuevoDesarrollador,
+            @RequestParam(required = false) Long idDesarrollador,
+            @RequestParam(required = false) String motivo) {
+        
+        Long targetDevId = idNuevoDesarrollador != null ? idNuevoDesarrollador : idDesarrollador;
+        String targetMotivo = motivo;
+
+        if (payload != null) {
+            if (targetDevId == null && payload.containsKey("idDesarrollador") && payload.get("idDesarrollador") != null) {
+                try { targetDevId = Long.valueOf(payload.get("idDesarrollador").toString()); } catch (Exception ignored) {}
+            }
+            if (targetDevId == null && payload.containsKey("idNuevoDesarrollador") && payload.get("idNuevoDesarrollador") != null) {
+                try { targetDevId = Long.valueOf(payload.get("idNuevoDesarrollador").toString()); } catch (Exception ignored) {}
+            }
+            if (targetMotivo == null && payload.containsKey("motivo") && payload.get("motivo") != null) {
+                targetMotivo = payload.get("motivo").toString();
+            }
+        }
+
+        if (targetDevId == null) {
+            throw new IllegalArgumentException("Debe especificar el identificador del nuevo desarrollador.");
+        }
+
+        Actividad actualizada = liderService.reasignarActividad(idActividad, targetDevId, targetMotivo);
         return ResponseEntity.ok(actualizada);
     }
 
