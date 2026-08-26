@@ -318,6 +318,7 @@ export const CoordinadorDashboard = () => {
   const [showReasignarLiderModalPrj, setShowReasignarLiderModalPrj] = useState(false);
   const [proyectoAReasignar, setProyectoAReasignar] = useState(null);
   const [targetNuevoLiderPrjId, setTargetNuevoLiderPrjId] = useState('');
+  const [motivoReasignacionPrj, setMotivoReasignacionPrj] = useState('');
   const [submittingReasignarLiderPrj, setSubmittingReasignarLiderPrj] = useState(false);
 
   // Estados para Detalle de Trabajador & Navegación Cruzada a Proyectos
@@ -1188,6 +1189,7 @@ export const CoordinadorDashboard = () => {
   const handleAbrirReasignarLiderPrj = (proyecto) => {
     setProyectoAReasignar(proyecto);
     setTargetNuevoLiderPrjId('');
+    setMotivoReasignacionPrj('');
     setShowReasignarLiderModalPrj(true);
   };
 
