@@ -279,6 +279,18 @@ const RoleBadge = ({ rol }) => {
   }
 };
 
+// Formateador de Fechas Humano en Español (ej. "26 ago. 2026")
+const formatearFechaHumana = (fechaStr) => {
+  if (!fechaStr) return 'Sin fecha';
+  try {
+    const fecha = new Date(fechaStr.includes('T') ? fechaStr : fechaStr + 'T00:00:00');
+    if (isNaN(fecha.getTime())) return fechaStr;
+    return fecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch (e) {
+    return fechaStr;
+  }
+};
+
 export const CoordinadorDashboard = () => {
   const { user } = useAuth();
   const api = useApi();
