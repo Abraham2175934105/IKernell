@@ -8,9 +8,10 @@ import {
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
   ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag, FolderGit2, DollarSign, Building2,
-  Crown, ArrowRight, ArrowLeft, ClipboardList, RotateCw
+  Crown, ArrowRight, ArrowLeft, ClipboardList, RotateCw, Pause, Play, Zap, CheckCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import jsPDF from 'jspdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
 
@@ -369,6 +370,255 @@ export const CoordinadorDashboard = () => {
   const [targetNuevoLiderPrjId, setTargetNuevoLiderPrjId] = useState('');
   const [motivoReasignacionPrj, setMotivoReasignacionPrj] = useState('');
   const [submittingReasignarLiderPrj, setSubmittingReasignarLiderPrj] = useState(false);
+
+  // Estados para Acciones Directivas WBS en Modo Edición del Coordinador
+  const [showNuevaEtapaModalCoord, setShowNuevaEtapaModalCoord] = useState(false);
+  const [nuevaEtapaCoord, setNuevaEtapaCoord] = useState({ nombreEtapa: '' });
+  const [submittingEtapaCoord, setSubmittingEtapaCoord] = useState(false);
+
+  const [showNuevaActividadModalCoord, setShowNuevaActividadModalCoord] = useState(false);
+  const [nuevaActividadCoord, setNuevaActividadCoord] = useState({ nombreActividad: '', idEtapa: '', idDesarrollador: '' });
+  const [submittingActividadCoord, setSubmittingActividadCoord] = useState(false);
+
+  const [showEditarEtapaModalCoord, setShowEditarEtapaModalCoord] = useState(false);
+  const [etapaAEditarCoord, setEtapaAEditarCoord] = useState({ idEtapa: null, nombreEtapa: '', estado: '' });
+  const [submittingEditarEtapaCoord, setSubmittingEditarEtapaCoord] = useState(false);
+
+  const [showReasignarActividadModalCoord, setShowReasignarActividadModalCoord] = useState(false);
+  const [actividadAReasignarCoord, setActividadAReasignarCoord] = useState(null);
+  const [targetDevIdReasignarCoord, setTargetDevIdReasignarCoord] = useState('');
+  const [submittingReasignarActividadCoord, setSubmittingReasignarActividadCoord] = useState(false);
+
+  const [submittingPausaFinalizarCoord, setSubmittingPausaFinalizarCoord] = useState(false);
+
+  // Generador de Reporte PDF del Coordinador
+  const handleGenerarReportePdfCoord = () => {
+    if (!selectedProyectoModal) return;
+    try {
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      doc.setFillColor(37, 99, 235);
+      doc.rect(0, 0, 210, 24, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REPORTE DIRECTIVO DE AUDITORÍA WBS', 14, 13);
+      doc.setFontSize(9);
+      doc.text('IKernell Enterprise Software Architecture Platform', 14, 19);
+
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(13);
+      doc.text(`Proyecto: ${selectedProyectoModal.nombre}`, 14, 34);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`ID del Proyecto: PRJ-00${selectedProyectoModal.idProyecto}`, 14, 41);
+      doc.text(`Cliente: ${selectedProyectoModal.cliente || 'Cliente Corporativo'}`, 14, 47);
+      doc.text(`Estado Actual: ${selectedProyectoModal.estado || 'ACTIVO'}`, 14, 53);
+      doc.text(`Presupuesto: US$ ${Number(selectedProyectoModal.presupuesto || 0).toLocaleString('en-US')}`, 14, 59);
+
+      let yPos = 70;
+      doc.setFont('helvetica', 'bold');
+      doc.text('ESTRUCTURA DE DESGLOSE DE TRABAJO (WBS):', 14, yPos);
+      yPos += 8;
+
+      (proyectoEtapasModal || []).forEach((etapa, idx) => {
+        if (yPos > 260) { doc.addPage(); yPos = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.text(`• Fase ${idx + 1}: ${etapa.nombreEtapa} [${etapa.estado || 'PENDIENTE'}]`, 16, yPos);
+        yPos += 6;
+        (etapa.actividades || []).forEach((act) => {
+          if (yPos > 260) { doc.addPage(); yPos = 20; }
+          doc.setFont('helvetica', 'normal');
+          const dev = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin asignar';
+          doc.text(`   - ${act.nombreActividad || act.descripcion} (${dev}) [${act.estado || 'FINALIZADA'}]`, 20, yPos);
+          yPos += 5;
+        });
+        yPos += 3;
+      });
+
+      doc.save(`Reporte_Directivo_WBS_${selectedProyectoModal.nombre.replace(/\s+/g, '_')}.pdf`);
+      toast.success('Reporte PDF generado exitosamente.');
+    } catch (e) {
+      console.error('Error generando PDF:', e);
+      toast.error('Error al generar reporte PDF.');
+    }
+  };
+
+  // Pausar / Reanudar Proyecto con Auditoría Directiva
+  const handlePausarReanudarProyectoCoord = async () => {
+    if (!selectedProyectoModal) return;
+    const isPausado = selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO';
+    const endpoint = isPausado ? `/lider/proyectos/${selectedProyectoModal.idProyecto}/reactivar` : `/lider/proyectos/${selectedProyectoModal.idProyecto}/pausar`;
+    const nuevoEstado = isPausado ? 'EN_PROGRESO' : 'EN_PAUSA';
+    const accion = isPausado ? 'REANUDACION_PROYECTO' : 'PAUSA_PROYECTO';
+    const detalles = isPausado ? 'El Coordinador reanudó el proyecto en la plataforma.' : 'El Coordinador pausó temporalmente el proyecto.';
+
+    try {
+      setSubmittingPausaFinalizarCoord(true);
+      await api.patch(endpoint);
+      setSelectedProyectoModal(prev => ({ ...prev, estado: nuevoEstado }));
+      setProyectos(prev => prev.map(p => p.idProyecto === selectedProyectoModal.idProyecto ? { ...p, estado: nuevoEstado } : p));
+      
+      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, accion, detalles);
+      toast.success(`Proyecto ${isPausado ? 'reactivado' : 'puesto en pausa'} exitosamente.`);
+    } catch (err) {
+      console.error('Error alternando estado del proyecto:', err);
+      toast.error(err.message || 'Error al cambiar estado del proyecto.');
+    } finally {
+      setSubmittingPausaFinalizarCoord(false);
+    }
+  };
+
+  // Finalizar Proyecto con Auditoría Directiva
+  const handleFinalizarProyectoCoord = async () => {
+    if (!selectedProyectoModal) return;
+    try {
+      setSubmittingPausaFinalizarCoord(true);
+      await api.patch(`/lider/proyectos/${selectedProyectoModal.idProyecto}/finalizar`);
+      setSelectedProyectoModal(prev => ({ ...prev, estado: 'FINALIZADO' }));
+      setProyectos(prev => prev.map(p => p.idProyecto === selectedProyectoModal.idProyecto ? { ...p, estado: 'FINALIZADO' } : p));
+      
+      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'FINALIZACION_PROYECTO', 'El Coordinador dio por FINALIZADO el proyecto formalmente.');
+      toast.success('El proyecto ha sido marcado como FINALIZADO.');
+    } catch (err) {
+      console.error('Error al finalizar el proyecto:', err);
+      toast.error(err.message || 'Error al finalizar el proyecto.');
+    } finally {
+      setSubmittingPausaFinalizarCoord(false);
+    }
+  };
+
+  // Crear Nueva Etapa WBS
+  const handleRegistrarEtapaCoord = async (e) => {
+    e.preventDefault();
+    if (!selectedProyectoModal || !nuevaEtapaCoord.nombreEtapa.trim()) return;
+
+    try {
+      setSubmittingEtapaCoord(true);
+      const body = { nombreEtapa: nuevaEtapaCoord.nombreEtapa.trim(), estado: 'PENDIENTE' };
+      await api.post(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`, body);
+      
+      const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
+      setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
+
+      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'CREACION_ETAPA', `Nueva Etapa WBS registrada: "${nuevaEtapaCoord.nombreEtapa.trim()}"`);
+      toast.success('Nueva Etapa WBS registrada exitosamente.');
+      setShowNuevaEtapaModalCoord(false);
+      setNuevaEtapaCoord({ nombreEtapa: '' });
+    } catch (err) {
+      console.error('Error creando etapa WBS:', err);
+      toast.error(err.message || 'Error al crear etapa WBS.');
+    } finally {
+      setSubmittingEtapaCoord(false);
+    }
+  };
+
+  // Asignar Nueva Actividad
+  const handleRegistrarActividadCoord = async (e) => {
+    e.preventDefault();
+    if (!selectedProyectoModal || !nuevaActividadCoord.nombreActividad.trim() || !nuevaActividadCoord.idEtapa || !nuevaActividadCoord.idDesarrollador) {
+      toast.error('Complete todos los campos del formulario de asignación.');
+      return;
+    }
+
+    try {
+      setSubmittingActividadCoord(true);
+      const dev = trabajadores.find(t => String(t.idTrabajador) === String(nuevaActividadCoord.idDesarrollador));
+      const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${nuevaActividadCoord.idDesarrollador}`;
+
+      const body = {
+        nombreActividad: nuevaActividadCoord.nombreActividad.trim(),
+        descripcion: nuevaActividadCoord.nombreActividad.trim(),
+        estado: 'PENDIENTE',
+        idEtapa: Number(nuevaActividadCoord.idEtapa)
+      };
+
+      await api.post(`/lider/proyectos/${selectedProyectoModal.idProyecto}/desarrolladores/${nuevaActividadCoord.idDesarrollador}/actividades`, body);
+
+      const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
+      setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
+
+      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'ASIGNACION_ACTIVIDAD', `Actividad "${nuevaActividadCoord.nombreActividad.trim()}" asignada a ${devNombre}`);
+      toast.success('Actividad asignada exitosamente.');
+      setShowNuevaActividadModalCoord(false);
+      setNuevaActividadCoord({ nombreActividad: '', idEtapa: '', idDesarrollador: '' });
+    } catch (err) {
+      console.error('Error asignando actividad:', err);
+      toast.error(err.message || 'Error al asignar la actividad.');
+    } finally {
+      setSubmittingActividadCoord(false);
+    }
+  };
+
+  // Editar Etapa WBS
+  const handleAbrirEditarEtapaCoord = (etapa) => {
+    setEtapaAEditarCoord({
+      idEtapa: etapa.idEtapa,
+      nombreEtapa: etapa.nombreEtapa || '',
+      estado: etapa.estado || 'PENDIENTE'
+    });
+    setShowEditarEtapaModalCoord(true);
+  };
+
+  const handleActualizarEtapaCoord = async (e) => {
+    e.preventDefault();
+    if (!selectedProyectoModal || !etapaAEditarCoord.idEtapa) return;
+
+    try {
+      setSubmittingEditarEtapaCoord(true);
+      await api.put(`/lider/etapas/${etapaAEditarCoord.idEtapa}`, {
+        nombreEtapa: etapaAEditarCoord.nombreEtapa,
+        estado: etapaAEditarCoord.estado
+      });
+
+      const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
+      setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
+
+      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'EDICION_ETAPA', `Fase #${etapaAEditarCoord.idEtapa} actualizada a "${etapaAEditarCoord.nombreEtapa}" [${etapaAEditarCoord.estado}]`);
+      toast.success('Fase WBS actualizada exitosamente.');
+      setShowEditarEtapaModalCoord(false);
+    } catch (err) {
+      console.error('Error editando etapa:', err);
+      toast.error(err.message || 'Error al actualizar etapa.');
+    } finally {
+      setSubmittingEditarEtapaCoord(false);
+    }
+  };
+
+  // Reasignar Actividad a otro Desarrollador
+  const handleAbrirReasignarActividadCoord = (act, etapa) => {
+    setActividadAReasignarCoord(act);
+    setTargetDevIdReasignarCoord(act.desarrollador?.idTrabajador ? String(act.desarrollador.idTrabajador) : '');
+    setShowReasignarActividadModalCoord(true);
+  };
+
+  const handleEjecutarReasignacionActividadCoord = async (e) => {
+    e.preventDefault();
+    if (!selectedProyectoModal || !actividadAReasignarCoord || !targetDevIdReasignarCoord) {
+      toast.error('Seleccione un desarrollador de destino.');
+      return;
+    }
+
+    try {
+      setSubmittingReasignarActividadCoord(true);
+      const dev = trabajadores.find(t => String(t.idTrabajador) === String(targetDevIdReasignarCoord));
+      const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${targetDevIdReasignarCoord}`;
+
+      await api.patch(`/lider/actividades/${actividadAReasignarCoord.idActividad}/reasignar?idNuevoDesarrollador=${targetDevIdReasignarCoord}`);
+
+      const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
+      setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
+
+      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'REASIGNACION_ACTIVIDAD', `Tarea "${actividadAReasignarCoord.nombreActividad || actividadAReasignarCoord.descripcion}" reasignada a ${devNombre}`);
+      toast.success('Tarea reasignada exitosamente.');
+      setShowReasignarActividadModalCoord(false);
+      setActividadAReasignarCoord(null);
+    } catch (err) {
+      console.error('Error reasignando actividad:', err);
+      toast.error(err.message || 'Error al reasignar la tarea.');
+    } finally {
+      setSubmittingReasignarActividadCoord(false);
+    }
+  };
 
   // Estados para Detalle de Trabajador & Navegación Cruzada a Proyectos
   const [selectedTrabajadorModal, setSelectedTrabajadorModal] = useState(null);
@@ -2152,7 +2402,7 @@ export const CoordinadorDashboard = () => {
                     <button
                       type="button"
                       onClick={() => handleAbrirHistorialCambios(selectedProyectoModal.idProyecto)}
-                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50/40 hover:bg-purple-100 rounded-2xl shadow-xs"
+                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50/40 hover:bg-purple-100 rounded-2xl shadow-xs cursor-pointer"
                       title="Ver el historial de auditoría de modificaciones registradas"
                     >
                       <ClipboardList size={15} className="text-purple-600" />
@@ -2161,13 +2411,54 @@ export const CoordinadorDashboard = () => {
 
                     <button
                       type="button"
+                      onClick={handleGenerarReportePdfCoord}
+                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 bg-blue-50/40 hover:bg-blue-100 rounded-2xl shadow-xs cursor-pointer"
+                      title="Generar y descargar informe técnico en PDF"
+                    >
+                      <FileText size={15} className="text-blue-600" />
+                      <span>Generar Reporte PDF</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => handleAbrirReasignarLiderPrj(selectedProyectoModal)}
-                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 hover:bg-indigo-100 rounded-2xl shadow-xs"
+                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 hover:bg-indigo-100 rounded-2xl shadow-xs cursor-pointer"
                       title="Reasignar el Líder de Proyecto responsable"
                     >
                       <RotateCw size={15} className="text-indigo-600" />
                       <span>Reasignar Líder</span>
                     </button>
+
+                    {modoEdicionCoordinador && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handlePausarReanudarProyectoCoord}
+                          disabled={submittingPausaFinalizarCoord}
+                          className={`text-xs py-2 px-3.5 font-extrabold inline-flex items-center gap-2 rounded-2xl border transition-all cursor-pointer shadow-xs ${
+                            selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-200'
+                              : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-200'
+                          }`}
+                        >
+                          {selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO' ? (
+                            <><Play size={15} className="text-emerald-600" /><span>Reanudar Proyecto</span></>
+                          ) : (
+                            <><Pause size={15} className="text-amber-600" /><span>Pausar Proyecto</span></>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleFinalizarProyectoCoord}
+                          disabled={submittingPausaFinalizarCoord || selectedProyectoModal.estado === 'FINALIZADO'}
+                          className="text-xs py-2 px-3.5 font-extrabold inline-flex items-center gap-2 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 bg-red-50 hover:bg-red-100 rounded-2xl shadow-xs cursor-pointer disabled:opacity-40"
+                        >
+                          <CheckCircle size={15} className="text-red-600" />
+                          <span>Finalizar Proyecto</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -2239,7 +2530,7 @@ export const CoordinadorDashboard = () => {
                   <p className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
                     {proyectoDevsModal.length} Integrantes
                   </p>
-                  <span className="text-[0.68rem] text-zinc-400 block font-mono">Nómina asignada</span>
+                  <span className="text-[0.68rem] text-zinc-400 block font-mono">Nómina assigned</span>
                 </div>
               </div>
 
@@ -2255,6 +2546,28 @@ export const CoordinadorDashboard = () => {
                       Desglose estructurado del proyecto en fases, etapas y actividades asignadas a desarrolladores.
                     </p>
                   </div>
+
+                  {modoEdicionCoordinador && (
+                    <div className="flex items-center gap-2 flex-wrap shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowNuevaEtapaModalCoord(true)}
+                        className="outline-button text-xs py-2 px-3.5 font-extrabold inline-flex items-center gap-1.5 rounded-2xl border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 cursor-pointer shadow-xs"
+                      >
+                        <Plus size={15} />
+                        <span>Nueva Etapa</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowNuevaActividadModalCoord(true)}
+                        className="gradient-button text-xs py-2 px-4 font-extrabold inline-flex items-center gap-1.5 rounded-2xl cursor-pointer shadow-md"
+                      >
+                        <Zap size={15} />
+                        <span>Asignar Actividad</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {loadingProyectoDetalle ? (
@@ -2282,13 +2595,26 @@ export const CoordinadorDashboard = () => {
                             </h4>
                           </div>
 
-                          <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-extrabold uppercase border ${
-                            etapa.estado === 'FINALIZADA' || etapa.estado === 'COMPLETADO'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
-                              : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
-                          }`}>
-                            {etapa.estado || 'EN_PROGRESO'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-extrabold uppercase border ${
+                              etapa.estado === 'FINALIZADA' || etapa.estado === 'COMPLETADO'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                            }`}>
+                              {etapa.estado || 'EN_PROGRESO'}
+                            </span>
+
+                            {modoEdicionCoordinador && (
+                              <button
+                                type="button"
+                                onClick={() => handleAbrirEditarEtapaCoord(etapa)}
+                                className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
+                              >
+                                <Edit3 size={13} className="text-blue-600" />
+                                <span>Editar Etapa</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Actividades dentro de la Etapa */}
@@ -2309,6 +2635,17 @@ export const CoordinadorDashboard = () => {
                                   <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
                                     {act.estado || 'FINALIZADA'}
                                   </span>
+
+                                  {modoEdicionCoordinador && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAbrirReasignarActividadCoord(act, etapa)}
+                                      className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
+                                    >
+                                      <RotateCw size={13} className="text-purple-600" />
+                                      <span>Reasignar</span>
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             ))
@@ -4626,6 +4963,260 @@ export const CoordinadorDashboard = () => {
                   ))
                 )}
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Registrar Nueva Etapa WBS (Modo Edición Coordinador) */}
+      <AnimatePresence>
+        {showNuevaEtapaModalCoord && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-5"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Layers size={20} className="text-blue-600" />
+                  <span>Registrar Nueva Etapa WBS</span>
+                </h3>
+                <button type="button" onClick={() => setShowNuevaEtapaModalCoord(false)} className="text-zinc-400 hover:text-zinc-600 p-1">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleRegistrarEtapaCoord} className="space-y-4 text-xs">
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Nombre de la Fase / Etapa *</label>
+                  <input
+                    type="text"
+                    required
+                    value={nuevaEtapaCoord.nombreEtapa}
+                    onChange={(e) => setNuevaEtapaCoord({ ...nuevaEtapaCoord, nombreEtapa: e.target.value })}
+                    placeholder="Ej. Fase 1: Especificación y Arquitectura N-Capas"
+                    className="input-field py-2.5 font-bold"
+                  />
+                </div>
+
+                <div className="p-3 rounded-2xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-[0.7rem] text-blue-800 dark:text-blue-200">
+                  <strong>Auditoría Directiva:</strong> La creación de esta etapa se registrará con la marca temporal del Coordinador.
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button type="button" onClick={() => setShowNuevaEtapaModalCoord(false)} className="outline-button px-4 py-2 text-xs font-bold rounded-2xl">
+                    Cancelar
+                  </button>
+                  <button type="submit" disabled={submittingEtapaCoord} className="gradient-button px-5 py-2 text-xs font-bold rounded-2xl">
+                    {submittingEtapaCoord ? 'Guardando...' : 'Crear Etapa'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Asignar Nueva Actividad WBS (Modo Edición Coordinador) */}
+      <AnimatePresence>
+        {showNuevaActividadModalCoord && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-5"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Zap size={20} className="text-blue-600" />
+                  <span>Asignar Actividad a Desarrollador</span>
+                </h3>
+                <button type="button" onClick={() => setShowNuevaActividadModalCoord(false)} className="text-zinc-400 hover:text-zinc-600 p-1">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleRegistrarActividadCoord} className="space-y-4 text-xs">
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción / Nombre de la Tarea *</label>
+                  <input
+                    type="text"
+                    required
+                    value={nuevaActividadCoord.nombreActividad}
+                    onChange={(e) => setNuevaActividadCoord({ ...nuevaActividadCoord, nombreActividad: e.target.value })}
+                    placeholder="Ej. Documentar contratos OpenAPI 3.0 para la API pública"
+                    className="input-field py-2.5 font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Seleccionar Fase / Etapa *</label>
+                  <select
+                    required
+                    value={nuevaActividadCoord.idEtapa}
+                    onChange={(e) => setNuevaActividadCoord({ ...nuevaActividadCoord, idEtapa: e.target.value })}
+                    className="input-field py-2.5 font-bold"
+                  >
+                    <option value="">-- Seleccionar Etapa WBS --</option>
+                    {proyectoEtapasModal.map((et) => (
+                      <option key={et.idEtapa} value={et.idEtapa}>
+                        Fase #{et.idEtapa}: {et.nombreEtapa}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Desarrollador Asignado *</label>
+                  <select
+                    required
+                    value={nuevaActividadCoord.idDesarrollador}
+                    onChange={(e) => setNuevaActividadCoord({ ...nuevaActividadCoord, idDesarrollador: e.target.value })}
+                    className="input-field py-2.5 font-bold"
+                  >
+                    <option value="">-- Seleccionar Desarrollador --</option>
+                    {trabajadores.filter(t => t.estado && (t.rol || '').toUpperCase().includes('DESARROLLADOR')).map((dev) => (
+                      <option key={dev.idTrabajador} value={dev.idTrabajador}>
+                        {dev.nombre} {dev.apellido} ({dev.profesion || 'Desarrollador'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button type="button" onClick={() => setShowNuevaActividadModalCoord(false)} className="outline-button px-4 py-2 text-xs font-bold rounded-2xl">
+                    Cancelar
+                  </button>
+                  <button type="submit" disabled={submittingActividadCoord} className="gradient-button px-5 py-2 text-xs font-bold rounded-2xl">
+                    {submittingActividadCoord ? 'Asignando...' : 'Asignar Tarea'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Editar Etapa WBS */}
+      <AnimatePresence>
+        {showEditarEtapaModalCoord && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-5"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Edit3 size={20} className="text-blue-600" />
+                  <span>Editar Etapa WBS</span>
+                </h3>
+                <button type="button" onClick={() => setShowEditarEtapaModalCoord(false)} className="text-zinc-400 hover:text-zinc-600 p-1">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleActualizarEtapaCoord} className="space-y-4 text-xs">
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Nombre de la Fase / Etapa *</label>
+                  <input
+                    type="text"
+                    required
+                    value={etapaAEditarCoord.nombreEtapa}
+                    onChange={(e) => setEtapaAEditarCoord({ ...etapaAEditarCoord, nombreEtapa: e.target.value })}
+                    className="input-field py-2.5 font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Estado de la Etapa *</label>
+                  <select
+                    value={etapaAEditarCoord.estado}
+                    onChange={(e) => setEtapaAEditarCoord({ ...etapaAEditarCoord, estado: e.target.value })}
+                    className="input-field py-2.5 font-bold uppercase"
+                  >
+                    <option value="PENDIENTE">PENDIENTE</option>
+                    <option value="EN_PROGRESO">EN PROGRESO</option>
+                    <option value="FINALIZADA">FINALIZADA</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button type="button" onClick={() => setShowEditarEtapaModalCoord(false)} className="outline-button px-4 py-2 text-xs font-bold rounded-2xl">
+                    Cancelar
+                  </button>
+                  <button type="submit" disabled={submittingEditarEtapaCoord} className="gradient-button px-5 py-2 text-xs font-bold rounded-2xl">
+                    {submittingEditarEtapaCoord ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Reasignar Actividad WBS */}
+      <AnimatePresence>
+        {showReasignarActividadModalCoord && actividadAReasignarCoord && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-5"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <RotateCw size={20} className="text-purple-600" />
+                  <span>Reasignar Tarea a Desarrollador</span>
+                </h3>
+                <button type="button" onClick={() => setShowReasignarActividadModalCoord(false)} className="text-zinc-400 hover:text-zinc-600 p-1">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs">
+                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase font-mono block">Tarea a Reasignar:</span>
+                <p className="font-bold text-zinc-800 dark:text-zinc-200 mt-1">
+                  {actividadAReasignarCoord.nombreActividad || actividadAReasignarCoord.descripcion}
+                </p>
+              </div>
+
+              <form onSubmit={handleEjecutarReasignacionActividadCoord} className="space-y-4 text-xs">
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Nuevo Desarrollador Responsable *</label>
+                  <select
+                    required
+                    value={targetDevIdReasignarCoord}
+                    onChange={(e) => setTargetDevIdReasignarCoord(e.target.value)}
+                    className="input-field py-2.5 font-bold"
+                  >
+                    <option value="">-- Seleccionar Desarrollador Target --</option>
+                    {trabajadores.filter(t => t.estado && (t.rol || '').toUpperCase().includes('DESARROLLADOR')).map((dev) => (
+                      <option key={dev.idTrabajador} value={dev.idTrabajador}>
+                        {dev.nombre} {dev.apellido} ({dev.profesion || 'Desarrollador'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button type="button" onClick={() => setShowReasignarActividadModalCoord(false)} className="outline-button px-4 py-2 text-xs font-bold rounded-2xl">
+                    Cancelar
+                  </button>
+                  <button type="submit" disabled={submittingReasignarActividadCoord} className="gradient-button px-5 py-2 text-xs font-bold rounded-2xl">
+                    {submittingReasignarActividadCoord ? 'Reasignando...' : 'Confirmar Reasignación'}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
