@@ -812,9 +812,23 @@ export const LiderDashboard = () => {
   const [showDetalleIncidenciaModal, setShowDetalleIncidenciaModal] = useState(false);
   const [incidenciaVerDetalle, setIncidenciaVerDetalle] = useState(null);
 
-  const handleVerDetallesIncidencia = (item) => {
-    setIncidenciaVerDetalle(item);
-    setShowDetalleIncidenciaModal(true);
+  // Auditoría acumulada de cambios directivos realizados por la Coordinación
+  const [showHistorialCambiosModal, setShowHistorialCambiosModal] = useState(false);
+  const [historialCambios, setHistorialCambios] = useState([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
+
+  const handleAbrirHistorialCambiosLider = async (idProyecto) => {
+    try {
+      setLoadingHistorial(true);
+      setShowHistorialCambiosModal(true);
+      const res = await api.get(`/lider/proyectos/${idProyecto}/historial-cambios`);
+      setHistorialCambios(res.data || []);
+    } catch (err) {
+      console.error('Error al obtener historial de cambios:', err);
+      toast.error('Error al cargar el historial de cambios.');
+    } finally {
+      setLoadingHistorial(false);
+    }
   };
 
   const [showConfirmFinalizar, setShowConfirmFinalizar] = useState(false);
@@ -2462,6 +2476,17 @@ export const LiderDashboard = () => {
                     </span>
                   </div>
                 )}
+
+                {/* Botón: Cambios de Coordinación (Auditoría Directiva) */}
+                <button
+                  type="button"
+                  onClick={() => handleAbrirHistorialCambiosLider(proyectoSeleccionado.idProyecto)}
+                  className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 cursor-pointer shadow-2xs"
+                  title="Ver el historial acumulado de modificaciones registradas por la Coordinación General"
+                >
+                  <RotateCcw size={13} className="text-purple-600 dark:text-purple-400" />
+                  <span>Cambios de Coordinación</span>
+                </button>
 
                 {/* Botón: Generar Reporte PDF (Disponible para todos) */}
                 <button
@@ -6679,6 +6704,78 @@ export const LiderDashboard = () => {
             </div>
           );
         })()}
+      </AnimatePresence>
+
+      {/* Modal: Historial Acumulado de Cambios por la Coordinación */}
+      <AnimatePresence>
+        {showHistorialCambiosModal && (
+          <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl space-y-6 max-h-[85dvh] flex flex-col"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                    <RotateCcw size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                      Historial de Cambios por Coordinación
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Registro de modificaciones y ajustes directivos en este proyecto
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowHistorialCambiosModal(false)}
+                  className="outline-button text-xs py-1.5 px-3.5 font-bold rounded-xl cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 space-y-3.5 pr-1">
+                {loadingHistorial ? (
+                  <div className="p-8 text-center text-xs text-zinc-400">
+                    <Loader2 size={24} className="animate-spin mx-auto text-blue-600 mb-2" />
+                    Cargando historial de auditoría...
+                  </div>
+                ) : historialCambios.length === 0 ? (
+                  <div className="p-8 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs space-y-1">
+                    <ShieldCheck size={28} className="mx-auto text-zinc-300" />
+                    <p className="font-bold text-zinc-700 dark:text-zinc-300">Sin modificaciones registradas</p>
+                    <p>La Coordinación General no ha realizado ediciones recientes en este proyecto.</p>
+                  </div>
+                ) : (
+                  historialCambios.map((reg, idx) => (
+                    <div key={reg.idHistorial || idx} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="font-mono text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                          {reg.accion || 'MODIFICACIÓN'}
+                        </span>
+                        <span className="text-[0.62rem] font-mono text-zinc-400 font-bold">
+                          {new Date(reg.fechaCambio).toLocaleString('es-CO')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed">
+                        {reg.detalles}
+                      </p>
+                      <div className="flex items-center gap-1.5 text-[0.65rem] text-zinc-500 font-medium pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                        <User size={12} className="text-blue-500" />
+                        <span>Coordinador responsable: <strong>{reg.nombreCoordinador}</strong> ({reg.emailCoordinador})</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
 
       </ErrorBoundary>

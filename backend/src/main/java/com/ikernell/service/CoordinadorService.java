@@ -18,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.ikernell.model.HistorialCambiosCoordinador;
+import com.ikernell.repository.HistorialCambiosCoordinadorRepository;
+
 // Servicio de negocio para la administración de personal y atención de consultas públicas
 @Service
 @Transactional
@@ -29,17 +32,20 @@ public class CoordinadorService {
     private final ProyectoDesarrolladorRepository proyectoDesarrolladorRepository;
     private final SolicitudContactoRepository solicitudContactoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository;
 
     public CoordinadorService(TrabajadorRepository trabajadorRepository,
                               ProyectoRepository proyectoRepository,
                               ProyectoDesarrolladorRepository proyectoDesarrolladorRepository,
                               SolicitudContactoRepository solicitudContactoRepository,
-                              PasswordEncoder passwordEncoder) {
+                              PasswordEncoder passwordEncoder,
+                              HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository) {
         this.trabajadorRepository = trabajadorRepository;
         this.proyectoRepository = proyectoRepository;
         this.proyectoDesarrolladorRepository = proyectoDesarrolladorRepository;
         this.solicitudContactoRepository = solicitudContactoRepository;
         this.passwordEncoder = passwordEncoder;
+        this.historialCambiosCoordinadorRepository = historialCambiosCoordinadorRepository;
     }
 
     // Registra un nuevo empleado cifrando la contraseña con BCrypt
@@ -295,5 +301,21 @@ public class CoordinadorService {
         solicitud.setContadorReaperturas(0);
         solicitud.setHistorialAtencion("[" + LocalDateTime.now() + "] Solicitud registrada desde el formulario web público.");
         return solicitudContactoRepository.save(solicitud);
+    }
+
+    @Transactional
+    public HistorialCambiosCoordinador registrarCambioCoordinador(Long idProyecto, Long idCoordinador, String nombreCoordinador, String emailCoordinador, String accion, String detalles, String batchId) {
+        Proyecto proyecto = proyectoRepository.findById(idProyecto)
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+
+        HistorialCambiosCoordinador registro = new HistorialCambiosCoordinador(
+                proyecto, idCoordinador, nombreCoordinador, emailCoordinador, accion, detalles, LocalDateTime.now(), batchId
+        );
+        return historialCambiosCoordinadorRepository.save(registro);
+    }
+
+    @Transactional(readOnly = true)
+    public List<HistorialCambiosCoordinador> obtenerHistorialCambiosProyecto(Long idProyecto) {
+        return historialCambiosCoordinadorRepository.findByProyectoIdProyectoOrderByFechaCambioDesc(idProyecto);
     }
 }

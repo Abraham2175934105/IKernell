@@ -6,6 +6,7 @@ import com.ikernell.model.*;
 import com.ikernell.model.Error;
 import com.ikernell.service.EtlAutomationService;
 import com.ikernell.service.LiderService;
+import com.ikernell.repository.HistorialCambiosCoordinadorRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,10 +32,18 @@ public class LiderController {
 
     private final LiderService liderService;
     private final EtlAutomationService etlAutomationService;
+    private final HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository;
 
-    public LiderController(LiderService liderService, EtlAutomationService etlAutomationService) {
+    public LiderController(LiderService liderService, EtlAutomationService etlAutomationService, HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository) {
         this.liderService = liderService;
         this.etlAutomationService = etlAutomationService;
+        this.historialCambiosCoordinadorRepository = historialCambiosCoordinadorRepository;
+    }
+
+    @GetMapping("/proyectos/{idProyecto}/historial-cambios")
+    @Operation(summary = "Obtener historial de cambios realizados por Coordinador", description = "Permite al Líder consultar todas las modificaciones directivas registradas en el proyecto")
+    public ResponseEntity<List<com.ikernell.model.HistorialCambiosCoordinador>> obtenerHistorialCambiosProyecto(@PathVariable Long idProyecto) {
+        return ResponseEntity.ok(historialCambiosCoordinadorRepository.findByProyectoIdProyectoOrderByFechaCambioDesc(idProyecto));
     }
 
     @PostMapping("/trabajadores")

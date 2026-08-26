@@ -119,6 +119,28 @@ public class CoordinadorController {
         return ResponseEntity.ok(actualizado);
     }
 
+    @PostMapping("/proyectos/{idProyecto}/historial-cambios")
+    @Operation(summary = "Registrar acción de auditoría directiva", description = "Guarda un registro acumulado de modificaciones realizadas por la Coordinación General")
+    public ResponseEntity<com.ikernell.model.HistorialCambiosCoordinador> registrarCambioCoordinador(
+            @PathVariable Long idProyecto,
+            @RequestParam Long idCoordinador,
+            @RequestParam String nombreCoordinador,
+            @RequestParam String emailCoordinador,
+            @RequestParam String accion,
+            @RequestParam String detalles,
+            @RequestParam(required = false) String batchId) {
+        com.ikernell.model.HistorialCambiosCoordinador registro = coordinadorService.registrarCambioCoordinador(
+                idProyecto, idCoordinador, nombreCoordinador, emailCoordinador, accion, detalles, batchId
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(registro);
+    }
+
+    @GetMapping("/proyectos/{idProyecto}/historial-cambios")
+    @Operation(summary = "Obtener historial de cambios del Coordinador", description = "Devuelve el registro acumulado de modificaciones realizadas por Coordinadores en el proyecto")
+    public ResponseEntity<List<com.ikernell.model.HistorialCambiosCoordinador>> obtenerHistorialCambiosCoordinador(@PathVariable Long idProyecto) {
+        return ResponseEntity.ok(coordinadorService.obtenerHistorialCambiosProyecto(idProyecto));
+    }
+
     @PostMapping("/proyectos/{idProyecto}/asignar/{idDesarrollador}")
     @Operation(summary = "Asignación operativa", description = "Vincula a un desarrollador a la planilla general de un proyecto (RF-12)")
     public ResponseEntity<ProyectoDesarrollador> asignarProyectoInicial(

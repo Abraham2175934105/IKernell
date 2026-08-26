@@ -314,6 +314,38 @@ export const CoordinadorDashboard = () => {
   const [proyectoEtapasModal, setProyectoEtapasModal] = useState([]);
   const [proyectoDevsModal, setProyectoDevsModal] = useState([]);
 
+  // Estados para Modo Edición / Lectura e Historial de Cambios Directivos
+  const [modoEdicionCoordinador, setModoEdicionCoordinador] = useState(false); // false = Modo Lectura, true = Modo Edición
+  const [showHistorialModal, setShowHistorialModal] = useState(false);
+  const [historialCambiosModal, setHistorialCambiosModal] = useState([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
+  const [sessionBatchId, setSessionBatchId] = useState('');
+
+  const registrarAccionCoordinador = async (idProyecto, accion, detalles) => {
+    if (!user) return;
+    try {
+      const bId = sessionBatchId || ('BATCH-' + Date.now());
+      if (!sessionBatchId) setSessionBatchId(bId);
+      await api.post(`/coordinador/proyectos/${idProyecto}/historial-cambios?idCoordinador=${user.idTrabajador || user.id}&nombreCoordinador=${encodeURIComponent(user.nombre + ' ' + user.apellido)}&emailCoordinador=${encodeURIComponent(user.email)}&accion=${encodeURIComponent(accion)}&detalles=${encodeURIComponent(detalles)}&batchId=${encodeURIComponent(bId)}`);
+    } catch (err) {
+      console.error('Error al registrar auditoría de acción:', err);
+    }
+  };
+
+  const handleAbrirHistorialCambios = async (idProyecto) => {
+    try {
+      setLoadingHistorial(true);
+      setShowHistorialModal(true);
+      const res = await api.get(`/coordinador/proyectos/${idProyecto}/historial-cambios`);
+      setHistorialCambiosModal(res.data || []);
+    } catch (err) {
+      console.error('Error al obtener historial de cambios:', err);
+      toast.error('Error al cargar historial de auditoría.');
+    } finally {
+      setLoadingHistorial(false);
+    }
+  };
+
   // Reasignar Líder a Proyecto Individual
   const [showReasignarLiderModalPrj, setShowReasignarLiderModalPrj] = useState(false);
   const [proyectoAReasignar, setProyectoAReasignar] = useState(null);
@@ -1201,6 +1233,8 @@ export const CoordinadorDashboard = () => {
   // Manejadores para Detalle de Proyecto y Reasignación de Líder
   const handleAbrirDetalleProyecto = async (proyecto) => {
     setSelectedProyectoModal(proyecto);
+    setModoEdicionCoordinador(false); // Por defecto se abre en Modo Lectura (Supervisión)
+    setSessionBatchId('BATCH-' + Date.now());
     setLoadingProyectoDetalle(true);
     try {
       const [etapasRes, devsRes] = await Promise.all([
@@ -1236,7 +1270,17 @@ export const CoordinadorDashboard = () => {
 
     try {
       setSubmittingReasignarLiderPrj(true);
-      await api.put(`/coordinador/proyectos/${proyectoAReasignar.idProyecto}/reasignar-lider?idNuevoLiderTarget=${targetNuevoLiderPrjId}`);
+      await api.put(`/coordinador/proyectos/${proyectoAReasignar.idProyecto}/reasignar-lider?idNuevoLiderTarget=${targetNuevoLiderPrjId}&motivo=${encodeURIComponent(motivoReasignacionPrj.trim())}`);
+      
+      const nuevoLiderObj = (lideresActivos || []).find(l => String(l.idTrabajador) === String(targetNuevoLiderPrjId));
+      const nuevoLiderNom = nuevoLiderObj ? `${nuevoLiderObj.nombre} ${nuevoLiderObj.apellido}` : 'Nuevo Líder';
+      
+      await registrarAccionCoordinador(
+        proyectoAReasignar.idProyecto,
+        'REASIGNACIÓN_LÍDER',
+        `Dirección del proyecto transferida formalmente a ${nuevoLiderNom}. Motivo: ${motivoReasignacionPrj.trim()}`
+      );
+
       toast.success('Líder de Proyecto reasignado exitosamente con registro de auditoría.');
       setShowReasignarLiderModalPrj(false);
       setProyectoAReasignar(null);
@@ -2291,7 +2335,7 @@ export const CoordinadorDashboard = () => {
                         className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-xs flex-1 justify-center rounded-xl cursor-pointer"
                       >
                         <Eye size={14} />
-                        <span>Ver WBS & Detalle</span>
+                        <span>Revisar Proyecto</span>
                       </button>
 
                       <button
@@ -3893,20 +3937,83 @@ export const CoordinadorDashboard = () => {
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-10 w-full max-w-5xl shadow-2xl max-h-[92dvh] overflow-y-auto space-y-7"
             >
-              {/* Encabezado Principal (Sin Botón X por Regla de Diseño) */}
-              <div className="border-b border-zinc-100 dark:border-zinc-800 pb-5">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="font-mono font-extrabold text-xs px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                    PRJ-00{selectedProyectoModal.idProyecto}
-                  </span>
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-medium">
-                    <Building2 size={14} className="text-blue-500" />
-                    <span>Cliente: <strong>{selectedProyectoModal.cliente || 'Cliente Corporativo'}</strong></span>
+              {/* Encabezado Principal de Inspección Directiva (Conmutador Modo Lectura / Modo Edición & Historial) */}
+              <div className="border-b border-zinc-100 dark:border-zinc-800 pb-5 space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="font-mono font-extrabold text-xs px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                      PRJ-00{selectedProyectoModal.idProyecto}
+                    </span>
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-medium">
+                      <Building2 size={14} className="text-blue-500" />
+                      <span>Cliente: <strong>{selectedProyectoModal.cliente || 'Cliente Corporativo'}</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Controles Directivos: Conmutador de Modo & Historial de Cambios */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => handleAbrirHistorialCambios(selectedProyectoModal.idProyecto)}
+                      className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl cursor-pointer"
+                      title="Ver el historial de auditoría de modificaciones realizadas por Coordinadores"
+                    >
+                      <RotateCcw size={13} className="text-purple-600 dark:text-purple-400" />
+                      <span>Historial de Cambios</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nuevoModo = !modoEdicionCoordinador;
+                        setModoEdicionCoordinador(nuevoModo);
+                        if (nuevoModo) {
+                          toast.success('Modo Edición Habilitado. Todos los cambios serán auditados.');
+                          if (!sessionBatchId) setSessionBatchId('BATCH-' + Date.now());
+                        } else {
+                          toast.info('Modo Lectura Activado (Supervisión).');
+                        }
+                      }}
+                      className={`text-xs py-1.5 px-3.5 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-2 shadow-xs ${
+                        modoEdicionCoordinador
+                          ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200'
+                      }`}
+                    >
+                      {modoEdicionCoordinador ? (
+                        <><Edit3 size={14} /> Modo Edición Activo</>
+                      ) : (
+                        <><ShieldCheck size={14} className="text-blue-500" /> Modo Lectura (Supervisión)</>
+                      )}
+                    </button>
                   </div>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mt-2">
+
+                <h3 className="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                   {selectedProyectoModal.nombre}
                 </h3>
+
+                {/* Banner de Estado de Edición */}
+                {modoEdicionCoordinador ? (
+                  <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-xs text-amber-900 dark:text-amber-200 font-medium flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={15} className="text-amber-600 animate-pulse shrink-0" />
+                      <span><strong>Modo Edición Activo:</strong> Las modificaciones realizadas en etapas, colaboradores y fechas registrarán automáticamente un evento de auditoría acumulado.</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setModoEdicionCoordinador(false)}
+                      className="text-[0.68rem] font-extrabold underline text-amber-800 dark:text-amber-300 shrink-0"
+                    >
+                      Volver a Modo Lectura
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-600 dark:text-zinc-400 font-medium flex items-center gap-2">
+                    <ShieldCheck size={14} className="text-blue-500 shrink-0" />
+                    <span>Modo Lectura Activo (Supervisión Directiva). Presione <strong>Modo Edición Activo</strong> si desea habilitar la gestión directiva de este proyecto.</span>
+                  </div>
+                )}
               </div>
 
               {/* Ficha Resumen Ejecutivo de 3 Tarjetas */}
@@ -4372,6 +4479,78 @@ export const CoordinadorDashboard = () => {
                 >
                   Cerrar Ficha
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Historial Acumulado de Cambios por la Coordinación */}
+      <AnimatePresence>
+        {showHistorialModal && (
+          <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl space-y-6 max-h-[85dvh] flex flex-col"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                    <History size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                      Historial de Cambios de Coordinación
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Auditoría acumulada de modificaciones directivas registradas
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowHistorialModal(false)}
+                  className="outline-button text-xs py-1.5 px-3.5 font-bold rounded-xl cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 space-y-3.5 pr-1">
+                {loadingHistorial ? (
+                  <div className="p-8 text-center text-xs text-zinc-400">
+                    <Loader2 size={24} className="animate-spin mx-auto text-blue-600 mb-2" />
+                    Cargando historial de auditoría...
+                  </div>
+                ) : historialCambiosModal.length === 0 ? (
+                  <div className="p-8 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs space-y-1">
+                    <ShieldCheck size={28} className="mx-auto text-zinc-300" />
+                    <p className="font-bold text-zinc-700 dark:text-zinc-300">Sin cambios de Coordinación registrados</p>
+                    <p>No se han registrado modificaciones directivas previas en este proyecto.</p>
+                  </div>
+                ) : (
+                  historialCambiosModal.map((reg, idx) => (
+                    <div key={reg.idHistorial || idx} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="font-mono text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                          {reg.accion || 'MODIFICACIÓN'}
+                        </span>
+                        <span className="text-[0.62rem] font-mono text-zinc-400 font-bold">
+                          {new Date(reg.fechaCambio).toLocaleString('es-CO')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed">
+                        {reg.detalles}
+                      </p>
+                      <div className="flex items-center gap-1.5 text-[0.65rem] text-zinc-500 font-medium pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                        <User size={12} className="text-blue-500" />
+                        <span>Realizado por: <strong>{reg.nombreCoordinador}</strong> ({reg.emailCoordinador})</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </motion.div>
           </div>
