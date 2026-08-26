@@ -1175,6 +1175,64 @@ export const CoordinadorDashboard = () => {
     return diffMs / (1000 * 60 * 60);
   };
 
+  // Manejo de notificaciones descartadas localmente en Coordinador (localStorage)
+  const [dismissedNotifsCoord, setDismissedNotifsCoord] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`dismissed_notifs_coord`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const handleDismissNotifCoord = (idNotif) => {
+    setDismissedNotifsCoord(prev => {
+      const next = [...prev, idNotif];
+      try {
+        localStorage.setItem(`dismissed_notifs_coord`, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  // Notificaciones unificadas de auditoría directiva (Reasignaciones y Nuevas Asignaciones)
+  const listNotificacionesCoordinador = useMemo(() => {
+    if (!proyectos || !Array.isArray(proyectos)) return [];
+    const notifs = [];
+
+    proyectos.forEach(p => {
+      // Reasignación reciente (Vigencia 72h)
+      if (p.reasignado && getHoursSinceReassignment(p.fechaReasignacion) <= 72 && !dismissedNotifsCoord.includes(`coord_reasig_${p.idProyecto}`)) {
+        notifs.push({
+          tipo: 'REASIGNACION',
+          idNotif: `coord_reasig_${p.idProyecto}`,
+          proyecto: p,
+          titulo: 'AUDITORÍA DIRECTIVA: PROYECTO REASIGNADO',
+          subtitulo: 'Reasignación de dirección técnica registrada por la Coordinación General.',
+          motivo: p.motivoReasignacion || 'Reorganización de dirección técnica.',
+          liderNombre: p.lider ? `${p.lider.nombre} ${p.lider.apellido}` : 'Líder Asignado',
+          vigencia: 'Vigencia de Auditoría (72h)'
+        });
+      }
+
+      // Nuevo Proyecto creado recientemente (Vigencia 72h)
+      if (!p.reasignado && (p.fechaInicio || p.createdAt) && getHoursSinceReassignment(p.fechaInicio || p.createdAt) <= 72 && !dismissedNotifsCoord.includes(`coord_new_${p.idProyecto}`)) {
+        notifs.push({
+          tipo: 'NUEVO_PROYECTO',
+          idNotif: `coord_new_${p.idProyecto}`,
+          proyecto: p,
+          titulo: 'NUEVO PROYECTO INCORPORADO AL PORTAFOLIO',
+          subtitulo: 'Se ha registrado una nueva arquitectura de proyecto con líder asignado y presupuesto.',
+          motivo: p.descripcion || 'Registro inicial de proyecto de software.',
+          liderNombre: p.lider ? `${p.lider.nombre} ${p.lider.apellido}` : 'Sin Asignar',
+          vigencia: 'Nuevo Registro (72h)'
+        });
+      }
+    });
+
+    return notifs;
+  }, [proyectos, dismissedNotifsCoord]);
+
   // 1. Subset de proyectos por Líder y Texto de Búsqueda (Sin filtrar por Estado Operativo)
   const proyectosBaseCoordinador = useMemo(() => {
     if (!Array.isArray(proyectos)) return [];
@@ -2036,6 +2094,113 @@ export const CoordinadorDashboard = () => {
               </button>
             </div>
           </motion.div>
+
+          {/* Banner Notificaciones Especiales de Reasignación & Nuevos Registros (Estándar Visual Premium) */}
+          {listNotificacionesCoordinador.length > 0 && (
+            <div className="space-y-4">
+              {listNotificacionesCoordinador.map((notif) => {
+                const prj = notif.proyecto;
+                const isReasig = notif.tipo === 'REASIGNACION';
+
+                return (
+                  <motion.div
+                    key={notif.idNotif}
+                    initial={{ opacity: 0, y: -16, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    className={`p-6 rounded-3xl border-2 shadow-xl backdrop-blur-md relative overflow-hidden space-y-4 ${
+                      isReasig
+                        ? 'bg-gradient-to-r from-amber-500/10 via-purple-500/5 to-indigo-500/10 dark:from-amber-950/50 dark:via-purple-900/30 dark:to-indigo-950/40 border-amber-300 dark:border-amber-700/80 shadow-amber-500/5'
+                        : 'bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-blue-500/10 dark:from-emerald-950/50 dark:via-teal-900/30 dark:to-blue-950/40 border-emerald-300 dark:border-emerald-700/80 shadow-emerald-500/5'
+                    }`}
+                  >
+                    {/* Fondo Resplandor */}
+                    <div className={`absolute -right-12 -top-12 w-48 h-48 rounded-full blur-3xl opacity-20 pointer-events-none ${
+                      isReasig ? 'bg-amber-400' : 'bg-emerald-400'
+                    }`} />
+
+                    {/* Cabecera */}
+                    <div className="flex items-center justify-between flex-wrap gap-3 relative z-10">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+                          isReasig
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
+                            : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                        }`}>
+                          {isReasig ? (
+                            <AlertTriangle size={22} className="animate-pulse" />
+                          ) : (
+                            <Sparkles size={22} className="animate-bounce text-amber-500" />
+                          )}
+                        </div>
+
+                        <div>
+                          <span className={`text-[0.68rem] font-mono font-black uppercase tracking-widest block mb-0.5 ${
+                            isReasig ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'
+                          }`}>
+                            {notif.titulo}
+                          </span>
+                          <h4 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                            <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
+                              PRJ-00{prj.idProyecto}
+                            </span>
+                            <span>{prj.nombre}</span>
+                          </h4>
+                        </div>
+                      </div>
+
+                      <span className="text-[0.65rem] font-mono font-extrabold px-3 py-1 rounded-full bg-white/80 dark:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                        {notif.vigencia}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed relative z-10 pl-1">
+                      {notif.subtitulo}
+                    </p>
+
+                    {/* Ficha Técnica / Justificación */}
+                    <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5 relative z-10 shadow-2xs">
+                      <div className="flex items-center justify-between text-[0.68rem] font-bold text-zinc-400">
+                        <span className="uppercase tracking-wider font-mono">
+                          {isReasig ? 'Observaciones de Auditoría de Reasignación:' : 'Alcance Registrado:'}
+                        </span>
+                        <span>Líder a Cargo: <strong>{notif.liderNombre}</strong></span>
+                      </div>
+                      <p className="text-xs text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed">
+                        {notif.motivo}
+                      </p>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex items-center justify-end gap-3 pt-1 relative z-10">
+                      <button
+                        type="button"
+                        onClick={() => handleDismissNotifCoord(notif.idNotif)}
+                        className="outline-button text-xs py-2 px-4 font-bold cursor-pointer"
+                      >
+                        Entendido / Entendido
+                      </button>
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        type="button"
+                        onClick={() => {
+                          setHighlightedProyectoId(prj.idProyecto);
+                          handleAbrirDetalleProyecto(prj);
+                          handleDismissNotifCoord(notif.idNotif);
+                        }}
+                        className="gradient-button text-xs py-2.5 px-5 font-extrabold inline-flex items-center gap-2 shadow-md cursor-pointer"
+                      >
+                        <Briefcase size={16} />
+                        <span>Supervisar Proyecto en Portafolio</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Tarjetas de Métricas Ejecutivas del Portafolio (Dinámicas por Filtro de Líder) */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
