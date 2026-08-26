@@ -3885,39 +3885,39 @@ export const CoordinadorDashboard = () => {
                 </div>
               </div>
 
-              {/* Registro de Auditoría & Gobernanza Directiva (Diseño Ejecutivo sin Emojis) */}
-              <div className="p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white shadow-md border border-indigo-900/50 space-y-3">
-                <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-indigo-800/40">
+              {/* Registro de Auditoría & Gobernanza Directiva (Diseño Claro Corporativo) */}
+              <div className="p-5 rounded-3xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/90 dark:from-zinc-800/80 dark:to-zinc-800/80 border border-blue-200/80 dark:border-zinc-700 space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-blue-200/60 dark:border-zinc-700/60">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0 shadow-2xs">
                       <ShieldCheck size={18} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-mono font-extrabold uppercase tracking-wider text-indigo-200">
+                      <h4 className="text-xs font-mono font-extrabold uppercase tracking-wider text-blue-900 dark:text-blue-200">
                         Historial de Auditoría & Gobernanza Directiva
                       </h4>
-                      <span className="text-[0.62rem] text-indigo-300/70 font-medium">Trazabilidad en tiempo real registrada en PostgreSQL</span>
+                      <span className="text-[0.62rem] text-zinc-500 dark:text-zinc-400 font-medium">Trazabilidad en tiempo real registrada en PostgreSQL</span>
                     </div>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[0.6rem] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  <span className="px-2.5 py-0.5 rounded-full text-[0.6rem] font-mono font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                     SISTEMA AUDITABLE
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3 text-xs pt-0.5">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white font-black text-[0.65rem] flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-[0.65rem] flex items-center justify-center shrink-0 shadow-xs">
                     {user ? getInitials(user.nombre, user.apellido) : 'CO'}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="text-[0.65rem] text-indigo-200/80 font-medium block">
+                    <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium block">
                       Supervisión asignada formalmente bajo la gobernanza del Coordinador:
                     </span>
-                    <span className="text-xs font-bold text-white truncate block">
-                      {user?.nombre} {user?.apellido} <span className="text-indigo-300 font-normal">({user?.email})</span>
+                    <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate block">
+                      {user?.nombre} {user?.apellido} <span className="text-blue-600 dark:text-blue-400 font-bold">({user?.email})</span>
                     </span>
                   </div>
-                  <div className="hidden sm:flex items-center gap-1 text-[0.62rem] text-emerald-400 font-mono font-bold bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-800/60">
-                    <CheckCircle2 size={12} /> REGISTRO VERIFICADO
+                  <div className="hidden sm:flex items-center gap-1 text-[0.62rem] text-emerald-700 dark:text-emerald-300 font-mono font-bold bg-emerald-100/80 dark:bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                    <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" /> REGISTRO VERIFICADO
                   </div>
                 </div>
               </div>
