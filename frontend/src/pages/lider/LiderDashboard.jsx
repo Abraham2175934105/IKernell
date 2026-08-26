@@ -11,7 +11,7 @@ import {
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
   FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye, EyeOff,
-  ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield, Pause, Play
+  ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield, Pause, Play, ClipboardList
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -816,6 +816,39 @@ export const LiderDashboard = () => {
   const [showHistorialCambiosModal, setShowHistorialCambiosModal] = useState(false);
   const [historialCambios, setHistorialCambios] = useState([]);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
+  const [unreadHistorialCount, setUnreadHistorialCount] = useState(0);
+
+  // Cargar contador de cambios no leídos cuando cambia el proyecto seleccionado
+  const consultarNuevosCambiosCoordinacion = useCallback(async (idPrj) => {
+    if (!idPrj || idPrj === 'GLOBAL') {
+      setUnreadHistorialCount(0);
+      setHistorialCambios([]);
+      return;
+    }
+    try {
+      const res = await api.get(`/lider/proyectos/${idPrj}/historial-cambios`).catch(() => []);
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      setHistorialCambios(data);
+
+      const lastSeenStr = localStorage.getItem(`visto_historial_prj_${idPrj}`);
+      if (!lastSeenStr) {
+        setUnreadHistorialCount(data.length);
+      } else {
+        const lastSeenTime = new Date(lastSeenStr).getTime();
+        const unread = data.filter(reg => new Date(reg.fechaCambio).getTime() > lastSeenTime).length;
+        setUnreadHistorialCount(unread);
+      }
+    } catch (err) {
+      console.error('Error al consultar contador de cambios:', err);
+      setUnreadHistorialCount(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (proyectoSeleccionado?.idProyecto && proyectoSeleccionado.idProyecto !== 'GLOBAL') {
+      consultarNuevosCambiosCoordinacion(proyectoSeleccionado.idProyecto);
+    }
+  }, [proyectoSeleccionado?.idProyecto, consultarNuevosCambiosCoordinacion]);
 
   const handleAbrirHistorialCambiosLider = async (idProyecto) => {
     if (!idProyecto || idProyecto === 'GLOBAL') {
@@ -825,12 +858,15 @@ export const LiderDashboard = () => {
     try {
       setLoadingHistorial(true);
       setShowHistorialCambiosModal(true);
-      const res = await api.get(`/lider/proyectos/${idProyecto}/historial-cambios`);
+      const res = await api.get(`/lider/proyectos/${idProyecto}/historial-cambios`).catch(() => []);
       const data = Array.isArray(res) ? res : (res?.data || []);
       setHistorialCambios(data);
+
+      // Marcar lectura en localStorage y limpiar contador
+      localStorage.setItem(`visto_historial_prj_${idProyecto}`, new Date().toISOString());
+      setUnreadHistorialCount(0);
     } catch (err) {
       console.error('Error al obtener historial de cambios:', err);
-      toast.error('Error al cargar el historial de cambios.');
     } finally {
       setLoadingHistorial(false);
     }
@@ -2516,15 +2552,20 @@ export const LiderDashboard = () => {
                   </div>
                 )}
 
-                {/* Botón: Cambios de Coordinación (Auditoría Directiva) */}
+                {/* Botón: Cambios de Coordinación (Auditoría Directiva con Contador de Novedades) */}
                 <button
                   type="button"
                   onClick={() => handleAbrirHistorialCambiosLider(proyectoSeleccionado.idProyecto)}
-                  className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 cursor-pointer shadow-2xs"
+                  className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 cursor-pointer shadow-2xs transition-all"
                   title="Ver el historial acumulado de modificaciones registradas por la Coordinación General"
                 >
-                  <RotateCcw size={13} className="text-purple-600 dark:text-purple-400" />
+                  <ClipboardList size={14} className="text-purple-600 dark:text-purple-400 shrink-0" />
                   <span>Cambios de Coordinación</span>
+                  {unreadHistorialCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white font-extrabold text-[0.62rem] animate-pulse shadow-xs">
+                      {unreadHistorialCount} nuevo{unreadHistorialCount > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </button>
 
                 {/* Botón: Generar Reporte PDF (Disponible para todos) */}
@@ -6775,68 +6816,86 @@ export const LiderDashboard = () => {
       {/* Modal: Historial Acumulado de Cambios por la Coordinación */}
       <AnimatePresence>
         {showHistorialCambiosModal && (
-          <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl space-y-6 max-h-[85dvh] flex flex-col"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-3xl shadow-2xl space-y-6 max-h-[88dvh] flex flex-col"
             >
               <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                    <RotateCcw size={20} />
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                    <ClipboardList size={22} />
                   </div>
                   <div>
-                    <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                      Historial de Cambios por Coordinación
+                    <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                      Historial de Cambios Realizados por Coordinación
                     </h3>
-                    <p className="text-xs text-zinc-500 font-medium">
-                      Registro de modificaciones y ajustes directivos en este proyecto
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                      Registro de auditoría acumulado con marca de tiempo e identificación directiva
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowHistorialCambiosModal(false)}
-                  className="outline-button text-xs py-1.5 px-3.5 font-bold rounded-xl cursor-pointer"
+                  className="outline-button text-xs py-2 px-4 font-bold rounded-2xl cursor-pointer"
                 >
                   Cerrar
                 </button>
               </div>
 
-              <div className="overflow-y-auto flex-1 space-y-3.5 pr-1">
+              <div className="overflow-y-auto flex-1 space-y-4 pr-1">
                 {loadingHistorial ? (
-                  <div className="p-8 text-center text-xs text-zinc-400">
-                    <Loader2 size={24} className="animate-spin mx-auto text-blue-600 mb-2" />
+                  <div className="p-12 text-center text-xs text-zinc-400">
+                    <Loader2 size={28} className="animate-spin mx-auto text-purple-600 mb-3" />
                     Cargando historial de auditoría...
                   </div>
                 ) : historialCambios.length === 0 ? (
-                  <div className="p-8 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs space-y-1">
-                    <ShieldCheck size={28} className="mx-auto text-zinc-300" />
-                    <p className="font-bold text-zinc-700 dark:text-zinc-300">Sin modificaciones registradas</p>
-                    <p>La Coordinación General no ha realizado ediciones recientes en este proyecto.</p>
+                  <div className="p-10 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl text-xs space-y-2">
+                    <ShieldCheck size={36} className="mx-auto text-zinc-300 dark:text-zinc-700" />
+                    <p className="font-extrabold text-sm text-zinc-700 dark:text-zinc-300">Sin modificaciones directivas</p>
+                    <p className="max-w-md mx-auto leading-relaxed">La Coordinación General no ha registrado ediciones de parámetros o etapas en este proyecto. Todo se encuentra según el plan inicial.</p>
                   </div>
                 ) : (
-                  historialCambios.map((reg, idx) => (
-                    <div key={reg.idHistorial || idx} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="font-mono text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                          {reg.accion || 'MODIFICACIÓN'}
-                        </span>
-                        <span className="text-[0.62rem] font-mono text-zinc-400 font-bold">
-                          {new Date(reg.fechaCambio).toLocaleString('es-CO')}
-                        </span>
+                  <div className="space-y-3.5">
+                    {historialCambios.map((reg, idx) => (
+                      <div key={reg.idHistorial || idx} className="p-5 rounded-3xl bg-zinc-50/90 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-3 shadow-2xs hover:border-purple-300 transition-colors">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[0.68rem] font-extrabold uppercase px-3 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                              {reg.accion || 'MODIFICACIÓN'}
+                            </span>
+                            {reg.batchId && (
+                              <span className="text-[0.62rem] font-mono text-zinc-400 bg-zinc-200/60 dark:bg-zinc-700/60 px-2 py-0.5 rounded-md font-bold">
+                                Session #{reg.batchId.split('-')[1] || reg.batchId}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs font-mono text-zinc-500 font-bold flex items-center gap-1">
+                            <Clock size={12} className="text-purple-500" />
+                            {new Date(reg.fechaCambio).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
+                          </span>
+                        </div>
+
+                        <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed pl-1">
+                          {reg.detalles}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 text-xs text-zinc-500 font-medium">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-purple-600 text-white font-black text-[0.6rem] flex items-center justify-center shrink-0">
+                              {getInitials(reg.nombreCoordinador || 'Coordinador', '')}
+                            </div>
+                            <span>
+                              Coordinador responsable: <strong className="text-zinc-900 dark:text-zinc-100">{reg.nombreCoordinador}</strong> ({reg.emailCoordinador})
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-xs text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed">
-                        {reg.detalles}
-                      </p>
-                      <div className="flex items-center gap-1.5 text-[0.65rem] text-zinc-500 font-medium pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
-                        <User size={12} className="text-blue-500" />
-                        <span>Coordinador responsable: <strong>{reg.nombreCoordinador}</strong> ({reg.emailCoordinador})</span>
-                      </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
             </motion.div>
