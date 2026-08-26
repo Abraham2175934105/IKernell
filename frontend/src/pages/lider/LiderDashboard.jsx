@@ -1440,21 +1440,24 @@ export const LiderDashboard = () => {
         if (isMine) return false;
       }
 
-      // 2. Filtro por Estado / Categoría Específica
+      // 2. Filtro por Estado / Categoría Específica (MUTUAMENTE EXCLUSIVO)
       if (filtroEstadoCatalogo !== 'TODOS') {
         const estUpper = (p.estado || '').toUpperCase();
-        if (filtroEstadoCatalogo === 'ACTIVO') {
-          if (estUpper !== 'ACTIVO') return false;
+        const isReassignedProject = Boolean(p.reasignado);
+
+        if (filtroEstadoCatalogo === 'REASIGNADO') {
+          if (!isReassignedProject) return false;
+        } else if (filtroEstadoCatalogo === 'ACTIVO') {
+          // PROYECTOS REASIGNADOS NUNCA SALEN EN ACTIVOS, SOLO EN REASIGNADOS
+          if (isReassignedProject || estUpper !== 'ACTIVO') return false;
         } else if (filtroEstadoCatalogo === 'EN_PLANIFICACION') {
-          if (!estUpper.includes('PLANIFICACION')) return false;
+          if (isReassignedProject || !estUpper.includes('PLANIFICACION')) return false;
         } else if (filtroEstadoCatalogo === 'PAUSADO') {
-          if (estUpper !== 'PAUSADO' && estUpper !== 'SUSPENDIDO' && estUpper !== 'INHABILITADO') return false;
+          if (isReassignedProject || (estUpper !== 'PAUSADO' && estUpper !== 'SUSPENDIDO' && estUpper !== 'INHABILITADO')) return false;
         } else if (filtroEstadoCatalogo === 'FINALIZADO') {
-          if (estUpper !== 'FINALIZADO' && estUpper !== 'COMPLETADO') return false;
-        } else if (filtroEstadoCatalogo === 'REASIGNADO') {
-          if (!p.reasignado) return false;
+          if (isReassignedProject || (estUpper !== 'FINALIZADO' && estUpper !== 'COMPLETADO')) return false;
         } else if (filtroEstadoCatalogo === 'NUEVO') {
-          const isNuevoPrj = !p.reasignado && (p.fechaInicio || p.createdAt) && getHoursSinceReassignment(p.fechaInicio || p.createdAt) <= 72;
+          const isNuevoPrj = !isReassignedProject && (p.fechaInicio || p.createdAt) && getHoursSinceReassignment(p.fechaInicio || p.createdAt) <= 72;
           if (!isNuevoPrj) return false;
         }
       }
@@ -3235,22 +3238,23 @@ export const LiderDashboard = () => {
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                  <div className="relative flex-1 md:w-64">
-                    <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  {/* Barra de Búsqueda Destacada de Alta Visibilidad */}
+                  <div className="relative flex-1 md:w-80 lg:w-[380px]">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 font-bold" />
                     <input
                       type="text"
                       value={busquedaCatalogoProyecto}
                       onChange={(e) => setBusquedaCatalogoProyecto(e.target.value)}
-                      placeholder="Buscar por nombre o cliente..."
-                      className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 font-medium"
+                      placeholder="Buscar proyecto por nombre, cliente, líder o código..."
+                      className="w-full pl-10 pr-9 py-2.5 text-xs rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 shadow-2xs font-semibold transition-all"
                     />
                     {busquedaCatalogoProyecto && (
                       <button
                         type="button"
                         onClick={() => setBusquedaCatalogoProyecto('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-100 p-0.5 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                       >
-                        <X size={12} />
+                        <X size={13} />
                       </button>
                     )}
                   </div>
@@ -3269,16 +3273,16 @@ export const LiderDashboard = () => {
                       setNuevoProyectoErrors({});
                       setShowNuevoProyectoModal(true);
                     }}
-                    className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-md shrink-0"
+                    className="gradient-button text-xs py-2.5 px-4 font-extrabold cursor-pointer inline-flex items-center gap-2 shadow-md shrink-0 rounded-2xl"
                   >
-                    <FolderPlus size={14} />
+                    <FolderPlus size={15} />
                     <span>Nuevo Proyecto</span>
                   </button>
                 </div>
               </div>
 
               {/* Selector Destacado de Filtro: Mis Proyectos vs Otros Líderes vs Todos + Filtro por Estado */}
-              <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 font-mono tracking-wider mr-1">
                     Visualizar:
@@ -3301,7 +3305,7 @@ export const LiderDashboard = () => {
                     onClick={() => setFiltroPropiedadLider('OTROS_LIDERES')}
                     className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center gap-2 border ${
                       filtroPropiedadLider === 'OTROS_LIDERES'
-                        ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-600/20'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-transparent hover:bg-zinc-200 dark:hover:bg-zinc-700'
                     }`}
                   >
@@ -3312,9 +3316,9 @@ export const LiderDashboard = () => {
                   <button
                     type="button"
                     onClick={() => setFiltroPropiedadLider('TODOS')}
-                    className={`px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 border ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 border ${
                       filtroPropiedadLider === 'TODOS'
-                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-sm'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-transparent hover:bg-zinc-200 dark:hover:bg-zinc-700'
                     }`}
                   >
@@ -3322,32 +3326,31 @@ export const LiderDashboard = () => {
                   </button>
                 </div>
 
-                {/* Filtro Secundario por Estado / Categoría */}
-                <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 lg:pb-0">
+                {/* Filtro Secundario por Estado / Categoría (Estándar Azul Corporativo Unificado) */}
+                <div className="flex items-center gap-2 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0">
                   <span className="text-[0.68rem] font-extrabold uppercase text-zinc-400 font-mono tracking-wider shrink-0">
                     Estado:
                   </span>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {[
                       { id: 'TODOS', label: 'Todos' },
-                      { id: 'ACTIVO', label: 'Activos', color: 'bg-emerald-500' },
-                      { id: 'EN_PLANIFICACION', label: 'En Planificación', color: 'bg-blue-500' },
-                      { id: 'PAUSADO', label: 'Pausados', color: 'bg-amber-500' },
-                      { id: 'FINALIZADO', label: 'Finalizados', color: 'bg-purple-500' },
-                      { id: 'REASIGNADO', label: 'Reasignados', color: 'bg-amber-600' },
-                      { id: 'NUEVO', label: 'Nuevos (3D)', color: 'bg-emerald-400' }
+                      { id: 'ACTIVO', label: 'Activos' },
+                      { id: 'EN_PLANIFICACION', label: 'En Planificación' },
+                      { id: 'PAUSADO', label: 'Pausados' },
+                      { id: 'FINALIZADO', label: 'Finalizados' },
+                      { id: 'REASIGNADO', label: 'Reasignados' },
+                      { id: 'NUEVO', label: 'Nuevos (3D)' }
                     ].map(st => (
                       <button
                         key={st.id}
                         type="button"
                         onClick={() => setFiltroEstadoCatalogo(st.id)}
-                        className={`px-2.5 py-1.5 rounded-lg text-[0.68rem] font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 border ${
+                        className={`px-3 py-1.5 rounded-xl text-[0.68rem] font-extrabold transition-all cursor-pointer inline-flex items-center gap-1 border ${
                           filtroEstadoCatalogo === st.id
-                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-2xs'
-                            : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700/80'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-transparent hover:bg-zinc-200 dark:hover:bg-zinc-700'
                         }`}
                       >
-                        {st.color && <span className={`w-2 h-2 rounded-full ${st.color}`} />}
                         <span>{st.label}</span>
                       </button>
                     ))}
