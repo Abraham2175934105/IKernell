@@ -757,6 +757,8 @@ export const LiderDashboard = () => {
     nivelDetalle: 'DETALLADO',
     incluirWbs: true,
     incluirEquipo: true,
+    incluirPausas: true,
+    incluirAuditoriaCoordinador: true,
     incluirIncidencias: true,
     modoSensible: true
   });
@@ -2178,7 +2180,72 @@ export const LiderDashboard = () => {
     }
   };
 
-  // Generador de Reporte PDF del Proyecto
+  // Función de cálculo de trazabilidad de pausas e impacto en el cronograma
+  const calcularDetalleTiempoPausa = (proyecto, historial) => {
+    if (!proyecto) return { enPausa: false, dias: 0, horas: 0, minutos: 0, textoFormateado: 'Sin pausas registradas', fechaInicioPausa: null, fechaEntregaImpactada: null };
+
+    const esPausaActual = proyecto.estado === 'EN_PAUSA';
+    
+    // Buscar último registro de pausa en el historial
+    const regPausa = (historial || []).find(r => 
+      (r.detalles || '').toLowerCase().includes('paus') || 
+      (r.accion || '').toLowerCase().includes('paus')
+    );
+
+    const fechaPausa = regPausa?.fechaCambio ? new Date(regPausa.fechaCambio) : (proyecto.updatedAt ? new Date(proyecto.updatedAt) : new Date());
+
+    if (esPausaActual) {
+      const ahora = new Date();
+      const diffMs = Math.max(0, ahora.getTime() - fechaPausa.getTime());
+      const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const horas = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      // Fecha de entrega original y ajustada por días de pausa
+      let fechaFinOriginal = proyecto.fechaFinEstimada ? new Date(proyecto.fechaFinEstimada) : new Date();
+      let fechaFinAjustada = new Date(fechaFinOriginal);
+      fechaFinAjustada.setDate(fechaFinAjustada.getDate() + (dias > 0 ? dias : 1));
+
+      const textoFormateado = `${dias} Día${dias !== 1 ? 's' : ''}, ${horas} Hora${horas !== 1 ? 's' : ''} y ${minutos} Minuto${minutos !== 1 ? 's' : ''}`;
+
+      return {
+        enPausa: true,
+        dias,
+        horas,
+        minutos,
+        textoFormateado,
+        fechaInicioPausa: fechaPausa,
+        fechaFinOriginal,
+        fechaFinAjustada
+      };
+    }
+
+    if (regPausa) {
+      return {
+        enPausa: false,
+        dias: 0,
+        horas: 0,
+        minutos: 0,
+        textoFormateado: 'Proyecto reactivado (Pausas previas registradas)',
+        fechaInicioPausa: fechaPausa,
+        fechaFinOriginal: proyecto.fechaFinEstimada ? new Date(proyecto.fechaFinEstimada) : null,
+        fechaFinAjustada: null
+      };
+    }
+
+    return {
+      enPausa: false,
+      dias: 0,
+      horas: 0,
+      minutos: 0,
+      textoFormateado: 'Sin pausas registradas en el proyecto',
+      fechaInicioPausa: null,
+      fechaFinOriginal: proyecto.fechaFinEstimada ? new Date(proyecto.fechaFinEstimada) : null,
+      fechaFinAjustada: null
+    };
+  };
+
+  // Generador de Reporte PDF del Proyecto con Trazabilidad Completa y Auditoría
   const handleGenerarReportePdf = () => {
     if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') {
       toast.error('Seleccione un proyecto específico para generar el reporte PDF.');
@@ -2192,11 +2259,15 @@ export const LiderDashboard = () => {
         format: 'a4'
       });
 
-      const primaryColor = [37, 99, 235]; // #2563eb
-      const darkColor = [24, 24, 27];     // #18181b
-      const lightBg = [248, 250, 252];    // #f8fafc
+      const primaryColor = [37, 99, 235];  // #2563eb
+      const darkColor = [24, 24, 27];      // #18181b
+      const pauseColor = [217, 119, 6];    // #d97706 (amber-600)
+      const purpleColor = [126, 34, 206];  // #7e22ce (purple-700)
 
-      // 1. Banner Superior
+      // Cálculo de Trazabilidad de Pausas
+      const detallePausa = calcularDetalleTiempoPausa(proyectoSeleccionado, historialCambios);
+
+      // 1. Banner Superior Corporativo
       doc.setFillColor(...primaryColor);
       doc.rect(0, 0, 210, 24, 'F');
 
@@ -2207,9 +2278,9 @@ export const LiderDashboard = () => {
 
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`REPORTE DE INGENIERÍA Y PROYECTO DE SOFTWARE | FECHA: ${new Date().toLocaleDateString('es-ES')}`, 14, 18);
+      doc.text(`REPORTE DE INGENIERÍA Y AUDITORÍA | FECHA: ${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`, 14, 18);
 
-      // 2. Título de Proyecto
+      // 2. Encabezado del Proyecto
       doc.setTextColor(...darkColor);
       doc.setFontSize(15);
       doc.setFont('helvetica', 'bold');
@@ -2220,34 +2291,43 @@ export const LiderDashboard = () => {
       doc.setTextColor(100, 100, 100);
       doc.text(`Código: PRJ-00${proyectoSeleccionado.idProyecto} | Estado: ${proyectoSeleccionado.estado || 'ACTIVO'} | Cliente: ${proyectoSeleccionado.cliente || 'Interno'}`, 14, 40);
 
-      let yPos = 48;
+      let yPos = 47;
 
-      // 3. Tarjeta Resumen Operativo
-      doc.setFillColor(...lightBg);
-      doc.roundedRect(14, yPos, 182, pdfConfig.modoSensible ? 28 : 22, 3, 3, 'F');
-      
+      // 3. Tarjeta Resumen Operativo & Cronograma
+      const isPaused = proyectoSeleccionado.estado === 'EN_PAUSA';
+      doc.setFillColor(isPaused ? 254 : 248, isPaused ? 243 : 250, isPaused ? 199 : 252);
+      doc.roundedRect(14, yPos, 182, pdfConfig.modoSensible ? 32 : 26, 3, 3, 'F');
+
       doc.setFontSize(9.5);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...primaryColor);
-      doc.text('RESUMEN Y DIMENSIÓN OPERATIVA', 18, yPos + 7);
+      doc.setTextColor(...(isPaused ? pauseColor : primaryColor));
+      doc.text(isPaused ? 'RESUMEN OPERATIVO - ESTADO: EN PAUSA (PRODUCCIÓN DETENIDA)' : 'RESUMEN Y DIMENSIÓN OPERATIVA', 18, yPos + 7);
 
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...darkColor);
       doc.text(`• Fecha de Inicio: ${formatearFechaHumana(proyectoSeleccionado.fechaInicio)}`, 18, yPos + 13);
-      doc.text(`• Entrega Estimada: ${formatearFechaHumana(proyectoSeleccionado.fechaFinEstimada)}`, 105, yPos + 13);
-      doc.text(`• Líder a Cargo: ${proyectoSeleccionado.lider ? `${proyectoSeleccionado.lider.nombre} ${proyectoSeleccionado.lider.apellido}` : 'Carlos Mendoza'}`, 18, yPos + 18);
-      doc.text(`• Duración Proyectada: ${calcularDuracionProyecto(proyectoSeleccionado.fechaInicio, proyectoSeleccionado.fechaFinEstimada)}`, 105, yPos + 18);
+      doc.text(`• Entrega Estimada Inicial: ${formatearFechaHumana(proyectoSeleccionado.fechaFinEstimada)}`, 105, yPos + 13);
+      doc.text(`• Líder a Cargo: ${proyectoSeleccionado.lider ? `${proyectoSeleccionado.lider.nombre} ${proyectoSeleccionado.lider.apellido}` : 'Carlos Mendoza'}`, 18, yPos + 19);
+
+      if (detallePausa.enPausa && detallePausa.fechaFinAjustada) {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...pauseColor);
+        doc.text(`• Fecha Ajustada de Entrega (Post-Pausa): ${formatearFechaHumana(detallePausa.fechaFinAjustada)} (+${detallePausa.dias > 0 ? detallePausa.dias : 1} días)`, 105, yPos + 19);
+      } else {
+        doc.text(`• Duración Proyectada: ${calcularDuracionProyecto(proyectoSeleccionado.fechaInicio, proyectoSeleccionado.fechaFinEstimada)}`, 105, yPos + 19);
+      }
 
       if (pdfConfig.modoSensible) {
         const presForm = proyectoSeleccionado.presupuesto ? Number(proyectoSeleccionado.presupuesto).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00';
         doc.setFont('helvetica', 'bold');
-        doc.text(`• Presupuesto Financiero Reservado (Confidencial): US$ ${presForm}`, 18, yPos + 24);
+        doc.setTextColor(...darkColor);
+        doc.text(`• Presupuesto Financiero Reservado (Confidencial): US$ ${presForm}`, 18, yPos + 25);
       }
 
-      yPos += pdfConfig.modoSensible ? 36 : 30;
+      yPos += pdfConfig.modoSensible ? 38 : 32;
 
-      // Alcance del proyecto
+      // Descripción y Alcance
       if (proyectoSeleccionado.descripcion) {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
@@ -2261,19 +2341,88 @@ export const LiderDashboard = () => {
         yPos += (splitDesc.length * 4) + 6;
       }
 
-      // 4. Sección WBS
+      // SECCIÓN SELECCIONABLE: TRAZABILIDAD DE PAUSAS Y TIEMPO ACUMULADO
+      if (pdfConfig.incluirPausas) {
+        if (yPos > 240) { doc.addPage(); yPos = 20; }
+
+        doc.setFillColor(254, 243, 199);
+        doc.roundedRect(14, yPos, 182, 34, 3, 3, 'F');
+
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...pauseColor);
+        doc.text('Trazabilidad de Pausas Operativas & Afectación al Plazo de Entrega', 18, yPos + 7);
+
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...darkColor);
+        doc.text(`• Estado Actual de Producción: ${proyectoSeleccionado.estado === 'EN_PAUSA' ? 'EN PAUSA (Suspenso Activo)' : 'ACTIVO / OPERATIVO'}`, 18, yPos + 14);
+        doc.text(`• Tiempo Acumulado en Pausa: ${detallePausa.textoFormateado}`, 18, yPos + 19);
+
+        if (detallePausa.fechaInicioPausa) {
+          doc.text(`• Fecha/Hora de Suspensión: ${new Date(detallePausa.fechaInicioPausa).toLocaleString('es-CO')}`, 18, yPos + 24);
+        }
+
+        if (detallePausa.enPausa && detallePausa.fechaFinAjustada) {
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(180, 83, 9);
+          doc.text(`• Proyección de Impacto: El plazo de entrega original se desplaza automáticamente del ${formatearFechaHumana(proyectoSeleccionado.fechaFinEstimada)} al ${formatearFechaHumana(detallePausa.fechaFinAjustada)}.`, 18, yPos + 29);
+        } else {
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(100, 100, 100);
+          doc.text('• Impacto en la Operación: No se detectan suspensiones activas que afecten la entrega proyectada.', 18, yPos + 29);
+        }
+
+        yPos += 40;
+      }
+
+      // SECCIÓN SELECCIONABLE: AUDITORÍA Y GESTIONES DEL COORDINADOR
+      if (pdfConfig.incluirAuditoriaCoordinador && historialCambios && historialCambios.length > 0) {
+        if (yPos > 240) { doc.addPage(); yPos = 20; }
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...purpleColor);
+        doc.text('Historial de Auditoría & Gestiones de la Coordinación General', 14, yPos);
+        yPos += 6;
+
+        const maxAuditLogs = pdfConfig.nivelDetalle === 'RESUMIDO' ? 3 : 10;
+        const logsAImprimir = historialCambios.slice(0, maxAuditLogs);
+
+        logsAImprimir.forEach((reg, idx) => {
+          if (yPos > 270) { doc.addPage(); yPos = 20; }
+
+          doc.setFillColor(245, 243, 255);
+          doc.rect(14, yPos, 182, 6, 'F');
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...purpleColor);
+          doc.text(`Acción #${idx + 1}: ${reg.accion || 'MODIFICACIÓN DIRECTIVA'} - ${new Date(reg.fechaCambio).toLocaleString('es-CO')}`, 16, yPos + 4.5);
+          yPos += 8;
+
+          doc.setFontSize(7.5);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...darkColor);
+          const textDet = doc.splitTextToSize(`Detalles: ${reg.detalles || 'Sin observaciones adicionales.'}`, 178);
+          doc.text(textDet, 18, yPos);
+          yPos += (textDet.length * 3.5) + 3;
+        });
+
+        yPos += 4;
+      }
+
+      // SECCIÓN WBS: Fases y Actividades
       if (pdfConfig.incluirWbs && etapas && etapas.length > 0) {
-        doc.setFontSize(10.5);
+        if (yPos > 240) { doc.addPage(); yPos = 20; }
+
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...primaryColor);
-        doc.text('1. Estructura de Desglose de Trabajo (Fases WBS & Actividades)', 14, yPos);
+        doc.text('Estructura WBS y Desglose de Fases Técnicas', 14, yPos);
         yPos += 6;
 
         etapas.forEach((etapa, index) => {
-          if (yPos > 260) {
-            doc.addPage();
-            yPos = 20;
-          }
+          if (yPos > 260) { doc.addPage(); yPos = 20; }
 
           doc.setFillColor(240, 244, 255);
           doc.rect(14, yPos, 182, 7, 'F');
@@ -2285,20 +2434,17 @@ export const LiderDashboard = () => {
 
           if (etapa.actividades && etapa.actividades.length > 0) {
             etapa.actividades.forEach(act => {
-              if (yPos > 270) {
-                doc.addPage();
-                yPos = 20;
-              }
+              if (yPos > 270) { doc.addPage(); yPos = 20; }
 
               doc.setFontSize(8);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(30, 41, 59);
               doc.text(`• ${act.nombreActividad}`, 18, yPos);
-              
+
               doc.setFont('helvetica', 'normal');
               doc.setTextColor(100, 116, 139);
               const devName = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin asignar';
-              doc.text(`[${act.estado || 'PENDIENTE'}] - Asignado a: ${devName} (${act.horasEstimadas || 0}h estimadas)`, 18, yPos + 4);
+              doc.text(`[${act.estado || 'PENDIENTE'}] - Asignado: ${devName} (${act.horasEstimadas || 0}h estimadas)`, 18, yPos + 4);
               yPos += 8;
             });
           } else {
@@ -2312,24 +2458,18 @@ export const LiderDashboard = () => {
         });
       }
 
-      // 5. Sección Desarrolladores
+      // SECCIÓN EQUIPO & DESARROLLADORES
       if (pdfConfig.incluirEquipo && desarrolladoresAsignadosProyecto && desarrolladoresAsignadosProyecto.length > 0) {
-        if (yPos > 240) {
-          doc.addPage();
-          yPos = 20;
-        }
+        if (yPos > 240) { doc.addPage(); yPos = 20; }
 
-        doc.setFontSize(10.5);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...primaryColor);
-        doc.text('2. Nómina de Desarrolladores y Capacidad Asignada (HU-12)', 14, yPos);
+        doc.text('Nómina de Desarrolladores y Capacidad Asignada (HU-12)', 14, yPos);
         yPos += 6;
 
         desarrolladoresAsignadosProyecto.forEach(dev => {
-          if (yPos > 270) {
-            doc.addPage();
-            yPos = 20;
-          }
+          if (yPos > 270) { doc.addPage(); yPos = 20; }
 
           const devName = dev.desarrollador ? `${dev.desarrollador.nombre} ${dev.desarrollador.apellido}` : 'Desarrollador';
           const devEmail = dev.desarrollador?.email || '';
@@ -6600,129 +6740,292 @@ export const LiderDashboard = () => {
           </div>
         )}
 
-        {/* 3. Modal: Generador de Reportes PDF Configurable */}
-        {showGenerarReportePdfModal && proyectoSeleccionado && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5"
-            >
-              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-extrabold text-base">
-                  <FileText size={20} className="text-blue-600 dark:text-blue-400" />
-                  <span>Configurar Reporte PDF del Proyecto</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowGenerarReportePdfModal(false)}
-                  className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+        {/* 3. Modal: Generador de Reportes PDF Configurable Avanzado (HU-12 / RF-18) */}
+        {showGenerarReportePdfModal && proyectoSeleccionado && (() => {
+          const detallePausaModal = calcularDetalleTiempoPausa(proyectoSeleccionado, historialCambios);
 
-              <div className="space-y-4 text-xs">
-                <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/80 space-y-1">
-                  <span className="font-extrabold text-blue-900 dark:text-blue-200 block text-xs">
-                    Proyecto Seleccionado: {proyectoSeleccionado.nombre}
-                  </span>
-                  <p className="text-blue-700 dark:text-blue-300 text-[0.68rem] font-medium">
-                    Selecciona el nivel de detalle e información sensible a incluir en el documento ejecutivo PDF.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block">
-                    Nivel de Detalle del Reporte *
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPdfConfig({ ...pdfConfig, nivelDetalle: 'RESUMIDO' })}
-                      className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                        pdfConfig.nivelDetalle === 'RESUMIDO'
-                          ? 'bg-blue-50 dark:bg-blue-950/80 border-blue-500 text-blue-900 dark:text-blue-100 font-bold'
-                          : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-600'
-                      }`}
-                    >
-                      <div className="font-extrabold text-xs">Reporte Resumido</div>
-                      <div className="text-[0.65rem] text-zinc-500 mt-0.5">Visión ejecutiva de alto nivel</div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPdfConfig({ ...pdfConfig, nivelDetalle: 'DETALLADO' })}
-                      className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                        pdfConfig.nivelDetalle === 'DETALLADO'
-                          ? 'bg-blue-50 dark:bg-blue-950/80 border-blue-500 text-blue-900 dark:text-blue-100 font-bold'
-                          : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-600'
-                      }`}
-                    >
-                      <div className="font-extrabold text-xs">Reporte Detallado</div>
-                      <div className="text-[0.65rem] text-zinc-500 mt-0.5">Incluye Fases WBS, Horas y Equipo</div>
-                    </button>
+          return (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-4xl shadow-2xl space-y-6 max-h-[92dvh] overflow-y-auto"
+              >
+                {/* Header del Modal */}
+                <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-sm">
+                      <FileText size={22} />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                        <span>Configurar Reporte PDF del Proyecto & Auditoría</span>
+                      </h3>
+                      <p className="text-xs text-zinc-500 font-medium">
+                        Personaliza los módulos e información confidencial a incluir en el documento impreso oficial
+                      </p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    Contenido a Incluir en el Documento:
-                  </label>
-
-                  <label className="flex items-center gap-2.5 cursor-pointer font-bold text-zinc-800 dark:text-zinc-200">
-                    <input
-                      type="checkbox"
-                      checked={pdfConfig.incluirWbs}
-                      onChange={(e) => setPdfConfig({ ...pdfConfig, incluirWbs: e.target.checked })}
-                      className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
-                    />
-                    <span>Incluir Estructura WBS y Fases del Proyecto</span>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 cursor-pointer font-bold text-zinc-800 dark:text-zinc-200">
-                    <input
-                      type="checkbox"
-                      checked={pdfConfig.incluirEquipo}
-                      onChange={(e) => setPdfConfig({ ...pdfConfig, incluirEquipo: e.target.checked })}
-                      className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
-                    />
-                    <span>Incluir Desarrolladores Asignados y Carga Horaria</span>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 cursor-pointer font-bold text-amber-800 dark:text-amber-300">
-                    <input
-                      type="checkbox"
-                      checked={pdfConfig.modoSensible}
-                      onChange={(e) => setPdfConfig({ ...pdfConfig, modoSensible: e.target.checked })}
-                      className="rounded border-zinc-300 text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
-                    />
-                    <span>Incluir Información Sensible (Presupuesto Financiero USD)</span>
-                  </label>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                   <button
                     type="button"
                     onClick={() => setShowGenerarReportePdfModal(false)}
-                    className="outline-button text-xs py-2 px-4 font-bold"
+                    className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Tarjeta Informativa del Proyecto Seleccionado con Estatus de Pausa */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-purple-50/60 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-purple-950/30 border border-blue-200/80 dark:border-blue-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[0.68rem] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white">
+                        PRJ-00{proyectoSeleccionado.idProyecto}
+                      </span>
+                      <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                        {proyectoSeleccionado.nombre}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium">
+                      Cliente: <strong>{proyectoSeleccionado.cliente || 'Interno'}</strong> • Líder: <strong>{proyectoSeleccionado.lider?.nombre || 'Asignado'} {proyectoSeleccionado.lider?.apellido || ''}</strong>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`px-3 py-1 rounded-full text-xs font-black border flex items-center gap-1.5 ${
+                      proyectoSeleccionado.estado === 'EN_PAUSA'
+                        ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800'
+                    }`}>
+                      {proyectoSeleccionado.estado === 'EN_PAUSA' ? <Pause size={13} /> : <CheckCircle2 size={13} />}
+                      {proyectoSeleccionado.estado || 'ACTIVO'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Alerta de tiempo en pausa si el proyecto está pausado */}
+                {detallePausaModal.enPausa && (
+                  <div className="p-3.5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/80 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+                    <Clock size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold block mb-0.5">Proyecto en Pausa Operativa:</strong>
+                      <span>Duración acumulada: <strong>{detallePausaModal.textoFormateado}</strong>. Se incluirá la proyección de postergación de la fecha de entrega original.</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Disposición en 2 Columnas de Configuración */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start text-xs">
+                  {/* Columna Izquierda: Nivel de Detalle del Reporte (5 cols) */}
+                  <div className="md:col-span-5 space-y-4">
+                    <div className="space-y-2">
+                      <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block uppercase tracking-wider text-[0.7rem]">
+                        1. Perfil del Documento PDF *
+                      </label>
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => setPdfConfig({ ...pdfConfig, nivelDetalle: 'RESUMIDO' })}
+                          className={`w-full p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${
+                            pdfConfig.nivelDetalle === 'RESUMIDO'
+                              ? 'bg-blue-50/90 dark:bg-blue-950/80 border-blue-500 ring-2 ring-blue-500/20 text-blue-900 dark:text-blue-100 font-bold'
+                              : 'bg-zinc-50 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/80 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100'
+                          }`}
+                        >
+                          <div className="font-extrabold text-xs flex items-center justify-between">
+                            <span>Reporte Resumido (Ejecutivo)</span>
+                            {pdfConfig.nivelDetalle === 'RESUMIDO' && <Check size={14} className="text-blue-600 dark:text-blue-400" />}
+                          </div>
+                          <div className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                            Visión estratégica de alto nivel con presupuesto, fechas clave y estatus operativo.
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setPdfConfig({ ...pdfConfig, nivelDetalle: 'DETALLADO' })}
+                          className={`w-full p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${
+                            pdfConfig.nivelDetalle === 'DETALLADO'
+                              ? 'bg-blue-50/90 dark:bg-blue-950/80 border-blue-500 ring-2 ring-blue-500/20 text-blue-900 dark:text-blue-100 font-bold'
+                              : 'bg-zinc-50 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/80 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100'
+                          }`}
+                        >
+                          <div className="font-extrabold text-xs flex items-center justify-between">
+                            <span>Reporte Operativo (Estándar)</span>
+                            {pdfConfig.nivelDetalle === 'DETALLADO' && <Check size={14} className="text-blue-600 dark:text-blue-400" />}
+                          </div>
+                          <div className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                            Estructura completa de fases WBS, desarrolladores asignados y estado de actividades.
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setPdfConfig({ ...pdfConfig, nivelDetalle: 'AUDITORIA_COMPLETA' })}
+                          className={`w-full p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${
+                            pdfConfig.nivelDetalle === 'AUDITORIA_COMPLETA'
+                              ? 'bg-purple-50/90 dark:bg-purple-950/80 border-purple-500 ring-2 ring-purple-500/20 text-purple-900 dark:text-purple-100 font-bold'
+                              : 'bg-zinc-50 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/80 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100'
+                          }`}
+                        >
+                          <div className="font-extrabold text-xs flex items-center justify-between">
+                            <span>Consolidado Audit-Ready (Completo)</span>
+                            {pdfConfig.nivelDetalle === 'AUDITORIA_COMPLETA' && <Check size={14} className="text-purple-600 dark:text-purple-400" />}
+                          </div>
+                          <div className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                            Incluye trazabilidad de pausas, historial de auditoría de coordinación y contingencies.
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Columna Derecha: Opciones y Secciones Específicas a Incluir (7 cols) */}
+                  <div className="md:col-span-7 space-y-3">
+                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block uppercase tracking-wider text-[0.7rem]">
+                      2. Secciones e Información a Imprimir *
+                    </label>
+
+                    <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1 custom-scrollbar">
+                      {/* Opción 1: Pausas y Trazabilidad */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                        pdfConfig.incluirPausas
+                          ? 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfig.incluirPausas}
+                          onChange={(e) => setPdfConfig({ ...pdfConfig, incluirPausas: e.target.checked })}
+                          className="rounded border-zinc-300 text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                            ⏸️ Trazabilidad de Pausas y Suspensión de Producción
+                          </span>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                            Fechas de inicio/fin de pausa, duración acumulada (Días, Horas, Minutos) y afectación a la fecha de entrega.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 2: Gestiones del Coordinador */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                        pdfConfig.incluirAuditoriaCoordinador
+                          ? 'bg-purple-50/70 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfig.incluirAuditoriaCoordinador}
+                          onChange={(e) => setPdfConfig({ ...pdfConfig, incluirAuditoriaCoordinador: e.target.checked })}
+                          className="rounded border-zinc-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                            🛡️ Historial de Gestiones y Auditoría del Coordinador
+                          </span>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                            Registro de modificaciones directivas de presupuesto, plazos y supervisión acumulada.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 3: Estructura WBS */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                        pdfConfig.incluirWbs
+                          ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfig.incluirWbs}
+                          onChange={(e) => setPdfConfig({ ...pdfConfig, incluirWbs: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                            📊 Estructura WBS, Fases y Actividades del Proyecto
+                          </span>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                            Desglose por etapas, actividades técnicas, horas estimadas y % de avance.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 4: Equipo y Nómina */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                        pdfConfig.incluirEquipo
+                          ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfig.incluirEquipo}
+                          onChange={(e) => setPdfConfig({ ...pdfConfig, incluirEquipo: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                            👥 Nómina de Desarrolladores y Control de Jornada (48h)
+                          </span>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                            Lista de desarrolladores vinculados, roles, especialidades y horas asignadas.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 5: Presupuesto Financiero Sensible */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                        pdfConfig.modoSensible
+                          ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfig.modoSensible}
+                          onChange={(e) => setPdfConfig({ ...pdfConfig, modoSensible: e.target.checked })}
+                          className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                            💵 Información Financiera Sensible (Presupuesto USD)
+                          </span>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                            Presupuesto financiero confidencial asignado y métricas de costo.
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Acciones del Modal */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowGenerarReportePdfModal(false)}
+                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer"
                   >
                     Cancelar
                   </button>
-                  <button
+                  <motion.button
                     type="button"
                     onClick={handleGenerarReportePdf}
-                    className="gradient-button text-xs py-2 px-5 font-bold inline-flex items-center gap-1.5 shadow-md"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="gradient-button text-xs py-2.5 px-6 font-bold cursor-pointer inline-flex items-center gap-2 shadow-md hover:shadow-blue-500/20"
                   >
-                    <Download size={14} />
-                    <span>Descargar Reporte PDF</span>
-                  </button>
+                    <Download size={16} />
+                    <span>Descargar Reporte PDF Audit-Ready</span>
+                  </motion.button>
                 </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
+              </motion.div>
+            </div>
+          );
+        })()}
         {/* Modal: Registro de Nuevo Colaborador (Líder o Desarrollador) */}
         {showNuevoColaboradorModal && (() => {
           const currentSkillProfile = ROLE_SKILL_PROFILES[nuevoColaboradorForm.rol] || ROLE_SKILL_PROFILES.DESARROLLADOR;
