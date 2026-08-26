@@ -1199,13 +1199,18 @@ export const CoordinadorDashboard = () => {
       toast.error('Seleccione el nuevo Líder de Proyecto.');
       return;
     }
+    if (!motivoReasignacionPrj || !motivoReasignacionPrj.trim()) {
+      toast.error('El motivo de la reasignación es obligatorio para el registro de auditoría.');
+      return;
+    }
 
     try {
       setSubmittingReasignarLiderPrj(true);
       await api.put(`/coordinador/proyectos/${proyectoAReasignar.idProyecto}/reasignar-lider?idNuevoLiderTarget=${targetNuevoLiderPrjId}`);
-      toast.success('Líder de Proyecto reasignado exitosamente en PostgreSQL.');
+      toast.success('Líder de Proyecto reasignado exitosamente con registro de auditoría.');
       setShowReasignarLiderModalPrj(false);
       setProyectoAReasignar(null);
+      setMotivoReasignacionPrj('');
       await cargarDatos();
     } catch (err) {
       console.error('Error al reasignar líder de proyecto:', err);
@@ -3787,14 +3792,17 @@ export const CoordinadorDashboard = () => {
 
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block text-xs flex items-center justify-between">
-                    <span>Motivo / Justificación del Cambio (Registro de Auditoría):</span>
-                    <span className="text-[0.62rem] text-zinc-400 font-normal">Opcional</span>
+                    <span>Motivo / Justificación del Cambio (Registro de Auditoría) *</span>
+                    <span className="text-[0.62rem] font-extrabold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-800">
+                      Obligatorio *
+                    </span>
                   </label>
                   <textarea
+                    required
                     rows={3}
                     value={motivoReasignacionPrj}
                     onChange={(e) => setMotivoReasignacionPrj(e.target.value)}
-                    placeholder="Describe la razón técnica u operativa de la reasignación (ej. Reorganización de carga directiva, vacaciones, especialización)..."
+                    placeholder="Descripción del motivo de la reasignación..."
                     className="input-field w-full p-3 text-xs font-medium rounded-xl border-2 border-zinc-200 dark:border-zinc-700 focus:border-blue-500"
                   />
                 </div>
@@ -3810,7 +3818,7 @@ export const CoordinadorDashboard = () => {
                   </button>
                   <button
                     type="submit"
-                    disabled={submittingReasignarLiderPrj || !targetNuevoLiderPrjId}
+                    disabled={submittingReasignarLiderPrj || !targetNuevoLiderPrjId || !motivoReasignacionPrj.trim()}
                     className="gradient-button text-xs py-2.5 px-6 font-bold cursor-pointer inline-flex items-center gap-2 rounded-2xl shadow-md disabled:opacity-50"
                   >
                     {submittingReasignarLiderPrj ? (
