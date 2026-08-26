@@ -187,6 +187,28 @@ public class LiderService {
         return proyectoRepository.save(proyecto);
     }
 
+    // Pausa un proyecto activo cambiando su estado a EN_PAUSA
+    public Proyecto pausarProyecto(Long idProyecto) {
+        Proyecto proyecto = proyectoRepository.findById(idProyecto)
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+            throw new IllegalStateException("Un proyecto finalizado no puede ser pausado.");
+        }
+        proyecto.setEstado("EN_PAUSA");
+        return proyectoRepository.save(proyecto);
+    }
+
+    // Reactiva un proyecto pausado cambiando su estado a ACTIVO
+    public Proyecto reactivarProyecto(Long idProyecto) {
+        Proyecto proyecto = proyectoRepository.findById(idProyecto)
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+            throw new IllegalStateException("Un proyecto finalizado no puede ser reactivado.");
+        }
+        proyecto.setEstado("ACTIVO");
+        return proyectoRepository.save(proyecto);
+    }
+
     // Deshabilita el proyecto para pausar o cerrar su ejecución
     public void inhabilitarProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)

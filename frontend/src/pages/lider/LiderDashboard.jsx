@@ -11,7 +11,7 @@ import {
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2,
   FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye, EyeOff,
-  ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield
+  ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield, Pause, Play
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -833,6 +833,40 @@ export const LiderDashboard = () => {
       toast.error('Error al cargar el historial de cambios.');
     } finally {
       setLoadingHistorial(false);
+    }
+  };
+
+  const [submittingPausa, setSubmittingPausa] = useState(false);
+
+  const handlePausarProyecto = async () => {
+    if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') return;
+    try {
+      setSubmittingPausa(true);
+      await api.patch(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/pausar`);
+      toast.success('Proyecto pausado exitosamente. Se ha detenido temporalmente la operación.');
+      setProyectoSeleccionado(prev => ({ ...prev, estado: 'EN_PAUSA' }));
+      if (typeof cargarProyectos === 'function') await cargarProyectos();
+    } catch (err) {
+      console.error('Error al pausar el proyecto:', err);
+      toast.error('Error al pausar el proyecto.');
+    } finally {
+      setSubmittingPausa(false);
+    }
+  };
+
+  const handleReactivarProyecto = async () => {
+    if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') return;
+    try {
+      setSubmittingPausa(true);
+      await api.patch(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/reactivar`);
+      toast.success('Proyecto reactivado exitosamente. Se ha reanudado la ejecución.');
+      setProyectoSeleccionado(prev => ({ ...prev, estado: 'ACTIVO' }));
+      if (typeof cargarProyectos === 'function') await cargarProyectos();
+    } catch (err) {
+      console.error('Error al reactivar el proyecto:', err);
+      toast.error('Error al reactivar el proyecto.');
+    } finally {
+      setSubmittingPausa(false);
     }
   };
 
@@ -2503,6 +2537,33 @@ export const LiderDashboard = () => {
                   <FileText size={13} className="text-blue-600 dark:text-blue-400" />
                   <span>Generar Reporte PDF</span>
                 </button>
+
+                {/* Acción Exclusiva del Líder Directivo: Pausar o Reactivar Proyecto */}
+                {isMiProyecto && !isProyectoFinalizado && (
+                  proyectoSeleccionado?.estado === 'EN_PAUSA' || proyectoSeleccionado?.estado === 'PAUSADO' ? (
+                    <button
+                      type="button"
+                      onClick={handleReactivarProyecto}
+                      disabled={submittingPausa}
+                      className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 bg-emerald-50/60 hover:bg-emerald-100 dark:bg-emerald-950/40 cursor-pointer shadow-2xs"
+                      title="Reactivar la ejecución del proyecto y reanudar actividades WBS"
+                    >
+                      {submittingPausa ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} className="text-emerald-600 fill-emerald-600" />}
+                      <span>Reactivar Proyecto</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handlePausarProyecto}
+                      disabled={submittingPausa}
+                      className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 bg-amber-50/60 hover:bg-amber-100 dark:bg-amber-950/40 cursor-pointer shadow-2xs"
+                      title="Pausar temporalmente el proyecto y detener el avance de actividades"
+                    >
+                      {submittingPausa ? <Loader2 size={13} className="animate-spin" /> : <Pause size={13} className="text-amber-600 fill-amber-600" />}
+                      <span>Pausar Proyecto</span>
+                    </button>
+                  )
+                )}
 
                 {/* Acciones Exclusivas de la Coordinación General (Edición Directiva de Parámetros) */}
                 {user?.rol === 'ROLE_COORDINADOR' && (

@@ -80,6 +80,20 @@ public class LiderController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/proyectos/{id}/pausar")
+    @Operation(summary = "Pausar Proyecto", description = "Cambia el estado del proyecto a EN_PAUSA")
+    public ResponseEntity<Proyecto> pausarProyecto(@PathVariable Long id) {
+        Proyecto pausado = liderService.pausarProyecto(id);
+        return ResponseEntity.ok(pausado);
+    }
+
+    @PatchMapping("/proyectos/{id}/reactivar")
+    @Operation(summary = "Reactivar Proyecto", description = "Restablece el estado de un proyecto pausado a ACTIVO")
+    public ResponseEntity<Proyecto> reactivarProyecto(@PathVariable Long id) {
+        Proyecto reactivado = liderService.reactivarProyecto(id);
+        return ResponseEntity.ok(reactivado);
+    }
+
     @PatchMapping("/proyectos/{id}/finalizar")
     @Operation(
         summary = "Finalizar Proyecto Formalmente", 
