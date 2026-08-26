@@ -2657,31 +2657,33 @@ export const LiderDashboard = () => {
             <span>Nuevo Proyecto</span>
           </motion.button>
 
-          {/* Botón: Nuevo Colaborador (Líder o Desarrollador) */}
-          <motion.button
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            type="button"
-            onClick={() => {
-              setNuevoColaboradorForm({
-                nombre: '',
-                apellido: '',
-                identificacion: '',
-                email: '',
-                rol: 'ROLE_DESARROLLADOR',
-                passwordHash: '',
-                profesion: 'Ingeniero de Software',
-                especialidad: 'Full Stack Web & Cloud'
-              });
-              setShowNuevoColaboradorModal(true);
-            }}
-            className="group px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/35 transition-all"
-            title="Registrar un nuevo colaborador (Líder o Desarrollador) en la plataforma"
-          >
-            <UserPlus size={15} className="group-hover:scale-115 group-hover:rotate-12 transition-transform duration-300" />
-            <span>Nuevo Colaborador</span>
-          </motion.button>
+          {/* Botón: Nuevo Colaborador (Exclusivo de Nómina y Personal) */}
+          {(activeTab === 'personal' || activeTab === 'nomina') && (
+            <motion.button
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              type="button"
+              onClick={() => {
+                setNuevoColaboradorForm({
+                  nombre: '',
+                  apellido: '',
+                  identificacion: '',
+                  email: '',
+                  rol: 'ROLE_DESARROLLADOR',
+                  passwordHash: '',
+                  profesion: 'Ingeniero de Software',
+                  especialidad: 'Full Stack Web & Cloud'
+                });
+                setShowNuevoColaboradorModal(true);
+              }}
+              className="group px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/35 transition-all"
+              title="Registrar un nuevo colaborador (Líder o Desarrollador) en la plataforma"
+            >
+              <UserPlus size={15} className="group-hover:scale-115 group-hover:rotate-12 transition-transform duration-300" />
+              <span>Nuevo Colaborador</span>
+            </motion.button>
+          )}
 
           {/* Botón de Actualización Minimalista Outline */}
           <button
