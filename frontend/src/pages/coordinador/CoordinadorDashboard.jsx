@@ -8,7 +8,7 @@ import {
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
   ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag, FolderGit2, DollarSign, Building2,
-  Crown, ArrowRight
+  Crown, ArrowRight, ArrowLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
