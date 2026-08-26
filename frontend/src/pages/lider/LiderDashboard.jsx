@@ -2327,24 +2327,30 @@ export const LiderDashboard = () => {
             </div>
           </button>
 
-          {/* Botón Destacado: Ver Todos los Proyectos / Vista Global Corporativa */}
-          <button
+          {/* Botón Destacado: Ver Todos los Proyectos / Vista Global Corporativa con Animaciones Avanzadas */}
+          <motion.button
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             type="button"
             onClick={() => seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' })}
-            className={`px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer border ${
+            className={`group px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer border ${
               proyectoSeleccionado?.idProyecto === 'GLOBAL'
-                ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20'
-                : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20 shadow-md shadow-blue-500/10'
+                : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:shadow-md hover:shadow-zinc-500/10'
             }`}
             title="Ver el portafolio completo y métricas consolidadas de todos los proyectos de la compañía"
           >
-            <Globe size={14} className={proyectoSeleccionado?.idProyecto === 'GLOBAL' ? 'text-blue-600 dark:text-blue-400 animate-pulse' : 'text-zinc-500'} />
+            <Globe size={15} className={`group-hover:rotate-45 transition-transform duration-500 ${proyectoSeleccionado?.idProyecto === 'GLOBAL' ? 'text-blue-600 dark:text-blue-400 animate-pulse' : 'text-zinc-500'}`} />
             <span className="hidden md:inline">
               {proyectoSeleccionado?.idProyecto === 'GLOBAL' ? 'Vista Global Activa' : 'Ver Todos los Proyectos'}
             </span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             type="button"
             onClick={() => {
               setNuevoProyectoForm({
@@ -2358,15 +2364,18 @@ export const LiderDashboard = () => {
               setNuevoProyectoErrors({});
               setShowNuevoProyectoModal(true);
             }}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+            className="group px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/35 transition-all"
             title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11)"
           >
-            <FolderPlus size={14} />
+            <FolderPlus size={15} className="group-hover:scale-115 group-hover:-rotate-12 transition-transform duration-300" />
             <span>Nuevo Proyecto</span>
-          </button>
+          </motion.button>
 
           {/* Botón: Nuevo Colaborador (Líder o Desarrollador) */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             type="button"
             onClick={() => {
               setNuevoColaboradorForm({
@@ -2381,12 +2390,12 @@ export const LiderDashboard = () => {
               });
               setShowNuevoColaboradorModal(true);
             }}
-            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+            className="group px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/35 transition-all"
             title="Registrar un nuevo colaborador (Líder o Desarrollador) en la plataforma"
           >
-            <UserPlus size={14} />
+            <UserPlus size={15} className="group-hover:scale-115 group-hover:rotate-12 transition-transform duration-300" />
             <span>Nuevo Colaborador</span>
-          </button>
+          </motion.button>
 
           {/* Botón de Actualización Minimalista Outline */}
           <button
@@ -2599,84 +2608,110 @@ export const LiderDashboard = () => {
                   </div>
                 )}
 
-                {/* Botón: Cambios de Coordinación (Auditoría Directiva con Contador de Novedades) */}
-                <button
+                {/* Botón: Cambios de Coordinación (Auditoría Directiva con Contador de Novedades & Animaciones Avanzadas) */}
+                <motion.button
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   type="button"
                   onClick={() => handleAbrirHistorialCambiosLider(proyectoSeleccionado.idProyecto)}
-                  className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 cursor-pointer shadow-2xs transition-all"
+                  className="outline-button group text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50/40 hover:bg-purple-100/80 dark:bg-purple-950/30 hover:border-purple-400 dark:hover:border-purple-600 cursor-pointer shadow-2xs hover:shadow-lg hover:shadow-purple-500/20 rounded-2xl transition-all"
                   title="Ver el historial acumulado de modificaciones registradas por la Coordinación General"
                 >
-                  <ClipboardList size={14} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                  <ClipboardList size={15} className="text-purple-600 dark:text-purple-400 shrink-0 group-hover:scale-115 group-hover:-rotate-12 transition-transform duration-300" />
                   <span>Cambios de Coordinación</span>
                   {unreadHistorialCount > 0 && (
                     <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white font-extrabold text-[0.62rem] animate-pulse shadow-xs">
                       {unreadHistorialCount} nuevo{unreadHistorialCount > 1 ? 's' : ''}
                     </span>
                   )}
-                </button>
+                </motion.button>
 
-                {/* Botón: Generar Reporte PDF (Disponible para todos) */}
-                <button
+                {/* Botón: Generar Reporte PDF (Disponible para todos con Animación Avanzada) */}
+                <motion.button
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   type="button"
                   onClick={() => setShowGenerarReportePdfModal(true)}
-                  className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer shadow-2xs"
+                  className="outline-button group text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 bg-blue-50/40 hover:bg-blue-100/80 dark:bg-blue-950/30 hover:border-blue-400 dark:hover:border-blue-600 cursor-pointer shadow-2xs hover:shadow-lg hover:shadow-blue-500/20 rounded-2xl transition-all"
                   title="Generar e imprimir reporte técnico/ejecutivo del proyecto en formato PDF"
                 >
-                  <FileText size={13} className="text-blue-600 dark:text-blue-400" />
+                  <FileText size={15} className="text-blue-600 dark:text-blue-400 shrink-0 group-hover:-translate-y-0.5 group-hover:scale-115 transition-transform duration-300" />
                   <span>Generar Reporte PDF</span>
-                </button>
+                </motion.button>
 
-                {/* Acción Exclusiva del Líder Directivo: Pausar o Reactivar Proyecto */}
+                {/* Acción Exclusiva del Líder Directivo: Pausar o Reactivar Proyecto con Animación Avanzada */}
                 {isMiProyecto && !isProyectoFinalizado && (
                   proyectoSeleccionado?.estado === 'EN_PAUSA' || proyectoSeleccionado?.estado === 'PAUSADO' ? (
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.04, y: -2 }}
+                      whileTap={{ scale: 0.96 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                       type="button"
                       onClick={handleReactivarProyecto}
                       disabled={submittingPausa}
-                      className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 bg-emerald-50/60 hover:bg-emerald-100 dark:bg-emerald-950/40 cursor-pointer shadow-2xs"
+                      className="outline-button group text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/80 bg-emerald-50/60 hover:bg-emerald-100 dark:bg-emerald-950/40 hover:border-emerald-400 dark:hover:border-emerald-500 cursor-pointer shadow-2xs hover:shadow-lg hover:shadow-emerald-500/20 rounded-2xl transition-all"
                       title="Reactivar la ejecución del proyecto y reanudar actividades WBS"
                     >
-                      {submittingPausa ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} className="text-emerald-600 fill-emerald-600" />}
+                      {submittingPausa ? (
+                        <Loader2 size={15} className="animate-spin text-emerald-600" />
+                      ) : (
+                        <Play size={15} className="text-emerald-600 fill-emerald-600 group-hover:scale-115 group-hover:translate-x-0.5 transition-transform duration-300" />
+                      )}
                       <span>Reactivar Proyecto</span>
-                    </button>
+                    </motion.button>
                   ) : (
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.04, y: -2 }}
+                      whileTap={{ scale: 0.96 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                       type="button"
                       onClick={() => setShowConfirmPausarModal(true)}
                       disabled={submittingPausa}
-                      className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 bg-amber-50/60 hover:bg-amber-100 dark:bg-amber-950/40 cursor-pointer shadow-2xs"
+                      className="outline-button group text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/80 bg-amber-50/60 hover:bg-amber-100 dark:bg-amber-950/40 hover:border-amber-400 dark:hover:border-amber-500 cursor-pointer shadow-2xs hover:shadow-lg hover:shadow-amber-500/20 rounded-2xl transition-all"
                       title="Pausar temporalmente el proyecto con evaluación de procesos y cronograma"
                     >
-                      {submittingPausa ? <Loader2 size={13} className="animate-spin" /> : <Pause size={13} className="text-amber-600 fill-amber-600" />}
+                      {submittingPausa ? (
+                        <Loader2 size={15} className="animate-spin text-amber-600" />
+                      ) : (
+                        <Pause size={15} className="text-amber-600 fill-amber-600 group-hover:scale-115 group-hover:rotate-12 transition-transform duration-300" />
+                      )}
                       <span>Pausar Proyecto</span>
-                    </button>
+                    </motion.button>
                   )
                 )}
 
-                {/* Acción Exclusiva del Líder Directivo: Finalizar Proyecto */}
+                {/* Acción Exclusiva del Líder Directivo: Finalizar Proyecto con Animación Avanzada */}
                 {isMiProyecto && !isProyectoFinalizado && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.04, y: -2 }}
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                     type="button"
                     onClick={() => setShowConfirmFinalizar(true)}
-                    className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer shadow-2xs"
+                    className="outline-button group text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800/80 bg-red-50/50 hover:bg-red-100/80 dark:bg-red-950/40 hover:border-red-400 dark:hover:border-red-600 cursor-pointer shadow-2xs hover:shadow-lg hover:shadow-red-500/20 rounded-2xl transition-all"
                     title="Cerrar formalmente el ciclo de vida del proyecto y liberar recursos"
                   >
-                    <CheckCircle2 size={13} className="text-red-500" />
+                    <CheckCircle2 size={15} className="text-red-500 group-hover:scale-115 group-hover:rotate-6 transition-transform duration-300" />
                     <span>Finalizar Proyecto</span>
-                  </button>
+                  </motion.button>
                 )}
 
                 {/* Acciones Exclusivas de la Coordinación General (Edición Directiva de Parámetros) */}
                 {user?.rol === 'ROLE_COORDINADOR' && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.04, y: -2 }}
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                     type="button"
                     onClick={handleAbrirEditarProyecto}
-                    className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs"
+                    className="outline-button group text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 hover:border-zinc-400 dark:hover:border-zinc-500 cursor-pointer shadow-2xs hover:shadow-lg hover:shadow-zinc-500/15 rounded-2xl transition-all"
                     title="Editar nombre, presupuesto, cliente, fechas y cambiar estado operativo"
                   >
-                    <Edit3 size={13} className="text-zinc-600 dark:text-zinc-400" />
+                    <Edit3 size={15} className="text-zinc-600 dark:text-zinc-400 group-hover:rotate-12 group-hover:scale-115 transition-transform duration-300" />
                     <span>Editar Proyecto</span>
-                  </button>
+                  </motion.button>
                 )}
               </div>
             </div>
