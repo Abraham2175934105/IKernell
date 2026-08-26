@@ -896,7 +896,7 @@ export const LiderDashboard = () => {
 
   // Estados y Filtros memorizados para la pestaña "Nómina & Personal"
   const [searchQueryPersonal, setSearchQueryPersonal] = useState('');
-  const [rolFiltroPersonal, setRolFiltroPersonal] = useState('TODOS');
+  const [rolFiltroPersonal, setRolFiltroPersonal] = useState('DESARROLLADOR');
   const [estadoFiltroPersonal, setEstadoFiltroPersonal] = useState('TODOS');
 
   const personalFiltrado = useMemo(() => {
@@ -3609,37 +3609,15 @@ export const LiderDashboard = () => {
                 Nómina & Personal Corporativo
               </h2>
               <p className="text-zinc-500 dark:text-zinc-400 font-medium text-xs mt-1">
-                Visualización y alta de Líderes de Proyecto y Desarrolladores de Software en la plataforma
+                Visualización y registro de desarrolladores de software asignados a los proyectos en la plataforma
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setNuevoColaboradorForm({
-                  identificacion: '',
-                  paisCodigo: 'CO',
-                  nombre: '',
-                  apellido: '',
-                  email: '',
-                  emailPersonal: '',
-                  profesion: '',
-                  especialidad: '',
-                  rol: 'DESARROLLADOR',
-                  passwordHash: ''
-                });
-                setSelectedSkills([]);
-                setCustomSkillInput('');
-                setShowPasswordInput(false);
-                setFormErrorsColaborador({});
-                setShowNuevoColaboradorModal(true);
-              }}
-              className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs inline-flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer shrink-0"
-              title="Dar de alta un nuevo Líder de Proyecto o Desarrollador de Software"
-            >
-              <UserPlus size={16} />
-              <span>Registrar Nuevo Colaborador</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-[0.68rem] font-extrabold font-mono px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                {personalFiltrado.length} Colaboradores Registrados
+              </span>
+            </div>
           </motion.div>
 
           {/* Barra de Filtros & Búsqueda Avanzada */}
@@ -3666,12 +3644,12 @@ export const LiderDashboard = () => {
                 )}
               </div>
 
-              {/* Filtros Rápido de Rol */}
+              {/* Filtros Rápidos de Rol */}
               <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
                 <span className="text-[0.68rem] font-bold text-zinc-400 uppercase mr-1 hidden sm:inline">Rol:</span>
                 {[
-                  { id: 'TODOS', label: 'Todos' },
                   { id: 'DESARROLLADOR', label: 'Desarrolladores' },
+                  { id: 'TODOS', label: 'Todos' },
                   { id: 'LIDER', label: 'Líderes' }
                 ].map(r => (
                   <button
