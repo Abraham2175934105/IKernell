@@ -8,12 +8,13 @@ import {
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
   ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag, FolderGit2, DollarSign, Building2,
-  Crown, ArrowRight, ArrowLeft, ClipboardList, RotateCw, Pause, Play, Zap, CheckCircle
+  Crown, ArrowRight, ArrowLeft, ClipboardList, RotateCw, Pause, Play, Zap, CheckCircle, Info
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
+import { CustomSelect } from '../../components/ui/CustomSelect';
 
 const ROLE_SKILL_PROFILES = {
   DESARROLLADOR: {
@@ -393,6 +394,7 @@ export const CoordinadorDashboard = () => {
   const [showReasignarActividadModalCoord, setShowReasignarActividadModalCoord] = useState(false);
   const [actividadAReasignarCoord, setActividadAReasignarCoord] = useState(null);
   const [targetDevIdReasignarCoord, setTargetDevIdReasignarCoord] = useState('');
+  const [motivoReasignarCoord, setMotivoReasignarCoord] = useState('');
   const [submittingReasignarActividadCoord, setSubmittingReasignarActividadCoord] = useState(false);
 
   const [submittingPausaFinalizarCoord, setSubmittingPausaFinalizarCoord] = useState(false);
@@ -849,6 +851,7 @@ export const CoordinadorDashboard = () => {
   const handleAbrirReasignarActividadCoord = (act, etapa) => {
     setActividadAReasignarCoord(act);
     setTargetDevIdReasignarCoord(act.desarrollador?.idTrabajador ? String(act.desarrollador.idTrabajador) : '');
+    setMotivoReasignarCoord('');
     setShowReasignarActividadModalCoord(true);
   };
 
@@ -856,6 +859,10 @@ export const CoordinadorDashboard = () => {
     e.preventDefault();
     if (!selectedProyectoModal || !actividadAReasignarCoord || !targetDevIdReasignarCoord) {
       toast.error('Seleccione un desarrollador de destino.');
+      return;
+    }
+    if (!motivoReasignarCoord.trim()) {
+      toast.error('El motivo o justificación de la reasignación es obligatorio.');
       return;
     }
 
@@ -869,10 +876,11 @@ export const CoordinadorDashboard = () => {
       const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
       setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
 
-      registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'REASIGNACION_ACTIVIDAD', `Tarea "${actividadAReasignarCoord.nombreActividad || actividadAReasignarCoord.descripcion}" reasignada a ${devNombre}`);
-      toast.success('Tarea reasignada exitosamente.');
+      registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'REASIGNACION_ACTIVIDAD', `Tarea "${actividadAReasignarCoord.nombreActividad || actividadAReasignarCoord.descripcion}" reasignada a ${devNombre}. Motivo: ${motivoReasignarCoord.trim()}`);
+      toast.success(`Tarea reasignada a ${devNombre} exitosamente.`);
       setShowReasignarActividadModalCoord(false);
       setActividadAReasignarCoord(null);
+      setMotivoReasignarCoord('');
     } catch (err) {
       console.error('Error reasignando actividad:', err);
       toast.error(err.message || 'Error al reasignar la tarea.');
@@ -5334,19 +5342,23 @@ export const CoordinadorDashboard = () => {
 
                 <div>
                   <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Desarrollador Asignado *</label>
-                  <select
-                    required
+                  <CustomSelect
                     value={nuevaActividadCoord.idDesarrollador}
-                    onChange={(e) => setNuevaActividadCoord({ ...nuevaActividadCoord, idDesarrollador: e.target.value })}
-                    className="input-field py-2.5 font-bold"
-                  >
-                    <option value="">-- Seleccionar Desarrollador --</option>
-                    {trabajadores.filter(t => t.estado && (t.rol || '').toUpperCase().includes('DESARROLLADOR')).map((dev) => (
-                      <option key={dev.idTrabajador} value={dev.idTrabajador}>
-                        {dev.nombre} {dev.apellido} ({dev.profesion || 'Desarrollador'})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setNuevaActividadCoord({ ...nuevaActividadCoord, idDesarrollador: val })}
+                    options={[
+                      { value: '', label: '— Seleccionar Desarrollador —' },
+                      ...(trabajadores || [])
+                        .filter(t => t.estado && (t.rol || '').toUpperCase().includes('DESARROLLADOR'))
+                        .map(dev => ({
+                          value: String(dev?.idTrabajador),
+                          label: `${dev?.nombre} ${dev?.apellido}`,
+                          subtitle: dev?.profesion || dev?.especialidad || 'Desarrollador'
+                        }))
+                    ]}
+                    maxWidth="w-full"
+                    searchable={true}
+                    icon={User}
+                  />
                 </div>
 
                 <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
@@ -5423,7 +5435,7 @@ export const CoordinadorDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal: Reasignar Actividad WBS */}
+      {/* Modal: Reasignar Actividad WBS con CustomSelect & Motivo Obligatorio */}
       <AnimatePresence>
         {showReasignarActividadModalCoord && actividadAReasignarCoord && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -5432,11 +5444,11 @@ export const CoordinadorDashboard = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-5"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto"
             >
-              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <RotateCw size={20} className="text-purple-600" />
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <RotateCcw size={20} className="text-purple-600" />
                   <span>Reasignar Tarea a Desarrollador</span>
                 </h3>
                 <button type="button" onClick={() => setShowReasignarActividadModalCoord(false)} className="text-zinc-400 hover:text-zinc-600 p-1">
@@ -5444,36 +5456,67 @@ export const CoordinadorDashboard = () => {
                 </button>
               </div>
 
-              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs">
-                <span className="text-[0.65rem] font-bold text-zinc-400 uppercase font-mono block">Tarea a Reasignar:</span>
-                <p className="font-bold text-zinc-800 dark:text-zinc-200 mt-1">
-                  {actividadAReasignarCoord.nombreActividad || actividadAReasignarCoord.descripcion}
-                </p>
+              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs">
+                <div className="font-bold text-zinc-900 dark:text-zinc-100 mb-1">Tarea a transferir:</div>
+                <div className="text-zinc-600 dark:text-zinc-300 italic mb-2">
+                  "{actividadAReasignarCoord.nombreActividad || actividadAReasignarCoord.descripcion}"
+                </div>
+                <div className="text-[0.7rem] text-zinc-500 font-semibold flex items-center gap-1.5">
+                  <User size={12} className="text-blue-500" />
+                  Responsable actual: {actividadAReasignarCoord.desarrollador ? `${actividadAReasignarCoord.desarrollador.nombre} ${actividadAReasignarCoord.desarrollador.apellido}` : 'Sin Asignar'}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-[0.7rem] text-blue-800 dark:text-blue-300 leading-relaxed flex items-start gap-2">
+                <Info size={15} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <strong>Trazabilidad Histórica:</strong> Esta reasignación registrará un cambio en la plataforma indicando el nuevo desarrollador responsable, el motivo directivo y la estampa de tiempo actual.
+                </div>
               </div>
 
               <form onSubmit={handleEjecutarReasignacionActividadCoord} className="space-y-4 text-xs">
                 <div>
                   <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Nuevo Desarrollador Responsable *</label>
-                  <select
-                    required
+                  <CustomSelect
                     value={targetDevIdReasignarCoord}
-                    onChange={(e) => setTargetDevIdReasignarCoord(e.target.value)}
-                    className="input-field py-2.5 font-bold"
-                  >
-                    <option value="">-- Seleccionar Desarrollador Target --</option>
-                    {trabajadores.filter(t => t.estado && (t.rol || '').toUpperCase().includes('DESARROLLADOR')).map((dev) => (
-                      <option key={dev.idTrabajador} value={dev.idTrabajador}>
-                        {dev.nombre} {dev.apellido} ({dev.profesion || 'Desarrollador'})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setTargetDevIdReasignarCoord(val)}
+                    options={[
+                      { value: '', label: '— Seleccione nuevo desarrollador —' },
+                      ...(trabajadores || [])
+                        .filter(t => t.estado && (t.rol || '').toUpperCase().includes('DESARROLLADOR'))
+                        .map(dev => ({
+                          value: String(dev?.idTrabajador),
+                          label: `${dev?.nombre} ${dev?.apellido}`,
+                          subtitle: dev?.profesion || dev?.especialidad || 'Desarrollador'
+                        }))
+                    ]}
+                    maxWidth="w-full"
+                    searchable={true}
+                    icon={User}
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Motivo o Justificación de la Reasignación *</label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={motivoReasignarCoord}
+                    onChange={(e) => setMotivoReasignarCoord(e.target.value)}
+                    placeholder="Motivo o justificación técnica obligatoria de la reasignación"
+                    className="input-field py-2"
+                  />
+                </div>
+
+                <div className="text-[0.65rem] text-zinc-400 font-medium font-mono">
+                  Fecha de trazabilidad: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                  <button type="button" onClick={() => setShowReasignarActividadModalCoord(false)} className="outline-button px-4 py-2 text-xs font-bold rounded-2xl">
+                  <button type="button" onClick={() => setShowReasignarActividadModalCoord(false)} className="outline-button px-4 py-2 text-xs font-bold rounded-2xl cursor-pointer">
                     Cancelar
                   </button>
-                  <button type="submit" disabled={submittingReasignarActividadCoord} className="gradient-button px-5 py-2 text-xs font-bold rounded-2xl">
+                  <button type="submit" disabled={submittingReasignarActividadCoord} className="gradient-button px-5 py-2 text-xs font-bold rounded-2xl cursor-pointer">
                     {submittingReasignarActividadCoord ? 'Reasignando...' : 'Confirmar Reasignación'}
                   </button>
                 </div>
