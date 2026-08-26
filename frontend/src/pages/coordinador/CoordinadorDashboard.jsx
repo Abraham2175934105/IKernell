@@ -1482,30 +1482,22 @@ export const CoordinadorDashboard = () => {
             </div>
 
             {/* 3. Paso 1 (Selección Única de Rol) y Paso 2 (Estado Lógico) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 border-t border-zinc-100 dark:border-zinc-800">
               
-              {/* A. Selección Única de Rol (Paso 1) */}
-              <div className="space-y-2">
+              {/* A. Selección Única de Rol (Paso 1) - Rediseñado sin enlace azul redundante */}
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <Briefcase size={13} className="text-amber-500" /> Paso 1: Selecciona 1 solo Rol a consultar:
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 font-mono">
+                    <Users size={14} className="text-blue-600 dark:text-blue-400 shrink-0" /> Paso 1: Selecciona 1 solo Rol a consultar:
                   </span>
-                  {rolSeleccionado !== 'TODOS' && (
-                    <button 
-                      onClick={() => handleSelectRole('TODOS')}
-                      className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-                    >
-                      Ver Todos los Roles
-                    </button>
-                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { key: 'TODOS', label: `Todos los Roles (${totalCount})`, icon: Sparkles },
-                    { key: 'DESARROLLADOR', label: `Desarrolladores (${devsCount})`, icon: Code2 },
-                    { key: 'LIDER', label: `Líderes (${lideresCount})`, icon: Briefcase },
-                    { key: 'COORDINADOR', label: `Coordinadores (${coordCount})`, icon: Shield }
+                    { key: 'TODOS', label: `Todos los Roles (${totalCount})`, icon: Sparkles, color: 'text-amber-500' },
+                    { key: 'DESARROLLADOR', label: `Desarrolladores (${devsCount})`, icon: Code2, color: 'text-emerald-500' },
+                    { key: 'LIDER', label: `Líderes (${lideresCount})`, icon: Crown, color: 'text-purple-500' },
+                    { key: 'COORDINADOR', label: `Coordinadores (${coordCount})`, icon: ShieldCheck, color: 'text-blue-500' }
                   ].map(r => {
                     const isSelected = rolSeleccionado === r.key;
                     const IconComponent = r.icon;
@@ -1514,7 +1506,7 @@ export const CoordinadorDashboard = () => {
                         key={r.key}
                         type="button"
                         onClick={() => handleSelectRole(r.key)}
-                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                           isSelected
                             ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
                             : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
@@ -1525,7 +1517,7 @@ export const CoordinadorDashboard = () => {
                         }`}>
                           {isSelected ? <Check size={10} /> : <span className="w-1 h-1 rounded-full bg-current inline-block" />}
                         </div>
-                        <IconComponent size={14} className="shrink-0" />
+                        <IconComponent size={14} className={`shrink-0 ${isSelected ? 'text-white' : r.color}`} />
                         <span>{r.label}</span>
                       </button>
                     );
@@ -1534,31 +1526,33 @@ export const CoordinadorDashboard = () => {
               </div>
 
               {/* B. Estado Lógico del Acceso (Paso 2) */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <BadgeCheck size={13} className="text-emerald-500" /> Paso 2: Estado de Permiso de Acceso:
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 font-mono">
+                    <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" /> Paso 2: Estado de Permiso de Acceso:
                   </span>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { key: 'TODOS', label: `Todos los Estados (${totalCount})` },
-                    { key: 'ACTIVO', label: `Solo Habilitados (${activosCount})` },
-                    { key: 'INHABILITADO', label: `Solo Inhabilitados (${inactivosCount})` }
+                    { key: 'TODOS', label: `Todos los Estados (${totalCount})`, icon: BadgeCheck, iconColor: 'text-blue-500' },
+                    { key: 'ACTIVO', label: `Solo Habilitados (${activosCount})`, icon: CheckCircle2, iconColor: 'text-emerald-500' },
+                    { key: 'INHABILITADO', label: `Solo Inhabilitados (${inactivosCount})`, icon: UserX, iconColor: 'text-red-500' }
                   ].map(s => {
                     const isSelected = estadoSeleccionado === s.key;
+                    const StatusIcon = s.icon;
                     return (
                       <button
                         key={s.key}
                         type="button"
                         onClick={() => setEstadoSeleccionado(s.key)}
-                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                           isSelected
                             ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-xs ring-2 ring-zinc-500/20 font-bold'
                             : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
                         }`}
                       >
+                        <StatusIcon size={14} className={`shrink-0 ${isSelected ? 'text-white dark:text-zinc-900' : s.iconColor}`} />
                         <span>{s.label}</span>
                       </button>
                     );
@@ -1568,12 +1562,12 @@ export const CoordinadorDashboard = () => {
 
             </div>
 
-            {/* 4. Paso 3: Habilidades Adaptativas (Solo se muestran cuando se elige un Rol específico en el Paso 1) */}
+            {/* 4. Paso 3: Habilidades Adaptativas */}
             {rolSeleccionado !== 'TODOS' && topSkills.length > 0 && (
-              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+              <div className="pt-3.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <Cpu size={13} className="text-blue-500" />
+                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 font-mono">
+                    <Sparkles size={14} className="text-amber-500 shrink-0" />
                     Paso 3: Habilidades Específicas de {
                       rolSeleccionado === 'DESARROLLADOR' ? 'Desarrollo WBS' : 
                       rolSeleccionado === 'LIDER' ? 'Gestión Ágil & Liderazgo' : 
