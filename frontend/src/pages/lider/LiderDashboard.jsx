@@ -2606,31 +2606,30 @@ export const LiderDashboard = () => {
                   )
                 )}
 
+                {/* Acción Exclusiva del Líder Directivo: Finalizar Proyecto */}
+                {isMiProyecto && !isProyectoFinalizado && (
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmFinalizar(true)}
+                    className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer shadow-2xs"
+                    title="Cerrar formalmente el ciclo de vida del proyecto y liberar recursos"
+                  >
+                    <CheckCircle2 size={13} className="text-red-500" />
+                    <span>Finalizar Proyecto</span>
+                  </button>
+                )}
+
                 {/* Acciones Exclusivas de la Coordinación General (Edición Directiva de Parámetros) */}
                 {user?.rol === 'ROLE_COORDINADOR' && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleAbrirEditarProyecto}
-                      className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs"
-                      title="Editar nombre, presupuesto, cliente, fechas y cambiar estado operativo"
-                    >
-                      <Edit3 size={13} className="text-zinc-600 dark:text-zinc-400" />
-                      <span>Editar Proyecto</span>
-                    </button>
-
-                    {!isProyectoFinalizado && (
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmFinalizar(true)}
-                        className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer shadow-2xs"
-                        title="Cerrar formalmente el ciclo de vida del proyecto"
-                      >
-                        <CheckCircle2 size={13} className="text-red-500" />
-                        <span>Finalizar Proyecto</span>
-                      </button>
-                    )}
-                  </>
+                  <button
+                    type="button"
+                    onClick={handleAbrirEditarProyecto}
+                    className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs"
+                    title="Editar nombre, presupuesto, cliente, fechas y cambiar estado operativo"
+                  >
+                    <Edit3 size={13} className="text-zinc-600 dark:text-zinc-400" />
+                    <span>Editar Proyecto</span>
+                  </button>
                 )}
               </div>
             </div>
