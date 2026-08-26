@@ -333,11 +333,16 @@ export const CoordinadorDashboard = () => {
   };
 
   const handleAbrirHistorialCambios = async (idProyecto) => {
+    if (!idProyecto || idProyecto === 'GLOBAL') {
+      toast.info('Seleccione un proyecto específico para consultar el historial de auditoría.');
+      return;
+    }
     try {
       setLoadingHistorial(true);
       setShowHistorialModal(true);
       const res = await api.get(`/coordinador/proyectos/${idProyecto}/historial-cambios`);
-      setHistorialCambiosModal(res.data || []);
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      setHistorialCambiosModal(data);
     } catch (err) {
       console.error('Error al obtener historial de cambios:', err);
       toast.error('Error al cargar historial de auditoría.');

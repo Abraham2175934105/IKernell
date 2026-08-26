@@ -818,11 +818,16 @@ export const LiderDashboard = () => {
   const [loadingHistorial, setLoadingHistorial] = useState(false);
 
   const handleAbrirHistorialCambiosLider = async (idProyecto) => {
+    if (!idProyecto || idProyecto === 'GLOBAL') {
+      toast.info('Seleccione un proyecto específico para consultar los cambios de coordinación.');
+      return;
+    }
     try {
       setLoadingHistorial(true);
       setShowHistorialCambiosModal(true);
       const res = await api.get(`/lider/proyectos/${idProyecto}/historial-cambios`);
-      setHistorialCambios(res.data || []);
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      setHistorialCambios(data);
     } catch (err) {
       console.error('Error al obtener historial de cambios:', err);
       toast.error('Error al cargar el historial de cambios.');
@@ -2499,8 +2504,8 @@ export const LiderDashboard = () => {
                   <span>Generar Reporte PDF</span>
                 </button>
 
-                {/* Acciones Exclusivas del Líder Propietario (Modo Edición) */}
-                {isMiProyecto && (
+                {/* Acciones Exclusivas de la Coordinación General (Edición Directiva de Parámetros) */}
+                {user?.rol === 'ROLE_COORDINADOR' && (
                   <>
                     <button
                       type="button"
