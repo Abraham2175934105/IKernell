@@ -1164,25 +1164,59 @@ export const CoordinadorDashboard = () => {
     }
   };
 
-  // Proyectos asociados a un trabajador seleccionado
+  // Proyectos asociados a un trabajador seleccionado (Matching robusto por ID, Cédula y Email)
   const workerProyectos = useMemo(() => {
     if (!selectedTrabajadorModal || !Array.isArray(proyectos)) return [];
-    const workerId = selectedTrabajadorModal.idTrabajador;
+
+    const targetId = selectedTrabajadorModal.idTrabajador || selectedTrabajadorModal.id;
+    const targetIdent = selectedTrabajadorModal.identificacion ? String(selectedTrabajadorModal.identificacion).trim() : '';
+    const targetEmail = selectedTrabajadorModal.email ? String(selectedTrabajadorModal.email).toLowerCase().trim() : '';
 
     return proyectos.filter(prj => {
-      // Si es Líder del Proyecto
-      if (prj.lider && Number(prj.lider.idTrabajador) === Number(workerId)) return true;
-      // Si es Desarrollador en la planilla del Proyecto
-      if (Array.isArray(prj.desarrolladores)) {
-        return prj.desarrolladores.some(d => Number(d.idTrabajador || d.desarrollador?.idTrabajador) === Number(workerId));
+      // 1. Si es Líder del Proyecto
+      if (prj.lider) {
+        const liderId = prj.lider.idTrabajador || prj.lider.id;
+        const liderIdent = prj.lider.identificacion ? String(prj.lider.identificacion).trim() : '';
+        const liderEmail = prj.lider.email ? String(prj.lider.email).toLowerCase().trim() : '';
+
+        if (targetId && liderId && String(targetId) === String(liderId)) return true;
+        if (targetIdent && liderIdent && targetIdent === liderIdent) return true;
+        if (targetEmail && liderEmail && targetEmail === liderEmail) return true;
       }
+
+      // 2. Si es Desarrollador en la planilla del Proyecto
+      if (Array.isArray(prj.desarrolladores)) {
+        return prj.desarrolladores.some(d => {
+          const devId = d.idTrabajador || d.id || d.desarrollador?.idTrabajador || d.desarrollador?.id;
+          const devIdent = d.identificacion || d.desarrollador?.identificacion;
+          const devEmail = d.email || d.desarrollador?.email;
+
+          if (targetId && devId && String(targetId) === String(devId)) return true;
+          if (targetIdent && devIdent && String(targetIdent).trim() === String(devIdent).trim()) return true;
+          if (targetEmail && devEmail && String(devEmail).toLowerCase().trim() === targetEmail) return true;
+          return false;
+        });
+      }
+
       return false;
     });
   }, [selectedTrabajadorModal, proyectos]);
 
-  const handleAbrirDetalleTrabajador = (trabajador) => {
+  const handleAbrirDetalleTrabajador = async (trabajador) => {
     setSelectedTrabajadorModal(trabajador);
-    setShowTrabajosSubpanel(false);
+    setShowTrabajosSubpanel(true); // Panel lateral desplegado por defecto para experiencia fluida
+
+    // Sincronizar catálogo de proyectos si no está poblado en estado local
+    if (!proyectos || proyectos.length === 0) {
+      try {
+        const res = await api.get('/coordinador/proyectos');
+        if (Array.isArray(res)) {
+          setProyectos(res);
+        }
+      } catch (err) {
+        console.error('Error al sincronizar proyectos para la ficha:', err);
+      }
+    }
   };
 
   const handleNavegarAProyectoDesdeTrabajador = (idProyecto) => {
@@ -3649,10 +3683,6 @@ export const CoordinadorDashboard = () => {
                     </p>
                   </div>
                 </div>
-
-                <button onClick={() => setSelectedTrabajadorModal(null)} className="text-zinc-400 hover:text-zinc-600 p-1">
-                  <X size={20} />
-                </button>
               </div>
 
               {/* Grid Dual: Panel de Datos Sensibles + Subpanel Lateral de Proyectos */}
