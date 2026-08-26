@@ -3258,26 +3258,6 @@ export const LiderDashboard = () => {
                       </button>
                     )}
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNuevoProyectoForm({
-                        nombre: '',
-                        cliente: '',
-                        descripcion: '',
-                        fechaInicio: new Date().toISOString().split('T')[0],
-                        fechaFinEstimada: '',
-                        presupuesto: ''
-                      });
-                      setNuevoProyectoErrors({});
-                      setShowNuevoProyectoModal(true);
-                    }}
-                    className="gradient-button text-xs py-2.5 px-4 font-extrabold cursor-pointer inline-flex items-center gap-2 shadow-md shrink-0 rounded-2xl"
-                  >
-                    <FolderPlus size={15} />
-                    <span>Nuevo Proyecto</span>
-                  </button>
                 </div>
               </div>
 
