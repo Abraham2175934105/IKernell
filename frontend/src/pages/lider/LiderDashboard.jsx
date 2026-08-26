@@ -2886,17 +2886,14 @@ export const LiderDashboard = () => {
               <button
                 type="button"
                 onClick={() => {
-                  if (fromReasigNotifModal) {
-                    handleVolverAFormularioDesdeWbs();
-                  } else {
-                    setActiveTab('proyectos');
-                  }
+                  setFromReasigNotifModal(false);
+                  setActiveTab('proyectos');
                 }}
                 className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs rounded-2xl transition-all"
-                title="Regresar al formulario de notificación / catálogo corporativo"
+                title="Regresar al catálogo corporativo de proyectos"
               >
                 <ArrowLeft size={16} className="text-zinc-500" />
-                <span>{fromReasigNotifModal ? 'Volver a Notificación de Reasignación' : 'Volver al Catálogo de Proyectos'}</span>
+                <span>Volver al Catálogo de Proyectos</span>
               </button>
 
               {!isMiProyecto && (
