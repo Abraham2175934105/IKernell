@@ -1362,17 +1362,46 @@ export const LiderDashboard = () => {
     return notifs;
   }, [proyectos, user, dismissedNotifications]);
 
-  // Confirmación de lectura de reasignación por parte del líder anterior
+  // Manejadores dedicados para el Flujo Interactivo de Notificación de Reasignación
+  const handleAbrirNotifReasignacionModal = (proyecto) => {
+    setProyectoNotifReasignacion(proyecto);
+    setShowReasignacionNotifModal(true);
+  };
+
+  const handleVerDetallesDesdeModal = (proyecto) => {
+    const prjTarget = proyecto || proyectoNotifReasignacion;
+    if (!prjTarget) return;
+    setProyectoNotifReasignacion(prjTarget);
+    setFromReasigNotifModal(true);
+    setShowReasignacionNotifModal(false);
+    seleccionarProyecto(prjTarget);
+    setActiveTab('wbs');
+  };
+
+  const handleVolverAFormularioDesdeWbs = () => {
+    const targetPrj = proyectoNotifReasignacion || proyectoSeleccionado;
+    if (targetPrj) {
+      setProyectoNotifReasignacion(targetPrj);
+    }
+    setShowReasignacionNotifModal(true);
+    setActiveTab('proyectos');
+  };
+
   const handleConfirmarLecturaReasignacion = async (idProyecto) => {
+    const targetId = idProyecto || proyectoNotifReasignacion?.idProyecto || proyectoSeleccionado?.idProyecto;
+    if (!targetId) return;
+
     try {
-      await api.put(`/lider/proyectos/${idProyecto}/confirmar-lectura-reasignacion`).catch(async () => {
-        await api.put(`/coordinador/proyectos/${idProyecto}/confirmar-lectura-reasignacion`);
-      });
-      toast.success('Notificación de reasignación confirmada. El proyecto se ha retirado de tu catálogo activo.');
       setShowReasignacionNotifModal(false);
-      setProyectoNotifReasignacion(null);
       setFromReasigNotifModal(false);
+      setProyectoNotifReasignacion(null);
       setActiveTab('proyectos');
+
+      await api.put(`/lider/proyectos/${targetId}/confirmar-lectura-reasignacion`).catch(async () => {
+        await api.put(`/coordinador/proyectos/${targetId}/confirmar-lectura-reasignacion`);
+      });
+
+      toast.success('Notificación de reasignación confirmada. El proyecto se ha retirado de tu catálogo activo.');
       const res = await api.get('/lider/proyectos');
       setProyectos(res.data);
     } catch (err) {
@@ -2857,14 +2886,14 @@ export const LiderDashboard = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setActiveTab('proyectos');
-                  if (fromReasigNotifModal && (proyectoNotifReasignacion || proyectoSeleccionado)) {
-                    if (!proyectoNotifReasignacion) setProyectoNotifReasignacion(proyectoSeleccionado);
-                    setShowReasignacionNotifModal(true);
+                  if (fromReasigNotifModal) {
+                    handleVolverAFormularioDesdeWbs();
+                  } else {
+                    setActiveTab('proyectos');
                   }
                 }}
                 className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs rounded-2xl transition-all"
-                title="Regresar al catálogo corporativo de proyectos"
+                title="Regresar al formulario de notificación / catálogo corporativo"
               >
                 <ArrowLeft size={16} className="text-zinc-500" />
                 <span>{fromReasigNotifModal ? 'Volver a Notificación de Reasignación' : 'Volver al Catálogo de Proyectos'}</span>
@@ -3311,8 +3340,7 @@ export const LiderDashboard = () => {
                         key={p.idProyecto}
                         onClick={() => {
                           if (isPastLiderPending) {
-                            setProyectoNotifReasignacion(p);
-                            setShowReasignacionNotifModal(true);
+                            handleAbrirNotifReasignacionModal(p);
                           } else {
                             seleccionarProyecto(p);
                           }
@@ -7779,12 +7807,7 @@ export const LiderDashboard = () => {
               <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                 <button
                   type="button"
-                  onClick={() => {
-                    setFromReasigNotifModal(true);
-                    setShowReasignacionNotifModal(false);
-                    seleccionarProyecto(proyectoNotifReasignacion);
-                    setActiveTab('wbs');
-                  }}
+                  onClick={() => handleVerDetallesDesdeModal(proyectoNotifReasignacion)}
                   className="outline-button w-full sm:w-auto text-xs py-2.5 px-5 font-bold inline-flex items-center justify-center gap-2 text-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 cursor-pointer shadow-2xs rounded-2xl transition-all"
                 >
                   <Eye size={15} className="text-zinc-600 dark:text-zinc-400" />
@@ -7793,11 +7816,7 @@ export const LiderDashboard = () => {
 
                 <button
                   type="button"
-                  onClick={async () => {
-                    await handleConfirmarLecturaReasignacion(proyectoNotifReasignacion.idProyecto);
-                    setShowReasignacionNotifModal(false);
-                    setProyectoNotifReasignacion(null);
-                  }}
+                  onClick={() => handleConfirmarLecturaReasignacion(proyectoNotifReasignacion.idProyecto)}
                   className="gradient-button w-full sm:w-auto text-xs py-2.5 px-5 font-extrabold inline-flex items-center justify-center gap-2 shadow-md cursor-pointer rounded-2xl"
                 >
                   <CheckCircle2 size={16} />
