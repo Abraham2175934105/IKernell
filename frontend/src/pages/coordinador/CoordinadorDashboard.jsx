@@ -1455,8 +1455,8 @@ export const CoordinadorDashboard = () => {
               </div>
 
               {/* Botón de Reseteo Rápido */}
-              <div className="flex items-center gap-2 shrink-0">
-                {activeFiltersCount > 0 && (
+              {activeFiltersCount > 0 && (
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={handleClearAllFilters}
@@ -1464,16 +1464,8 @@ export const CoordinadorDashboard = () => {
                   >
                     <RotateCcw size={13} /> Ver Todo el Personal ({activeFiltersCount} activo)
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(true)}
-                  className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 shadow-md cursor-pointer"
-                >
-                  <UserPlus size={15} />
-                  <span>Nuevo Trabajador</span>
-                </button>
-              </div>
+                </div>
+              )}
 
             </div>
 
