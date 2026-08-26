@@ -46,6 +46,13 @@ public class LiderController {
         return ResponseEntity.ok(historialCambiosCoordinadorRepository.findByProyectoIdProyectoOrderByFechaCambioDesc(idProyecto));
     }
 
+    @PutMapping("/proyectos/{idProyecto}/confirmar-lectura-reasignacion")
+    @Operation(summary = "Confirmar lectura de reasignación", description = "Marca como leída la notificación de transferencia por parte del Líder anterior")
+    public ResponseEntity<Proyecto> confirmarLecturaReasignacion(@PathVariable Long idProyecto) {
+        Proyecto actualizado = liderService.confirmarLecturaReasignacion(idProyecto);
+        return ResponseEntity.ok(actualizado);
+    }
+
     @PostMapping("/trabajadores")
     @Operation(summary = "Registrar nuevo trabajador (Líder o Desarrollador)", description = "Permite al Líder registrar nuevos colaboradores únicamente con rol Líder o Desarrollador")
     public ResponseEntity<Trabajador> registrarTrabajadorPorLider(@Valid @RequestBody Trabajador trabajador) {

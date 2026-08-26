@@ -209,6 +209,14 @@ public class LiderService {
         return proyectoRepository.save(proyecto);
     }
 
+    @Transactional
+    public Proyecto confirmarLecturaReasignacion(Long idProyecto) {
+        Proyecto proyecto = proyectoRepository.findById(idProyecto)
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+        proyecto.setLeidoPorLiderAnterior(true);
+        return proyectoRepository.save(proyecto);
+    }
+
     // Deshabilita el proyecto para pausar o cerrar su ejecución
     public void inhabilitarProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)

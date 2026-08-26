@@ -1365,8 +1365,14 @@ export const LiderDashboard = () => {
   // Confirmación de lectura de reasignación por parte del líder anterior
   const handleConfirmarLecturaReasignacion = async (idProyecto) => {
     try {
-      await api.put(`/coordinador/proyectos/${idProyecto}/confirmar-lectura-reasignacion`);
-      toast.success('Notificación de reasignación confirmada. El proyecto ya no aparecerá en tu panel individual.');
+      await api.put(`/lider/proyectos/${idProyecto}/confirmar-lectura-reasignacion`).catch(async () => {
+        await api.put(`/coordinador/proyectos/${idProyecto}/confirmar-lectura-reasignacion`);
+      });
+      toast.success('Notificación de reasignación confirmada. El proyecto se ha retirado de tu catálogo activo.');
+      setShowReasignacionNotifModal(false);
+      setProyectoNotifReasignacion(null);
+      setFromReasigNotifModal(false);
+      setActiveTab('proyectos');
       const res = await api.get('/lider/proyectos');
       setProyectos(res.data);
     } catch (err) {
@@ -2851,15 +2857,14 @@ export const LiderDashboard = () => {
               <button
                 type="button"
                 onClick={() => {
+                  setActiveTab('proyectos');
                   if (fromReasigNotifModal && (proyectoNotifReasignacion || proyectoSeleccionado)) {
                     if (!proyectoNotifReasignacion) setProyectoNotifReasignacion(proyectoSeleccionado);
                     setShowReasignacionNotifModal(true);
-                  } else {
-                    setActiveTab('proyectos');
                   }
                 }}
                 className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs rounded-2xl transition-all"
-                title="Regresar a la pantalla anterior"
+                title="Regresar al catálogo corporativo de proyectos"
               >
                 <ArrowLeft size={16} className="text-zinc-500" />
                 <span>{fromReasigNotifModal ? 'Volver a Notificación de Reasignación' : 'Volver al Catálogo de Proyectos'}</span>
