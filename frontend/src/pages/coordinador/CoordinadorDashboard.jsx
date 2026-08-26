@@ -319,6 +319,12 @@ export const CoordinadorDashboard = () => {
   const [targetNuevoLiderPrjId, setTargetNuevoLiderPrjId] = useState('');
   const [submittingReasignarLiderPrj, setSubmittingReasignarLiderPrj] = useState(false);
 
+  // Estados para Detalle de Trabajador & Navegación Cruzada a Proyectos
+  const [selectedTrabajadorModal, setSelectedTrabajadorModal] = useState(null);
+  const [showTrabajosSubpanel, setShowTrabajosSubpanel] = useState(false);
+  const [highlightedProyectoId, setHighlightedProyectoId] = useState(null);
+  const [navHistory, setNavHistory] = useState(null);
+
   // Estados de Paginación Inteligente (Por cantidad y por hojas)
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5); // 5, 10, 25, 50 por página
@@ -1158,6 +1164,49 @@ export const CoordinadorDashboard = () => {
     }
   };
 
+  // Proyectos asociados a un trabajador seleccionado
+  const workerProyectos = useMemo(() => {
+    if (!selectedTrabajadorModal || !Array.isArray(proyectos)) return [];
+    const workerId = selectedTrabajadorModal.idTrabajador;
+
+    return proyectos.filter(prj => {
+      // Si es Líder del Proyecto
+      if (prj.lider && Number(prj.lider.idTrabajador) === Number(workerId)) return true;
+      // Si es Desarrollador en la planilla del Proyecto
+      if (Array.isArray(prj.desarrolladores)) {
+        return prj.desarrolladores.some(d => Number(d.idTrabajador || d.desarrollador?.idTrabajador) === Number(workerId));
+      }
+      return false;
+    });
+  }, [selectedTrabajadorModal, proyectos]);
+
+  const handleAbrirDetalleTrabajador = (trabajador) => {
+    setSelectedTrabajadorModal(trabajador);
+    setShowTrabajosSubpanel(false);
+  };
+
+  const handleNavegarAProyectoDesdeTrabajador = (idProyecto) => {
+    const currentWorker = selectedTrabajadorModal;
+    setSelectedTrabajadorModal(null);
+    setShowTrabajosSubpanel(false);
+
+    // Guardar trazabilidad para el botón de Volver Atrás
+    setNavHistory({ fromTab: 'personal', worker: currentWorker });
+
+    // Marcar el ID del proyecto objetivo para el efecto parpadeante (pulsing)
+    setHighlightedProyectoId(idProyecto);
+
+    // Resetear filtros para asegurar visibilidad del proyecto en la grilla global
+    setFiltroProyectoEstado('TODOS');
+    setFiltroProyectoLider('TODOS');
+    setSearchProyectoQuery('');
+    setCurrentProyectoPage(1);
+
+    // Redirigir a la pestaña Gestión de Proyectos
+    setActiveTab('proyectos');
+    toast.success(`Redirigido a Catálogo Global. El Proyecto PRJ-00${idProyecto} parpadeará en pantalla.`, { icon: '✨' });
+  };
+
   const getTopSkillsByRole = (list, selectedRole) => {
     const counts = {};
     (list || []).forEach(t => {
@@ -1607,47 +1656,59 @@ export const CoordinadorDashboard = () => {
                         </span>
                       </td>
 
-                      {/* Botón de Acción Explicativo / Protegido contra Auto-Inhabilitación */}
+                      {/* Botones de Acción: Ver Detalle del Trabajador + Inhabilitar/Reactivar */}
                       <td className="py-4 px-6 text-right">
-                        {user && (
-                          user.idTrabajador === t.idTrabajador ||
-                          user.id === t.idTrabajador ||
-                          (user.email && t.email && user.email.toLowerCase() === t.email.toLowerCase()) ||
-                          (user.identificacion && t.identificacion && String(user.identificacion) === String(t.identificacion))
-                        ) ? (
-                          <span 
-                            title="Cuenta en sesión activa. No es posible auto-inhabilitarse por seguridad."
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold text-xs border border-zinc-200 dark:border-zinc-700 cursor-not-allowed opacity-80"
-                          >
-                            <Shield size={13} className="text-purple-500 shrink-0" />
-                            Sesión Actual
-                          </span>
-                        ) : (
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
-                            disabled={togglingId === t.idTrabajador}
-                            onClick={() => handleInhabilitar(t.idTrabajador)}
-                            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs disabled:opacity-50 ${
-                              t.estado
-                                ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-300 border-red-200 dark:border-red-800'
-                                : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                            }`}
+                            onClick={() => handleAbrirDetalleTrabajador(t)}
+                            className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                            title="Ver ficha completa, datos sensibles e historial de proyectos del trabajador"
                           >
-                            {togglingId === t.idTrabajador ? (
-                              <>
-                                <Loader2 size={13} className="animate-spin" /> Procesando...
-                              </>
-                            ) : t.estado ? (
-                              <>
-                                <UserX size={13} /> Inhabilitar
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck size={13} /> Reactivar
-                              </>
-                            )}
+                            <Eye size={13} />
+                            <span>Ver Detalle</span>
                           </button>
-                        )}
+
+                          {user && (
+                            user.idTrabajador === t.idTrabajador ||
+                            user.id === t.idTrabajador ||
+                            (user.email && t.email && user.email.toLowerCase() === t.email.toLowerCase()) ||
+                            (user.identificacion && t.identificacion && String(user.identificacion) === String(t.identificacion))
+                          ) ? (
+                            <span 
+                              title="Cuenta en sesión activa. No es posible auto-inhabilitarse por seguridad."
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold text-xs border border-zinc-200 dark:border-zinc-700 cursor-not-allowed opacity-80"
+                            >
+                              <Shield size={13} className="text-purple-500 shrink-0" />
+                              Sesión Actual
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={togglingId === t.idTrabajador}
+                              onClick={() => handleInhabilitar(t.idTrabajador)}
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs disabled:opacity-50 ${
+                                t.estado
+                                  ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-300 border-red-200 dark:border-red-800'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                              }`}
+                            >
+                              {togglingId === t.idTrabajador ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" /> Procesando...
+                                </>
+                              ) : t.estado ? (
+                                <>
+                                  <UserX size={13} /> Inhabilitar
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck size={13} /> Reactivar
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1787,6 +1848,27 @@ export const CoordinadorDashboard = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              {navHistory && navHistory.fromTab === 'personal' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetWorker = navHistory.worker;
+                    setNavHistory(null);
+                    setHighlightedProyectoId(null);
+                    setActiveTab('personal');
+                    if (targetWorker) {
+                      handleAbrirDetalleTrabajador(targetWorker);
+                      setShowTrabajosSubpanel(true);
+                    }
+                  }}
+                  className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 cursor-pointer shadow-xs"
+                  title="Regresar a la ficha de personal y menús anteriores"
+                >
+                  <ChevronLeft size={14} />
+                  <span>Volver a Ficha de {navHistory.worker?.nombre}</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={cargarDatos}
@@ -1977,14 +2059,35 @@ export const CoordinadorDashboard = () => {
                 const presupuestoFmt = Number(prj.presupuesto || 0).toLocaleString('es-CO');
                 const isCompletado = prj.estado === 'COMPLETADO' || prj.estado === 'FINALIZADO';
                 const isPausado = prj.estado === 'PAUSADO';
+                const isHighlighted = Number(prj.idProyecto) === Number(highlightedProyectoId);
 
                 return (
                   <motion.div
                     key={prj.idProyecto}
                     whileHover={{ y: -3 }}
-                    className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between gap-4 transition-all duration-200 hover:border-blue-400 dark:hover:border-blue-500/50"
+                    onClick={() => {
+                      if (isHighlighted) {
+                        setHighlightedProyectoId(null);
+                        handleAbrirDetalleProyecto(prj);
+                      }
+                    }}
+                    className={`bg-white dark:bg-zinc-900 p-5 rounded-3xl border shadow-sm flex flex-col justify-between gap-4 transition-all duration-300 ${
+                      isHighlighted
+                        ? 'ring-4 ring-blue-500 animate-pulse border-blue-600 bg-blue-50/50 dark:bg-blue-950/50 shadow-2xl scale-[1.02] cursor-pointer'
+                        : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-400 dark:hover:border-blue-500/50'
+                    }`}
                   >
                     <div className="space-y-3">
+                      {isHighlighted && (
+                        <div className="bg-blue-600 text-white text-[0.68rem] font-black px-3 py-1.5 rounded-2xl flex items-center justify-between gap-1 -mx-2 -mt-2 mb-2 shadow-md">
+                          <span className="flex items-center gap-1.5">
+                            <Sparkles size={13} className="animate-spin text-amber-300" />
+                            <span>PROYECTO SELECCIONADO (Haga clic para abrir)</span>
+                          </span>
+                          <span className="text-[0.6rem] underline">Ver Detalle</span>
+                        </div>
+                      )}
+
                       {/* Cabecera de la Tarjeta */}
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[0.65rem] font-mono font-bold text-zinc-400 uppercase tracking-wider">
@@ -3511,6 +3614,216 @@ export const CoordinadorDashboard = () => {
                   className="outline-button px-5 py-2 text-xs font-bold cursor-pointer"
                 >
                   Cerrar Vista
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Ficha Técnica, Datos Sensibles & Dual Panel de Proyectos del Trabajador */}
+      <AnimatePresence>
+        {selectedTrabajadorModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-[95%] sm:w-full transition-all duration-300 shadow-2xl max-h-[90dvh] overflow-y-auto space-y-6 ${
+                showTrabajosSubpanel ? 'max-w-5xl' : 'max-w-xl'
+              }`}
+            >
+              {/* Encabezado Principal */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white font-black text-lg flex items-center justify-center shadow-md">
+                    {getInitials(selectedTrabajadorModal.nombre, selectedTrabajadorModal.apellido)}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      {selectedTrabajadorModal.nombre} {selectedTrabajadorModal.apellido}
+                      <RoleBadge rol={selectedTrabajadorModal.rol} />
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Identificación Corporativa: #{selectedTrabajadorModal.identificacion || selectedTrabajadorModal.idTrabajador}
+                    </p>
+                  </div>
+                </div>
+
+                <button onClick={() => setSelectedTrabajadorModal(null)} className="text-zinc-400 hover:text-zinc-600 p-1">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Grid Dual: Panel de Datos Sensibles + Subpanel Lateral de Proyectos */}
+              <div className={`grid gap-6 ${showTrabajosSubpanel ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+                {/* Panel Izquierdo: Información Personal & Datos Sensibles */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                    <Shield size={16} className="text-blue-600" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                      Ficha Personal & Credenciales de Acceso
+                    </h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 text-xs">
+                    {/* Correo Corporativo (No editable por regla de negocio) */}
+                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo (Principal):</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Mail size={13} className="text-blue-600 shrink-0" />
+                        <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 truncate">
+                          {selectedTrabajadorModal.email}
+                        </span>
+                        <Lock size={12} className="text-zinc-400 ml-auto shrink-0" title="Correo Corporativo Protegido" />
+                      </div>
+                    </div>
+
+                    {/* Correo Personal Alternativo (Para credenciales temporales) */}
+                    <div className="p-3 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60">
+                      <span className="text-[0.62rem] font-extrabold uppercase text-purple-700 dark:text-purple-300 block font-mono">
+                        Correo Personal Alternativo (Credenciales Temporales):
+                      </span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Mail size={13} className="text-purple-600 shrink-0" />
+                        <span className="font-mono font-bold text-purple-900 dark:text-purple-200 truncate">
+                          {selectedTrabajadorModal.correoPersonal || selectedTrabajadorModal.emailPersonal || 'No registrado / Asignado al crear'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Profesión & Especialidad */}
+                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Profesión & Disciplina Técnica:</span>
+                      <span className="font-bold text-zinc-800 dark:text-zinc-200 block mt-0.5">
+                        {selectedTrabajadorModal.profesion || 'Ingeniero de Sistemas'}
+                      </span>
+                      <span className="text-[0.7rem] text-zinc-500 font-medium block mt-1">
+                        Especialidad: {selectedTrabajadorModal.especialidad || 'Desarrollo de Software'}
+                      </span>
+                    </div>
+
+                    {/* Estado Lógico & Tipo Contrato */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Estado en Plataforma:</span>
+                        <span className={`font-bold mt-0.5 inline-block ${selectedTrabajadorModal.estado ? 'text-emerald-600' : 'text-red-500'}`}>
+                          {selectedTrabajadorModal.estado ? '● HABILITADO' : '○ INHABILITADO'}
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Primer Login Realizado:</span>
+                        <span className="font-bold text-zinc-800 dark:text-zinc-200 block mt-0.5">
+                          {selectedTrabajadorModal.primerLoginRealizado ? 'Sí (Datos validados)' : 'Pendiente primera sesión'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Botón Inferior de Despliegue de Proyectos */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowTrabajosSubpanel(prev => !prev)}
+                      className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-md w-full justify-center"
+                    >
+                      <FolderGit2 size={16} />
+                      <span>
+                        {showTrabajosSubpanel 
+                          ? '◄ Ocultar Proyectos Asociados' 
+                          : `Desplegar Proyectos Asociados (${workerProyectos.length}) ►`}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Panel Derecho (Subpanel Lateral Desplegable de Proyectos Asociados) */}
+                {showTrabajosSubpanel && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="space-y-4 border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 lg:pl-6 pt-4 lg:pt-0"
+                  >
+                    <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <Briefcase size={16} className="text-blue-600" />
+                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                          Proyectos Asociados & Historial
+                        </h4>
+                      </div>
+                      <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                        {workerProyectos.length} Asignado(s)
+                      </span>
+                    </div>
+
+                    {workerProyectos.length === 0 ? (
+                      <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/40 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 space-y-2 text-xs text-zinc-500">
+                        <FolderGit2 size={32} className="mx-auto text-zinc-400" />
+                        <p className="font-bold">Sin proyectos asociados actualmente.</p>
+                        <p className="text-[0.7rem]">Este trabajador no está registrado como Líder ni vinculado como Desarrollador a ningún proyecto.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3 max-h-[60dvh] overflow-y-auto pr-1">
+                        {workerProyectos.map(prj => {
+                          const isLider = prj.lider && Number(prj.lider.idTrabajador) === Number(selectedTrabajadorModal.idTrabajador);
+
+                          return (
+                            <div 
+                              key={prj.idProyecto}
+                              className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2 text-xs hover:border-blue-300 transition-colors"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-mono font-bold text-[0.65rem] text-zinc-400">
+                                  PRJ-00{prj.idProyecto}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-full text-[0.6rem] font-bold uppercase ${
+                                  isLider 
+                                    ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300' 
+                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                }`}>
+                                  {isLider ? '👑 Líder Directivo' : '💻 Desarrollador'}
+                                </span>
+                              </div>
+
+                              <h5 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm leading-snug">
+                                {prj.nombre}
+                              </h5>
+
+                              <div className="grid grid-cols-2 gap-2 text-[0.7rem] pt-1">
+                                <div>
+                                  <span className="text-zinc-400 font-bold block">Cliente:</span>
+                                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{prj.cliente || 'Corporativo'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-zinc-400 font-bold block">Presupuesto:</span>
+                                  <span className="font-mono font-bold text-emerald-600">${Number(prj.presupuesto || 0).toLocaleString('es-CO')}</span>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleNavegarAProyectoDesdeTrabajador(prj.idProyecto)}
+                                className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer shadow-2xs w-full justify-center mt-2"
+                              >
+                                <span>Ver en Catálogo Global</span>
+                                <ChevronRight size={14} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTrabajadorModal(null)}
+                  className="outline-button px-5 py-2 text-xs font-bold cursor-pointer"
+                >
+                  Cerrar Ficha
                 </button>
               </div>
             </motion.div>
