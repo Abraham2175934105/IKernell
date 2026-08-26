@@ -873,6 +873,53 @@ export const LiderDashboard = () => {
   };
 
   const [submittingPausa, setSubmittingPausa] = useState(false);
+  const [showConfirmPausarModal, setShowConfirmPausarModal] = useState(false);
+
+  // Evaluación de procesos WBS activos e impacto para pausar proyecto
+  const evidenciaWbsPausa = useMemo(() => {
+    if (!etapas || !Array.isArray(etapas) || etapas.length === 0) {
+      return {
+        etapasActivas: [],
+        actividadesActivas: [],
+        tieneAvancesActivos: false
+      };
+    }
+
+    const etapasActivas = etapas.filter(et => et?.estado !== 'FINALIZADA' && et?.estado !== 'COMPLETADA');
+    const actividadesActivas = [];
+
+    etapas.forEach(et => {
+      if (et.actividades && Array.isArray(et.actividades)) {
+        et.actividades.forEach(act => {
+          if (act.estado !== 'FINALIZADA' && act.estado !== 'COMPLETADA') {
+            actividadesActivas.push({
+              ...act,
+              etapaNombre: et.nombreEtapa
+            });
+          }
+        });
+      }
+    });
+
+    return {
+      etapasActivas,
+      actividadesActivas,
+      tieneAvancesActivos: etapasActivas.length > 0 || actividadesActivas.length > 0
+    };
+  }, [etapas]);
+
+  // Cálculo de tiempo restante de entrega pactado
+  const calculoDiasPausa = useMemo(() => {
+    if (!proyectoSeleccionado?.fechaFinEstimada) return { diasRestantes: 0, fechaFormateada: 'Sin fecha configurada' };
+    const fin = new Date(proyectoSeleccionado.fechaFinEstimada);
+    const hoy = new Date();
+    const diffTime = fin - hoy;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return {
+      diasRestantes: diffDays > 0 ? diffDays : 0,
+      fechaFormateada: fin.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
+    };
+  }, [proyectoSeleccionado?.fechaFinEstimada]);
 
   const handlePausarProyecto = async () => {
     if (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') return;
@@ -2595,10 +2642,10 @@ export const LiderDashboard = () => {
                   ) : (
                     <button
                       type="button"
-                      onClick={handlePausarProyecto}
+                      onClick={() => setShowConfirmPausarModal(true)}
                       disabled={submittingPausa}
                       className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 bg-amber-50/60 hover:bg-amber-100 dark:bg-amber-950/40 cursor-pointer shadow-2xs"
-                      title="Pausar temporalmente el proyecto y detener el avance de actividades"
+                      title="Pausar temporalmente el proyecto con evaluación de procesos y cronograma"
                     >
                       {submittingPausa ? <Loader2 size={13} className="animate-spin" /> : <Pause size={13} className="text-amber-600 fill-amber-600" />}
                       <span>Pausar Proyecto</span>
@@ -5219,6 +5266,132 @@ export const LiderDashboard = () => {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Confirmación de Impacto Operativo para Pausar Proyecto */}
+      <AnimatePresence>
+        {showConfirmPausarModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl space-y-6 max-h-[90dvh] overflow-y-auto my-auto relative"
+            >
+              {/* Cabecera Principal */}
+              <div className="flex items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5 pr-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20 ring-4 ring-amber-500/10">
+                    <Pause size={24} className="fill-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                        Confirmar Pausa Directiva del Proyecto
+                      </h3>
+                      <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.68rem] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        Impacto Operativo
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5 flex items-center gap-1.5">
+                      <Briefcase size={13} className="text-blue-500 shrink-0" />
+                      <span>Proyecto:</span>
+                      <strong className="text-zinc-800 dark:text-zinc-200 font-bold font-mono">[PRJ-00{proyectoSeleccionado?.idProyecto}]</strong>
+                      <span className="truncate max-w-md font-bold">{proyectoSeleccionado?.nombre}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ficha Resumen de Cronograma y Tiempo de Entrega */}
+              <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="text-[0.68rem] font-mono font-extrabold text-amber-900 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <CalendarClock size={15} className="text-amber-600 dark:text-amber-400" />
+                    Impacto en Fecha de Entrega y Cronograma Pactado
+                  </span>
+                  <span className="text-[0.68rem] font-mono font-black px-2.5 py-0.5 rounded-lg bg-amber-200/80 text-amber-900 dark:bg-amber-900/80 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                    {calculoDiasPausa.diasRestantes > 0 ? `Faltan ${calculoDiasPausa.diasRestantes} días pactados` : 'Fecha límite alcanzada'}
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed">
+                  Fecha estimada de entrega pactada: <strong>{calculoDiasPausa.fechaFormateada}</strong>. Al pausar este proyecto, el conteo operativo del cronograma quedará suspendido hasta su reactivación directiva.
+                </p>
+              </div>
+
+              {/* Evaluación de Procesos y Actividades en Desarrollo */}
+              {evidenciaWbsPausa.tieneAvancesActivos ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-1">
+                    <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider flex items-center gap-2">
+                      <Layers size={16} className="text-amber-600 shrink-0" />
+                      <span>Procesos WBS que Quedarán Congelados ({evidenciaWbsPausa.actividadesActivas.length} Actividades Activas)</span>
+                    </span>
+                    <span className="text-[0.65rem] font-mono font-bold text-zinc-400">
+                      {evidenciaWbsPausa.etapasActivas.length} Etapa(s) Afectada(s)
+                    </span>
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                    {evidenciaWbsPausa.actividadesActivas.map((act, idx) => (
+                      <div key={act.idActividad || idx} className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 flex items-center justify-between text-xs gap-3">
+                        <div className="min-w-0">
+                          <span className="text-[0.62rem] font-mono text-zinc-400 block uppercase font-bold">{act.etapaNombre}</span>
+                          <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate block mt-0.5">{act.descripcion}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {act.desarrollador && (
+                            <span className="text-[0.65rem] font-bold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center gap-1">
+                              <Code2 size={12} className="text-amber-500" />
+                              {act.desarrollador.nombre} {act.desarrollador.apellido}
+                            </span>
+                          )}
+                          <span className="text-[0.62rem] font-black uppercase text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded-md">
+                            {act.estado || 'EN_PROGRESO'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-600 dark:text-zinc-400 font-medium flex items-center gap-2.5">
+                  <ShieldCheck size={18} className="text-emerald-500 shrink-0" />
+                  <span>Este proyecto no cuenta con tareas ni procesos activos en desarrollo en este momento. ¿Está seguro de pausar la ejecución de este proyecto?</span>
+                </div>
+              )}
+
+              {/* Botones de Confirmación */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPausarModal(false)}
+                  disabled={submittingPausa}
+                  className="outline-button px-5 py-2.5 text-xs font-bold rounded-2xl cursor-pointer"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handlePausarProyecto();
+                    setShowConfirmPausarModal(false);
+                  }}
+                  disabled={submittingPausa}
+                  className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold text-xs py-2.5 px-6 rounded-2xl shadow-md inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
+                >
+                  {submittingPausa ? (
+                    <><Loader2 size={15} className="animate-spin" /> Procesando Pausa...</>
+                  ) : (
+                    <><Pause size={15} className="fill-white" /> Confirmar Pausa del Proyecto</>
+                  )}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
