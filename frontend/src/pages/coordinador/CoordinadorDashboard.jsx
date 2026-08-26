@@ -827,17 +827,45 @@ export const CoordinadorDashboard = () => {
 
     try {
       setSubmittingEditarEtapaCoord(true);
-      await api.put(`/lider/etapas/${etapaAEditarCoord.idEtapa}`, {
-        nombreEtapa: etapaAEditarCoord.nombreEtapa.trim(),
-        estado: etapaAEditarCoord.estado,
-        proyecto: { idProyecto: selectedProyectoModal.idProyecto }
+      const idModificada = etapaAEditarCoord.idEtapa;
+      const nuevoNombre = etapaAEditarCoord.nombreEtapa.trim();
+      const nuevoEstado = etapaAEditarCoord.estado;
+
+      // 1. Enviar actualización limpia a la API
+      await api.put(`/lider/etapas/${idModificada}`, {
+        nombreEtapa: nuevoNombre,
+        estado: nuevoEstado
       });
 
-      const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
-      setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
+      // 2. Reactividad local instantánea en modales y tablas de vista
+      setProyectoEtapasModal(prev => (prev || []).map(et => 
+        String(et.idEtapa) === String(idModificada) 
+          ? { ...et, nombreEtapa: nuevoNombre, estado: nuevoEstado } 
+          : et
+      ));
 
-      registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'EDICION_ETAPA', `Fase #${etapaAEditarCoord.idEtapa} actualizada a "${etapaAEditarCoord.nombreEtapa.trim()}" [${etapaAEditarCoord.estado}]`);
-      toast.success('Fase WBS actualizada exitosamente.');
+      setProyectos(prev => (prev || []).map(p => {
+        if (String(p.idProyecto) === String(selectedProyectoModal.idProyecto)) {
+          const etapasActualizadas = (p.etapas || []).map(et => 
+            String(et.idEtapa) === String(idModificada) 
+              ? { ...et, nombreEtapa: nuevoNombre, estado: nuevoEstado } 
+              : et
+          );
+          return { ...p, etapas: etapasActualizadas };
+        }
+        return p;
+      }));
+
+      // 3. Sincronización en segundo plano de etapas
+      api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`)
+        .then(etapasRes => {
+          if (Array.isArray(etapasRes)) setProyectoEtapasModal(etapasRes);
+        })
+        .catch(() => {});
+
+      // 4. Auditoría directiva y notificación de éxito
+      registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'EDICION_ETAPA', `Fase #${idModificada} actualizada a "${nuevoNombre}" [${nuevoEstado}]`);
+      toast.success('Etapa WBS actualizada exitosamente.');
       setShowEditarEtapaModalCoord(false);
     } catch (err) {
       console.error('Error editando etapa:', err);
