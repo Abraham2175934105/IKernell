@@ -335,13 +335,19 @@ export const CoordinadorDashboard = () => {
   const [sessionBatchId, setSessionBatchId] = useState('');
 
   const registrarAccionCoordinador = async (idProyecto, accion, detalles) => {
-    if (!user) return;
     try {
       const bId = sessionBatchId || ('BATCH-' + Date.now());
       if (!sessionBatchId) setSessionBatchId(bId);
-      await api.post(`/coordinador/proyectos/${idProyecto}/historial-cambios?idCoordinador=${user.idTrabajador || user.id}&nombreCoordinador=${encodeURIComponent(user.nombre + ' ' + user.apellido)}&emailCoordinador=${encodeURIComponent(user.email)}&accion=${encodeURIComponent(accion)}&detalles=${encodeURIComponent(detalles)}&batchId=${encodeURIComponent(bId)}`);
+
+      const coordId = Number(user?.idTrabajador || user?.id || user?.idUsuario || user?.trabajadorId || 1);
+      const coordNombre = user?.nombre ? `${user.nombre} ${user.apellido || ''}`.trim() : (user?.nombreCompleto || user?.username || 'Coordinador General');
+      const coordEmail = user?.email || 'coordinador@ikernell.com';
+
+      await api.post(`/coordinador/proyectos/${idProyecto}/historial-cambios?idCoordinador=${coordId}&nombreCoordinador=${encodeURIComponent(coordNombre)}&emailCoordinador=${encodeURIComponent(coordEmail)}&accion=${encodeURIComponent(accion)}&detalles=${encodeURIComponent(detalles)}&batchId=${encodeURIComponent(bId)}`).catch(err => {
+        console.warn('[Auditoría Coordinador] Aviso:', err?.message || err);
+      });
     } catch (err) {
-      console.error('Error al registrar auditoría de acción:', err);
+      console.warn('[Auditoría Coordinador] Error no bloqueante:', err);
     }
   };
 
@@ -754,7 +760,7 @@ export const CoordinadorDashboard = () => {
       const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
       setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
 
-      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'CREACION_ETAPA', `Nueva Etapa WBS registrada: "${nuevaEtapaCoord.nombreEtapa.trim()}"`);
+      registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'CREACION_ETAPA', `Nueva Etapa WBS registrada: "${nuevaEtapaCoord.nombreEtapa.trim()}"`);
       toast.success('Nueva Etapa WBS registrada exitosamente.');
       setShowNuevaEtapaModalCoord(false);
       setNuevaEtapaCoord({ nombreEtapa: '' });
@@ -786,12 +792,12 @@ export const CoordinadorDashboard = () => {
         idEtapa: Number(nuevaActividadCoord.idEtapa)
       };
 
-      await api.post(`/lider/proyectos/${selectedProyectoModal.idProyecto}/desarrolladores/${nuevaActividadCoord.idDesarrollador}/actividades`, body);
+      await api.post(`/lider/etapas/${nuevaActividadCoord.idEtapa}/desarrolladores/${nuevaActividadCoord.idDesarrollador}/actividades`, body);
 
       const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
       setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
 
-      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'ASIGNACION_ACTIVIDAD', `Actividad "${nuevaActividadCoord.nombreActividad.trim()}" asignada a ${devNombre}`);
+      registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'ASIGNACION_ACTIVIDAD', `Actividad "${nuevaActividadCoord.nombreActividad.trim()}" asignada a ${devNombre}`);
       toast.success('Actividad asignada exitosamente.');
       setShowNuevaActividadModalCoord(false);
       setNuevaActividadCoord({ nombreActividad: '', idEtapa: '', idDesarrollador: '' });
@@ -820,14 +826,15 @@ export const CoordinadorDashboard = () => {
     try {
       setSubmittingEditarEtapaCoord(true);
       await api.put(`/lider/etapas/${etapaAEditarCoord.idEtapa}`, {
-        nombreEtapa: etapaAEditarCoord.nombreEtapa,
-        estado: etapaAEditarCoord.estado
+        nombreEtapa: etapaAEditarCoord.nombreEtapa.trim(),
+        estado: etapaAEditarCoord.estado,
+        proyecto: { idProyecto: selectedProyectoModal.idProyecto }
       });
 
       const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
       setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
 
-      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'EDICION_ETAPA', `Fase #${etapaAEditarCoord.idEtapa} actualizada a "${etapaAEditarCoord.nombreEtapa}" [${etapaAEditarCoord.estado}]`);
+      registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'EDICION_ETAPA', `Fase #${etapaAEditarCoord.idEtapa} actualizada a "${etapaAEditarCoord.nombreEtapa.trim()}" [${etapaAEditarCoord.estado}]`);
       toast.success('Fase WBS actualizada exitosamente.');
       setShowEditarEtapaModalCoord(false);
     } catch (err) {
@@ -862,7 +869,7 @@ export const CoordinadorDashboard = () => {
       const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
       setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
 
-      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'REASIGNACION_ACTIVIDAD', `Tarea "${actividadAReasignarCoord.nombreActividad || actividadAReasignarCoord.descripcion}" reasignada a ${devNombre}`);
+      registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'REASIGNACION_ACTIVIDAD', `Tarea "${actividadAReasignarCoord.nombreActividad || actividadAReasignarCoord.descripcion}" reasignada a ${devNombre}`);
       toast.success('Tarea reasignada exitosamente.');
       setShowReasignarActividadModalCoord(false);
       setActividadAReasignarCoord(null);
