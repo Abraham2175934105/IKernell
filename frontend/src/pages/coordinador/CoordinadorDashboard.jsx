@@ -2028,6 +2028,7 @@ export const CoordinadorDashboard = () => {
       )}
 
       {/* 2. SECCIÓN: GESTIÓN DE PROYECTOS & VISTA GLOBAL DEL PORTAFOLIO */}
+      {/* 2. SECCIÓN: GESTIÓN DE PROYECTOS & VISTA GLOBAL DEL PORTAFOLIO */}
       {activeTab === 'proyectos' && (
         <motion.div 
           key="proyectos"
@@ -2036,7 +2037,282 @@ export const CoordinadorDashboard = () => {
           animate="visible"
           className="space-y-6"
         >
-          {/* Header de Gestión Global de Proyectos */}
+          {selectedProyectoModal ? (
+            /* ========================================================================= */
+            /* FULL IN-PAGE WBS & PROJECT DETAILS DASHBOARD (Replica Panel del Líder)   */
+            /* ========================================================================= */
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="space-y-6"
+            >
+              {/* Barra de Navegación Superior y Conmutador de Modo */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setSelectedProyectoModal(null)}
+                  className="outline-button text-xs py-2.5 px-4 font-extrabold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 cursor-pointer shadow-2xs hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl"
+                >
+                  <ArrowLeft size={16} />
+                  <span>Volver al Catálogo de Proyectos</span>
+                </button>
+
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className={`px-3.5 py-1.5 rounded-2xl text-xs font-black inline-flex items-center gap-2 border ${
+                    modoEdicionCoordinador
+                      ? 'bg-amber-50 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 animate-pulse'
+                      : 'bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800'
+                  }`}>
+                    {modoEdicionCoordinador ? (
+                      <><Edit3 size={14} className="text-amber-600" /> Modo Edición Activo (Gestión Directiva Habilitada)</>
+                    ) : (
+                      <><ShieldCheck size={14} className="text-blue-600" /> Modo Visualización (Supervisión Directiva)</>
+                    )}
+                  </span>
+
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="button"
+                    onClick={() => {
+                      const nuevoModo = !modoEdicionCoordinador;
+                      setModoEdicionCoordinador(nuevoModo);
+                      if (nuevoModo) {
+                        toast.success('Modo Edición Habilitado. Los cambios se guardarán con auditoría directiva.');
+                        if (!sessionBatchId) setSessionBatchId('BATCH-' + Date.now());
+                      } else {
+                        toast.info('Modo Visualización Activado (Supervisión).');
+                      }
+                    }}
+                    className={`text-xs py-2.5 px-5 rounded-2xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-2 shadow-sm ${
+                      modoEdicionCoordinador
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20'
+                        : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20'
+                    }`}
+                  >
+                    {modoEdicionCoordinador ? (
+                      <><Eye size={15} /> Cambiar a Modo Visualización</>
+                    ) : (
+                      <><Edit3 size={15} /> Habilitar Modo Edición</>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Ficha Principal de Detalles (Replica Foto 3) */}
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-5">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-sm">
+                      <FolderGit2 size={24} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                          {selectedProyectoModal.nombre}
+                        </h3>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-black uppercase border ${
+                          selectedProyectoModal.estado === 'FINALIZADO' || selectedProyectoModal.estado === 'COMPLETADO'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300' :
+                          selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO'
+                            ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 animate-pulse'
+                            : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                        }`}>
+                          {selectedProyectoModal.estado === 'EN_PAUSA' ? '⏸️ EN PAUSA' : (selectedProyectoModal.estado || 'ACTIVO')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                        Identificador del Proyecto: <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">PRJ-00{selectedProyectoModal.idProyecto}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Acciones de Cabecera Directiva */}
+                  <div className="flex items-center gap-2 flex-wrap shrink-0">
+                    {selectedProyectoModal.lider && (
+                      <div className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+                        <User size={14} className="text-blue-600 dark:text-blue-400" />
+                        <span>Líder: <strong>{selectedProyectoModal.lider.nombre} {selectedProyectoModal.lider.apellido}</strong></span>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleAbrirHistorialCambios(selectedProyectoModal.idProyecto)}
+                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50/40 hover:bg-purple-100 rounded-2xl shadow-xs"
+                      title="Ver el historial de auditoría de modificaciones registradas"
+                    >
+                      <ClipboardList size={15} className="text-purple-600" />
+                      <span>Cambios de Coordinación</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAbrirReasignarLiderPrj(selectedProyectoModal)}
+                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 hover:bg-indigo-100 rounded-2xl shadow-xs"
+                      title="Reasignar el Líder de Proyecto responsable"
+                    >
+                      <RotateCw size={15} className="text-indigo-600" />
+                      <span>Reasignar Líder</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3 Tarjetas Ejecutivas de Información (Replica Foto 3) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400 font-mono block">CLIENTE / ORGANIZACIÓN</span>
+                    <p className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 mt-1">
+                      {selectedProyectoModal.cliente || 'Cliente Corporativo'}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400 font-mono block">DIMENSIÓN PRESUPUESTAL</span>
+                    <p className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm mt-1">
+                      US$ {Number(selectedProyectoModal.presupuesto || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400 font-mono block">CRONOGRAMA ESTIMADO</span>
+                    <p className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs mt-1">
+                      {formatearFechaHumana(selectedProyectoModal.fechaInicio)} → {formatearFechaHumana(selectedProyectoModal.fechaFinEstimada)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Caja de Alcance y Objetivos */}
+                {selectedProyectoModal.descripcion && (
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/80 space-y-1 text-xs">
+                    <span className="font-mono text-[0.68rem] font-extrabold uppercase text-zinc-500 block">Descripción del Alcance y Objetivos:</span>
+                    <p className="text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed">
+                      {selectedProyectoModal.descripcion}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Grilla de 4 Tarjetas de Métricas de Resumen (Replica Foto 3) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-1">
+                  <span className="text-[0.65rem] font-bold uppercase text-zinc-400 font-mono block">ESTADO DEL PROYECTO</span>
+                  <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 uppercase mt-1">
+                    {selectedProyectoModal.estado || 'ACTIVO'}
+                  </p>
+                  <span className="text-[0.68rem] text-zinc-400 block font-mono">
+                    Fin Estimado: {formatearFechaHumana(selectedProyectoModal.fechaFinEstimada)}
+                  </span>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-1">
+                  <span className="text-[0.65rem] font-bold uppercase text-zinc-400 font-mono block">TOTAL ERRORES EVALUADOS</span>
+                  <p className="text-xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
+                    0 Incidencias
+                  </p>
+                  <span className="text-[0.68rem] text-zinc-400 block font-mono">Persistidas en PostgreSQL</span>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-1">
+                  <span className="text-[0.65rem] font-bold uppercase text-zinc-400 font-mono block">HORAS DE INTERRUPCIÓN</span>
+                  <p className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono">
+                    0.0 Horas
+                  </p>
+                  <span className="text-[0.68rem] text-zinc-400 block font-mono">En 0 eventos reportados</span>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-1">
+                  <span className="text-[0.65rem] font-bold uppercase text-zinc-400 font-mono block">EQUIPO RESERVADO</span>
+                  <p className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                    {proyectoDevsModal.length} Integrantes
+                  </p>
+                  <span className="text-[0.68rem] text-zinc-400 block font-mono">Nómina asignada</span>
+                </div>
+              </div>
+
+              {/* Estructura WBS (Replica Foto 3) */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm space-y-5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                  <div>
+                    <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <Layers size={20} className="text-blue-600 dark:text-blue-400" />
+                      <span>Estructura de Desglose de Trabajo (WBS)</span>
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                      Desglose estructurado del proyecto en fases, etapas y actividades asignadas a desarrolladores.
+                    </p>
+                  </div>
+                </div>
+
+                {loadingProyectoDetalle ? (
+                  <div className="p-12 text-center text-xs text-zinc-400">
+                    <Loader2 size={28} className="animate-spin mx-auto text-blue-600 mb-3" />
+                    Cargando estructura WBS del proyecto...
+                  </div>
+                ) : proyectoEtapasModal.length === 0 ? (
+                  <div className="p-10 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl text-xs space-y-2">
+                    <Layers size={36} className="mx-auto text-zinc-300 dark:text-zinc-700" />
+                    <p className="font-bold text-zinc-700 dark:text-zinc-300">Sin fases WBS registradas</p>
+                    <p className="max-w-md mx-auto">No hay etapas registradas para este proyecto aún.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {proyectoEtapasModal.map((etapa, idx) => (
+                      <div key={etapa.idEtapa || idx} className="p-5 rounded-3xl bg-zinc-50/80 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80 space-y-3 shadow-2xs">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[0.68rem] font-bold px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                              #ETAPA_{etapa.idEtapa || (idx + 1)}
+                            </span>
+                            <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                              Fase {idx + 1}: {etapa.nombreEtapa}
+                            </h4>
+                          </div>
+
+                          <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-extrabold uppercase border ${
+                            etapa.estado === 'FINALIZADA' || etapa.estado === 'COMPLETADO'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                              : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                          }`}>
+                            {etapa.estado || 'EN_PROGRESO'}
+                          </span>
+                        </div>
+
+                        {/* Actividades dentro de la Etapa */}
+                        <div className="space-y-2 pt-2">
+                          {etapa.actividades && etapa.actividades.length > 0 ? (
+                            etapa.actividades.map((act, aIdx) => (
+                              <div key={act.idActividad || aIdx} className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-2xs">
+                                <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                                  {act.nombreActividad || act.descripcion}
+                                </span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {act.desarrollador && (
+                                    <span className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold text-[0.68rem] flex items-center gap-1.5">
+                                      <User size={12} className="text-blue-500" />
+                                      {act.desarrollador.nombre} {act.desarrollador.apellido}
+                                    </span>
+                                  )}
+                                  <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
+                                    {act.estado || 'FINALIZADA'}
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-[0.7rem] text-zinc-400 italic pl-1">Sin tareas asignadas en esta fase.</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <>
+              {/* Header de Gestión Global de Proyectos */}
           <motion.div 
             variants={itemVariants}
             className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
@@ -2549,8 +2825,10 @@ export const CoordinadorDashboard = () => {
               </div>
             </div>
           )}
-        </motion.div>
+        </>
       )}
+    </motion.div>
+  )}
 
       {/* 2. SECCIÓN: SOLICITUDES DE CONTACTO WEB */}
       {activeTab === 'solicitudes' && (
@@ -4097,292 +4375,7 @@ export const CoordinadorDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal: Detalle Completo de Proyecto & Supervisión WBS (Vista Amplia Executiva sin Botón X) */}
-      <AnimatePresence>
-        {selectedProyectoModal && (
-          <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-10 w-full max-w-5xl shadow-2xl max-h-[92dvh] overflow-y-auto space-y-7"
-            >
-              {/* Encabezado Principal de Inspección Directiva (Conmutador Modo Lectura / Modo Edición & Historial) */}
-              <div className="border-b border-zinc-100 dark:border-zinc-800 pb-5 space-y-3">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="font-mono font-extrabold text-xs px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                      PRJ-00{selectedProyectoModal.idProyecto}
-                    </span>
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-medium">
-                      <Building2 size={14} className="text-blue-500" />
-                      <span>Cliente: <strong>{selectedProyectoModal.cliente || 'Cliente Corporativo'}</strong></span>
-                    </div>
-                  </div>
 
-                  {/* Controles Directivos: Conmutador de Modo & Historial de Cambios */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => handleAbrirHistorialCambios(selectedProyectoModal.idProyecto)}
-                      className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl cursor-pointer"
-                      title="Ver el historial de auditoría de modificaciones realizadas por Coordinadores"
-                    >
-                      <RotateCcw size={13} className="text-purple-600 dark:text-purple-400" />
-                      <span>Historial de Cambios</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nuevoModo = !modoEdicionCoordinador;
-                        setModoEdicionCoordinador(nuevoModo);
-                        if (nuevoModo) {
-                          toast.success('Modo Edición Habilitado. Todos los cambios serán auditados.');
-                          if (!sessionBatchId) setSessionBatchId('BATCH-' + Date.now());
-                        } else {
-                          toast.info('Modo Lectura Activado (Supervisión).');
-                        }
-                      }}
-                      className={`text-xs py-1.5 px-3.5 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-2 shadow-xs ${
-                        modoEdicionCoordinador
-                          ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200'
-                      }`}
-                    >
-                      {modoEdicionCoordinador ? (
-                        <><Edit3 size={14} /> Modo Edición Activo</>
-                      ) : (
-                        <><ShieldCheck size={14} className="text-blue-500" /> Modo Lectura (Supervisión)</>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <h3 className="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                  {selectedProyectoModal.nombre}
-                </h3>
-
-                {/* Banner de Estado de Edición */}
-                {modoEdicionCoordinador ? (
-                  <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-xs text-amber-900 dark:text-amber-200 font-medium flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <Sparkles size={15} className="text-amber-600 animate-pulse shrink-0" />
-                      <span><strong>Modo Edición Activo:</strong> Las modificaciones realizadas en etapas, colaboradores y fechas registrarán automáticamente un evento de auditoría acumulado.</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setModoEdicionCoordinador(false)}
-                      className="text-[0.68rem] font-extrabold underline text-amber-800 dark:text-amber-300 shrink-0"
-                    >
-                      Volver a Modo Lectura
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-2.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-600 dark:text-zinc-400 font-medium flex items-center gap-2">
-                    <ShieldCheck size={14} className="text-blue-500 shrink-0" />
-                    <span>Modo Lectura Activo (Supervisión Directiva). Presione <strong>Modo Edición Activo</strong> si desea habilitar la gestión directiva de este proyecto.</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Ficha Resumen Ejecutivo de 3 Tarjetas */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
-                  <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Líder Directivo a Cargo:</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-[0.6rem] flex items-center justify-center shrink-0">
-                      {selectedProyectoModal.lider ? getInitials(selectedProyectoModal.lider.nombre, selectedProyectoModal.lider.apellido) : 'SD'}
-                    </div>
-                    <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm truncate">
-                      {selectedProyectoModal.lider ? `${selectedProyectoModal.lider.nombre} ${selectedProyectoModal.lider.apellido}` : 'Sin Líder Asignado'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
-                  <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Presupuesto Asignado:</span>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <DollarSign size={16} className="text-emerald-500 shrink-0" />
-                    <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">
-                      ${Number(selectedProyectoModal.presupuesto || 0).toLocaleString('es-CO')} COP
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-1">
-                  <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Estado Operativo:</span>
-                  <div className="mt-1">
-                    <span className="px-3 py-1 rounded-full text-xs font-black uppercase inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
-                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                      {selectedProyectoModal.estado || 'ACTIVO'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Registro de Auditoría & Gobernanza Directiva (Diseño Claro Corporativo) */}
-              <div className="p-5 rounded-3xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/90 dark:from-zinc-800/80 dark:to-zinc-800/80 border border-blue-200/80 dark:border-zinc-700 space-y-3 shadow-2xs">
-                <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-blue-200/60 dark:border-zinc-700/60">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0 shadow-2xs">
-                      <ShieldCheck size={18} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-mono font-extrabold uppercase tracking-wider text-blue-900 dark:text-blue-200">
-                        Historial de Auditoría & Gobernanza Directiva
-                      </h4>
-                      <span className="text-[0.62rem] text-zinc-500 dark:text-zinc-400 font-medium">Trazabilidad en tiempo real registrada en PostgreSQL</span>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[0.6rem] font-mono font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                    SISTEMA AUDITABLE
-                  </span>
-                </div>
-
-                {selectedProyectoModal.reasignado && selectedProyectoModal.motivoReasignacion && (
-                  <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-blue-200 dark:border-blue-800 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[0.65rem] font-mono font-extrabold text-blue-800 dark:text-blue-300 uppercase flex items-center gap-1">
-                        <Sparkles size={12} className="text-amber-500" /> Motivo de Reasignación Registrado:
-                      </span>
-                      {selectedProyectoModal.nombreLiderAnterior && (
-                        <span className="text-[0.62rem] text-zinc-500 font-mono">
-                          Líder Previo: <strong>{selectedProyectoModal.nombreLiderAnterior}</strong>
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed">
-                      "{selectedProyectoModal.motivoReasignacion}"
-                    </p>
-
-                    {filtroProyectoLider !== 'TODOS' && String(selectedProyectoModal.idLiderAnterior) === String(filtroProyectoLider) && !selectedProyectoModal.leidoPorLiderAnterior && (
-                      <div className="pt-2 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              await api.put(`/coordinador/proyectos/${selectedProyectoModal.idProyecto}/confirmar-lectura-reasignacion`);
-                              toast.success('Lectura de reasignación confirmada. El proyecto no volverá a figurar en tu panel individual.');
-                              setSelectedProyectoModal(null);
-                              await cargarDatos();
-                            } catch (err) {
-                              toast.error('Error al confirmar lectura.');
-                            }
-                          }}
-                          className="gradient-button text-xs py-2 px-4 font-extrabold inline-flex items-center gap-1.5 rounded-xl shadow-md cursor-pointer"
-                        >
-                          <CheckCircle2 size={14} />
-                          <span>Entendido / Confirmar Lectura</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3 text-xs pt-0.5">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-[0.65rem] flex items-center justify-center shrink-0 shadow-xs">
-                    {user ? getInitials(user.nombre, user.apellido) : 'CO'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium block">
-                      Supervisión asignada formalmente bajo la gobernanza del Coordinador:
-                    </span>
-                    <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate block">
-                      {user?.nombre} {user?.apellido} <span className="text-blue-600 dark:text-blue-400 font-bold">({user?.email})</span>
-                    </span>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-1 text-[0.62rem] text-emerald-700 dark:text-emerald-300 font-mono font-bold bg-emerald-100/80 dark:bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                    <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" /> REGISTRO VERIFICADO
-                  </div>
-                </div>
-              </div>
-
-              {/* Secciones de WBS y Desglose de Actividades */}
-              {loadingProyectoDetalle ? (
-                <div className="space-y-4 py-6">
-                  <div className="h-24 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
-                  <div className="h-24 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Desglose de Etapas WBS */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                      <h4 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                        <Layers size={18} className="text-blue-600 dark:text-blue-400" />
-                        <span>Estructura de Desglose WBS ({proyectoEtapasModal.length} Etapas Operativas)</span>
-                      </h4>
-                      <span className="text-[0.65rem] font-bold text-zinc-400 font-mono">
-                        Supervisión WBS Sincronizada
-                      </span>
-                    </div>
-
-                    {proyectoEtapasModal.length === 0 ? (
-                      <div className="p-8 text-center text-xs text-zinc-400 bg-zinc-50 dark:bg-zinc-800/40 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-700 space-y-2">
-                        <Layers size={32} className="mx-auto text-zinc-400" />
-                        <p className="font-bold">Sin etapas WBS registradas para este proyecto.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {proyectoEtapasModal.map(etapa => (
-                          <div key={etapa.idEtapa} className="p-5 rounded-3xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 space-y-3 shadow-2xs">
-                            <div className="flex justify-between items-center flex-wrap gap-2">
-                              <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
-                                {etapa.nombreEtapa}
-                              </span>
-                              <span className="text-[0.65rem] font-black uppercase px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                                {etapa.estado || 'EN_PROGRESO'}
-                              </span>
-                            </div>
-
-                            {/* Actividades de la Etapa */}
-                            {etapa.actividades && etapa.actividades.length > 0 ? (
-                              <div className="space-y-2 pt-1">
-                                {etapa.actividades.map(act => (
-                                  <div key={act.idActividad} className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 flex justify-between items-center text-xs gap-3 shadow-2xs hover:border-blue-300 transition-colors">
-                                    <span className="font-semibold text-zinc-800 dark:text-zinc-200 leading-snug">
-                                      {act.descripcion}
-                                    </span>
-                                    <div className="flex items-center gap-2.5 shrink-0">
-                                      {act.desarrollador && (
-                                        <span className="text-[0.68rem] font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center gap-1.5">
-                                          <Code2 size={12} className="text-emerald-500" />
-                                          {act.desarrollador.nombre} {act.desarrollador.apellido}
-                                        </span>
-                                      )}
-                                      <span className="text-[0.62rem] font-black uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                                        {act.estado || 'COMPLETADA'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-[0.72rem] text-zinc-400 italic py-1">No hay actividades asignadas aún a esta etapa WBS.</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Footer con Botón de Cierre Holgado (Sin Botón X en la Esquina Superior) */}
-              <div className="pt-5 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setSelectedProyectoModal(null)}
-                  className="gradient-button px-7 py-3 text-xs font-extrabold cursor-pointer rounded-2xl shadow-md"
-                >
-                  Cerrar Vista WBS
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Modal: Ficha Técnica, Datos Sensibles & Dual Panel de Proyectos del Trabajador */}
       <AnimatePresence>
