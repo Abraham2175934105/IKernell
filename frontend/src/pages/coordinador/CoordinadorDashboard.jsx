@@ -519,6 +519,8 @@ export const CoordinadorDashboard = () => {
   const [liderAInhabilitar, setLiderAInhabilitar] = useState(null);
   const [proyectosDelLiderAfectado, setProyectosDelLiderAfectado] = useState([]);
   const [nuevoLiderTargetId, setNuevoLiderTargetId] = useState('');
+  const [reasignacionesMap, setReasignacionesMap] = useState({});
+  const [pasoModalReasignar, setPasoModalReasignar] = useState('FORMULARIO'); // 'FORMULARIO' | 'CONFIRMACION'
   const [submittingReasignacionLider, setSubmittingReasignacionLider] = useState(false);
 
   // Manejadores de eventos (Handlers) - Soft Delete / Toggle Estado Lógico
@@ -564,14 +566,24 @@ export const CoordinadorDashboard = () => {
         setLiderAInhabilitar(targetUser);
         setProyectosDelLiderAfectado(proyectosAfectados);
         
-        // Precargar con el primer otro líder activo disponible
+        // Buscar otros líderes activos disponibles
         const otrosLideres = trabajadores.filter(t => 
           String(t.idTrabajador) !== String(id) && 
           t.estado && 
           t.rol && 
           String(t.rol).toUpperCase().includes('LIDER')
         );
-        setNuevoLiderTargetId(otrosLideres.length > 0 ? String(otrosLideres[0].idTrabajador) : '');
+
+        const defaultLeaderId = otrosLideres.length > 0 ? String(otrosLideres[0].idTrabajador) : '';
+        setNuevoLiderTargetId(defaultLeaderId);
+
+        // Construir mapa inicial de asignaciones por defecto
+        const initialMap = {};
+        proyectosAfectados.forEach(p => {
+          initialMap[p.idProyecto] = defaultLeaderId;
+        });
+        setReasignacionesMap(initialMap);
+        setPasoModalReasignar('FORMULARIO');
         
         setShowReasignarLiderModal(true);
         return;
@@ -594,23 +606,59 @@ export const CoordinadorDashboard = () => {
     }
   };
 
-  const handleConfirmarReasignacionEInhabilitar = async (e) => {
+  const handleAsignarTodosAMismoLider = (targetId) => {
+    setNuevoLiderTargetId(targetId);
+    if (!targetId) return;
+    const updated = {};
+    proyectosDelLiderAfectado.forEach(p => {
+      updated[p.idProyecto] = targetId;
+    });
+    setReasignacionesMap(updated);
+  };
+
+  const handleCambiarLiderDeProyecto = (idProyecto, newLeaderId) => {
+    setReasignacionesMap(prev => ({
+      ...prev,
+      [idProyecto]: newLeaderId
+    }));
+  };
+
+  const handleIrAConfirmacionReasignacion = (e) => {
     e.preventDefault();
-    if (!liderAInhabilitar || !nuevoLiderTargetId) {
-      toast.error('Debe seleccionar a qué líder activo transferir los proyectos.');
+    const sinLider = proyectosDelLiderAfectado.some(p => !reasignacionesMap[p.idProyecto]);
+    if (sinLider) {
+      toast.error('Debe seleccionar un Líder receptor para cada uno de los proyectos listados.');
       return;
     }
+    setPasoModalReasignar('CONFIRMACION');
+  };
+
+  const handleEjecutarReasignacionEInhabilitar = async () => {
+    if (!liderAInhabilitar) return;
 
     setSubmittingReasignacionLider(true);
     try {
-      await api.put(`/coordinador/trabajadores/${liderAInhabilitar.idTrabajador}/inhabilitar-reasignar?idNuevoLiderTarget=${nuevoLiderTargetId}`);
+      const targetLeaderIds = Object.values(reasignacionesMap);
+      const allSame = targetLeaderIds.length > 0 && targetLeaderIds.every(id => String(id) === String(targetLeaderIds[0]));
 
-      const nuevoLiderObj = trabajadores.find(t => String(t.idTrabajador) === String(nuevoLiderTargetId));
-      const nombreNuevoLider = nuevoLiderObj ? `${nuevoLiderObj.nombre} ${nuevoLiderObj.apellido}` : 'nuevo Líder';
+      if (allSame) {
+        const singleTargetId = targetLeaderIds[0];
+        await api.put(`/coordinador/trabajadores/${liderAInhabilitar.idTrabajador}/inhabilitar-reasignar?idNuevoLiderTarget=${singleTargetId}`);
+      } else {
+        for (const p of proyectosDelLiderAfectado) {
+          const targetLiderId = reasignacionesMap[p.idProyecto];
+          if (targetLiderId) {
+            await api.put(`/coordinador/proyectos/${p.idProyecto}/reasignar-lider?idNuevoLiderTarget=${targetLiderId}`);
+          }
+        }
+        await api.patch(`/coordinador/trabajadores/${liderAInhabilitar.idTrabajador}/estado`);
+      }
 
-      toast.success(`Portafolio de ${proyectosDelLiderAfectado.length} proyecto(s) reasignado a ${nombreNuevoLider} y líder ${liderAInhabilitar.nombre} inhabilitado.`);
+      toast.success(`Portafolio de ${proyectosDelLiderAfectado.length} proyecto(s) reasignado exitosamente. El usuario ${liderAInhabilitar.nombre} ${liderAInhabilitar.apellido} ha sido inhabilitado.`);
       setShowReasignarLiderModal(false);
       setLiderAInhabilitar(null);
+      setReasignacionesMap({});
+      setPasoModalReasignar('FORMULARIO');
 
       // Recargar trabajadores y proyectos
       const [trabRes, proyRes] = await Promise.all([
@@ -3370,93 +3418,264 @@ export const CoordinadorDashboard = () => {
             </motion.div>
           </div>
         )}
-        {/* Modal: Reasignación Obligatoria de Proyectos al Inhabilitar Líder */}
+        {/* Modal: Reasignación Obligatoria de Proyectos al Inhabilitar Líder (Vista Amplia & Asignación Granular) */}
         {showReasignarLiderModal && liderAInhabilitar && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-4xl shadow-2xl space-y-6 max-h-[90dvh] overflow-y-auto"
             >
-              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-extrabold text-base">
-                  <AlertTriangle size={20} className="text-amber-500" />
-                  <span>Reasignación Obligatoria de Proyectos</span>
+              {/* Encabezado Principal */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black shrink-0 border border-amber-500/20">
+                    <AlertTriangle size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      Reasignación Granular Obligatoria de Proyectos
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Transfiere el portafolio de supervisión antes de inhabilitar al Líder
+                    </p>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowReasignarLiderModal(false)}
-                  className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
-                >
-                  <X size={18} />
-                </button>
               </div>
 
-              <div className="space-y-4 text-xs">
-                <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 space-y-2 text-amber-900 dark:text-amber-200">
-                  <strong className="block text-xs font-black">
-                    Líder Afectado: {liderAInhabilitar.nombre} {liderAInhabilitar.apellido} ({liderAInhabilitar.email})
-                  </strong>
-                  <p className="text-[0.7rem] leading-relaxed">
-                    Este Líder administra actualmente <strong>{proyectosDelLiderAfectado.length} proyecto(s) activo(s)</strong>. Para inhabilitar su acceso, debes reasignar su portafolio a otro Líder activo disponible en la empresa.
-                  </p>
-                </div>
-
-                {/* Lista de Proyectos que serán reasignados */}
-                <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                  <span className="text-[0.65rem] font-extrabold text-zinc-400 uppercase tracking-wider block">
-                    Proyectos que cambiarán de supervisión:
-                  </span>
-                  {proyectosDelLiderAfectado.map((p) => (
-                    <div key={p.idProyecto} className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-[0.7rem] flex items-center justify-between">
-                      <span className="font-bold text-zinc-800 dark:text-zinc-200 truncate">{p.nombre}</span>
-                      <span className="font-mono text-zinc-500 shrink-0">PRJ-00{p.idProyecto}</span>
+              {/* Contenido Dinámico según Paso (FORMULARIO / CONFIRMACION) */}
+              <AnimatePresence mode="wait">
+                {pasoModalReasignar === 'FORMULARIO' ? (
+                  <motion.form 
+                    key="step-formulario"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    onSubmit={handleIrAConfirmacionReasignacion} 
+                    className="space-y-6 text-xs"
+                  >
+                    {/* Alerta Informativa del Líder Afectado */}
+                    <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 flex items-start gap-3 text-amber-900 dark:text-amber-200">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500 text-white font-bold flex items-center justify-center shrink-0 text-sm shadow-sm">
+                        {getInitials(liderAInhabilitar.nombre, liderAInhabilitar.apellido)}
+                      </div>
+                      <div className="space-y-1">
+                        <strong className="block text-xs font-black">
+                          Líder Afectado: {liderAInhabilitar.nombre} {liderAInhabilitar.apellido} ({liderAInhabilitar.email})
+                        </strong>
+                        <p className="text-[0.72rem] leading-relaxed opacity-90">
+                          Este Líder administra actualmente <strong>{proyectosDelLiderAfectado.length} proyecto(s) activo(s)</strong>. Para inhabilitar su acceso en la plataforma, asigna individualmente a qué Líder transferirás la supervisión de cada proyecto.
+                        </p>
+                      </div>
                     </div>
-                  ))}
-                </div>
 
-                <form onSubmit={handleConfirmarReasignacionEInhabilitar} className="space-y-4 pt-2">
-                  <div className="space-y-1">
-                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block">
-                      Seleccionar Nuevo Líder Receptor *
-                    </label>
-                    <select
-                      required
-                      value={nuevoLiderTargetId}
-                      onChange={(e) => setNuevoLiderTargetId(e.target.value)}
-                      className="input-field w-full py-2.5 text-xs font-bold appearance-none cursor-pointer"
-                    >
-                      <option value="">— Seleccione un Líder Activo —</option>
-                      {trabajadores
-                        .filter(t => t.idTrabajador !== liderAInhabilitar.idTrabajador && t.estado && t.rol && t.rol.toUpperCase().includes('LIDER'))
-                        .map(l => (
-                          <option key={l.idTrabajador} value={l.idTrabajador}>
-                            {l.nombre} {l.apellido} ({l.profesion || 'Líder de Proyecto'}) &bull; {l.email}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
+                    {/* Barra de Asignación Masiva Rápida */}
+                    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <UserCheck size={16} className="text-blue-600 dark:text-blue-400" />
+                        <span className="font-extrabold text-zinc-800 dark:text-zinc-200 text-xs">
+                          ⚡ Asignación Masiva Rápida (Opcional):
+                        </span>
+                      </div>
+                      <select
+                        value={nuevoLiderTargetId}
+                        onChange={(e) => handleAsignarTodosAMismoLider(e.target.value)}
+                        className="input-field w-full py-2 px-3 text-xs font-bold appearance-none cursor-pointer bg-white dark:bg-zinc-900"
+                      >
+                        <option value="">— Asignar todos los proyectos a un mismo Líder —</option>
+                        {trabajadores
+                          .filter(t => t.idTrabajador !== liderAInhabilitar.idTrabajador && t.estado && t.rol && t.rol.toUpperCase().includes('LIDER'))
+                          .map(l => (
+                            <option key={l.idTrabajador} value={l.idTrabajador}>
+                              {l.nombre} {l.apellido} ({l.profesion || 'Líder de Proyecto'}) &bull; {l.email}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
 
-                  <div className="flex justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                    <button
-                      type="button"
-                      onClick={() => setShowReasignarLiderModal(false)}
-                      className="outline-button text-xs py-2 px-4 font-bold"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submittingReasignacionLider || !nuevoLiderTargetId}
-                      className="gradient-button text-xs py-2 px-5 font-bold inline-flex items-center gap-1.5 shadow-md disabled:opacity-50"
-                    >
-                      {submittingReasignacionLider ? <Loader2 size={14} className="animate-spin" /> : <UserCheck size={14} />}
-                      <span>Reasignar Proyectos e Inhabilitar</span>
-                    </button>
-                  </div>
-                </form>
-              </div>
+                    {/* Lista Granular e Independiente de Proyectos */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[0.7rem] font-extrabold text-zinc-400 uppercase tracking-wider block font-mono">
+                          Matriz de Asignación por Proyecto ({proyectosDelLiderAfectado.length} Proyectos):
+                        </span>
+                        <span className="text-[0.65rem] text-zinc-500 font-medium">
+                          Puedes seleccionar un Líder distinto para cada proyecto
+                        </span>
+                      </div>
+
+                      <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                        {proyectosDelLiderAfectado.map((p) => {
+                          const otrosLideresList = trabajadores.filter(
+                            t => t.idTrabajador !== liderAInhabilitar.idTrabajador && t.estado && t.rol && t.rol.toUpperCase().includes('LIDER')
+                          );
+
+                          return (
+                            <div 
+                              key={p.idProyecto} 
+                              className="p-4 rounded-2xl bg-white dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 space-y-3 text-xs shadow-2xs hover:border-blue-300 transition-colors"
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-700/50 pb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-[0.65rem] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                                    PRJ-00{p.idProyecto}
+                                  </span>
+                                  <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm">
+                                    {p.nombre}
+                                  </h4>
+                                </div>
+                                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                                  ${Number(p.presupuesto || 0).toLocaleString('es-CO')} COP
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                <div className="text-[0.7rem] text-zinc-500">
+                                  <span className="font-bold text-zinc-700 dark:text-zinc-300 block">Cliente: {p.cliente || 'Corporativo'}</span>
+                                  <span>Estado: {p.estado}</span>
+                                </div>
+
+                                <div>
+                                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 text-[0.68rem] block mb-1">
+                                    Nuevo Líder Receptor *
+                                  </label>
+                                  <select
+                                    required
+                                    value={reasignacionesMap[p.idProyecto] || ''}
+                                    onChange={(e) => handleCambiarLiderDeProyecto(p.idProyecto, e.target.value)}
+                                    className="input-field w-full py-2 px-3 text-xs font-bold appearance-none cursor-pointer"
+                                  >
+                                    <option value="">— Seleccionar Líder —</option>
+                                    {otrosLideresList.map(l => (
+                                      <option key={l.idTrabajador} value={l.idTrabajador}>
+                                        {l.nombre} {l.apellido} &bull; {l.email}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Botones de Acción */}
+                    <div className="flex justify-between items-center pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => setShowReasignarLiderModal(false)}
+                        className="outline-button text-xs py-2 px-4 font-bold"
+                      >
+                        Cancelar
+                      </button>
+
+                      <button
+                        type="submit"
+                        className="gradient-button text-xs py-2.5 px-6 font-bold inline-flex items-center gap-2 shadow-md cursor-pointer"
+                      >
+                        <span>Revisar & Confirmar Reasignación</span>
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </motion.form>
+                ) : (
+                  <motion.div 
+                    key="step-confirmacion"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="space-y-5 text-xs"
+                  >
+                    {/* Alerta Prominente de Confirmación */}
+                    <div className="p-5 rounded-2xl bg-blue-50/90 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 space-y-2 text-blue-900 dark:text-blue-200">
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert size={22} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                        <h4 className="text-sm font-black uppercase tracking-wider">
+                          Confirmación de Transferencia e Inhabilitación
+                        </h4>
+                      </div>
+                      <p className="text-xs font-bold leading-relaxed">
+                        ¿Estás seguro de transferir los <strong>{proyectosDelLiderAfectado.length} proyectos</strong> de supervisión e inhabilitar al usuario <strong>{liderAInhabilitar.nombre} {liderAInhabilitar.apellido}</strong>?
+                      </p>
+                    </div>
+
+                    {/* Tabla Resumen de Reasignaciones */}
+                    <div className="space-y-2">
+                      <span className="text-[0.7rem] font-extrabold text-zinc-400 uppercase tracking-wider block font-mono">
+                        Resumen de Transferencias a Ejecutar:
+                      </span>
+
+                      <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-2xs">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 font-extrabold text-[0.65rem] uppercase">
+                              <th className="p-3">Proyecto</th>
+                              <th className="p-3">Líder Saliente</th>
+                              <th className="p-3">Nuevo Líder Receptor</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            {proyectosDelLiderAfectado.map((p) => {
+                              const targetLiderId = reasignacionesMap[p.idProyecto];
+                              const receptorObj = trabajadores.find(t => String(t.idTrabajador) === String(targetLiderId));
+                              const nombreReceptor = receptorObj ? `${receptorObj.nombre} ${receptorObj.apellido}` : 'Líder Seleccionado';
+
+                              return (
+                                <tr key={p.idProyecto} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                                  <td className="p-3 font-bold text-zinc-800 dark:text-zinc-200">
+                                    <span className="font-mono text-zinc-400 text-[0.65rem] block">PRJ-00{p.idProyecto}</span>
+                                    {p.nombre}
+                                  </td>
+                                  <td className="p-3 text-red-500 font-semibold text-[0.72rem]">
+                                    {liderAInhabilitar.nombre} {liderAInhabilitar.apellido}
+                                  </td>
+                                  <td className="p-3 font-extrabold text-emerald-600 dark:text-emerald-400 text-[0.72rem]">
+                                    ➔ {nombreReceptor}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Botones de Confirmación Final */}
+                    <div className="flex justify-between items-center pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => setPasoModalReasignar('FORMULARIO')}
+                        disabled={submittingReasignacionLider}
+                        className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <ChevronLeft size={16} />
+                        <span>Modificar Asignaciones</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleEjecutarReasignacionEInhabilitar}
+                        disabled={submittingReasignacionLider}
+                        className="gradient-button text-xs py-2.5 px-6 font-bold inline-flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+                      >
+                        {submittingReasignacionLider ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            <span>Procesando Cambios...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 size={16} />
+                            <span>Confirmar y Procesar Reasignación</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </div>
         )}
