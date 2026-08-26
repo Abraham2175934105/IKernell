@@ -3379,7 +3379,7 @@ export const LiderDashboard = () => {
                               ) : isNuevo ? (
                                 <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-700 animate-pulse flex items-center gap-1 shadow-2xs">
                                   <Sparkles size={11} className="text-emerald-600 animate-bounce shrink-0" />
-                                  NUEVO PROYECTO ASIGNADO (3D)
+                                  NUEVO PROYECTO (3D)
                                 </span>
                               ) : null}
 
