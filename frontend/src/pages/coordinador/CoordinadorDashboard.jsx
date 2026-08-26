@@ -391,116 +391,121 @@ export const CoordinadorDashboard = () => {
 
   const [submittingPausaFinalizarCoord, setSubmittingPausaFinalizarCoord] = useState(false);
 
-  // Generador de Reporte PDF Directivo 100/10 Ultra-Estructurado & Rápido (< 50ms)
+  // Generador de Reporte PDF Directivo 100/10 - Arquitectura de Tabla Corporativa Tabular Sin Corchetes ni Superposiciones
   const handleGenerarReportePdfCoord = () => {
     if (!selectedProyectoModal) return;
     try {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       
-      // Paleta de Colores Ejecutivos
-      const primaryColor = [37, 99, 235];    // #2563eb (Azul Corporativo)
-      const darkColor = [15, 23, 42];        // #0f172a (Slate Oscuro)
-      const lightBg = [248, 250, 252];       // #f8fafc (Gris Claro)
-      const borderColor = [226, 232, 240];   // #e2e8f0 (Borde Fino)
-      const emeraldColor = [16, 185, 129];   // #10b981 (Verde Éxito)
-      const amberColor = [217, 119, 6];      // #d97706 (Ámbar Advertencia)
-      const purpleColor = [126, 34, 206];    // #7e22ce (Púrpura Auditoría)
+      // Paleta de Colores Ejecutivo Corporativo (Estándar Slate & Navy)
+      const navyColor = [30, 58, 138];      // #1e3a8a (Azul Marino Ejecutivo)
+      const slateDark = [15, 23, 42];       // #0f172a (Slate Principal)
+      const slateMuted = [100, 116, 139];   // #64748b (Slate Secundario)
+      const cardBg = [248, 250, 252];       // #f8fafc (Fondo Tarjeta)
+      const cardBorder = [203, 213, 225];   // #cbd5e1 (Borde Estructurado)
+      const rowLineColor = [226, 232, 240]; // #e2e8f0 (Línea de Filas)
+      const emeraldColor = [5, 150, 105];   // #059669 (Verde Éxito)
+      const amberColor = [217, 119, 6];      // #d97706 (Ámbar Pausa/Pendiente)
+      const purpleColor = [109, 40, 217];   // #6d28d9 (Púrpura Auditoría)
 
-      // 1. BANNER ENCABEZADO CORPORATIVO (Ultra-Executive Header)
-      doc.setFillColor(...primaryColor);
+      // 1. BANNER ENCABEZADO CORPORATIVO
+      doc.setFillColor(...navyColor);
       doc.rect(0, 0, 210, 26, 'F');
 
-      // Franja Dorada / Acento Superior
-      doc.setFillColor(245, 158, 11);
-      doc.rect(0, 26, 210, 1.5, 'F');
+      // Franja de Acento Inferior
+      doc.setFillColor(234, 179, 8);
+      doc.rect(0, 26, 210, 1.2, 'F');
 
-      // Título Principal
+      // Títulos del Encabezado
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
+      doc.setFontSize(13);
       doc.text('IKERNELL ENTERPRISE ARCHITECTURE PLATFORM', 14, 12);
 
       doc.setFontSize(8.5);
-      doc.setFont('helvetica', 'bold');
-      doc.text('REPORTE DIRECTIVO DE AUDITORÍA OPERATIVA WBS', 14, 18);
+      doc.setFont('helvetica', 'normal');
+      doc.text('REPORTE DIRECTIVO DE AUDITORÍA Y ESTRUCTURA WBS', 14, 18);
 
-      // Fecha e Identificación de Emisión
       const nowStr = `${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
       doc.setFontSize(7.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`AUDIT-READY | EMISIÓN: ${nowStr}`, 135, 18);
+      doc.text(`EMISIÓN OFICIAL: ${nowStr}`, 138, 18);
 
       let yPos = 34;
 
       // 2. FICHA TÉCNICA DEL PROYECTO (TARJETA EJECUTIVA REDONDEADA)
-      doc.setFillColor(...lightBg);
-      doc.setDrawColor(...borderColor);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(14, yPos, 182, 36, 3, 3, 'FD');
+      doc.setFillColor(...cardBg);
+      doc.setDrawColor(...cardBorder);
+      doc.setLineWidth(0.35);
+      doc.roundedRect(14, yPos, 182, 38, 2, 2, 'FD');
 
-      // Título del Proyecto
-      doc.setTextColor(...darkColor);
-      doc.setFontSize(13);
+      // Título Limpio del Proyecto
+      doc.setTextColor(...slateDark);
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       const cleanProjTitle = selectedProyectoModal.nombre.replace(/^(Proyecto:\s*)+/i, '');
       doc.text(`PROYECTO: ${cleanProjTitle}`, 18, yPos + 8);
 
-      // Columna 1 de Metadatos
+      // Línea divisoria interna
+      doc.setDrawColor(...rowLineColor);
+      doc.line(18, yPos + 11, 192, yPos + 11);
+
+      // Grid Metadatos - Columna 1
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 116, 139);
-      doc.text('CÓDIGO DE REGISTRO:', 18, yPos + 15);
+      doc.setTextColor(...slateMuted);
+      doc.text('REGISTRO:', 18, yPos + 18);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...primaryColor);
-      doc.text(`PRJ-00${selectedProyectoModal.idProyecto}`, 55, yPos + 15);
+      doc.setTextColor(...navyColor);
+      doc.text(`PRJ-00${selectedProyectoModal.idProyecto}`, 45, yPos + 18);
 
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 116, 139);
-      doc.text('CLIENTE / EMPRESA:', 18, yPos + 21);
+      doc.setTextColor(...slateMuted);
+      doc.text('ORGANIZACIÓN:', 18, yPos + 25);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...darkColor);
-      doc.text(selectedProyectoModal.cliente || 'Cliente Corporativo', 55, yPos + 21);
+      doc.setTextColor(...slateDark);
+      doc.text(selectedProyectoModal.cliente || 'Cliente Corporativo', 45, yPos + 25);
 
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 116, 139);
-      doc.text('LÍDER RESPONSABLE:', 18, yPos + 27);
+      doc.setTextColor(...slateMuted);
+      doc.text('LÍDER RESPONSABLE:', 18, yPos + 32);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...darkColor);
+      doc.setTextColor(...slateDark);
       const liderNombre = selectedProyectoModal.lider ? `${selectedProyectoModal.lider.nombre} ${selectedProyectoModal.lider.apellido}` : 'Asignación Directiva';
-      doc.text(liderNombre, 55, yPos + 27);
+      doc.text(liderNombre, 45, yPos + 32);
 
-      // Columna 2 de Metadatos (Derecha)
+      // Grid Metadatos - Columna 2
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 116, 139);
-      doc.text('ESTADO EN PLATAFORMA:', 115, yPos + 15);
-      const st = selectedProyectoModal.estado || 'ACTIVO';
+      doc.setTextColor(...slateMuted);
+      doc.text('ESTADO PROYECTO:', 115, yPos + 18);
+      const st = (selectedProyectoModal.estado || 'ACTIVO').toUpperCase().replace(/_/g, ' ');
       const isFin = st === 'FINALIZADO' || st === 'COMPLETADO';
-      const isPau = st === 'EN_PAUSA' || st === 'PAUSADO';
-      doc.setTextColor(...(isFin ? emeraldColor : isPau ? amberColor : primaryColor));
+      const isPau = st === 'EN PAUSA' || st === 'PAUSADO';
+      doc.setTextColor(...(isFin ? emeraldColor : isPau ? amberColor : navyColor));
       doc.setFont('helvetica', 'bold');
-      doc.text(st, 158, yPos + 15);
+      doc.text(st, 155, yPos + 18);
 
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 116, 139);
-      doc.text('PRESUPUESTO RESERVADO:', 115, yPos + 21);
+      doc.setTextColor(...slateMuted);
+      doc.text('PRESUPUESTO:', 115, yPos + 25);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(16, 185, 129);
-      doc.text(`US$ ${Number(selectedProyectoModal.presupuesto || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 158, yPos + 21);
+      doc.setTextColor(...emeraldColor);
+      doc.text(`US$ ${Number(selectedProyectoModal.presupuesto || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 155, yPos + 25);
 
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 116, 139);
-      doc.text('CRONOGRAMA ESTIMADO:', 115, yPos + 27);
+      doc.setTextColor(...slateMuted);
+      doc.text('CRONOGRAMA:', 115, yPos + 32);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...darkColor);
-      doc.text(`${formatearFechaHumana(selectedProyectoModal.fechaInicio)} -> ${formatearFechaHumana(selectedProyectoModal.fechaFinEstimada)}`, 158, yPos + 27);
+      doc.setTextColor(...slateDark);
+      doc.text(`${formatearFechaHumana(selectedProyectoModal.fechaInicio)} a ${formatearFechaHumana(selectedProyectoModal.fechaFinEstimada)}`, 155, yPos + 32);
 
-      yPos += 42;
+      yPos += 44;
 
       // Alcance / Descripción si existe
       if (selectedProyectoModal.descripcion) {
         doc.setFontSize(8.5);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...darkColor);
+        doc.setTextColor(...slateDark);
         doc.text('ALCANCE Y OBJETIVOS ESTRATÉGICOS:', 14, yPos);
         yPos += 4.5;
 
@@ -509,7 +514,7 @@ export const CoordinadorDashboard = () => {
         doc.setTextColor(51, 65, 85);
         const splitDesc = doc.splitTextToSize(selectedProyectoModal.descripcion, 182);
         doc.text(splitDesc, 14, yPos);
-        yPos += (splitDesc.length * 3.8) + 5;
+        yPos += (splitDesc.length * 3.8) + 6;
       }
 
       // 3. SECCIÓN HISTORIAL DE AUDITORÍA DIRECTIVA (Si existen registros)
@@ -522,7 +527,7 @@ export const CoordinadorDashboard = () => {
         doc.setFontSize(8.5);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...purpleColor);
-        doc.text('TRAZABILIDAD DE MODIFICACIONES DIRECTIVAS (AUDITORÍA DE COORDINACIÓN)', 18, yPos + 4.2);
+        doc.text('TRAZABILIDAD DE MODIFICACIONES DIRECTIVAS - AUDITORÍA DE COORDINACIÓN', 18, yPos + 4.2);
         yPos += 8;
 
         historialCambiosModal.slice(0, 5).forEach((reg, idx) => {
@@ -530,12 +535,12 @@ export const CoordinadorDashboard = () => {
           doc.setFontSize(7.5);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(...purpleColor);
-          doc.text(`[${new Date(reg.fechaCambio).toLocaleString('es-CO')}] Accion #${idx + 1}: ${reg.accion}`, 16, yPos);
+          doc.text(`${new Date(reg.fechaCambio).toLocaleString('es-CO')} - Acción ${idx + 1}: ${reg.accion}`, 16, yPos);
           yPos += 3.8;
 
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(30, 41, 59);
-          const splitDet = doc.splitTextToSize(`Detalles: ${reg.detalles} | Realizado por: ${reg.nombreCoordinador} (${reg.emailCoordinador})`, 176);
+          const splitDet = doc.splitTextToSize(`Detalles: ${reg.detalles} | Coordinador: ${reg.nombreCoordinador}`, 176);
           doc.text(splitDet, 18, yPos);
           yPos += (splitDet.length * 3.5) + 3;
         });
@@ -543,14 +548,14 @@ export const CoordinadorDashboard = () => {
         yPos += 3;
       }
 
-      // 4. ESTRUCTURA WBS Y DESGLOSE DE ACTIVIDADES (Tabla Limpia y Estructurada)
+      // 4. ESTRUCTURA WBS Y TABLA DE ACTIVIDADES (Diseño Tabular Formal Sin Corchetes ni Superposición)
       if (yPos > 230) { doc.addPage(); yPos = 20; }
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...primaryColor);
-      doc.text('ESTRUCTURA DE DESGLOSE DE TRABAJO (WBS) & TAREAS TÉCNICAS', 14, yPos);
-      yPos += 6;
+      doc.setTextColor(...navyColor);
+      doc.text('ESTRUCTURA DE DESGLOSE DE TRABAJO WBS Y TAREAS TÉCNICAS', 14, yPos);
+      yPos += 7;
 
       const etapasAImprimir = proyectoEtapasModal && proyectoEtapasModal.length > 0 ? proyectoEtapasModal : [];
 
@@ -558,109 +563,134 @@ export const CoordinadorDashboard = () => {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
         doc.setTextColor(148, 163, 184);
-        doc.text('No hay etapas WBS configuradas actualmente para este proyecto.', 14, yPos);
+        doc.text('Sin etapas WBS registradas para este proyecto.', 14, yPos);
         yPos += 8;
       } else {
         etapasAImprimir.forEach((etapa, idx) => {
-          if (yPos > 250) { doc.addPage(); yPos = 20; }
+          if (yPos > 240) { doc.addPage(); yPos = 20; }
 
           // Limpieza estricta de nombres duplicados de Fase
           let rawEtapaNombre = etapa.nombreEtapa || `Fase ${idx + 1}`;
           rawEtapaNombre = rawEtapaNombre.replace(/^(Fase\s+\d+:\s*)+/i, '');
           const tituloFaseLimpio = `Fase ${idx + 1}: ${rawEtapaNombre}`;
 
-          const estadoEtapa = (etapa.estado || 'PENDIENTE').toUpperCase();
+          const estadoEtapa = (etapa.estado || 'PENDIENTE').toUpperCase().replace(/_/g, ' ');
           const isFaseFin = estadoEtapa === 'FINALIZADA' || estadoEtapa === 'COMPLETADO';
 
-          // Barra de Cabecera de Etapa / Fase
-          doc.setFillColor(isFaseFin ? 236 : 239, isFaseFin ? 253 : 246, isFaseFin ? 245 : 255);
-          doc.setDrawColor(isFaseFin ? 167 : 191, isFaseFin ? 243 : 219, isFaseFin ? 208 : 254);
-          doc.roundedRect(14, yPos, 182, 7, 1.5, 1.5, 'FD');
+          // 4.1 Barra de Cabecera de Etapa / Fase (Sin corchetes)
+          doc.setFillColor(241, 245, 249); // slate-100
+          doc.setDrawColor(...cardBorder);
+          doc.setLineWidth(0.35);
+          doc.roundedRect(14, yPos, 182, 8, 1.5, 1.5, 'FD');
 
-          doc.setFontSize(8.5);
+          doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...darkColor);
-          doc.text(tituloFaseLimpio, 18, yPos + 4.8);
+          doc.setTextColor(...slateDark);
+          doc.text(tituloFaseLimpio, 18, yPos + 5.5);
 
-          // Badge de Estado de Etapa
-          doc.setFontSize(7.5);
+          // Estado de Etapa al extremo derecho (Texto limpio, sin corchetes)
+          doc.setFontSize(8);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...(isFaseFin ? emeraldColor : primaryColor));
-          doc.text(`[ESTADO: ${estadoEtapa}]`, 160, yPos + 4.8);
+          doc.setTextColor(...(isFaseFin ? emeraldColor : navyColor));
+          doc.text(estadoEtapa, 170, yPos + 5.5);
 
-          yPos += 9;
+          // AVANCE OBLIGATORIO DE Y PARA EVITAR SUPERPOSICIONES CON LA TABLA DE ACTIVIDADES
+          yPos += 11;
 
-          // Sub-tabla de Actividades de la Fase
+          // 4.2 Cabecera Tabular de Actividades de la Fase
           const actividades = etapa.actividades || [];
           if (actividades.length > 0) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(14, yPos, 182, 6, 'F');
+            doc.setDrawColor(...rowLineColor);
+            doc.setLineWidth(0.25);
+            doc.line(14, yPos, 196, yPos);
+            doc.line(14, yPos + 6, 196, yPos + 6);
+
+            doc.setFontSize(7.5);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(...slateMuted);
+            doc.text('DESCRIPCIÓN DE ACTIVIDAD WBS', 18, yPos + 4.2);
+            doc.text('DESARROLLADOR ASIGNADO', 125, yPos + 4.2);
+            doc.text('ESTADO', 170, yPos + 4.2);
+
+            yPos += 8;
+
+            // 4.3 Filas de Actividades de la Fase
             actividades.forEach((act) => {
-              if (yPos > 265) { doc.addPage(); yPos = 20; }
-
               const actNombre = act.nombreActividad || act.descripcion || 'Actividad WBS';
-              const dev = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin asignar';
-              const actEst = (act.estado || 'PENDIENTE').toUpperCase();
+              const dev = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin Asignar';
+              const actEst = (act.estado || 'PENDIENTE').toUpperCase().replace(/_/g, ' ');
               const isActFin = actEst === 'FINALIZADA' || actEst === 'COMPLETADO';
-              const isActProg = actEst === 'EN_PROGRESO' || actEst === 'EN_CURSO';
+              const isActProg = actEst === 'EN PROGRESO' || actEst === 'EN CURSO';
 
-              // Punto viñeta
-              doc.setFillColor(isActFin ? 16 : 185, isActFin ? 185 : 99, isActFin ? 129 : 235);
-              doc.circle(18, yPos - 1, 0.8, 'F');
+              // Ajuste automático de alto de fila según número de líneas de la descripción
+              const splitTask = doc.splitTextToSize(actNombre, 102);
+              const rowHeight = Math.max(7, splitTask.length * 3.8 + 2.5);
 
-              // Texto de Tarea con splitTextToSize (Max 115mm) para EVITAR desbordes
+              if (yPos + rowHeight > 270) {
+                doc.addPage();
+                yPos = 20;
+              }
+
+              // Línea divisoria inferior de la fila
+              doc.setDrawColor(...rowLineColor);
+              doc.setLineWidth(0.2);
+              doc.line(14, yPos + rowHeight - 0.5, 196, yPos + rowHeight - 0.5);
+
+              // Columna 1: Descripción de la Tarea
               doc.setFontSize(8);
-              doc.setFont('helvetica', 'bold');
+              doc.setFont('helvetica', 'normal');
               doc.setTextColor(30, 41, 59);
+              doc.text(splitTask, 18, yPos + 4);
 
-              const splitTask = doc.splitTextToSize(actNombre, 115);
-              doc.text(splitTask, 21, yPos);
-
-              // Desarrollador Asignado
+              // Columna 2: Nombre del Desarrollador (Limpio, sin 'Dev:' ni paréntesis)
               doc.setFontSize(7.5);
               doc.setFont('helvetica', 'normal');
-              doc.setTextColor(100, 116, 139);
-              doc.text(`Dev: ${dev}`, 140, yPos);
+              doc.setTextColor(71, 85, 105);
+              doc.text(dev, 125, yPos + 4);
 
-              // Badge Estado Actividad
+              // Columna 3: Estado de la Tarea (Limpio, sin corchetes)
+              doc.setFontSize(7.5);
               doc.setFont('helvetica', 'bold');
-              doc.setTextColor(...(isActFin ? emeraldColor : isActProg ? primaryColor : amberColor));
-              doc.text(`[${actEst}]`, 175, yPos);
+              doc.setTextColor(...(isActFin ? emeraldColor : isActProg ? navyColor : amberColor));
+              doc.text(actEst, 170, yPos + 4);
 
-              const lineCount = splitTask.length;
-              yPos += (lineCount * 4) + 2.5;
+              yPos += rowHeight;
             });
           } else {
             doc.setFontSize(7.5);
             doc.setFont('helvetica', 'italic');
             doc.setTextColor(148, 163, 184);
-            doc.text('   No se registraron tareas vinculadas a esta fase.', 21, yPos);
-            yPos += 5.5;
+            doc.text('Sin tareas asignadas en esta fase.', 18, yPos + 4);
+            yPos += 8;
           }
 
-          yPos += 2.5;
+          yPos += 5; // Separación entre bloques de Fase
         });
       }
 
-      // 5. PIE DE PÁGINA PROFESIONAL Y NÚMERO DE PÁGINAS (Página X de Y)
+      // 5. PIE DE PÁGINA PROFESIONAL Y NUMERACIÓN DE PÁGINAS
       const totalPages = doc.internal.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
 
         // Línea divisoria inferior
-        doc.setDrawColor(226, 232, 240);
+        doc.setDrawColor(...cardBorder);
         doc.setLineWidth(0.3);
         doc.line(14, 282, 196, 282);
 
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(148, 163, 184);
-        doc.text(`Sistema IKernell Enterprise Architecture | Documento Oficial Audit-Ready PRJ-00${selectedProyectoModal.idProyecto}`, 14, 287);
+        doc.text(`Sistema IKernell Enterprise Architecture | Documento Oficial PRJ-00${selectedProyectoModal.idProyecto}`, 14, 287);
         doc.setFont('helvetica', 'bold');
         doc.text(`Página ${i} de ${totalPages}`, 178, 287);
       }
 
       const cleanFileName = `Reporte_Directivo_PRJ-00${selectedProyectoModal.idProyecto}_${selectedProyectoModal.nombre.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
       doc.save(cleanFileName);
-      toast.success('Reporte PDF ultra-estructurado generado exitosamente.');
+      toast.success('Reporte PDF corporativo generado exitosamente.');
     } catch (e) {
       console.error('Error generando PDF:', e);
       toast.error('Error al generar reporte PDF.');

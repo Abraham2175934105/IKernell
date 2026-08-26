@@ -2668,47 +2668,89 @@ export const LiderDashboard = () => {
         yPos += 6;
 
         etapas.forEach((etapa, index) => {
-          if (yPos > 260) { doc.addPage(); yPos = 20; }
+          if (yPos > 240) { doc.addPage(); yPos = 20; }
 
           let rawEtapaNombre = etapa.nombreEtapa || `Fase ${index + 1}`;
           rawEtapaNombre = rawEtapaNombre.replace(/^(Fase\s+\d+:\s*)+/i, '');
           const tituloFaseLimpio = `Fase ${index + 1}: ${rawEtapaNombre}`;
+          const estadoEtapa = (etapa.estado || 'PENDIENTE').toUpperCase().replace(/_/g, ' ');
 
-          doc.setFillColor(240, 244, 255);
-          doc.rect(14, yPos, 182, 7, 'F');
-          doc.setFontSize(8.5);
+          doc.setFillColor(241, 245, 249);
+          doc.setDrawColor(203, 213, 225);
+          doc.setLineWidth(0.35);
+          doc.roundedRect(14, yPos, 182, 8, 1.5, 1.5, 'FD');
+
+          doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...darkColor);
-          doc.text(`${tituloFaseLimpio} [Estado: ${etapa.estado || 'PENDIENTE'}]`, 16, yPos + 5);
-          yPos += 9;
+          doc.setTextColor(15, 23, 42);
+          doc.text(tituloFaseLimpio, 18, yPos + 5.5);
+
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(etapa.estado === 'FINALIZADA' ? 5 : 30, etapa.estado === 'FINALIZADA' ? 150 : 58, etapa.estado === 'FINALIZADA' ? 105 : 138);
+          doc.text(estadoEtapa, 170, yPos + 5.5);
+
+          yPos += 11;
 
           if (etapa.actividades && etapa.actividades.length > 0) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(14, yPos, 182, 6, 'F');
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.25);
+            doc.line(14, yPos, 196, yPos);
+            doc.line(14, yPos + 6, 196, yPos + 6);
+
+            doc.setFontSize(7.5);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(100, 116, 139);
+            doc.text('DESCRIPCIÓN DE ACTIVIDAD WBS', 18, yPos + 4.2);
+            doc.text('DESARROLLADOR ASIGNADO', 125, yPos + 4.2);
+            doc.text('ESTADO', 170, yPos + 4.2);
+
+            yPos += 8;
+
             etapa.actividades.forEach(act => {
-              if (yPos > 270) { doc.addPage(); yPos = 20; }
-
               const actNombre = act.nombreActividad || act.descripcion || 'Actividad WBS';
+              const devName = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin Asignar';
+              const actEst = (act.estado || 'PENDIENTE').toUpperCase().replace(/_/g, ' ');
+
+              const splitTask = doc.splitTextToSize(actNombre, 102);
+              const rowHeight = Math.max(7, splitTask.length * 3.8 + 2.5);
+
+              if (yPos + rowHeight > 270) {
+                doc.addPage();
+                yPos = 20;
+              }
+
+              doc.setDrawColor(226, 232, 240);
+              doc.setLineWidth(0.2);
+              doc.line(14, yPos + rowHeight - 0.5, 196, yPos + rowHeight - 0.5);
+
               doc.setFontSize(8);
-              doc.setFont('helvetica', 'bold');
-              doc.setTextColor(30, 41, 59);
-
-              const splitTask = doc.splitTextToSize(`• ${actNombre}`, 178);
-              doc.text(splitTask, 18, yPos);
-              yPos += (splitTask.length * 3.8);
-
               doc.setFont('helvetica', 'normal');
-              doc.setTextColor(100, 116, 139);
-              const devName = act.desarrollador ? `${act.desarrollador.nombre} ${act.desarrollador.apellido}` : 'Sin asignar';
-              doc.text(`[${act.estado || 'PENDIENTE'}] - Asignado: ${devName} (${act.horasEstimadas || 0}h estimadas)`, 18, yPos);
-              yPos += 5.5;
+              doc.setTextColor(30, 41, 59);
+              doc.text(splitTask, 18, yPos + 4);
+
+              doc.setFontSize(7.5);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(71, 85, 105);
+              doc.text(devName, 125, yPos + 4);
+
+              doc.setFontSize(7.5);
+              doc.setFont('helvetica', 'bold');
+              doc.setTextColor(actEst.includes('FIN') ? 5 : actEst.includes('PROG') ? 30 : 217, actEst.includes('FIN') ? 150 : actEst.includes('PROG') ? 58 : 119, actEst.includes('FIN') ? 105 : actEst.includes('PROG') ? 138 : 6);
+              doc.text(actEst, 170, yPos + 4);
+
+              yPos += rowHeight;
             });
           } else {
-            doc.setFontSize(8);
+            doc.setFontSize(7.5);
             doc.setFont('helvetica', 'italic');
-            doc.setTextColor(150, 150, 150);
-            doc.text('  Sin actividades registradas en esta fase.', 18, yPos);
-            yPos += 6;
+            doc.setTextColor(148, 163, 184);
+            doc.text('Sin tareas asignadas en esta fase.', 18, yPos + 4);
+            yPos += 8;
           }
-          yPos += 3;
+          yPos += 5;
         });
       }
 
