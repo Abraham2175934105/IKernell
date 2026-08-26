@@ -2791,140 +2791,7 @@ export const LiderDashboard = () => {
         </div>
       </motion.div>
 
-      {/* Banner Notificaciones Especiales de Reasignación & Nueva Asignación (Estándar Visual Premium) */}
-      {listNotificacionesLider.length > 0 && (
-        <div className="space-y-4 mb-6">
-          {listNotificacionesLider.map((notif) => {
-            const prj = notif.proyecto;
-            const isReasigAnterior = notif.tipo === 'REASIGNACION_ANTERIOR';
-            const isReasigNueva = notif.tipo === 'REASIGNACION_NUEVA';
 
-            return (
-              <motion.div
-                key={notif.idNotif}
-                initial={{ opacity: 0, y: -16, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
-                className={`p-6 rounded-3xl border-2 shadow-xl backdrop-blur-md relative overflow-hidden space-y-4 ${
-                  isReasigAnterior
-                    ? 'bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-purple-500/10 dark:from-amber-950/50 dark:via-amber-900/30 dark:to-purple-950/40 border-amber-300 dark:border-amber-700/80 shadow-amber-500/5'
-                    : isReasigNueva
-                    ? 'bg-gradient-to-r from-purple-500/10 via-indigo-500/5 to-blue-500/10 dark:from-purple-950/50 dark:via-indigo-900/30 dark:to-blue-950/40 border-purple-300 dark:border-purple-700/80 shadow-purple-500/5'
-                    : 'bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-blue-500/10 dark:from-emerald-950/50 dark:via-teal-900/30 dark:to-blue-950/40 border-emerald-300 dark:border-emerald-700/80 shadow-emerald-500/5'
-                }`}
-              >
-                {/* Fondo Resplandor de Luz */}
-                <div className={`absolute -right-12 -top-12 w-48 h-48 rounded-full blur-3xl opacity-20 pointer-events-none ${
-                  isReasigAnterior ? 'bg-amber-400' : isReasigNueva ? 'bg-purple-400' : 'bg-emerald-400'
-                }`} />
-
-                {/* Cabecera Notificación */}
-                <div className="flex items-center justify-between flex-wrap gap-3 relative z-10">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
-                      isReasigAnterior
-                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
-                        : isReasigNueva
-                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-700'
-                        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
-                    }`}>
-                      {isReasigAnterior ? (
-                        <AlertTriangle size={22} className="animate-pulse" />
-                      ) : isReasigNueva ? (
-                        <Sparkles size={22} className="animate-bounce text-amber-500" />
-                      ) : (
-                        <CheckCircle2 size={22} className="animate-pulse" />
-                      )}
-                    </div>
-
-                    <div>
-                      <span className={`text-[0.68rem] font-mono font-black uppercase tracking-widest block mb-0.5 ${
-                        isReasigAnterior ? 'text-amber-800 dark:text-amber-300' : isReasigNueva ? 'text-purple-800 dark:text-purple-300' : 'text-emerald-800 dark:text-emerald-300'
-                      }`}>
-                        {notif.titulo}
-                      </span>
-                      <h4 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                        <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
-                          PRJ-00{prj.idProyecto}
-                        </span>
-                        <span>{prj.nombre}</span>
-                      </h4>
-                    </div>
-                  </div>
-
-                  <span className="text-[0.65rem] font-mono font-extrabold px-3 py-1 rounded-full bg-white/80 dark:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
-                    {notif.vigencia}
-                  </span>
-                </div>
-
-                <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed relative z-10 pl-1">
-                  {notif.subtitulo}
-                </p>
-
-                {/* Tarjeta de Motivo / Ficha Técnica */}
-                <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5 relative z-10 shadow-2xs">
-                  <div className="flex items-center justify-between text-[0.68rem] font-bold text-zinc-400">
-                    <span className="uppercase tracking-wider font-mono">
-                      {isReasigAnterior ? 'Motivo de Reasignación Directiva:' : isReasigNueva ? 'Justificación de Reasignación:' : 'Alcance Inicial del Proyecto:'}
-                    </span>
-                    <span>Cliente: <strong>{prj.cliente || 'Interno'}</strong></span>
-                  </div>
-                  <p className="text-xs text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed">
-                    {notif.motivo}
-                  </p>
-                  {isReasigAnterior && notif.nuevoLider && (
-                    <p className="text-[0.7rem] text-amber-700 dark:text-amber-400 font-bold pt-1 border-t border-zinc-100 dark:border-zinc-800">
-                      Transferido a: <strong>{notif.nuevoLider}</strong>
-                    </p>
-                  )}
-                </div>
-
-                {/* Acciones */}
-                <div className="flex items-center justify-end gap-3 pt-1 relative z-10">
-                  {isReasigAnterior ? (
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      type="button"
-                      onClick={() => handleConfirmarLecturaReasignacion(prj.idProyecto)}
-                      className="gradient-button text-xs py-2.5 px-5 font-extrabold inline-flex items-center gap-2 shadow-md cursor-pointer"
-                    >
-                      <CheckCircle2 size={16} />
-                      <span>Entendido / Confirmar Lectura</span>
-                    </motion.button>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleDismissNotification(notif.idNotif)}
-                        className="outline-button text-xs py-2 px-4 font-bold cursor-pointer"
-                      >
-                        Entendido / Descartar
-                      </button>
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        type="button"
-                        onClick={() => {
-                          setProyectoSeleccionado(prj);
-                          setActiveTab('wbs');
-                          handleDismissNotification(notif.idNotif);
-                          toast.success(`Navegando a la WBS del proyecto "${prj.nombre}"`);
-                        }}
-                        className="gradient-button text-xs py-2.5 px-5 font-extrabold inline-flex items-center gap-2 shadow-md cursor-pointer"
-                      >
-                        <FolderCheck size={16} />
-                        <span>🚀 Gestionar WBS de Proyecto</span>
-                      </motion.button>
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
 
       {/* Banner Flotante de Retorno Rápido (Volver al Predictor de Burnout en 1 Clic) */}
       {navReturnContext && (
@@ -3385,12 +3252,20 @@ export const LiderDashboard = () => {
                   {proyectosCatalogoFiltrados.map((p) => {
                     const badgeStyle = getEstadoBadgeClasses(p.estado);
                     const presupuestoFormateado = p.presupuesto ? Number(p.presupuesto).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00';
+                    const isReasig = p.reasignado && getHoursSinceReassignment(p.fechaReasignacion) <= 72;
+                    const isNuevo = !p.reasignado && (p.fechaInicio || p.createdAt) && getHoursSinceReassignment(p.fechaInicio || p.createdAt) <= 72;
 
                     return (
                       <div
                         key={p.idProyecto}
                         onClick={() => seleccionarProyecto(p)}
-                        className="group bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 shadow-xs hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4"
+                        className={`group p-6 rounded-3xl border shadow-xs hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4 ${
+                          isReasig
+                            ? 'border-amber-400 dark:border-amber-700/80 bg-gradient-to-b from-amber-50/40 via-amber-50/10 to-white dark:from-amber-950/20 dark:to-zinc-900 shadow-md shadow-amber-500/5 hover:border-amber-500'
+                            : isNuevo
+                            ? 'border-emerald-400 dark:border-emerald-700/80 bg-gradient-to-b from-emerald-50/40 via-emerald-50/10 to-white dark:from-emerald-950/20 dark:to-zinc-900 shadow-md shadow-emerald-500/5 hover:border-emerald-500'
+                            : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400'
+                        }`}
                       >
                         <div className="space-y-3">
                           <div className="flex items-start justify-between gap-3">
@@ -3409,10 +3284,24 @@ export const LiderDashboard = () => {
                               </div>
                             </div>
 
-                            <span className={`inline-flex items-center gap-1.5 text-[0.62rem] font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${badgeStyle.badge}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${badgeStyle.dot}`} />
-                              <span>{p.estado || 'ACTIVO'}</span>
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {isReasig ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 animate-pulse flex items-center gap-1 shadow-2xs">
+                                  <AlertTriangle size={11} className="text-amber-600 shrink-0" />
+                                  PROCESO REASIGNADO (1D)
+                                </span>
+                              ) : isNuevo ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-700 animate-pulse flex items-center gap-1 shadow-2xs">
+                                  <Sparkles size={11} className="text-emerald-600 animate-bounce shrink-0" />
+                                  NUEVO PROYECTO ASIGNADO (3D)
+                                </span>
+                              ) : null}
+
+                              <span className={`inline-flex items-center gap-1.5 text-[0.62rem] font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${badgeStyle.badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${badgeStyle.dot}`} />
+                                <span>{p.estado || 'ACTIVO'}</span>
+                              </span>
+                            </div>
                           </div>
 
                           {p.descripcion && (
@@ -3420,6 +3309,26 @@ export const LiderDashboard = () => {
                               {p.descripcion}
                             </p>
                           )}
+
+                          {/* Ficha de Líder y Etiqueta de Estado */}
+                          <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-3 text-xs">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <User size={13} className="text-blue-500 shrink-0" />
+                              <span className="truncate font-semibold text-zinc-700 dark:text-zinc-300">
+                                Líder: <strong>{p.lider ? `${p.lider.nombre} ${p.lider.apellido}` : 'Sin Asignar'}</strong>
+                              </span>
+                            </div>
+
+                            {isReasig ? (
+                              <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 text-[0.62rem] font-extrabold shrink-0 shadow-2xs">
+                                Reasignado
+                              </span>
+                            ) : isNuevo ? (
+                              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 text-[0.62rem] font-extrabold shrink-0 shadow-2xs">
+                                Nuevo
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
 
                         {/* Inversión Financiera Destacada */}
