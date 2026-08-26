@@ -2751,29 +2751,32 @@ export const LiderDashboard = () => {
             </motion.button>
           )}
 
-          <motion.button
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            type="button"
-            onClick={() => {
-              setNuevoProyectoForm({
-                nombre: '',
-                cliente: '',
-                descripcion: '',
-                fechaInicio: new Date().toISOString().split('T')[0],
-                fechaFinEstimada: '',
-                presupuesto: ''
-              });
-              setNuevoProyectoErrors({});
-              setShowNuevoProyectoModal(true);
-            }}
-            className="group px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/35 transition-all"
-            title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11)"
-          >
-            <FolderPlus size={15} className="group-hover:scale-115 group-hover:-rotate-12 transition-transform duration-300" />
-            <span>Nuevo Proyecto</span>
-          </motion.button>
+          {/* Botón: Nuevo Proyecto (Exclusivo de la Vista Global Corporativa de WBS y Proyectos) */}
+          {activeTab === 'wbs' && (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') && (
+            <motion.button
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              type="button"
+              onClick={() => {
+                setNuevoProyectoForm({
+                  nombre: '',
+                  cliente: '',
+                  descripcion: '',
+                  fechaInicio: new Date().toISOString().split('T')[0],
+                  fechaFinEstimada: '',
+                  presupuesto: ''
+                });
+                setNuevoProyectoErrors({});
+                setShowNuevoProyectoModal(true);
+              }}
+              className="group px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/35 transition-all"
+              title="Crear un nuevo proyecto de software con presupuesto y fechas (HU-11)"
+            >
+              <FolderPlus size={15} className="group-hover:scale-115 group-hover:-rotate-12 transition-transform duration-300" />
+              <span>Nuevo Proyecto</span>
+            </motion.button>
+          )}
 
           {/* Botón: Nuevo Colaborador (Exclusivo de Nómina y Personal) */}
           {(activeTab === 'personal' || activeTab === 'nomina') && (
