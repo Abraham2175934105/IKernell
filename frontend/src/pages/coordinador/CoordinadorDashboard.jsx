@@ -3419,27 +3419,27 @@ export const CoordinadorDashboard = () => {
             </motion.div>
           </div>
         )}
-        {/* Modal: Reasignación Obligatoria de Proyectos al Inhabilitar Líder (Vista Amplia & Asignación Granular) */}
+        {/* Modal: Reasignación Obligatoria de Proyectos al Inhabilitar Líder (Vista Amplia Executiva & Granular) */}
         {showReasignarLiderModal && liderAInhabilitar && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-4xl shadow-2xl space-y-6 max-h-[90dvh] overflow-y-auto"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-10 w-full max-w-5xl shadow-2xl space-y-7 max-h-[92dvh] overflow-y-auto"
             >
               {/* Encabezado Principal */}
-              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black shrink-0 border border-amber-500/20">
-                    <AlertTriangle size={22} />
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-5">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black shrink-0 border border-amber-500/20 shadow-sm">
+                    <AlertTriangle size={24} />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       Reasignación Granular Obligatoria de Proyectos
                     </h3>
                     <p className="text-xs text-zinc-500 font-medium">
-                      Transfiere el portafolio de supervisión antes de inhabilitar al Líder
+                      Transfiere la supervisión directiva del portafolio antes de inhabilitar la cuenta del Líder
                     </p>
                   </div>
                 </div>
@@ -3456,101 +3456,138 @@ export const CoordinadorDashboard = () => {
                     onSubmit={handleIrAConfirmacionReasignacion} 
                     className="space-y-6 text-xs"
                   >
-                    {/* Alerta Informativa del Líder Afectado */}
-                    <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 flex items-start gap-3 text-amber-900 dark:text-amber-200">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500 text-white font-bold flex items-center justify-center shrink-0 text-sm shadow-sm">
-                        {getInitials(liderAInhabilitar.nombre, liderAInhabilitar.apellido)}
+                    {/* Alerta Informativa Enriquecida del Líder Afectado */}
+                    <div className="p-5 rounded-3xl bg-gradient-to-r from-amber-50/90 via-amber-50 to-orange-50/80 dark:from-amber-950/50 dark:via-amber-950/40 dark:to-orange-950/40 border border-amber-200/90 dark:border-amber-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-amber-900 dark:text-amber-200 shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white font-black flex items-center justify-center shrink-0 text-lg shadow-md border border-amber-400/30">
+                          {getInitials(liderAInhabilitar.nombre, liderAInhabilitar.apellido)}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100 border border-amber-300 dark:border-amber-700">
+                              ⚠️ Líder a Inhabilitar
+                            </span>
+                            <strong className="text-sm font-black text-amber-950 dark:text-amber-100">
+                              {liderAInhabilitar.nombre} {liderAInhabilitar.apellido}
+                            </strong>
+                          </div>
+                          <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                            {liderAInhabilitar.email} &bull; {liderAInhabilitar.profesion || 'Líder de Proyecto'}
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <strong className="block text-xs font-black">
-                          Líder Afectado: {liderAInhabilitar.nombre} {liderAInhabilitar.apellido} ({liderAInhabilitar.email})
-                        </strong>
-                        <p className="text-[0.72rem] leading-relaxed opacity-90">
-                          Este Líder administra actualmente <strong>{proyectosDelLiderAfectado.length} proyecto(s) activo(s)</strong>. Para inhabilitar su acceso en la plataforma, asigna individualmente a qué Líder transferirás la supervisión de cada proyecto.
-                        </p>
+
+                      <div className="px-4 py-2.5 rounded-2xl bg-white/80 dark:bg-zinc-900/80 border border-amber-300/80 dark:border-amber-700/80 shrink-0 text-center space-y-0.5">
+                        <span className="text-[0.62rem] font-mono font-extrabold text-amber-700 dark:text-amber-400 uppercase block">Portafolio Activo</span>
+                        <span className="font-mono font-black text-base text-amber-950 dark:text-amber-100 block">
+                          {proyectosDelLiderAfectado.length} Proyecto(s)
+                        </span>
                       </div>
                     </div>
 
-                    {/* Barra de Asignación Masiva Rápida */}
-                    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <UserCheck size={16} className="text-blue-600 dark:text-blue-400" />
-                        <span className="font-extrabold text-zinc-800 dark:text-zinc-200 text-xs">
-                          ⚡ Asignación Masiva Rápida (Opcional):
-                        </span>
+                    {/* Tarjeta Destacada de Asignación Masiva Rápida (Zap Atajo) */}
+                    <div className="p-5 rounded-3xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/90 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 border border-blue-200/90 dark:border-blue-800/80 space-y-3 shadow-sm">
+                      <div className="flex items-center gap-2.5">
+                        <Sparkles size={18} className="text-amber-500 shrink-0 animate-pulse" />
+                        <div>
+                          <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-xs block">
+                            ⚡ Asignación Masiva Rápida (Atajo para todo el portafolio)
+                          </span>
+                          <span className="text-[0.68rem] text-zinc-500 font-medium block">
+                            Asigna un mismo Líder receptor a los {proyectosDelLiderAfectado.length} proyectos con un solo clic. Puedes cambiar individualmente cada uno abajo.
+                          </span>
+                        </div>
                       </div>
+
                       <select
                         value={nuevoLiderTargetId}
                         onChange={(e) => handleAsignarTodosAMismoLider(e.target.value)}
-                        className="input-field w-full py-2 px-3 text-xs font-bold appearance-none cursor-pointer bg-white dark:bg-zinc-900"
+                        className="input-field w-full py-3 px-4 text-xs font-bold appearance-none cursor-pointer bg-white dark:bg-zinc-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-500 rounded-xl"
                       >
-                        <option value="">— Asignar todos los proyectos a un mismo Líder —</option>
+                        <option value="">— Seleccionar Líder para asignar masivamente a los {proyectosDelLiderAfectado.length} proyectos —</option>
                         {trabajadores
                           .filter(t => t.idTrabajador !== liderAInhabilitar.idTrabajador && t.estado && t.rol && t.rol.toUpperCase().includes('LIDER'))
                           .map(l => (
                             <option key={l.idTrabajador} value={l.idTrabajador}>
-                              {l.nombre} {l.apellido} ({l.profesion || 'Líder de Proyecto'}) &bull; {l.email}
+                              {l.nombre} {l.apellido} — ({l.profesion || 'Líder de Proyecto'}) &bull; [{l.email}]
                             </option>
                           ))}
                       </select>
                     </div>
 
-                    {/* Lista Granular e Independiente de Proyectos */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[0.7rem] font-extrabold text-zinc-400 uppercase tracking-wider block font-mono">
-                          Matriz de Asignación por Proyecto ({proyectosDelLiderAfectado.length} Proyectos):
+                    {/* Matriz Granular de Asignación Obligatoria */}
+                    <div className="space-y-3.5">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-[0.7rem] font-extrabold text-zinc-500 uppercase tracking-wider block font-mono">
+                          Matriz de Asignación Granular ({proyectosDelLiderAfectado.length} Proyectos Obligatorios):
                         </span>
-                        <span className="text-[0.65rem] text-zinc-500 font-medium">
-                          Puedes seleccionar un Líder distinto para cada proyecto
+                        <span className="text-[0.68rem] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
+                          ⚠️ Ningún proyecto se puede quedar sin asignar
                         </span>
                       </div>
 
-                      <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                      {/* Lista de Proyectos con Scrollbar aislado */}
+                      <div className="space-y-4 max-h-[55dvh] overflow-y-auto pr-3.5 pl-1 py-1">
                         {proyectosDelLiderAfectado.map((p) => {
                           const otrosLideresList = trabajadores.filter(
                             t => t.idTrabajador !== liderAInhabilitar.idTrabajador && t.estado && t.rol && t.rol.toUpperCase().includes('LIDER')
                           );
+                          const estaAsignado = Boolean(reasignacionesMap[p.idProyecto]);
 
                           return (
                             <div 
                               key={p.idProyecto} 
-                              className="p-4 rounded-2xl bg-white dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 space-y-3 text-xs shadow-2xs hover:border-blue-300 transition-colors"
+                              className={`p-5 rounded-3xl bg-white dark:bg-zinc-800/80 border space-y-3.5 text-xs shadow-2xs transition-all ${
+                                estaAsignado 
+                                  ? 'border-zinc-200 dark:border-zinc-700/80 hover:border-blue-400' 
+                                  : 'border-amber-300 dark:border-amber-700 bg-amber-50/20 dark:bg-amber-950/10'
+                              }`}
                             >
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-700/50 pb-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono font-bold text-[0.65rem] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-700/50 pb-2.5">
+                                <div className="flex items-center gap-2.5">
+                                  <span className="font-mono font-extrabold text-[0.68rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
                                     PRJ-00{p.idProyecto}
                                   </span>
                                   <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm">
                                     {p.nombre}
                                   </h4>
                                 </div>
-                                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                                <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
                                   ${Number(p.presupuesto || 0).toLocaleString('es-CO')} COP
                                 </span>
                               </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                                <div className="text-[0.7rem] text-zinc-500">
+                              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                                <div className="md:col-span-5 text-[0.72rem] text-zinc-500 space-y-0.5">
                                   <span className="font-bold text-zinc-700 dark:text-zinc-300 block">Cliente: {p.cliente || 'Corporativo'}</span>
-                                  <span>Estado: {p.estado}</span>
+                                  <span>Estado: <strong className="text-blue-600 dark:text-blue-400 uppercase">{p.estado || 'ACTIVO'}</strong></span>
                                 </div>
 
-                                <div>
-                                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 text-[0.68rem] block mb-1">
-                                    Nuevo Líder Receptor *
-                                  </label>
+                                <div className="md:col-span-7 space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 text-[0.7rem]">
+                                      Nuevo Líder Receptor *
+                                    </label>
+                                    {!estaAsignado && (
+                                      <span className="text-[0.62rem] font-bold text-amber-600 dark:text-amber-400">
+                                        ⚠️ Selecciona un Líder
+                                      </span>
+                                    )}
+                                  </div>
                                   <select
                                     required
                                     value={reasignacionesMap[p.idProyecto] || ''}
                                     onChange={(e) => handleCambiarLiderDeProyecto(p.idProyecto, e.target.value)}
-                                    className="input-field w-full py-2 px-3 text-xs font-bold appearance-none cursor-pointer"
+                                    className={`input-field w-full py-2.5 px-3.5 text-xs font-bold appearance-none cursor-pointer rounded-xl border-2 ${
+                                      estaAsignado 
+                                        ? 'border-zinc-200 dark:border-zinc-700 focus:border-blue-500' 
+                                        : 'border-amber-400 dark:border-amber-600 bg-amber-50/50 dark:bg-amber-950/30'
+                                    }`}
                                   >
-                                    <option value="">— Seleccionar Líder —</option>
+                                    <option value="">— ⚠️ Seleccionar Líder Receptor Obligatorio —</option>
                                     {otrosLideresList.map(l => (
                                       <option key={l.idTrabajador} value={l.idTrabajador}>
-                                        {l.nombre} {l.apellido} &bull; {l.email}
+                                        {l.nombre} {l.apellido} — ({l.profesion || 'Líder de Proyecto'}) &bull; [{l.email}]
                                       </option>
                                     ))}
                                   </select>
@@ -3567,14 +3604,14 @@ export const CoordinadorDashboard = () => {
                       <button
                         type="button"
                         onClick={() => setShowReasignarLiderModal(false)}
-                        className="outline-button text-xs py-2 px-4 font-bold"
+                        className="outline-button text-xs py-2.5 px-5 font-bold rounded-2xl"
                       >
                         Cancelar
                       </button>
 
                       <button
                         type="submit"
-                        className="gradient-button text-xs py-2.5 px-6 font-bold inline-flex items-center gap-2 shadow-md cursor-pointer"
+                        className="gradient-button text-xs py-3 px-6 font-bold inline-flex items-center gap-2 shadow-md cursor-pointer rounded-2xl"
                       >
                         <span>Revisar & Confirmar Reasignación</span>
                         <ChevronRight size={16} />
