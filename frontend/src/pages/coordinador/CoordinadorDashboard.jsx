@@ -1129,25 +1129,17 @@ export const CoordinadorDashboard = () => {
     return (trabajadores || []).filter(t => t.rol === 'LIDER' && t.estado);
   }, [trabajadores]);
 
-  // Filtrado Estricto de Proyectos para el Coordinador (Vista Global)
-  const proyectosFiltradosCoordinador = useMemo(() => {
+  // 1. Subset de proyectos por Líder y Texto de Búsqueda (Sin filtrar por Estado Operativo)
+  const proyectosBaseCoordinador = useMemo(() => {
     if (!Array.isArray(proyectos)) return [];
 
     return proyectos.filter(prj => {
-      // 1. Estado
-      if (filtroProyectoEstado !== 'TODOS') {
-        if (filtroProyectoEstado === 'EN_PROGRESO' && prj.estado !== 'EN_PROGRESO' && prj.estado !== 'ACTIVO') return false;
-        if (filtroProyectoEstado === 'COMPLETADO' && prj.estado !== 'COMPLETADO' && prj.estado !== 'FINALIZADO') return false;
-        if (filtroProyectoEstado === 'PAUSADO' && prj.estado !== 'PAUSADO') return false;
-        if (filtroProyectoEstado === 'INHABILITADO' && prj.estado !== 'INHABILITADO') return false;
-      }
-
-      // 2. Líder
+      // Filtro de Líder
       if (filtroProyectoLider !== 'TODOS') {
         if (String(prj.lider?.idTrabajador) !== String(filtroProyectoLider)) return false;
       }
 
-      // 3. Búsqueda por texto
+      // Búsqueda por texto
       if (searchProyectoQuery.trim()) {
         const q = searchProyectoQuery.toLowerCase().trim();
         const matchCode = String(prj.idProyecto).includes(q) || `prj-00${prj.idProyecto}`.toLowerCase().includes(q);
@@ -1159,7 +1151,29 @@ export const CoordinadorDashboard = () => {
 
       return true;
     });
-  }, [proyectos, filtroProyectoEstado, filtroProyectoLider, searchProyectoQuery]);
+  }, [proyectos, filtroProyectoLider, searchProyectoQuery]);
+
+  // 2. Filtrado final aplicando Estado Operativo
+  const proyectosFiltradosCoordinador = useMemo(() => {
+    return proyectosBaseCoordinador.filter(prj => {
+      if (filtroProyectoEstado !== 'TODOS') {
+        if (filtroProyectoEstado === 'EN_PROGRESO' && prj.estado !== 'EN_PROGRESO' && prj.estado !== 'ACTIVO') return false;
+        if (filtroProyectoEstado === 'COMPLETADO' && prj.estado !== 'COMPLETADO' && prj.estado !== 'FINALIZADO') return false;
+        if (filtroProyectoEstado === 'PAUSADO' && prj.estado !== 'PAUSADO') return false;
+        if (filtroProyectoEstado === 'INHABILITADO' && prj.estado !== 'INHABILITADO') return false;
+      }
+      return true;
+    });
+  }, [proyectosBaseCoordinador, filtroProyectoEstado]);
+
+  // Contadores dinámicos para las pestañas de estado según el Líder seleccionado
+  const countsEstadoDinamicos = useMemo(() => {
+    const todos = proyectosBaseCoordinador.length;
+    const enProgreso = proyectosBaseCoordinador.filter(p => p.estado === 'EN_PROGRESO' || p.estado === 'ACTIVO' || !p.estado).length;
+    const completados = proyectosBaseCoordinador.filter(p => p.estado === 'COMPLETADO' || p.estado === 'FINALIZADO').length;
+    const pausados = proyectosBaseCoordinador.filter(p => p.estado === 'PAUSADO').length;
+    return { todos, enProgreso, completados, pausados };
+  }, [proyectosBaseCoordinador]);
 
   // Paginación Inteligente de Proyectos
   const totalFilteredProyectos = proyectosFiltradosCoordinador.length;
@@ -1966,7 +1980,7 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Tarjetas de Métricas Ejecutivas del Portafolio */}
+          {/* Tarjetas de Métricas Ejecutivas del Portafolio (Dinámicas por Filtro de Líder) */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
               <div className="flex items-center justify-between">
@@ -1974,10 +1988,10 @@ export const CoordinadorDashboard = () => {
                 <Briefcase size={16} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-2">
-                {proyectos.length} Proyectos
+                {proyectosBaseCoordinador.length} Proyectos
               </div>
               <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
-                Sincronizados en PostgreSQL
+                {filtroProyectoLider !== 'TODOS' ? 'Filtrado por Líder seleccionado' : 'Sincronizados en PostgreSQL'}
               </span>
             </div>
 
@@ -1987,10 +2001,10 @@ export const CoordinadorDashboard = () => {
                 <DollarSign size={16} className="text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2 font-mono">
-                ${proyectos.reduce((acc, p) => acc + (p.presupuesto || 0), 0).toLocaleString('es-CO')}
+                ${proyectosBaseCoordinador.reduce((acc, p) => acc + (p.presupuesto || 0), 0).toLocaleString('es-CO')}
               </div>
               <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
-                Presupuesto acumulado activo
+                {filtroProyectoLider !== 'TODOS' ? 'Presupuesto del Líder' : 'Presupuesto acumulado activo'}
               </span>
             </div>
 
@@ -2000,10 +2014,10 @@ export const CoordinadorDashboard = () => {
                 <Clock size={16} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-2">
-                {proyectos.filter(p => p.estado === 'EN_PROGRESO' || p.estado === 'ACTIVO' || !p.estado).length} Activos
+                {countsEstadoDinamicos.enProgreso} Activos
               </div>
               <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
-                Bajo supervisión técnica
+                En desarrollo técnico activo
               </span>
             </div>
 
@@ -2013,10 +2027,10 @@ export const CoordinadorDashboard = () => {
                 <Users size={16} className="text-purple-600 dark:text-purple-400" />
               </div>
               <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-2">
-                {lideresActivos.length} Líderes
+                {filtroProyectoLider !== 'TODOS' ? '1 Líder' : `${lideresActivos.length} Líderes`}
               </div>
               <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
-                Dirección asignada
+                {filtroProyectoLider !== 'TODOS' ? 'Líder filtrado en pantalla' : 'Dirección asignada'}
               </span>
             </div>
           </motion.div>
@@ -2068,7 +2082,7 @@ export const CoordinadorDashboard = () => {
               </div>
             </div>
 
-            {/* Pestañas de Filtro por Estado Operativo */}
+            {/* Pestañas de Filtro por Estado Operativo (Dinámicas según el Líder seleccionado) */}
             <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-zinc-100 dark:border-zinc-800">
               <button
                 type="button"
@@ -2079,7 +2093,7 @@ export const CoordinadorDashboard = () => {
                     : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
                 }`}
               >
-                Todos los Estados ({proyectos.length})
+                Todos los Estados ({countsEstadoDinamicos.todos})
               </button>
 
               <button
@@ -2092,7 +2106,7 @@ export const CoordinadorDashboard = () => {
                 }`}
               >
                 <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                En Ejecución ({proyectos.filter(p => p.estado === 'EN_PROGRESO' || p.estado === 'ACTIVO' || !p.estado).length})
+                En Ejecución ({countsEstadoDinamicos.enProgreso})
               </button>
 
               <button
@@ -2105,7 +2119,7 @@ export const CoordinadorDashboard = () => {
                 }`}
               >
                 <CheckCircle2 size={12} />
-                Completados ({proyectos.filter(p => p.estado === 'COMPLETADO' || p.estado === 'FINALIZADO').length})
+                Completados ({countsEstadoDinamicos.completados})
               </button>
 
               <button
@@ -2118,7 +2132,7 @@ export const CoordinadorDashboard = () => {
                 }`}
               >
                 <Clock size={12} />
-                En Pausa ({proyectos.filter(p => p.estado === 'PAUSADO').length})
+                En Pausa ({countsEstadoDinamicos.pausados})
               </button>
             </div>
           </motion.div>
