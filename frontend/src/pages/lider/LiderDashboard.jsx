@@ -1384,7 +1384,8 @@ export const LiderDashboard = () => {
       setProyectoNotifReasignacion(targetPrj);
     }
     setShowReasignacionNotifModal(true);
-    setActiveTab('proyectos');
+    seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+    setActiveTab('wbs');
   };
 
   const handleConfirmarLecturaReasignacion = async (idProyecto) => {
@@ -1395,7 +1396,8 @@ export const LiderDashboard = () => {
       setShowReasignacionNotifModal(false);
       setFromReasigNotifModal(false);
       setProyectoNotifReasignacion(null);
-      setActiveTab('proyectos');
+      seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+      setActiveTab('wbs');
 
       await api.put(`/lider/proyectos/${targetId}/confirmar-lectura-reasignacion`).catch(async () => {
         await api.put(`/coordinador/proyectos/${targetId}/confirmar-lectura-reasignacion`);
@@ -2887,7 +2889,8 @@ export const LiderDashboard = () => {
                 type="button"
                 onClick={() => {
                   setFromReasigNotifModal(false);
-                  setActiveTab('proyectos');
+                  seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+                  setActiveTab('wbs');
                 }}
                 className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs rounded-2xl transition-all"
                 title="Regresar al catálogo corporativo de proyectos"
