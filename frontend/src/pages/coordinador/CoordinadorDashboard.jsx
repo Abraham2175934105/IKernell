@@ -3917,15 +3917,15 @@ export const CoordinadorDashboard = () => {
                 {/* Panel Izquierdo: Información Personal, Credenciales & Stack Técnico */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                    <Shield size={16} className="text-blue-600" />
-                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                    <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
                       Ficha Personal, Credenciales & Stack Técnico
                     </h4>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 text-xs">
                     {/* Correo Corporativo (No editable por regla de negocio) */}
-                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
                       <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo Principal:</span>
                       <div className="flex items-center gap-2 mt-1">
                         <Mail size={14} className="text-blue-600 shrink-0" />
@@ -3937,7 +3937,7 @@ export const CoordinadorDashboard = () => {
                     </div>
 
                     {/* Correo Personal Alternativo (Para credenciales temporales) */}
-                    <div className="p-3.5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60">
+                    <div className="p-3.5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 hover:border-purple-400 dark:hover:border-purple-600 transition-colors">
                       <span className="text-[0.62rem] font-extrabold uppercase text-purple-700 dark:text-purple-300 block font-mono">
                         Correo Personal Alternativo (Credenciales Temporales):
                       </span>
@@ -3949,16 +3949,18 @@ export const CoordinadorDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Profesión & Especialidad Desglosada en Tech Pills */}
+                    {/* Profesión & Especialidad Desglosada en Tech Pills Animadas */}
                     <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2">
                       <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Profesión & Competencias Técnicas:</span>
                       <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm block">
                         {selectedTrabajadorModal.profesion || 'Ingeniero de Software'}
                       </span>
                       
-                      {/* Tech Pills Parser */}
+                      {/* Tech Pills Parser con Framer Motion */}
                       <div className="pt-1">
-                        <span className="text-[0.65rem] font-bold text-zinc-500 block mb-1.5">Tecnologías & Disciplinas Destacadas:</span>
+                        <span className="text-[0.65rem] font-bold text-zinc-500 block mb-1.5 flex items-center gap-1">
+                          <Sparkles size={12} className="text-amber-500" /> Tecnologías & Disciplinas Destacadas:
+                        </span>
                         <div className="flex flex-wrap gap-1.5">
                           {(selectedTrabajadorModal.especialidad || 'Desarrollo de Software')
                             .replace(/\[|\]/g, '')
@@ -3966,12 +3968,14 @@ export const CoordinadorDashboard = () => {
                             .map(item => item.trim())
                             .filter(item => item.length > 0)
                             .map((tech, idx) => (
-                              <span 
+                              <motion.span 
                                 key={idx}
-                                className="px-2.5 py-1 rounded-lg text-[0.65rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs"
+                                whileHover={{ scale: 1.06, y: -1 }}
+                                whileTap={{ scale: 0.96 }}
+                                className="px-2.5 py-1 rounded-lg text-[0.65rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs cursor-default select-none transition-colors hover:border-blue-400"
                               >
                                 {tech}
-                              </span>
+                              </motion.span>
                             ))}
                         </div>
                       </div>
@@ -3998,7 +4002,9 @@ export const CoordinadorDashboard = () => {
                   {/* Botón Inferior de Despliegue de Proyectos (SOLO PARA LÍDERES O COORDINADORES) */}
                   {!selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR') && (
                     <div className="pt-2">
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.98 }}
                         type="button"
                         onClick={() => setShowTrabajosSubpanel(prev => !prev)}
                         className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-md w-full justify-center"
@@ -4009,12 +4015,12 @@ export const CoordinadorDashboard = () => {
                             ? '◄ Ocultar Proyectos Asociados' 
                             : `Desplegar Proyectos Asociados (${workerProyectos.length}) ►`}
                         </span>
-                      </button>
+                      </motion.button>
                     </div>
                   )}
                 </div>
 
-                {/* Panel Derecho (Subpanel Lateral Desplegable de Proyectos - Solo para Líderes / Coordinadores) */}
+                {/* Panel Derecho (Subpanel Lateral Desplegable de Proyectos - Tarjetas con Framer Motion Stagger) */}
                 {showTrabajosSubpanel && !selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR') && (
                   <motion.div 
                     initial={{ opacity: 0, x: 20 }}
@@ -4023,12 +4029,12 @@ export const CoordinadorDashboard = () => {
                   >
                     <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
                       <div className="flex items-center gap-2">
-                        <Briefcase size={16} className="text-blue-600" />
-                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                        <FolderGit2 size={18} className="text-indigo-600 dark:text-indigo-400" />
+                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
                           Proyectos Asociados & Historial
                         </h4>
                       </div>
-                      <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                      <span className="text-[0.65rem] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         {workerProyectos.length} Asignado(s)
                       </span>
                     </div>
@@ -4041,27 +4047,32 @@ export const CoordinadorDashboard = () => {
                       </div>
                     ) : (
                       <div className="space-y-3 max-h-[60dvh] overflow-y-auto pr-1">
-                        {workerProyectos.map(prj => {
+                        {workerProyectos.map((prj, index) => {
                           const isLider = prj.lider && (
                             String(prj.lider.idTrabajador) === String(selectedTrabajadorModal.idTrabajador) ||
                             (prj.lider.email && prj.lider.email.toLowerCase() === selectedTrabajadorModal.email?.toLowerCase())
                           );
 
                           return (
-                            <div 
+                            <motion.div 
                               key={prj.idProyecto}
-                              className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2 text-xs hover:border-blue-300 transition-colors"
+                              initial={{ opacity: 0, y: 15 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.25, delay: index * 0.05 }}
+                              whileHover={{ y: -3, scale: 1.01 }}
+                              className="p-4.5 rounded-2xl bg-white dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 shadow-2xs space-y-2.5 text-xs hover:border-blue-400 dark:hover:border-blue-600 transition-all"
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className="font-mono font-bold text-[0.65rem] text-zinc-400">
+                                <span className="font-mono font-extrabold text-[0.68rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
                                   PRJ-00{prj.idProyecto}
                                 </span>
-                                <span className={`px-2 py-0.5 rounded-full text-[0.6rem] font-bold uppercase ${
+                                <span className={`px-2.5 py-0.5 rounded-full text-[0.6rem] font-black uppercase inline-flex items-center gap-1 ${
                                   isLider 
                                     ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300' 
                                     : 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
                                 }`}>
-                                  {isLider ? '👑 Líder Directivo' : '💻 Desarrollador'}
+                                  {isLider ? <Crown size={12} className="text-amber-500" /> : <Code2 size={12} />}
+                                  {isLider ? 'Líder Directivo' : 'Desarrollador'}
                                 </span>
                               </div>
 
@@ -4069,26 +4080,34 @@ export const CoordinadorDashboard = () => {
                                 {prj.nombre}
                               </h5>
 
-                              <div className="grid grid-cols-2 gap-2 text-[0.7rem] pt-1">
-                                <div>
-                                  <span className="text-zinc-400 font-bold block">Cliente:</span>
-                                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{prj.cliente || 'Corporativo'}</span>
+                              <div className="grid grid-cols-2 gap-2 text-[0.72rem] pt-1 border-t border-zinc-100 dark:border-zinc-700/50">
+                                <div className="space-y-0.5">
+                                  <span className="text-zinc-400 font-bold block flex items-center gap-1">
+                                    <Building2 size={11} /> Cliente:
+                                  </span>
+                                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">{prj.cliente || 'Corporativo'}</span>
                                 </div>
-                                <div>
-                                  <span className="text-zinc-400 font-bold block">Presupuesto:</span>
-                                  <span className="font-mono font-bold text-emerald-600">${Number(prj.presupuesto || 0).toLocaleString('es-CO')}</span>
+                                <div className="space-y-0.5">
+                                  <span className="text-zinc-400 font-bold block flex items-center gap-1">
+                                    <DollarSign size={11} className="text-emerald-500" /> Presupuesto:
+                                  </span>
+                                  <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                                    ${Number(prj.presupuesto || 0).toLocaleString('es-CO')} COP
+                                  </span>
                                 </div>
                               </div>
 
-                              <button
+                              <motion.button
+                                whileHover={{ x: 2 }}
+                                whileTap={{ scale: 0.98 }}
                                 type="button"
                                 onClick={() => handleNavegarAProyectoDesdeTrabajador(prj.idProyecto)}
-                                className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer shadow-2xs w-full justify-center mt-2"
+                                className="gradient-button text-xs py-2 px-3 font-bold inline-flex items-center gap-2 text-white cursor-pointer shadow-sm w-full justify-center mt-2 group"
                               >
                                 <span>Ver en Catálogo Global</span>
-                                <ChevronRight size={14} />
-                              </button>
-                            </div>
+                                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                              </motion.button>
+                            </motion.div>
                           );
                         })}
                       </div>
