@@ -3,11 +3,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { 
-  Users, UserPlus, UserX, UserCheck, Search, Shield, CheckCircle2, 
+  Users, UserPlus, UserX, UserCheck, Search, Shield, ShieldCheck, ShieldAlert, CheckCircle2, 
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
-  ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag, FolderGit2, DollarSign, Building2
+  ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag, FolderGit2, DollarSign, Building2,
+  Crown, ArrowRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
