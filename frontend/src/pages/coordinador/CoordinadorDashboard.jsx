@@ -2051,7 +2051,7 @@ export const CoordinadorDashboard = () => {
                   }}
                   className="bg-transparent text-xs font-extrabold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer pr-2"
                 >
-                  <option value="TODOS">👑 Todos los Líderes ({lideresActivos.length})</option>
+                  <option value="TODOS">Todos los Líderes ({lideresActivos.length})</option>
                   {lideresActivos.map(lider => (
                     <option key={lider.idTrabajador} value={lider.idTrabajador}>
                       {lider.nombre} {lider.apellido} &bull; [{lider.email}]
@@ -3885,17 +3885,41 @@ export const CoordinadorDashboard = () => {
                 </div>
               </div>
 
-              {/* Registro de Auditoría & Trazabilidad de Dirección */}
-              <div className="p-4.5 rounded-2xl bg-gradient-to-r from-purple-50/70 via-indigo-50/70 to-blue-50/70 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-blue-950/30 border border-purple-200/80 dark:border-purple-800/60 text-xs space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-purple-600 dark:text-purple-400 shrink-0" />
-                  <span className="font-extrabold text-purple-950 dark:text-purple-200 uppercase tracking-wider text-[0.68rem] font-mono">
-                    📜 Historial de Auditoría & Trazabilidad Directiva:
+              {/* Registro de Auditoría & Gobernanza Directiva (Diseño Ejecutivo sin Emojis) */}
+              <div className="p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white shadow-md border border-indigo-900/50 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-indigo-800/40">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                      <ShieldCheck size={18} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-mono font-extrabold uppercase tracking-wider text-indigo-200">
+                        Historial de Auditoría & Gobernanza Directiva
+                      </h4>
+                      <span className="text-[0.62rem] text-indigo-300/70 font-medium">Trazabilidad en tiempo real registrada en PostgreSQL</span>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[0.6rem] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    SISTEMA AUDITABLE
                   </span>
                 </div>
-                <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed pl-6">
-                  Supervisión actual asignada formalmente. Registro activo en PostgreSQL bajo la gobernanza del Coordinador <strong>{user?.nombre} {user?.apellido}</strong> ({user?.email}).
-                </p>
+
+                <div className="flex items-center gap-3 text-xs pt-0.5">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white font-black text-[0.65rem] flex items-center justify-center shrink-0 shadow-xs">
+                    {user ? getInitials(user.nombre, user.apellido) : 'CO'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[0.65rem] text-indigo-200/80 font-medium block">
+                      Supervisión asignada formalmente bajo la gobernanza del Coordinador:
+                    </span>
+                    <span className="text-xs font-bold text-white truncate block">
+                      {user?.nombre} {user?.apellido} <span className="text-indigo-300 font-normal">({user?.email})</span>
+                    </span>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1 text-[0.62rem] text-emerald-400 font-mono font-bold bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-800/60">
+                    <CheckCircle2 size={12} /> REGISTRO VERIFICADO
+                  </div>
+                </div>
               </div>
 
               {/* Secciones de WBS y Desglose de Actividades */}
