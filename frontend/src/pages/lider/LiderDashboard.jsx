@@ -2689,83 +2689,67 @@ export const LiderDashboard = () => {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap shrink-0 min-w-0 max-w-full">
-          {/* Botón Trigger para Menú Emergente / Selector de Proyectos Enterprise */}
-          <button
-            type="button"
-            onClick={() => setModalProyectosOpen(true)}
-            disabled={loadingProyectos}
-            className="group flex items-center justify-between gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 rounded-2xl px-3.5 py-2.5 shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer min-w-[200px] sm:min-w-[260px] max-w-full disabled:opacity-60 text-left"
-            title="Abrir menú emergente de selección y búsqueda de proyectos"
-          >
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              {loadingProyectos ? (
-                <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate">
-                  <Loader2 size={14} className="animate-spin text-blue-600 dark:text-blue-400 shrink-0" />
-                  <span>Sincronizando proyectos...</span>
-                </div>
-              ) : (!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0 shadow-2xs">
-                    <Globe size={14} />
+          {/* Botón Trigger para Selector de Proyectos: Solo se muestra al estar dentro de un proyecto específico */}
+          {proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (
+            <button
+              type="button"
+              onClick={() => setModalProyectosOpen(true)}
+              disabled={loadingProyectos}
+              className="group flex items-center justify-between gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 rounded-2xl px-3.5 py-2.5 shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer min-w-[200px] sm:min-w-[260px] max-w-full disabled:opacity-60 text-left"
+              title="Abrir menú emergente de selección y búsqueda de proyectos"
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                {loadingProyectos ? (
+                  <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate">
+                    <Loader2 size={14} className="animate-spin text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>Sincronizando proyectos...</span>
                   </div>
-                  <div className="text-left truncate">
-                    <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 block truncate">
-                      [Vista Global Corporativa]
-                    </span>
-                    <span className="text-[0.65rem] text-zinc-400 font-medium block truncate">
-                      Todos los proyectos ({proyectos?.length || 0})
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 shadow-2xs">
-                    <FolderGit2 size={14} />
-                  </div>
-                  <div className="text-left min-w-0 flex-1 truncate">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 shrink-0">
-                        [PRJ-00{proyectoSeleccionado?.idProyecto || 0}]
-                      </span>
-                      <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate max-w-[120px] sm:max-w-[160px]" title={proyectoSeleccionado?.nombre || ''}>
-                        {proyectoSeleccionado?.nombre || 'Proyecto'}
-                      </span>
+                ) : (
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 shadow-2xs">
+                      <FolderGit2 size={14} />
                     </div>
-                    {proyectoSeleccionado?.cliente && (
-                      <span className="text-[0.65rem] text-zinc-400 dark:text-zinc-500 block truncate">
-                        {proyectoSeleccionado.cliente}
-                      </span>
-                    )}
+                    <div className="text-left min-w-0 flex-1 truncate">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 shrink-0">
+                          [PRJ-00{proyectoSeleccionado?.idProyecto || 0}]
+                        </span>
+                        <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate max-w-[120px] sm:max-w-[160px]" title={proyectoSeleccionado?.nombre || ''}>
+                          {proyectoSeleccionado?.nombre || 'Proyecto'}
+                        </span>
+                      </div>
+                      {proyectoSeleccionado?.cliente && (
+                        <span className="text-[0.65rem] text-zinc-400 dark:text-zinc-500 block truncate">
+                          {proyectoSeleccionado.cliente}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="flex items-center gap-1 text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200 shrink-0 transition-colors">
-              <span className="text-[0.65rem] font-bold hidden sm:inline">Cambiar</span>
-              <ChevronDown size={15} className="group-hover:translate-y-0.5 transition-transform" />
-            </div>
-          </button>
+              <div className="flex items-center gap-1 text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200 shrink-0 transition-colors">
+                <span className="text-[0.65rem] font-bold hidden sm:inline">Cambiar</span>
+                <ChevronDown size={15} className="group-hover:translate-y-0.5 transition-transform" />
+              </div>
+            </button>
+          )}
 
-          {/* Botón Destacado: Ver Todos los Proyectos / Vista Global Corporativa con Animaciones Avanzadas */}
-          <motion.button
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            type="button"
-            onClick={() => seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' })}
-            className={`group px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer border ${
-              proyectoSeleccionado?.idProyecto === 'GLOBAL'
-                ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20 shadow-md shadow-blue-500/10'
-                : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:shadow-md hover:shadow-zinc-500/10'
-            }`}
-            title="Ver el portafolio completo y métricas consolidadas de todos los proyectos de la compañía"
-          >
-            <Globe size={15} className={`group-hover:rotate-45 transition-transform duration-500 ${proyectoSeleccionado?.idProyecto === 'GLOBAL' ? 'text-blue-600 dark:text-blue-400 animate-pulse' : 'text-zinc-500'}`} />
-            <span className="hidden md:inline">
-              {proyectoSeleccionado?.idProyecto === 'GLOBAL' ? 'Vista Global Activa' : 'Ver Todos los Proyectos'}
-            </span>
-          </motion.button>
+          {/* Botón: Ver Todos los Proyectos (Solo cuando se está dentro de un proyecto específico) */}
+          {proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (
+            <motion.button
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              type="button"
+              onClick={() => seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' })}
+              className="group px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer border bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:shadow-md hover:shadow-zinc-500/10"
+              title="Ver el portafolio completo y métricas consolidadas de todos los proyectos"
+            >
+              <Globe size={15} className="group-hover:rotate-45 transition-transform duration-500 text-zinc-500" />
+              <span className="hidden md:inline">Ver Todos los Proyectos</span>
+            </motion.button>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.04, y: -2 }}
