@@ -102,6 +102,15 @@ public class CoordinadorController {
         return ResponseEntity.ok(inhabilitado);
     }
 
+    @PutMapping("/proyectos/{idProyecto}/reasignar-lider")
+    @Operation(summary = "Reasignar Líder a un proyecto", description = "Transfiere la dirección de un proyecto específico a un nuevo Líder asignado")
+    public ResponseEntity<Proyecto> reasignarLiderAProyecto(
+            @PathVariable Long idProyecto,
+            @RequestParam Long idNuevoLiderTarget) {
+        Proyecto actualizado = coordinadorService.reasignarLiderAProyecto(idProyecto, idNuevoLiderTarget);
+        return ResponseEntity.ok(actualizado);
+    }
+
     @PostMapping("/proyectos/{idProyecto}/asignar/{idDesarrollador}")
     @Operation(summary = "Asignación operativa", description = "Vincula a un desarrollador a la planilla general de un proyecto (RF-12)")
     public ResponseEntity<ProyectoDesarrollador> asignarProyectoInicial(

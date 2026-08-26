@@ -164,6 +164,21 @@ public class CoordinadorService {
         return trabajadorRepository.save(liderSaliente);
     }
 
+    // Reasigna la dirección de un proyecto específico a un nuevo Líder
+    public Proyecto reasignarLiderAProyecto(Long idProyecto, Long idNuevoLiderTarget) {
+        Proyecto proyecto = proyectoRepository.findById(idProyecto)
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+        Trabajador nuevoLider = obtenerPorId(idNuevoLiderTarget);
+
+        if (!Boolean.TRUE.equals(nuevoLider.getEstado())) {
+            throw new IllegalArgumentException("El nuevo líder seleccionado no se encuentra activo en la empresa.");
+        }
+
+        proyecto.setLider(nuevoLider);
+        proyecto.setReasignado(true);
+        return proyectoRepository.save(proyecto);
+    }
+
     // Asigna un desarrollador al equipo general de un proyecto
     public ProyectoDesarrollador asignarProyectoADesarrollador(Long idProyecto, Long idDesarrollador) {
         // Validaciones

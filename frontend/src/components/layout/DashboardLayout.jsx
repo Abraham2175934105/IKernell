@@ -85,6 +85,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
     if (user?.rol === 'COORDINADOR') {
       return [
         { id: 'personal', label: 'Gestión de Personal', icon: Users, desc: 'CRUD y control de acceso' },
+        { id: 'proyectos', label: 'Gestión de Proyectos', icon: Briefcase, desc: 'Vista global de catálogo y líderes' },
         { id: 'solicitudes', label: 'Solicitudes Web', icon: FileText, desc: 'Consultas públicas' },
         { id: 'burnout', label: 'Predictor de Burnout', icon: Activity, desc: 'Capacidad y desgaste 21d' }
       ];

@@ -7,7 +7,7 @@ import {
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
-  ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag
+  ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag, FolderGit2, DollarSign, Building2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -299,6 +299,25 @@ export const CoordinadorDashboard = () => {
   const [searchSolicitudQuery, setSearchSolicitudQuery] = useState('');
   const [fechaInicioSolicitud, setFechaInicioSolicitud] = useState('');
   const [fechaFinSolicitud, setFechaFinSolicitud] = useState('');
+
+  // Estados para la pestaña 'proyectos' (Gestión de Proyectos - Vista Global del Coordinador)
+  const [searchProyectoQuery, setSearchProyectoQuery] = useState('');
+  const [filtroProyectoEstado, setFiltroProyectoEstado] = useState('TODOS'); // 'TODOS' | 'EN_PROGRESO' | 'COMPLETADO' | 'PAUSADO' | 'INHABILITADO'
+  const [filtroProyectoLider, setFiltroProyectoLider] = useState('TODOS'); // 'TODOS' | idLider
+  const [currentProyectoPage, setCurrentProyectoPage] = useState(1);
+  const [proyectosPerPage, setProyectosPerPage] = useState(6);
+
+  // Modales de Gestión de Proyectos en Coordinador
+  const [selectedProyectoModal, setSelectedProyectoModal] = useState(null);
+  const [loadingProyectoDetalle, setLoadingProyectoDetalle] = useState(false);
+  const [proyectoEtapasModal, setProyectoEtapasModal] = useState([]);
+  const [proyectoDevsModal, setProyectoDevsModal] = useState([]);
+
+  // Reasignar Líder a Proyecto Individual
+  const [showReasignarLiderModalPrj, setShowReasignarLiderModalPrj] = useState(false);
+  const [proyectoAReasignar, setProyectoAReasignar] = useState(null);
+  const [targetNuevoLiderPrjId, setTargetNuevoLiderPrjId] = useState('');
+  const [submittingReasignarLiderPrj, setSubmittingReasignarLiderPrj] = useState(false);
 
   // Estados de Paginación Inteligente (Por cantidad y por hojas)
   const [currentPage, setCurrentPage] = useState(1);
@@ -1049,6 +1068,96 @@ export const CoordinadorDashboard = () => {
   const liderPct = totalCount > 0 ? Math.round((lideresCount / totalCount) * 100) : 0;
   const coordPct = totalCount > 0 ? Math.round((coordCount / totalCount) * 100) : 0;
 
+  // Líderes Activos en la Empresa
+  const lideresActivos = useMemo(() => {
+    return (trabajadores || []).filter(t => t.rol === 'LIDER' && t.estado);
+  }, [trabajadores]);
+
+  // Filtrado Estricto de Proyectos para el Coordinador (Vista Global)
+  const proyectosFiltradosCoordinador = useMemo(() => {
+    if (!Array.isArray(proyectos)) return [];
+
+    return proyectos.filter(prj => {
+      // 1. Estado
+      if (filtroProyectoEstado !== 'TODOS') {
+        if (filtroProyectoEstado === 'EN_PROGRESO' && prj.estado !== 'EN_PROGRESO' && prj.estado !== 'ACTIVO') return false;
+        if (filtroProyectoEstado === 'COMPLETADO' && prj.estado !== 'COMPLETADO' && prj.estado !== 'FINALIZADO') return false;
+        if (filtroProyectoEstado === 'PAUSADO' && prj.estado !== 'PAUSADO') return false;
+        if (filtroProyectoEstado === 'INHABILITADO' && prj.estado !== 'INHABILITADO') return false;
+      }
+
+      // 2. Líder
+      if (filtroProyectoLider !== 'TODOS') {
+        if (String(prj.lider?.idTrabajador) !== String(filtroProyectoLider)) return false;
+      }
+
+      // 3. Búsqueda por texto
+      if (searchProyectoQuery.trim()) {
+        const q = searchProyectoQuery.toLowerCase().trim();
+        const matchCode = String(prj.idProyecto).includes(q) || `prj-00${prj.idProyecto}`.toLowerCase().includes(q);
+        const matchNombre = prj.nombre?.toLowerCase().includes(q);
+        const matchCliente = prj.cliente?.toLowerCase().includes(q);
+        const matchLider = prj.lider ? `${prj.lider.nombre} ${prj.lider.apellido}`.toLowerCase().includes(q) : false;
+        if (!matchCode && !matchNombre && !matchCliente && !matchLider) return false;
+      }
+
+      return true;
+    });
+  }, [proyectos, filtroProyectoEstado, filtroProyectoLider, searchProyectoQuery]);
+
+  // Paginación Inteligente de Proyectos
+  const totalFilteredProyectos = proyectosFiltradosCoordinador.length;
+  const totalProyectoPages = Math.ceil(totalFilteredProyectos / proyectosPerPage) || 1;
+  const safeProyectoPage = Math.min(currentProyectoPage, totalProyectoPages);
+  const startProyectoIdx = (safeProyectoPage - 1) * proyectosPerPage;
+  const proyectosPaginados = proyectosFiltradosCoordinador.slice(startProyectoIdx, startProyectoIdx + proyectosPerPage);
+
+  // Manejadores para Detalle de Proyecto y Reasignación de Líder
+  const handleAbrirDetalleProyecto = async (proyecto) => {
+    setSelectedProyectoModal(proyecto);
+    setLoadingProyectoDetalle(true);
+    try {
+      const [etapasRes, devsRes] = await Promise.all([
+        api.get(`/lider/proyectos/${proyecto.idProyecto}/etapas`).catch(() => []),
+        api.get(`/lider/proyectos/${proyecto.idProyecto}/desarrolladores`).catch(() => [])
+      ]);
+      setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
+      setProyectoDevsModal(Array.isArray(devsRes) ? devsRes : []);
+    } catch (err) {
+      console.error('Error cargando detalle del proyecto:', err);
+    } finally {
+      setLoadingProyectoDetalle(false);
+    }
+  };
+
+  const handleAbrirReasignarLiderPrj = (proyecto) => {
+    setProyectoAReasignar(proyecto);
+    setTargetNuevoLiderPrjId('');
+    setShowReasignarLiderModalPrj(true);
+  };
+
+  const handleEjecutarReasignarLiderPrj = async (e) => {
+    e.preventDefault();
+    if (!targetNuevoLiderPrjId) {
+      toast.error('Seleccione el nuevo Líder de Proyecto.');
+      return;
+    }
+
+    try {
+      setSubmittingReasignarLiderPrj(true);
+      await api.put(`/coordinador/proyectos/${proyectoAReasignar.idProyecto}/reasignar-lider?idNuevoLiderTarget=${targetNuevoLiderPrjId}`);
+      toast.success('Líder de Proyecto reasignado exitosamente en PostgreSQL.');
+      setShowReasignarLiderModalPrj(false);
+      setProyectoAReasignar(null);
+      await cargarDatos();
+    } catch (err) {
+      console.error('Error al reasignar líder de proyecto:', err);
+      toast.error(err.response?.data?.message || 'Error al reasignar el Líder del Proyecto.');
+    } finally {
+      setSubmittingReasignarLiderPrj(false);
+    }
+  };
+
   const getTopSkillsByRole = (list, selectedRole) => {
     const counts = {};
     (list || []).forEach(t => {
@@ -1641,6 +1750,350 @@ export const CoordinadorDashboard = () => {
             )}
           </motion.div>
 
+        </motion.div>
+      )}
+
+      {/* 2. SECCIÓN: GESTIÓN DE PROYECTOS & VISTA GLOBAL DEL PORTAFOLIO */}
+      {activeTab === 'proyectos' && (
+        <motion.div 
+          key="proyectos"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-6"
+        >
+          {/* Header de Gestión Global de Proyectos */}
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <Briefcase size={22} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                    Catálogo Corporativo & Supervisión de Proyectos
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                      Vista Global
+                    </span>
+                  </h2>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                    Consola ejecutiva del Coordinador: Control de portafolio, reasignación de Líderes y consulta WBS.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={cargarDatos}
+                disabled={loading}
+                className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-2xs"
+                title="Sincronizar el catálogo corporativo desde PostgreSQL"
+              >
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                <span>Refrescar Catálogo</span>
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Tarjetas de Métricas Ejecutivas del Portafolio */}
+          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Proyectos en Portafolio</span>
+                <Briefcase size={16} className="text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-2">
+                {proyectos.length} Proyectos
+              </div>
+              <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
+                Sincronizados en PostgreSQL
+              </span>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Inversión Presupuestada</span>
+                <DollarSign size={16} className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2 font-mono">
+                ${proyectos.reduce((acc, p) => acc + (p.presupuesto || 0), 0).toLocaleString('es-CO')}
+              </div>
+              <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
+                Presupuesto acumulado activo
+              </span>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Proyectos en Ejecución</span>
+                <Clock size={16} className="text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-2">
+                {proyectos.filter(p => p.estado === 'EN_PROGRESO' || p.estado === 'ACTIVO' || !p.estado).length} Activos
+              </div>
+              <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
+                Bajo supervisión técnica
+              </span>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Líderes Responsables</span>
+                <Users size={16} className="text-purple-600 dark:text-purple-400" />
+              </div>
+              <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-2">
+                {lideresActivos.length} Líderes
+              </div>
+              <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
+                Dirección asignada
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Panel Integrado de Búsqueda y Filtros Avanzados */}
+          <motion.div variants={itemVariants} className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
+              {/* Caja de Búsqueda */}
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={searchProyectoQuery}
+                  onChange={(e) => {
+                    setSearchProyectoQuery(e.target.value);
+                    setCurrentProyectoPage(1);
+                  }}
+                  placeholder="Buscar por código (PRJ-001), nombre de proyecto, cliente o líder..."
+                  className="w-full pl-10 pr-4 py-2.5 text-xs rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium focus:ring-2 focus:ring-blue-500"
+                />
+                {searchProyectoQuery && (
+                  <button onClick={() => setSearchProyectoQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Filtro por Líder de Proyecto */}
+              <div className="flex items-center gap-2">
+                <span className="text-[0.65rem] font-black uppercase text-zinc-400 shrink-0">Filtrar por Líder:</span>
+                <select
+                  value={filtroProyectoLider}
+                  onChange={(e) => {
+                    setFiltroProyectoLider(e.target.value);
+                    setCurrentProyectoPage(1);
+                  }}
+                  className="px-3 py-2 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold"
+                >
+                  <option value="TODOS">👥 Todos los Líderes ({lideresActivos.length})</option>
+                  {lideresActivos.map(lider => (
+                    <option key={lider.idTrabajador} value={lider.idTrabajador}>
+                      {lider.nombre} {lider.apellido} ({lider.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Pestañas de Filtro por Estado Operativo */}
+            <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <button
+                type="button"
+                onClick={() => { setFiltroProyectoEstado('TODOS'); setCurrentProyectoPage(1); }}
+                className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer ${
+                  filtroProyectoEstado === 'TODOS'
+                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
+                }`}
+              >
+                Todos los Estados ({proyectos.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setFiltroProyectoEstado('EN_PROGRESO'); setCurrentProyectoPage(1); }}
+                className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                  filtroProyectoEstado === 'EN_PROGRESO'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                En Ejecución ({proyectos.filter(p => p.estado === 'EN_PROGRESO' || p.estado === 'ACTIVO' || !p.estado).length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setFiltroProyectoEstado('COMPLETADO'); setCurrentProyectoPage(1); }}
+                className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                  filtroProyectoEstado === 'COMPLETADO'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60'
+                }`}
+              >
+                <CheckCircle2 size={12} />
+                Completados ({proyectos.filter(p => p.estado === 'COMPLETADO' || p.estado === 'FINALIZADO').length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setFiltroProyectoEstado('PAUSADO'); setCurrentProyectoPage(1); }}
+                className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                  filtroProyectoEstado === 'PAUSADO'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
+                }`}
+              >
+                <Clock size={12} />
+                En Pausa ({proyectos.filter(p => p.estado === 'PAUSADO').length})
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Grilla Corporativa de Proyectos */}
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+              <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+              <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+            </div>
+          ) : proyectosPaginados.length === 0 ? (
+            <div className="bg-white dark:bg-zinc-900 p-12 text-center rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800 space-y-3">
+              <FolderGit2 size={40} className="mx-auto text-zinc-400" />
+              <h3 className="text-base font-bold text-zinc-700 dark:text-zinc-300">
+                No se encontraron proyectos con los criterios seleccionados.
+              </h3>
+              <p className="text-xs text-zinc-500">
+                Intente ajustar el término de búsqueda o resetear los filtros por Líder / Estado.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {proyectosPaginados.map(prj => {
+                const presupuestoFmt = Number(prj.presupuesto || 0).toLocaleString('es-CO');
+                const isCompletado = prj.estado === 'COMPLETADO' || prj.estado === 'FINALIZADO';
+                const isPausado = prj.estado === 'PAUSADO';
+
+                return (
+                  <motion.div
+                    key={prj.idProyecto}
+                    whileHover={{ y: -3 }}
+                    className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between gap-4 transition-all duration-200 hover:border-blue-400 dark:hover:border-blue-500/50"
+                  >
+                    <div className="space-y-3">
+                      {/* Cabecera de la Tarjeta */}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[0.65rem] font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                          PRJ-00{prj.idProyecto}
+                        </span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold uppercase border ${
+                          isCompletado ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' :
+                          isPausado ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 animate-pulse' :
+                          'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
+                        }`}>
+                          {prj.estado || 'EN_PROGRESO'}
+                        </span>
+                      </div>
+
+                      {/* Título y Cliente */}
+                      <div>
+                        <h4 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2">
+                          {prj.nombre}
+                        </h4>
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-1">
+                          <Building2 size={13} className="shrink-0 text-zinc-400" />
+                          <span className="truncate">{prj.cliente || 'Cliente Corporativo'}</span>
+                        </div>
+                      </div>
+
+                      {/* Líder Asignado (Badge de Trazabilidad de Dirección) */}
+                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-xl bg-blue-600 text-white font-extrabold text-[0.65rem] flex items-center justify-center shrink-0">
+                            {prj.lider ? getInitials(prj.lider.nombre, prj.lider.apellido) : 'SD'}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[0.62rem] font-bold text-zinc-400 block uppercase font-mono">Líder Asignado:</span>
+                            <span className="text-xs font-black text-zinc-800 dark:text-zinc-200 truncate block">
+                              {prj.lider ? `${prj.lider.nombre} ${prj.lider.apellido}` : 'Sin Líder Asignado'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {prj.reasignado && (
+                          <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 text-[0.6rem] font-bold border border-indigo-200 dark:border-indigo-800 shrink-0">
+                            Reasignado
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Fechas e Inversión */}
+                      <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                        <div className="bg-zinc-50/50 dark:bg-zinc-800/30 p-2 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                          <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase">Presupuesto:</span>
+                          <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">${presupuestoFmt}</span>
+                        </div>
+                        <div className="bg-zinc-50/50 dark:bg-zinc-800/30 p-2 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                          <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase">Fin Estimado:</span>
+                          <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300">{prj.fechaFinEstimada || '2027-12-31'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botones de Acción Interactivas */}
+                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleAbrirDetalleProyecto(prj)}
+                        className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer shadow-2xs flex-1 justify-center"
+                      >
+                        <Eye size={13} /> Ver WBS & Detalle
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAbrirReasignarLiderPrj(prj)}
+                        className="p-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-50 text-zinc-700 dark:text-zinc-300 hover:text-blue-600 border border-zinc-200 dark:border-zinc-700 transition-colors cursor-pointer shrink-0"
+                        title="Reasignar la dirección de este proyecto a otro Líder"
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Paginación Integrada de Proyectos */}
+          {totalProyectoPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-500">
+              <span>Mostrando {startProyectoIdx + 1} - {Math.min(startProyectoIdx + proyectosPerPage, totalFilteredProyectos)} de {totalFilteredProyectos} proyectos</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={safeProyectoPage <= 1}
+                  onClick={() => setCurrentProyectoPage(prev => Math.max(prev - 1, 1))}
+                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span>Página {safeProyectoPage} de {totalProyectoPages}</span>
+                <button
+                  type="button"
+                  disabled={safeProyectoPage >= totalProyectoPages}
+                  onClick={() => setCurrentProyectoPage(prev => Math.min(prev + 1, totalProyectoPages))}
+                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -2866,6 +3319,199 @@ export const CoordinadorDashboard = () => {
                     </button>
                   </div>
                 </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Reasignar Líder a Proyecto Específico */}
+      <AnimatePresence>
+        {showReasignarLiderModalPrj && proyectoAReasignar && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl space-y-6"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <RotateCcw size={20} className="text-blue-600 dark:text-blue-400" /> Reasignar Dirección de Proyecto
+                </h3>
+                <button onClick={() => setShowReasignarLiderModalPrj(false)} className="text-zinc-400 hover:text-zinc-600">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 space-y-1 font-medium">
+                <span className="font-bold block">Proyecto Target: {proyectoAReasignar.nombre} (PRJ-00{proyectoAReasignar.idProyecto})</span>
+                <span>Líder Actual: <strong>{proyectoAReasignar.lider ? `${proyectoAReasignar.lider.nombre} ${proyectoAReasignar.lider.apellido}` : 'Sin Líder'}</strong></span>
+              </div>
+
+              <form onSubmit={handleEjecutarReasignarLiderPrj} className="space-y-4 text-xs">
+                <div>
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Seleccionar Nuevo Líder de Proyecto *</label>
+                  <select
+                    required
+                    value={targetNuevoLiderPrjId}
+                    onChange={(e) => setTargetNuevoLiderPrjId(e.target.value)}
+                    className="input-field py-2.5 font-bold"
+                  >
+                    <option value="">-- Seleccione un Líder de la Lista --</option>
+                    {lideresActivos
+                      .filter(l => l.idTrabajador !== proyectoAReasignar.lider?.idTrabajador)
+                      .map(lider => (
+                        <option key={lider.idTrabajador} value={lider.idTrabajador}>
+                          {lider.nombre} {lider.apellido} ({lider.email})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowReasignarLiderModalPrj(false)}
+                    disabled={submittingReasignarLiderPrj}
+                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReasignarLiderPrj || !targetNuevoLiderPrjId}
+                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {submittingReasignarLiderPrj ? <><Loader2 size={14} className="animate-spin" /> Transfiriendo...</> : 'Confirmar Reasignación'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Detalle Completo de Proyecto & Supervisión WBS para Coordinador */}
+      <AnimatePresence>
+        {selectedProyectoModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-[95%] sm:w-full max-w-4xl shadow-2xl max-h-[90dvh] overflow-y-auto space-y-6"
+            >
+              {/* Encabezado */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[0.65rem] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                      PRJ-00{selectedProyectoModal.idProyecto}
+                    </span>
+                    <span className="text-xs font-bold text-zinc-500">
+                      Cliente: {selectedProyectoModal.cliente || 'Corporativo'}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mt-1">
+                    {selectedProyectoModal.nombre}
+                  </h3>
+                </div>
+
+                <button onClick={() => setSelectedProyectoModal(null)} className="text-zinc-400 hover:text-zinc-600 p-1">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Ficha Resumen */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80">
+                  <span className="text-[0.62rem] font-bold uppercase text-zinc-400 block">Líder Directivo:</span>
+                  <span className="font-extrabold text-zinc-800 dark:text-zinc-200">
+                    {selectedProyectoModal.lider ? `${selectedProyectoModal.lider.nombre} ${selectedProyectoModal.lider.apellido}` : 'Sin Asignar'}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80">
+                  <span className="text-[0.62rem] font-bold uppercase text-zinc-400 block">Presupuesto Asignado:</span>
+                  <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">
+                    ${Number(selectedProyectoModal.presupuesto || 0).toLocaleString('es-CO')}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80">
+                  <span className="text-[0.62rem] font-bold uppercase text-zinc-400 block">Estado Operativo:</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400 uppercase">
+                    {selectedProyectoModal.estado || 'EN_PROGRESO'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Secciones de WBS y Equipo */}
+              {loadingProyectoDetalle ? (
+                <div className="space-y-3 py-6">
+                  <div className="h-20 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-2xl" />
+                  <div className="h-20 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-2xl" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Desglose de Etapas WBS */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <Layers size={16} className="text-blue-600" /> Estructura de Desglose WBS ({proyectoEtapasModal.length} Etapas)
+                    </h4>
+
+                    {proyectoEtapasModal.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-zinc-400 bg-zinc-50 dark:bg-zinc-800/40 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700">
+                        Sin etapas WBS registradas para este proyecto.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {proyectoEtapasModal.map(etapa => (
+                          <div key={etapa.idEtapa} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="font-extrabold text-xs text-zinc-800 dark:text-zinc-200">
+                                {etapa.nombreEtapa}
+                              </span>
+                              <span className="text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                                {etapa.estado || 'PENDIENTE'}
+                              </span>
+                            </div>
+
+                            {/* Actividades */}
+                            {etapa.actividades && etapa.actividades.length > 0 ? (
+                              <div className="space-y-1.5 pt-1">
+                                {etapa.actividades.map(act => (
+                                  <div key={act.idActividad} className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/80 flex justify-between items-center text-xs">
+                                    <span className="font-medium text-zinc-700 dark:text-zinc-300">{act.descripcion}</span>
+                                    <div className="flex items-center gap-2">
+                                      {act.desarrollador && (
+                                        <span className="text-[0.65rem] font-bold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
+                                          {act.desarrollador.nombre} {act.desarrollador.apellido}
+                                        </span>
+                                      )}
+                                      <span className="text-[0.6rem] font-extrabold uppercase text-emerald-600">{act.estado}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-[0.7rem] text-zinc-400 italic">No hay actividades asignadas aún a esta etapa.</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectedProyectoModal(null)}
+                  className="outline-button px-5 py-2 text-xs font-bold cursor-pointer"
+                >
+                  Cerrar Vista
+                </button>
               </div>
             </motion.div>
           </div>
