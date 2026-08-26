@@ -8,7 +8,7 @@ import {
   Loader2, Inbox, RefreshCw, Eye, RotateCcw, Info, ArrowRight,
   FileText, Calendar, User, ShieldAlert, Play, Check,
   Filter, SlidersHorizontal, Search, FolderGit2, ArrowUpDown,
-  LayoutGrid, List
+  LayoutGrid, List, Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
