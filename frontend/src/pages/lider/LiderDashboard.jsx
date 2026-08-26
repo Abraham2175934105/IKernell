@@ -364,28 +364,46 @@ const calcularDiasFaltantes = (finStr) => {
 };
 
 /**
- * Selector de Desarrolladores de Nivel Enterprise con Buscador e Indicadores de Carga Horaria (HU-12)
+ * Selector de Desarrolladores de Nivel Enterprise con Soporte de Despliegue Lateral Derecho
  */
-const DeveloperCombobox = ({ value, onChange, desarrolladores, getDevCargaInfo, getCleanEspecialidad, placeholder = "— Seleccione un desarrollador —", required = false, error = false }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const DeveloperCombobox = ({
+  value,
+  onChange,
+  desarrolladores,
+  getDevCargaInfo,
+  getCleanEspecialidad,
+  placeholder = "— Seleccione un desarrollador responsable —",
+  error = false,
+  isOpen,
+  setIsOpen,
+  inlineList = false
+}) => {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef(null);
+
+  const openState = isOpen !== undefined ? isOpen : internalOpen;
+  const toggleOpen = () => {
+    const next = !openState;
+    if (setIsOpen) setIsOpen(next);
+    else setInternalOpen(next);
+  };
 
   const selectedDev = useMemo(() => {
     if (!value) return null;
     return desarrolladores?.find(d => String(d.idTrabajador) === String(value));
   }, [value, desarrolladores]);
 
-  // Cerrar al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false);
+        if (setIsOpen) setIsOpen(false);
+        else setInternalOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [setIsOpen]);
 
   const filteredDevs = useMemo(() => {
     if (!searchTerm.trim()) return desarrolladores || [];
@@ -397,18 +415,16 @@ const DeveloperCombobox = ({ value, onChange, desarrolladores, getDevCargaInfo, 
     });
   }, [desarrolladores, searchTerm]);
 
-  const selectedCarga = selectedDev ? getDevCargaInfo(selectedDev.idTrabajador) : null;
-
   return (
     <div ref={containerRef} className="w-full space-y-2">
       {/* Botón Trigger Principal */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         className={`w-full flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border text-xs font-semibold shadow-2xs transition-all cursor-pointer text-left ${
           error 
             ? 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10' 
-            : isOpen 
+            : openState 
             ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 bg-blue-50/30 dark:bg-blue-950/20' 
             : 'border-zinc-200 dark:border-zinc-700/80 hover:border-zinc-400 dark:hover:border-zinc-600'
         }`}
@@ -428,17 +444,6 @@ const DeveloperCombobox = ({ value, onChange, desarrolladores, getDevCargaInfo, 
                 {getCleanEspecialidad(selectedDev.especialidad, selectedDev.profesion)}
               </span>
             </div>
-            {selectedCarga && (
-              <span className={`px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${
-                selectedCarga.horasAsignadas >= 48
-                  ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800'
-                  : selectedCarga.horasAsignadas >= 36
-                  ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
-                  : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
-              }`}>
-                {selectedCarga.horasAsignadas}/48h
-              </span>
-            )}
           </div>
         ) : (
           <div className="flex items-center gap-2.5 text-zinc-400 font-medium text-xs">
@@ -447,122 +452,261 @@ const DeveloperCombobox = ({ value, onChange, desarrolladores, getDevCargaInfo, 
           </div>
         )}
 
-        <div className="flex items-center gap-1.5 text-zinc-400 shrink-0">
+        <div className="flex items-center gap-1.5 text-zinc-400 shrink-0 pl-2">
           <span className="text-[0.68rem] font-bold text-blue-600 dark:text-blue-400">
-            {isOpen ? 'Ocultar lista' : 'Desplegar lista'}
+            {openState ? 'Ocultar lista' : 'Desplegar lista a la derecha'}
           </span>
-          <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''}`} />
+          <ChevronRight size={16} className={`transition-transform duration-300 ${openState ? 'rotate-90 text-blue-600 dark:text-blue-400' : ''}`} />
         </div>
       </button>
 
-      {/* Panel Desplegable Integrado Inline (Cero Recorte de Pantalla) */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="overflow-hidden bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl p-3 space-y-3 shadow-inner"
-          >
-            {/* Buscador Rápido Interno */}
-            <div className="relative">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Filtrar por nombre, apellido o especialidad técnica..."
-                className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
-                autoFocus
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
+      {/* Lista Desplegable Inline Fallback */}
+      {inlineList && (
+        <AnimatePresence>
+          {openState && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="overflow-hidden bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl p-3 space-y-3 shadow-inner"
+            >
+              <div className="relative">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Filtrar por nombre, apellido o especialidad técnica..."
+                  className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                  autoFocus
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
 
-            {/* Lista Amplia y Desplegada de Tarjetas de Desarrolladores */}
-            <div className="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-              {filteredDevs.length === 0 ? (
-                <div className="p-4 text-center text-xs text-zinc-400 font-medium bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/60 dark:border-zinc-800">
-                  No se encontraron desarrolladores coincidentes con la búsqueda.
-                </div>
-              ) : (
-                filteredDevs.map(dev => {
-                  const isSelected = String(dev.idTrabajador) === String(value);
-                  const carga = getDevCargaInfo(dev.idTrabajador);
-                  const horas = carga?.horasAsignadas || 0;
-                  const pct = Math.min(Math.round((horas / 48) * 100), 100);
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                {filteredDevs.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-zinc-400 font-medium bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/60 dark:border-zinc-800">
+                    No se encontraron desarrolladores coincidentes.
+                  </div>
+                ) : (
+                  filteredDevs.map(dev => {
+                    const isSelected = String(dev.idTrabajador) === String(value);
+                    const carga = getDevCargaInfo(dev.idTrabajador);
+                    const horas = carga?.horasAsignadas || 0;
+                    const pct = Math.min(Math.round((horas / 48) * 100), 100);
 
-                  const estColor = horas >= 48
-                    ? { bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800', bar: 'bg-red-500', label: 'SATURADO' }
-                    : horas >= 36
-                    ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
-                    : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
+                    const estColor = horas >= 48
+                      ? { bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800', bar: 'bg-red-500', label: 'SATURADO' }
+                      : horas >= 36
+                      ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
+                      : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
 
-                  return (
-                    <div
-                      key={dev.idTrabajador}
-                      onClick={() => {
-                        onChange(String(dev.idTrabajador));
-                        setIsOpen(false);
-                        setSearchTerm('');
-                      }}
-                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                        isSelected
-                          ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 shadow-sm ring-1 ring-blue-500/20'
-                          : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-700/80 hover:bg-blue-50/40 dark:hover:bg-zinc-800/80 hover:border-blue-300 dark:hover:border-blue-700 shadow-2xs'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`w-9 h-9 rounded-2xl font-black text-xs flex items-center justify-center shrink-0 border ${
+                    return (
+                      <div
+                        key={dev.idTrabajador}
+                        onClick={() => {
+                          onChange(String(dev.idTrabajador));
+                          toggleOpen();
+                          setSearchTerm('');
+                        }}
+                        className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           isSelected
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                        }`}>
-                          {dev.nombre?.[0]}{dev.apellido?.[0]}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                            ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 shadow-sm ring-1 ring-blue-500/20'
+                            : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-700/80 hover:bg-blue-50/40 dark:hover:bg-zinc-800/80 hover:border-blue-300 dark:hover:border-blue-700 shadow-2xs'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className={`w-9 h-9 rounded-2xl font-black text-xs flex items-center justify-center shrink-0 border ${
+                            isSelected
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                          }`}>
+                            {dev.nombre?.[0]}{dev.apellido?.[0]}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate block">
                               {dev.nombre} {dev.apellido}
                             </span>
-                            {isSelected && (
-                              <span className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-600 text-white">
-                                <Check size={12} /> SELECCIONADO
-                              </span>
-                            )}
+                            <span className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium mt-0.5">
+                              {getCleanEspecialidad(dev.especialidad, dev.profesion)}
+                            </span>
                           </div>
-                          <span className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium mt-0.5">
-                            {getCleanEspecialidad(dev.especialidad, dev.profesion)}
-                          </span>
                         </div>
-                      </div>
 
-                      {/* Capacidad Horaria Visual Amplia */}
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0 gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
-                        <span className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-black border ${estColor.bg}`}>
-                          {horas}/48h • {estColor.label}
-                        </span>
-                        <div className="w-24 h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                          <div className={`h-full ${estColor.bar} transition-all`} style={{ width: `${pct}%` }} />
+                        {/* Capacidad Horaria Visual Amplia */}
+                        <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0 gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
+                          <span className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-black border ${estColor.bg}`}>
+                            {horas}/48h • {estColor.label}
+                          </span>
+                          <div className="w-24 h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div className={`h-full ${estColor.bar} transition-all`} style={{ width: `${pct}%` }} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    )}
+  </div>
+);
+};
+
+/**
+ * Panel Lateral Derecho para Selección de Desarrollador
+ */
+const DeveloperSideSelectorPanel = ({
+  value,
+  onChange,
+  desarrolladores,
+  getDevCargaInfo,
+  getCleanEspecialidad,
+  onClose
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredDevs = useMemo(() => {
+    if (!searchTerm.trim()) return desarrolladores || [];
+    const term = searchTerm.toLowerCase();
+    return (desarrolladores || []).filter(dev => {
+      const nombreCompleto = `${dev.nombre || ''} ${dev.apellido || ''}`.toLowerCase();
+      const esp = (dev.especialidad || dev.profesion || '').toLowerCase();
+      return nombreCompleto.includes(term) || esp.includes(term);
+    });
+  }, [desarrolladores, searchTerm]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className="p-5 rounded-3xl bg-zinc-50/90 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-4 shadow-sm flex flex-col h-full"
+    >
+      <div className="flex items-center justify-between pb-2 border-b border-zinc-200/80 dark:border-zinc-700/60 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+            <Users size={16} />
+          </div>
+          <div>
+            <h4 className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+              Desarrolladores Disponibles ({desarrolladores?.length || 0})
+            </h4>
+            <span className="text-[0.62rem] text-zinc-500">Seleccione para asignar al rol de responsable</span>
+          </div>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 font-bold p-1 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700"
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Buscador Rápido Interno */}
+      <div className="relative shrink-0">
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Filtrar por nombre, apellido o especialidad..."
+          className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+          autoFocus
+        />
+        {searchTerm && (
+          <button
+            type="button"
+            onClick={() => setSearchTerm('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
+      {/* Lista Desplegada Amplia */}
+      <div className="space-y-2.5 overflow-y-auto flex-1 max-h-[380px] pr-1 custom-scrollbar">
+        {filteredDevs.length === 0 ? (
+          <div className="p-6 text-center text-xs text-zinc-400 font-medium bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/60 dark:border-zinc-800">
+            No se encontraron desarrolladores coincidentes.
+          </div>
+        ) : (
+          filteredDevs.map(dev => {
+            const isSelected = String(dev.idTrabajador) === String(value);
+            const carga = getDevCargaInfo(dev.idTrabajador);
+            const horas = carga?.horasAsignadas || 0;
+            const pct = Math.min(Math.round((horas / 48) * 100), 100);
+
+            const estColor = horas >= 48
+              ? { bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800', bar: 'bg-red-500', label: 'SATURADO' }
+              : horas >= 36
+              ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
+              : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
+
+            return (
+              <div
+                key={dev.idTrabajador}
+                onClick={() => {
+                  onChange(String(dev.idTrabajador));
+                  if (onClose) onClose();
+                }}
+                className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
+                  isSelected
+                    ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 shadow-sm ring-2 ring-blue-500/20'
+                    : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-700/80 hover:bg-blue-50/40 dark:hover:bg-zinc-800/80 hover:border-blue-300 dark:hover:border-blue-700 shadow-2xs'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={`w-9 h-9 rounded-2xl font-black text-xs flex items-center justify-center shrink-0 border ${
+                      isSelected
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                    }`}>
+                      {dev.nombre?.[0]}{dev.apellido?.[0]}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate block">
+                        {dev.nombre} {dev.apellido}
+                      </span>
+                      <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium">
+                        {getCleanEspecialidad(dev.especialidad, dev.profesion)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span className={`px-2.5 py-1 rounded-xl text-[0.68rem] font-bold border shrink-0 ${estColor.bg}`}>
+                    {horas}/48h • {estColor.label}
+                  </span>
+                </div>
+
+                <div className="space-y-1 pt-1">
+                  <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    <div className={`h-full transition-all duration-500 ${estColor.bar}`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </motion.div>
   );
 };
 
@@ -874,6 +1018,8 @@ export const LiderDashboard = () => {
 
   const [submittingPausa, setSubmittingPausa] = useState(false);
   const [showConfirmPausarModal, setShowConfirmPausarModal] = useState(false);
+  const [isAsignarTareaDevListOpen, setIsAsignarTareaDevListOpen] = useState(false);
+  const [isAsignarProyectoDevListOpen, setIsAsignarProyectoDevListOpen] = useState(false);
 
   // Evaluación de procesos WBS activos e impacto para pausar proyecto
   const evidenciaWbsPausa = useMemo(() => {
@@ -4179,7 +4325,7 @@ export const LiderDashboard = () => {
         </motion.div>
       )}
 
-      {/* Modal: Asignar Actividad a Desarrollador (RF-17) */}
+      {/* Modal: Asignar Actividad a Desarrollador (RF-17) con Despliegue Lateral Derecho */}
       <AnimatePresence>
         {showAsignarModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -4187,105 +4333,129 @@ export const LiderDashboard = () => {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90dvh] overflow-y-auto"
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full shadow-2xl max-h-[90dvh] overflow-y-auto transition-all duration-300 ${
+                isAsignarTareaDevListOpen ? 'max-w-4xl' : 'max-w-xl'
+              }`}
             >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <UserCheck size={20} /> Asignar Tarea a Desarrollador
+                  <UserCheck size={20} className="text-blue-600 dark:text-blue-400" /> Asignar Tarea a Desarrollador
                 </h3>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-[0.7rem] text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4 flex items-start gap-2">
                 <Info size={15} className="text-blue-500 shrink-0 mt-0.5" />
                 <div>
-                  <strong>Nota Informativa:</strong> La actividad se creará en estado <strong>PENDIENTE</strong> y se vinculará directamente a la cuenta del desarrollador en PostgreSQL, apareciendo de inmediato en su tablero de trabajo.
+                  <strong>Nota Informativa:</strong> La actividad se creará en estado <strong>PENDIENTE</strong> y se vinculará directamente a la cuenta del desarrollador en PostgreSQL.
                 </div>
               </div>
 
-              <form onSubmit={handleAsignarActividad} className="space-y-4 text-xs" noValidate>
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Etapa / Fase WBS *</label>
-                  <CustomSelect
-                    value={nuevaActividad.idEtapa}
-                    onChange={(val) => { setNuevaActividad({ ...nuevaActividad, idEtapa: val }); setFormErrors(p => ({ ...p, idEtapa: undefined })); }}
-                    options={[
-                      { value: '', label: '— Seleccione una etapa —' },
-                      ...(etapas || []).map(et => ({ value: et?.idEtapa, label: et?.nombreEtapa }))
-                    ]}
-                    maxWidth="w-full"
-                  />
-                  {formErrors.idEtapa && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idEtapa}</p>}
-                </div>
+              <div className={`grid grid-cols-1 ${isAsignarTareaDevListOpen ? 'md:grid-cols-2' : ''} gap-6 transition-all duration-300 items-start`}>
+                {/* Columna Izquierda: Formulario Principal */}
+                <form onSubmit={handleAsignarActividad} className="space-y-4 text-xs" noValidate>
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Etapa / Fase WBS *</label>
+                    <CustomSelect
+                      value={nuevaActividad.idEtapa}
+                      onChange={(val) => { setNuevaActividad({ ...nuevaActividad, idEtapa: val }); setFormErrors(p => ({ ...p, idEtapa: undefined })); }}
+                      options={[
+                        { value: '', label: '— Seleccione una etapa —' },
+                        ...(etapas || []).map(et => ({ value: et?.idEtapa, label: et?.nombreEtapa }))
+                      ]}
+                      maxWidth="w-full"
+                    />
+                    {formErrors.idEtapa && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idEtapa}</p>}
+                  </div>
 
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Desarrollador Responsable *</label>
-                  <DeveloperCombobox
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Desarrollador Responsable *</label>
+                    <DeveloperCombobox
+                      value={nuevaActividad.idDesarrollador}
+                      onChange={(idDev) => {
+                        setNuevaActividad({ ...nuevaActividad, idDesarrollador: idDev });
+                        setFormErrors(p => ({ ...p, idDesarrollador: undefined }));
+                      }}
+                      desarrolladores={desarrolladores}
+                      getDevCargaInfo={getDevCargaInfo}
+                      getCleanEspecialidad={getCleanEspecialidad}
+                      placeholder="— Seleccione un desarrollador responsable —"
+                      error={!!formErrors.idDesarrollador}
+                      isOpen={isAsignarTareaDevListOpen}
+                      setIsOpen={setIsAsignarTareaDevListOpen}
+                    />
+                    {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
+
+                    {/* Ficha Resumen del Desarrollador Seleccionado (Debajo del Campo) */}
+                    {nuevaActividad.idDesarrollador && (() => {
+                      const c = getDevCargaInfo(nuevaActividad.idDesarrollador);
+                      if (!c) return null;
+                      return (
+                        <div className="mt-2.5 p-3 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 flex items-center justify-between shadow-2xs">
+                          <span className="text-[0.7rem] font-bold text-zinc-800 dark:text-zinc-200">
+                            Carga Semanal Asignada:
+                          </span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[0.65rem] font-bold border ${
+                            c.horasAsignadas >= 48 
+                              ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                              : c.horasAsignadas >= 36
+                              ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                              : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                          }`}>
+                            {c.horasAsignadas}/48h ({c.horasDisponibles}h libres)
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción de la Tarea *</label>
+                    <textarea
+                      rows={3}
+                      value={nuevaActividad.descripcion}
+                      onChange={(e) => { setNuevaActividad({ ...nuevaActividad, descripcion: e.target.value }); setFormErrors(p => ({ ...p, descripcion: undefined })); }}
+                      placeholder="Descripción de la tarea técnica a ejecutar"
+                      className={`input-field py-2 ${formErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
+                    />
+                    {formErrors.descripcion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.descripcion}</p>}
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => { setShowAsignarModal(false); setIsAsignarTareaDevListOpen(false); setFormErrors({}); }}
+                      disabled={submittingActividad}
+                      className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingActividad}
+                      className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {submittingActividad ? <><Loader2 size={14} className="animate-spin" /> Asignando...</> : 'Guardar y Asignar'}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Columna Derecha: Panel de Selección Lateral de Desarrollador */}
+                {isAsignarTareaDevListOpen && (
+                  <DeveloperSideSelectorPanel
                     value={nuevaActividad.idDesarrollador}
                     onChange={(idDev) => {
                       setNuevaActividad({ ...nuevaActividad, idDesarrollador: idDev });
                       setFormErrors(p => ({ ...p, idDesarrollador: undefined }));
+                      setIsAsignarTareaDevListOpen(false);
                     }}
                     desarrolladores={desarrolladores}
                     getDevCargaInfo={getDevCargaInfo}
                     getCleanEspecialidad={getCleanEspecialidad}
-                    placeholder="— Seleccione un desarrollador responsable —"
-                    error={!!formErrors.idDesarrollador}
+                    onClose={() => setIsAsignarTareaDevListOpen(false)}
                   />
-                  {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
-
-                  {nuevaActividad.idDesarrollador && (() => {
-                    const c = getDevCargaInfo(nuevaActividad.idDesarrollador);
-                    if (!c) return null;
-                    return (
-                      <div className="mt-2 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-between">
-                        <span className="text-[0.7rem] font-bold text-zinc-700 dark:text-zinc-300">
-                          Balance de Carga Semanal:
-                        </span>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.65rem] font-bold border ${
-                          c.horasAsignadas >= 48 
-                            ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
-                            : c.horasAsignadas >= 36
-                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
-                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                        }`}>
-                          Carga: {c.horasAsignadas}/48h ({c.horasDisponibles}h disponibles)
-                        </span>
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción de la Tarea *</label>
-                  <textarea
-                    rows={3}
-                    value={nuevaActividad.descripcion}
-                    onChange={(e) => { setNuevaActividad({ ...nuevaActividad, descripcion: e.target.value }); setFormErrors(p => ({ ...p, descripcion: undefined })); }}
-                    placeholder="Descripción de la tarea técnica a ejecutar"
-                    className={`input-field py-2 ${formErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
-                  />
-                  {formErrors.descripcion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.descripcion}</p>}
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                  <button
-                    type="button"
-                    onClick={() => { setShowAsignarModal(false); setFormErrors({}); }}
-                    disabled={submittingActividad}
-                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submittingActividad}
-                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {submittingActividad ? <><Loader2 size={14} className="animate-spin" /> Asignando...</> : 'Guardar y Asignar'}
-                  </button>
-                </div>
-              </form>
+                )}
+              </div>
             </motion.div>
           </div>
         )}
@@ -4299,8 +4469,10 @@ export const LiderDashboard = () => {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-xl sm:max-w-2xl shadow-2xl max-h-[90dvh] overflow-y-auto space-y-4"
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full shadow-2xl max-h-[90dvh] overflow-y-auto space-y-4 transition-all duration-300 ${
+                isAsignarProyectoDevListOpen ? 'max-w-4xl' : 'max-w-xl'
+              }`}
             >
               <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
                 <div className="flex items-center gap-2.5">
@@ -4329,113 +4501,133 @@ export const LiderDashboard = () => {
                 </div>
               )}
 
-              <form onSubmit={handleAsignarDesarrolladorAProyecto} className="space-y-4 text-xs" noValidate>
-                {/* Selector de Desarrollador */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    Desarrollador a Vincular *
-                  </label>
-                  <DeveloperCombobox
+              <div className={`grid grid-cols-1 ${isAsignarProyectoDevListOpen ? 'md:grid-cols-2' : ''} gap-6 transition-all duration-300 items-start`}>
+                <form onSubmit={handleAsignarDesarrolladorAProyecto} className="space-y-4 text-xs" noValidate>
+                  {/* Selector de Desarrollador */}
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                      Desarrollador a Vincular *
+                    </label>
+                    <DeveloperCombobox
+                      value={asignarDevForm.idDesarrollador}
+                      onChange={(idDev) => {
+                        setAsignarDevForm({ ...asignarDevForm, idDesarrollador: idDev });
+                        setAsignarDevError(null);
+                      }}
+                      desarrolladores={desarrolladores}
+                      getDevCargaInfo={getDevCargaInfo}
+                      getCleanEspecialidad={getCleanEspecialidad}
+                      placeholder="— Seleccione un desarrollador para vincular —"
+                      isOpen={isAsignarProyectoDevListOpen}
+                      setIsOpen={setIsAsignarProyectoDevListOpen}
+                    />
+                  </div>
+
+                  {/* Previsualización de Carga del Desarrollador Seleccionado */}
+                  {asignarDevForm.idDesarrollador && (() => {
+                    const carga = getDevCargaInfo(asignarDevForm.idDesarrollador);
+                    if (!carga) return null;
+                    const horasNuevas = parseInt(asignarDevForm.horasSemanales) || 0;
+                    const horasTotales = carga.horasAsignadas + horasNuevas;
+                    const esSobrecarga = horasTotales > 48;
+
+                    return (
+                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                        <div className="flex justify-between items-center text-[0.7rem]">
+                          <span className="font-bold text-zinc-600 dark:text-zinc-300">Carga Actual en la Empresa:</span>
+                          <span className={`px-2 py-0.5 rounded-full font-bold border ${
+                            carga.horasAsignadas >= 48 
+                              ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800'
+                              : carga.horasAsignadas >= 36
+                              ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800'
+                          }`}>
+                            Carga: {carga.horasAsignadas}/48h
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[0.7rem]">
+                          <span className="font-bold text-zinc-600 dark:text-zinc-300">Horas Disponibles:</span>
+                          <span className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100">
+                            {carga.horasDisponibles} horas/semana
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[0.7rem] pt-1.5 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                          <span className="font-bold text-zinc-700 dark:text-zinc-200">Total Proyectado:</span>
+                          <span className={`font-mono font-extrabold ${esSobrecarga ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                            {horasTotales} / 48h {esSobrecarga ? '(¡Excede Límite Máximo!)' : '(Capacidad Válida)'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Input de Horas Semanales Asignadas */}
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                      Horas Semanales Asignadas a Este Proyecto *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        max="48"
+                        step="1"
+                        required
+                        value={asignarDevForm.horasSemanales}
+                        onChange={(e) => {
+                          setAsignarDevForm({ ...asignarDevForm, horasSemanales: e.target.value });
+                          setAsignarDevError(null);
+                        }}
+                        placeholder="20"
+                        className="input-field py-2 font-mono font-bold"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">
+                        h / semana
+                      </span>
+                    </div>
+                    <p className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium mt-1">
+                      Límite legal: 48 horas semanales sumando todas las asignaciones activas de la empresa.
+                    </p>
+                  </div>
+
+                  {/* Acciones */}
+                  <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => { setShowAsignarDevModal(false); setIsAsignarProyectoDevListOpen(false); setAsignarDevError(null); }}
+                      disabled={submittingAsignarDev}
+                      className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingAsignarDev}
+                      className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {submittingAsignarDev ? <><Loader2 size={14} className="animate-spin" /> Verificando y Guardando...</> : <><UserPlus size={14} /> Vincular al Proyecto</>}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Columna Derecha: Panel de Selección Lateral de Desarrollador */}
+                {isAsignarProyectoDevListOpen && (
+                  <DeveloperSideSelectorPanel
                     value={asignarDevForm.idDesarrollador}
                     onChange={(idDev) => {
                       setAsignarDevForm({ ...asignarDevForm, idDesarrollador: idDev });
                       setAsignarDevError(null);
+                      setIsAsignarProyectoDevListOpen(false);
                     }}
                     desarrolladores={desarrolladores}
                     getDevCargaInfo={getDevCargaInfo}
                     getCleanEspecialidad={getCleanEspecialidad}
-                    placeholder="— Seleccione un desarrollador para vincular —"
+                    onClose={() => setIsAsignarProyectoDevListOpen(false)}
                   />
-                </div>
-
-                {/* Previsualización de Carga del Desarrollador Seleccionado */}
-                {asignarDevForm.idDesarrollador && (() => {
-                  const carga = getDevCargaInfo(asignarDevForm.idDesarrollador);
-                  if (!carga) return null;
-                  const horasNuevas = parseInt(asignarDevForm.horasSemanales) || 0;
-                  const horasTotales = carga.horasAsignadas + horasNuevas;
-                  const esSobrecarga = horasTotales > 48;
-
-                  return (
-                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2">
-                      <div className="flex justify-between items-center text-[0.7rem]">
-                        <span className="font-bold text-zinc-600 dark:text-zinc-300">Carga Actual en la Empresa:</span>
-                        <span className={`px-2 py-0.5 rounded-full font-bold border ${
-                          carga.horasAsignadas >= 48 
-                            ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800'
-                            : carga.horasAsignadas >= 36
-                            ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800'
-                        }`}>
-                          Carga: {carga.horasAsignadas}/48h
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center text-[0.7rem]">
-                        <span className="font-bold text-zinc-600 dark:text-zinc-300">Horas Disponibles:</span>
-                        <span className="font-mono font-extrabold text-zinc-900 dark:text-zinc-100">
-                          {carga.horasDisponibles} horas/semana
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center text-[0.7rem] pt-1.5 border-t border-zinc-200/60 dark:border-zinc-700/60">
-                        <span className="font-bold text-zinc-700 dark:text-zinc-200">Total Proyectado:</span>
-                        <span className={`font-mono font-extrabold ${esSobrecarga ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                          {horasTotales} / 48h {esSobrecarga ? '(¡Excede Límite Máximo!)' : '(Capacidad Válida)'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Input de Horas Semanales Asignadas */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    Horas Semanales Asignadas a Este Proyecto *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min="1"
-                      max="48"
-                      step="1"
-                      required
-                      value={asignarDevForm.horasSemanales}
-                      onChange={(e) => {
-                        setAsignarDevForm({ ...asignarDevForm, horasSemanales: e.target.value });
-                        setAsignarDevError(null);
-                      }}
-                      placeholder="20"
-                      className="input-field py-2 font-mono font-bold"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">
-                      h / semana
-                    </span>
-                  </div>
-                  <p className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium mt-1">
-                    Límite legal: 48 horas semanales sumando todas las asignaciones activas de la empresa.
-                  </p>
-                </div>
-
-                {/* Acciones */}
-                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <button
-                    type="button"
-                    onClick={() => { setShowAsignarDevModal(false); setAsignarDevError(null); }}
-                    disabled={submittingAsignarDev}
-                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submittingAsignarDev}
-                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {submittingAsignarDev ? <><Loader2 size={14} className="animate-spin" /> Verificando y Guardando...</> : <><UserPlus size={14} /> Vincular al Proyecto</>}
-                  </button>
-                </div>
-              </form>
+                )}
+              </div>
             </motion.div>
           </div>
         )}
