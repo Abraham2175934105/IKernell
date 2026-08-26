@@ -7026,16 +7026,16 @@ export const LiderDashboard = () => {
                           onClick={() => setPdfConfig({ ...pdfConfig, nivelDetalle: 'AUDITORIA_COMPLETA' })}
                           className={`w-full p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${
                             pdfConfig.nivelDetalle === 'AUDITORIA_COMPLETA'
-                              ? 'bg-purple-50/90 dark:bg-purple-950/80 border-purple-500 ring-2 ring-purple-500/20 text-purple-900 dark:text-purple-100 font-bold'
+                              ? 'bg-blue-50/90 dark:bg-blue-950/80 border-blue-500 ring-2 ring-blue-500/20 text-blue-900 dark:text-blue-100 font-bold'
                               : 'bg-zinc-50 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/80 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100'
                           }`}
                         >
                           <div className="font-extrabold text-xs flex items-center justify-between">
                             <span>Consolidado Audit-Ready (Completo)</span>
-                            {pdfConfig.nivelDetalle === 'AUDITORIA_COMPLETA' && <Check size={14} className="text-purple-600 dark:text-purple-400" />}
+                            {pdfConfig.nivelDetalle === 'AUDITORIA_COMPLETA' && <Check size={14} className="text-blue-600 dark:text-blue-400" />}
                           </div>
                           <div className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                            Incluye trazabilidad de pausas, historial de auditoría de coordinación y contingencies.
+                            Incluye trazabilidad de pausas, historial de auditoría de coordinación y contingencias.
                           </div>
                         </button>
                       </div>
@@ -7048,56 +7048,62 @@ export const LiderDashboard = () => {
                       2. Secciones e Información a Imprimir *
                     </label>
 
-                    <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1 custom-scrollbar">
+                    <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
                       {/* Opción 1: Pausas y Trazabilidad */}
-                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                      <label className={`p-3.5 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
                         pdfConfig.incluirPausas
-                          ? 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 shadow-2xs'
-                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70 hover:border-zinc-300 dark:hover:border-zinc-600'
                       }`}>
                         <input
                           type="checkbox"
                           checked={pdfConfig.incluirPausas}
                           onChange={(e) => setPdfConfig({ ...pdfConfig, incluirPausas: e.target.checked })}
-                          className="rounded border-zinc-300 text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer mt-0.5"
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
                         />
-                        <div className="min-w-0 flex-1">
-                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
-                            ⏸️ Trazabilidad de Pausas y Suspensión de Producción
-                          </span>
-                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Pause size={14} className={pdfConfig.incluirPausas ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Trazabilidad de Pausas y Suspensión de Producción
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
                             Fechas de inicio/fin de pausa, duración acumulada (Días, Horas, Minutos) y afectación a la fecha de entrega.
                           </span>
                         </div>
                       </label>
 
                       {/* Opción 2: Gestiones del Coordinador */}
-                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                      <label className={`p-3.5 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
                         pdfConfig.incluirAuditoriaCoordinador
-                          ? 'bg-purple-50/70 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800 shadow-2xs'
-                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70 hover:border-zinc-300 dark:hover:border-zinc-600'
                       }`}>
                         <input
                           type="checkbox"
                           checked={pdfConfig.incluirAuditoriaCoordinador}
                           onChange={(e) => setPdfConfig({ ...pdfConfig, incluirAuditoriaCoordinador: e.target.checked })}
-                          className="rounded border-zinc-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer mt-0.5"
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
                         />
-                        <div className="min-w-0 flex-1">
-                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
-                            🛡️ Historial de Gestiones y Auditoría del Coordinador
-                          </span>
-                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck size={14} className={pdfConfig.incluirAuditoriaCoordinador ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Historial de Gestiones y Auditoría del Coordinador
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
                             Registro de modificaciones directivas de presupuesto, plazos y supervisión acumulada.
                           </span>
                         </div>
                       </label>
 
                       {/* Opción 3: Estructura WBS */}
-                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                      <label className={`p-3.5 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
                         pdfConfig.incluirWbs
-                          ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 shadow-2xs'
-                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70 hover:border-zinc-300 dark:hover:border-zinc-600'
                       }`}>
                         <input
                           type="checkbox"
@@ -7105,21 +7111,24 @@ export const LiderDashboard = () => {
                           onChange={(e) => setPdfConfig({ ...pdfConfig, incluirWbs: e.target.checked })}
                           className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
                         />
-                        <div className="min-w-0 flex-1">
-                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
-                            📊 Estructura WBS, Fases y Actividades del Proyecto
-                          </span>
-                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Layers size={14} className={pdfConfig.incluirWbs ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Estructura WBS, Fases y Actividades del Proyecto
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
                             Desglose por etapas, actividades técnicas, horas estimadas y % de avance.
                           </span>
                         </div>
                       </label>
 
                       {/* Opción 4: Equipo y Nómina */}
-                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                      <label className={`p-3.5 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
                         pdfConfig.incluirEquipo
-                          ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 shadow-2xs'
-                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70 hover:border-zinc-300 dark:hover:border-zinc-600'
                       }`}>
                         <input
                           type="checkbox"
@@ -7127,33 +7136,39 @@ export const LiderDashboard = () => {
                           onChange={(e) => setPdfConfig({ ...pdfConfig, incluirEquipo: e.target.checked })}
                           className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
                         />
-                        <div className="min-w-0 flex-1">
-                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
-                            👥 Nómina de Desarrolladores y Control de Jornada (48h)
-                          </span>
-                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Users size={14} className={pdfConfig.incluirEquipo ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Nómina de Desarrolladores y Control de Jornada (48h)
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
                             Lista de desarrolladores vinculados, roles, especialidades y horas asignadas.
                           </span>
                         </div>
                       </label>
 
                       {/* Opción 5: Presupuesto Financiero Sensible */}
-                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
+                      <label className={`p-3.5 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${
                         pdfConfig.modoSensible
-                          ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 shadow-2xs'
-                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70'
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-200 dark:border-zinc-700/70 hover:border-zinc-300 dark:hover:border-zinc-600'
                       }`}>
                         <input
                           type="checkbox"
                           checked={pdfConfig.modoSensible}
                           onChange={(e) => setPdfConfig({ ...pdfConfig, modoSensible: e.target.checked })}
-                          className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer mt-0.5"
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
                         />
-                        <div className="min-w-0 flex-1">
-                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
-                            💵 Información Financiera Sensible (Presupuesto USD)
-                          </span>
-                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight mt-0.5">
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <DollarSign size={14} className={pdfConfig.modoSensible ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Información Financiera Sensible (Presupuesto USD)
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
                             Presupuesto financiero confidencial asignado y métricas de costo.
                           </span>
                         </div>
