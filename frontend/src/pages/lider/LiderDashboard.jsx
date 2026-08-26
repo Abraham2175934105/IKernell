@@ -775,7 +775,8 @@ export const LiderDashboard = () => {
   });
   const [nuevoProyectoErrors, setNuevoProyectoErrors] = useState({});
 
-  // Registro de Nuevo Colaborador por el Líder (solo LÍDER o DESARROLLADOR)
+  // Registro y Ficha de Detalle de Desarrollador por el Líder
+  const [selectedTrabajadorModal, setSelectedTrabajadorModal] = useState(null);
   const [showNuevoColaboradorModal, setShowNuevoColaboradorModal] = useState(false);
   const [submittingNuevoColaborador, setSubmittingNuevoColaborador] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState([]);
@@ -892,6 +893,94 @@ export const LiderDashboard = () => {
 
   const handleRemoveSkill = (skillToRemove) => {
     setSelectedSkills(prev => prev.filter(s => s !== skillToRemove));
+  };
+
+  // Componente Desplegable de Habilidades Técnicas (Pop-over al pasar el cursor)
+  const SkillsHoverDropdown = ({ skills, mainSpec }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+      <div className="space-y-1">
+        {mainSpec && (
+          <div className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+            {mainSpec}
+          </div>
+        )}
+
+        {skills && skills.length > 0 && (
+          <div 
+            className="relative inline-block"
+            onMouseEnter={() => setIsOpen(true)}
+            onMouseLeave={() => setIsOpen(false)}
+          >
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setIsOpen(prev => !prev); }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 border border-blue-200/70 dark:border-blue-800/70 text-[0.68rem] font-mono font-bold transition-all cursor-pointer shadow-2xs"
+            >
+              <Code2 size={12} className="text-blue-500 shrink-0" />
+              <span>{skills.length} Competencias</span>
+              <ChevronDown size={11} className={`text-blue-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute left-0 top-full mt-1.5 w-72 p-3.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 backdrop-blur-2xl"
+                >
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100 dark:border-zinc-800 text-[0.68rem] font-bold text-zinc-600 dark:text-zinc-300">
+                    <span className="flex items-center gap-1.5">
+                      <Layers size={13} className="text-blue-500" /> Stack Técnico & Habilidades
+                    </span>
+                    <span className="font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded text-[0.62rem] font-bold">
+                      {skills.length}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
+                    {skills.map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80 text-[0.65rem] font-mono font-semibold"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderEspecialidadYSkills = (especialidadRaw) => {
+    if (!especialidadRaw || !especialidadRaw.trim()) {
+      return <span className="text-zinc-400 dark:text-zinc-500 text-xs">General / Sin definir</span>;
+    }
+
+    if (especialidadRaw.includes('• [')) {
+      const [mainSpec, skillsPart] = especialidadRaw.split('• [');
+      const skills = skillsPart ? skillsPart.replace(']', '').split(',').map(s => s.trim()).filter(Boolean) : [];
+      return <SkillsHoverDropdown skills={skills} mainSpec={mainSpec.trim()} />;
+    }
+
+    if (especialidadRaw.startsWith('[') && especialidadRaw.endsWith(']')) {
+      const skills = especialidadRaw.slice(1, -1).split(',').map(s => s.trim()).filter(Boolean);
+      return <SkillsHoverDropdown skills={skills} mainSpec="" />;
+    }
+
+    return (
+      <div className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+        {especialidadRaw}
+      </div>
+    );
   };
 
   // Estados y Filtros memorizados para la pestaña "Nómina & Personal"
@@ -3872,6 +3961,7 @@ export const LiderDashboard = () => {
                       <th className="py-3.5 px-6">Profesión / Stack Técnico</th>
                       <th className="py-3.5 px-6">Rol Asignado</th>
                       <th className="py-3.5 px-6">Estado Lógico</th>
+                      <th className="py-3.5 px-6 text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
@@ -3909,17 +3999,13 @@ export const LiderDashboard = () => {
                             </div>
                           </td>
 
-                          <td className="py-4 px-6">
-                            <div className="space-y-1">
-                              <p className="font-bold text-zinc-800 dark:text-zinc-200">
-                                {t.profesion || 'Ingeniero de Software'}
-                              </p>
-                              {t.especialidad && (
-                                <p className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 font-semibold">
-                                  {t.especialidad}
-                                </p>
-                              )}
+                          {/* Profesión y Stack de Habilidades Técnicas */}
+                          <td className="py-4 px-6 max-w-[280px]">
+                            <div className="font-bold text-zinc-900 dark:text-zinc-100 text-xs mb-1 flex items-center gap-1">
+                              <GraduationCap size={13} className="text-blue-500 shrink-0" />
+                              <span>{t.profesion || 'Ingeniero de Software'}</span>
                             </div>
+                            {renderEspecialidadYSkills(t.especialidad)}
                           </td>
 
                           <td className="py-4 px-6">
@@ -3929,8 +4015,8 @@ export const LiderDashboard = () => {
                                 Líder de Proyecto
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
-                                <Code2 size={12} className="text-emerald-600 dark:text-emerald-400" />
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs">
+                                <Code2 size={12} className="text-blue-600 dark:text-blue-400" />
                                 Desarrollador
                               </span>
                             )}
@@ -3948,6 +4034,19 @@ export const LiderDashboard = () => {
                                 Inhabilitado
                               </span>
                             )}
+                          </td>
+
+                          {/* Botón de Acción: Ver Detalle del Desarrollador */}
+                          <td className="py-4 px-6 text-right">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedTrabajadorModal(t)}
+                              className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                              title="Ver ficha organizada y stack técnico del desarrollador"
+                            >
+                              <Eye size={13} />
+                              <span>Ver Detalle</span>
+                            </button>
                           </td>
                         </tr>
                       );
@@ -7849,6 +7948,150 @@ export const LiderDashboard = () => {
                 >
                   <CheckCircle2 size={16} />
                   <span>Confirmar / Entendido</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Ficha Organizada & Stack Técnico del Desarrollador */}
+      <AnimatePresence>
+        {selectedTrabajadorModal && (
+          <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-9 w-full max-w-2xl shadow-2xl max-h-[92dvh] overflow-y-auto space-y-6"
+            >
+              {/* Encabezado del Modal */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-blue-700 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg shrink-0 border border-blue-400/20">
+                    {(selectedTrabajadorModal.nombre ? selectedTrabajadorModal.nombre.charAt(0) : 'U') + (selectedTrabajadorModal.apellido ? selectedTrabajadorModal.apellido.charAt(0) : '')}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h3 className="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                        {selectedTrabajadorModal.nombre} {selectedTrabajadorModal.apellido}
+                      </h3>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs">
+                        <Code2 size={12} className="text-blue-600 dark:text-blue-400" />
+                        Desarrollador (WBS)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2.5 mt-1.5 text-xs text-zinc-500 font-medium flex-wrap">
+                      <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-md font-bold text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                        ID: #{selectedTrabajadorModal.identificacion || selectedTrabajadorModal.idTrabajador}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setSelectedTrabajadorModal(null)}
+                  className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Ficha Personal, Credenciales & Stack Técnico */}
+              <div className="space-y-4 text-xs">
+                <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                  <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                    Ficha Técnica & Credenciales del Desarrollador
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3.5">
+                  {/* Correo Corporativo Principal */}
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                    <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo Principal:</span>
+                    <div className="flex items-center gap-2.5 mt-1.5">
+                      <Mail size={15} className="text-blue-600 shrink-0" />
+                      <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-sm truncate">
+                        {selectedTrabajadorModal.email}
+                      </span>
+                      <Lock size={13} className="text-zinc-400 ml-auto shrink-0" title="Correo Corporativo Protegido" />
+                    </div>
+                  </div>
+
+                  {/* Correo Personal Alternativo */}
+                  {selectedTrabajadorModal.emailPersonal && (
+                    <div className="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60">
+                      <span className="text-[0.62rem] font-extrabold uppercase text-purple-700 dark:text-purple-300 block font-mono">
+                        Correo Personal Alternativo (Credenciales Temporales):
+                      </span>
+                      <div className="flex items-center gap-2.5 mt-1.5">
+                        <Mail size={15} className="text-purple-600 shrink-0" />
+                        <span className="font-mono font-bold text-purple-900 dark:text-purple-200 text-xs truncate">
+                          {selectedTrabajadorModal.emailPersonal}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Profesión & Especialidad Desglosada en Tech Pills */}
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2.5">
+                    <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Profesión & Competencias Técnicas:</span>
+                    <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm block">
+                      {selectedTrabajadorModal.profesion || 'Ingeniero de Software'}
+                    </span>
+                    
+                    {/* Tech Pills Parser */}
+                    <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/50">
+                      <span className="text-[0.65rem] font-bold text-zinc-500 block mb-2 flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-amber-500 shrink-0" /> Tecnologías & Stack Técnico Destacado:
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {(selectedTrabajadorModal.especialidad || 'Desarrollo de Software')
+                          .replace(/\[|\]/g, '')
+                          .split(/[,•]/)
+                          .map(item => item.trim())
+                          .filter(item => item.length > 0)
+                          .map((tech, idx) => (
+                            <motion.span 
+                              key={idx}
+                              whileHover={{ scale: 1.06, y: -1 }}
+                              className="px-3 py-1.5 rounded-xl text-[0.68rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs select-none"
+                            >
+                              {tech}
+                            </motion.span>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Estado Lógico & Primer Login */}
+                  <div className="grid grid-cols-2 gap-3.5">
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Estado en Plataforma:</span>
+                      <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${(selectedTrabajadorModal.estado === true || selectedTrabajadorModal.estado === 'ACTIVO') ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                        <span className={`w-2.5 h-2.5 rounded-full ${(selectedTrabajadorModal.estado === true || selectedTrabajadorModal.estado === 'ACTIVO') ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                        {(selectedTrabajadorModal.estado === true || selectedTrabajadorModal.estado === 'ACTIVO') ? 'HABILITADO' : 'INHABILITADO'}
+                      </span>
+                    </div>
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Primer Login:</span>
+                      <span className="font-extrabold text-zinc-800 dark:text-zinc-200 text-xs block mt-1">
+                        {selectedTrabajadorModal.primerLoginRealizado ? 'Sí (Validado)' : 'Pendiente primera sesión'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer del Modal */}
+              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTrabajadorModal(null)}
+                  className="px-6 py-2.5 text-xs font-bold cursor-pointer rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all"
+                >
+                  Cerrar Ficha
                 </button>
               </div>
             </motion.div>
