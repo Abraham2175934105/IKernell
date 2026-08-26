@@ -926,6 +926,8 @@ export const CoordinadorDashboard = () => {
   const [showTrabajosSubpanel, setShowTrabajosSubpanel] = useState(false);
   const [highlightedProyectoId, setHighlightedProyectoId] = useState(null);
   const [navHistory, setNavHistory] = useState(null);
+  const [highlightedActividadId, setHighlightedActividadId] = useState(null);
+  const [highlightedEtapaId, setHighlightedEtapaId] = useState(null);
 
   // Estados de Paginación Inteligente (Por cantidad y por hojas)
   const [currentPage, setCurrentPage] = useState(1);
@@ -1975,26 +1977,72 @@ export const CoordinadorDashboard = () => {
     }
   };
 
-  const handleNavegarAProyectoDesdeTrabajador = (idProyecto) => {
-    const currentWorker = selectedTrabajadorModal;
+  const handleIrAWbsProyectoDesdeTrabajador = async (idProyecto, idActividad = null, idEtapa = null, devContext = null) => {
+    const currentWorker = devContext || selectedTrabajadorModal;
+    
+    // 1. Guardar contexto de trazabilidad para el botón "Regresar a Inspección"
+    if (currentWorker) {
+      setNavHistory({ fromTab: activeTab || 'personal', worker: currentWorker });
+    }
+    setHighlightedActividadId(idActividad || null);
+    setHighlightedEtapaId(idEtapa || null);
+
+    // 2. Cerrar temporalmente las fichas laterales de trabajador
     setSelectedTrabajadorModal(null);
     setShowTrabajosSubpanel(false);
 
-    // Guardar trazabilidad para el botón de Volver Atrás
-    setNavHistory({ fromTab: 'personal', worker: currentWorker });
+    // 3. Buscar el proyecto destino en el catálogo local o cargarlo de la API
+    let prjTarget = (proyectos || []).find(p => String(p.idProyecto) === String(idProyecto));
+    if (!prjTarget) {
+      try {
+        prjTarget = await api.get(`/lider/proyectos/${idProyecto}`);
+      } catch (err) {
+        console.error('Error al obtener proyecto para WBS:', err);
+      }
+    }
 
-    // Marcar el ID del proyecto objetivo para el efecto parpadeante (pulsing)
-    setHighlightedProyectoId(idProyecto);
+    if (prjTarget) {
+      setSelectedProyectoModal(prjTarget);
+      setHighlightedProyectoId(idProyecto);
+      setActiveTab('proyectos');
 
-    // Resetear filtros para asegurar visibilidad del proyecto en la grilla global
-    setFiltroProyectoEstado('TODOS');
-    setFiltroProyectoLider('TODOS');
-    setSearchProyectoQuery('');
-    setCurrentProyectoPage(1);
+      // 4. Cargar estructura WBS de etapas y actividades
+      try {
+        setLoadingEtapasModal(true);
+        const res = await api.get(`/lider/proyectos/${idProyecto}/etapas`);
+        const data = Array.isArray(res) ? res : (res?.data || []);
+        setProyectoEtapasModal(data);
+      } catch (err) {
+        console.error('Error al cargar etapas WBS para navegación:', err);
+      } finally {
+        setLoadingEtapasModal(false);
+      }
 
-    // Redirigir a la pestaña Gestión de Proyectos
-    setActiveTab('proyectos');
-    toast.success(`Redirigido a Catálogo Global. El Proyecto PRJ-00${idProyecto} parpadeará en pantalla.`, { icon: '✨' });
+      toast.success(`Entrando al WBS de "${prjTarget.nombre}"`, { icon: '🎯' });
+    } else {
+      toast.error('No se pudo encontrar el proyecto seleccionado.');
+    }
+  };
+
+  const handleRegresarAInspeccionTrabajador = () => {
+    if (!navHistory?.worker) {
+      setSelectedProyectoModal(null);
+      setHighlightedActividadId(null);
+      return;
+    }
+    const workerToRestore = navHistory.worker;
+    const fromTab = navHistory.fromTab || 'personal';
+
+    setSelectedProyectoModal(null);
+    setHighlightedActividadId(null);
+    setHighlightedEtapaId(null);
+
+    // Restaurar modal y panel de inspección del trabajador
+    setSelectedTrabajadorModal(workerToRestore);
+    setShowTrabajosSubpanel(true);
+    setActiveTab(fromTab);
+
+    toast.info(`Regresando a la inspección de ${workerToRestore.nombre} ${workerToRestore.apellido}`, { icon: '↩️' });
   };
 
   const getTopSkillsByRole = (list, selectedRole) => {
@@ -2612,14 +2660,32 @@ export const CoordinadorDashboard = () => {
             >
               {/* Barra de Navegación Superior y Conmutador de Modo */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                <button
-                  type="button"
-                  onClick={() => setSelectedProyectoModal(null)}
-                  className="outline-button text-xs py-2.5 px-4 font-extrabold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 cursor-pointer shadow-2xs hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl"
-                >
-                  <ArrowLeft size={16} />
-                  <span>Volver al Catálogo de Proyectos</span>
-                </button>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProyectoModal(null);
+                      setHighlightedActividadId(null);
+                    }}
+                    className="outline-button text-xs py-2.5 px-4 font-extrabold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 cursor-pointer shadow-2xs hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl"
+                  >
+                    <ArrowLeft size={16} />
+                    <span>Volver al Catálogo de Proyectos</span>
+                  </button>
+
+                  {navHistory && navHistory.worker && (
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      type="button"
+                      onClick={handleRegresarAInspeccionTrabajador}
+                      className="gradient-button text-xs py-2.5 px-4 font-extrabold inline-flex items-center gap-2 text-white cursor-pointer shadow-md rounded-2xl"
+                    >
+                      <RotateCcw size={15} />
+                      <span>Volver a Ficha de {navHistory.worker.nombre} {navHistory.worker.apellido}</span>
+                    </motion.button>
+                  )}
+                </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className={`px-3.5 py-1.5 rounded-2xl text-xs font-black inline-flex items-center gap-2 border ${
@@ -2921,35 +2987,57 @@ export const CoordinadorDashboard = () => {
                         {/* Actividades dentro de la Etapa */}
                         <div className="space-y-2 pt-2">
                           {etapa.actividades && etapa.actividades.length > 0 ? (
-                            etapa.actividades.map((act, aIdx) => (
-                              <div key={act.idActividad || aIdx} className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-2xs">
-                                <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-                                  {act.nombreActividad || act.descripcion}
-                                </span>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  {act.desarrollador && (
-                                    <span className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold text-[0.68rem] flex items-center gap-1.5">
-                                      <User size={12} className="text-blue-500" />
-                                      {act.desarrollador.nombre} {act.desarrollador.apellido}
-                                    </span>
-                                  )}
-                                  <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
-                                    {act.estado || 'FINALIZADA'}
-                                  </span>
+                            etapa.actividades.map((act, aIdx) => {
+                              const isHighlighted = highlightedActividadId && (
+                                String(act.idActividad) === String(highlightedActividadId) ||
+                                String(act.id) === String(highlightedActividadId)
+                              );
 
-                                  {modoEdicionCoordinador && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleAbrirReasignarActividadCoord(act, etapa)}
-                                      className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
-                                    >
-                                      <RotateCw size={13} className="text-purple-600" />
-                                      <span>Reasignar</span>
-                                    </button>
-                                  )}
+                              return (
+                                <div 
+                                  key={act.idActividad || aIdx} 
+                                  className={`p-3.5 rounded-2xl transition-all ${
+                                    isHighlighted
+                                      ? 'bg-amber-100/90 dark:bg-amber-950/80 border-2 border-amber-500 dark:border-amber-400 ring-4 ring-amber-400/30 shadow-lg scale-[1.01]'
+                                      : 'bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800'
+                                  } flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-2xs`}
+                                >
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {isHighlighted && (
+                                      <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white font-black text-[0.62rem] animate-pulse shrink-0">
+                                        🎯 TAREA SELECCIONADA
+                                      </span>
+                                    )}
+                                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                                      {act.nombreActividad || act.descripcion}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {act.desarrollador && (
+                                      <span className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold text-[0.68rem] flex items-center gap-1.5">
+                                        <User size={12} className="text-blue-500" />
+                                        {act.desarrollador.nombre} {act.desarrollador.apellido}
+                                      </span>
+                                    )}
+                                    <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
+                                      {act.estado || 'FINALIZADA'}
+                                    </span>
+
+                                    {modoEdicionCoordinador && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleAbrirReasignarActividadCoord(act, etapa)}
+                                        className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
+                                      >
+                                        <RotateCw size={13} className="text-purple-600" />
+                                        <span>Reasignar</span>
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))
+                              );
+                            })
                           ) : (
                             <p className="text-[0.7rem] text-zinc-400 italic pl-1">Sin tareas asignadas en esta fase.</p>
                           )}
@@ -3804,7 +3892,15 @@ export const CoordinadorDashboard = () => {
           animate="visible"
           className="space-y-6"
         >
-          <PredictorBurnout />
+          <PredictorBurnout 
+            onNavigateToWbs={(proyectoObj, devObj, taskObj) => {
+              const idPrj = proyectoObj?.idProyecto || taskObj?.idProyecto;
+              const idAct = taskObj?.idActividad || taskObj?.id;
+              if (idPrj) {
+                handleIrAWbsProyectoDesdeTrabajador(idPrj, idAct, null, devObj);
+              }
+            }}
+          />
         </motion.div>
       )}
 
@@ -5166,10 +5262,10 @@ export const CoordinadorDashboard = () => {
                                   whileHover={{ x: 2 }}
                                   whileTap={{ scale: 0.98 }}
                                   type="button"
-                                  onClick={() => handleNavegarAProyectoDesdeTrabajador(prj.idProyecto)}
+                                  onClick={() => handleIrAWbsProyectoDesdeTrabajador(prj.idProyecto)}
                                   className="gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 text-white cursor-pointer shadow-sm w-full justify-center rounded-xl group"
                                 >
-                                  <span>Ver en Catálogo Global</span>
+                                  <span>Ir al WBS del Proyecto</span>
                                   <ArrowRight size={15} className="group-hover:translate-x-1.5 transition-transform shrink-0" />
                                 </motion.button>
                               </div>

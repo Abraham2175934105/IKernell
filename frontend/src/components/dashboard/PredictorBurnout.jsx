@@ -529,7 +529,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
   }, [tareasFiltradasModal, proyectosList]);
 
   // Manejador de navegación con auto-filtrado y redirección automática al WBS
-  const handleIrAProyectoWbs = (proyectoTarget) => {
+  const handleIrAProyectoWbs = (proyectoTarget, taskTarget = null) => {
     // Guardar contexto previo para permitir "Volver con 1 Clic"
     if (selectedDev) {
       setPreviousNavigationContext({
@@ -549,7 +549,7 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
     }
 
     if (onNavigateToWbs) {
-      onNavigateToWbs(proyectoTarget, selectedDev);
+      onNavigateToWbs(proyectoTarget, selectedDev, taskTarget);
     }
 
     toast.success(`Navegando a "${proyectoTarget?.nombre || 'Proyecto'}". Usa el botón "Volver a inspección" para retornar.`);
@@ -2173,7 +2173,7 @@ Generado automáticamente por el motor analítico IKernell v2.0
 
                           <button
                             type="button"
-                            onClick={() => handleIrAProyectoWbs(task.proyectoObj || { idProyecto: task.idProyecto, nombre: task.nombreProyecto })}
+                            onClick={() => handleIrAProyectoWbs(task.proyectoObj || { idProyecto: task.idProyecto, nombre: task.nombreProyecto }, task)}
                             className="text-[0.65rem] font-extrabold py-1 px-2.5 rounded-lg bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:bg-blue-600 dark:hover:bg-blue-500 dark:hover:text-white transition-all cursor-pointer inline-flex items-center gap-1"
                             title="Seleccionar este proyecto y redirigir a WBS"
                           >
