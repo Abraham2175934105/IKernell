@@ -41,6 +41,21 @@ public class Proyecto {
     @Column(name = "reasignado")
     private Boolean reasignado = false;
 
+    @Column(name = "fecha_reasignacion")
+    private java.time.LocalDateTime fechaReasignacion;
+
+    @Column(name = "motivo_reasignacion", columnDefinition = "TEXT")
+    private String motivoReasignacion;
+
+    @Column(name = "id_lider_anterior")
+    private Long idLiderAnterior;
+
+    @Column(name = "nombre_lider_anterior", length = 150)
+    private String nombreLiderAnterior;
+
+    @Column(name = "leido_por_lider_anterior")
+    private Boolean leidoPorLiderAnterior = false;
+
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "proyectosLiderados", "actividades", "errores", "interrupciones"})
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "lider_id", nullable = false)
@@ -162,6 +177,46 @@ public class Proyecto {
 
     public void setReasignado(Boolean reasignado) {
         this.reasignado = reasignado;
+    }
+
+    public java.time.LocalDateTime getFechaReasignacion() {
+        return fechaReasignacion;
+    }
+
+    public void setFechaReasignacion(java.time.LocalDateTime fechaReasignacion) {
+        this.fechaReasignacion = fechaReasignacion;
+    }
+
+    public String getMotivoReasignacion() {
+        return motivoReasignacion;
+    }
+
+    public void setMotivoReasignacion(String motivoReasignacion) {
+        this.motivoReasignacion = motivoReasignacion;
+    }
+
+    public Long getIdLiderAnterior() {
+        return idLiderAnterior;
+    }
+
+    public void setIdLiderAnterior(Long idLiderAnterior) {
+        this.idLiderAnterior = idLiderAnterior;
+    }
+
+    public String getNombreLiderAnterior() {
+        return nombreLiderAnterior;
+    }
+
+    public void setNombreLiderAnterior(String nombreLiderAnterior) {
+        this.nombreLiderAnterior = nombreLiderAnterior;
+    }
+
+    public Boolean getLeidoPorLiderAnterior() {
+        return leidoPorLiderAnterior != null ? leidoPorLiderAnterior : false;
+    }
+
+    public void setLeidoPorLiderAnterior(Boolean leidoPorLiderAnterior) {
+        this.leidoPorLiderAnterior = leidoPorLiderAnterior;
     }
 
     public List<Trabajador> getDesarrolladores() {

@@ -972,6 +972,28 @@ export const LiderDashboard = () => {
     }
   };
 
+  // Helper para calcular horas transcurridas desde una reasignación
+  const getHoursSinceReassignment = (fechaReasignacion) => {
+    if (!fechaReasignacion) return Infinity;
+    const fecha = new Date(fechaReasignacion);
+    const ahora = new Date();
+    const diffMs = ahora.getTime() - fecha.getTime();
+    return diffMs / (1000 * 60 * 60);
+  };
+
+  // Confirmación de lectura de reasignación por parte del líder anterior
+  const handleConfirmarLecturaReasignacion = async (idProyecto) => {
+    try {
+      await api.put(`/coordinador/proyectos/${idProyecto}/confirmar-lectura-reasignacion`);
+      toast.success('Notificación de reasignación confirmada. El proyecto ya no aparecerá en tu panel individual.');
+      const res = await api.get('/lider/proyectos');
+      setProyectos(res.data);
+    } catch (err) {
+      console.error('Error al confirmar lectura:', err);
+      toast.error('Error al confirmar la lectura.');
+    }
+  };
+
   // Filtrado reactivo para la grilla del catálogo de proyectos con segregación por propiedad de Líder
   const proyectosCatalogoFiltrados = useMemo(() => {
     if (!proyectos || !Array.isArray(proyectos)) return [];
@@ -984,7 +1006,14 @@ export const LiderDashboard = () => {
         const pLiderId = p.lider?.idTrabajador || p.lider?.id;
         const pLiderEmail = (p.lider?.email || '').toLowerCase();
         const isMine = (userDevId && String(pLiderId) === String(userDevId)) || (userEmail && pLiderEmail && userEmail === pLiderEmail);
-        if (!isMine) return false;
+
+        const isPastLiderPending = p.reasignado
+          && !p.leidoPorLiderAnterior
+          && userDevId
+          && String(p.idLiderAnterior) === String(userDevId)
+          && getHoursSinceReassignment(p.fechaReasignacion) <= 24;
+
+        if (!isMine && !isPastLiderPending) return false;
       } else if (filtroPropiedadLider === 'OTROS_LIDERES') {
         const pLiderId = p.lider?.idTrabajador || p.lider?.id;
         const pLiderEmail = (p.lider?.email || '').toLowerCase();
@@ -2236,6 +2265,89 @@ export const LiderDashboard = () => {
           </button>
         </div>
       </motion.div>
+
+      {/* Notificaciones Especiales de Reasignación (Vigencia 1d para Líder Anterior / 3d para Nuevo Líder) */}
+      {proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && proyectoSeleccionado.reasignado && (() => {
+        const userDevId = user?.idTrabajador || user?.id;
+        const isPastLiderPending = !proyectoSeleccionado.leidoPorLiderAnterior
+          && userDevId
+          && String(proyectoSeleccionado.idLiderAnterior) === String(userDevId)
+          && getHoursSinceReassignment(proyectoSeleccionado.fechaReasignacion) <= 24;
+
+        const isNewReassignment = getHoursSinceReassignment(proyectoSeleccionado.fechaReasignacion) <= 72;
+
+        if (isPastLiderPending) {
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 bg-amber-50 dark:bg-amber-950/70 border-2 border-amber-300 dark:border-amber-700 p-5 rounded-3xl shadow-md space-y-3"
+            >
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-extrabold text-xs font-mono uppercase tracking-wider">
+                  <AlertTriangle size={18} className="text-amber-600 animate-pulse shrink-0" />
+                  <span>NOTIFICACIÓN DIRECTIVA: PROCESO REASIGNADO A OTRO LÍDER</span>
+                </div>
+                <span className="text-[0.62rem] font-bold font-mono px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                  Disponible por 1 Día Hábil (24h)
+                </span>
+              </div>
+
+              <p className="text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed">
+                La dirección técnica y administrativa de este proyecto fue transferida por la Coordinación General a{' '}
+                <strong>{proyectoSeleccionado.lider ? `${proyectoSeleccionado.lider.nombre} ${proyectoSeleccionado.lider.apellido}` : 'Nuevo Líder'}</strong>.
+              </p>
+
+              <div className="p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200 dark:border-amber-800 text-xs">
+                <span className="font-mono font-extrabold text-amber-800 dark:text-amber-300 uppercase text-[0.62rem] block mb-0.5">Motivo / Justificación Registrada:</span>
+                <p className="text-zinc-800 dark:text-zinc-200 font-semibold">{proyectoSeleccionado.motivoReasignacion || 'Reorganización de portafolio.'}</p>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleConfirmarLecturaReasignacion(proyectoSeleccionado.idProyecto)}
+                  className="gradient-button text-xs py-2.5 px-5 font-extrabold inline-flex items-center gap-2 rounded-2xl cursor-pointer shadow-md"
+                >
+                  <CheckCircle2 size={15} />
+                  <span>Entendido / Confirmar Lectura</span>
+                </button>
+              </div>
+            </motion.div>
+          );
+        }
+
+        if (isNewReassignment) {
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 bg-blue-50 dark:bg-blue-950/70 border-2 border-blue-300 dark:border-blue-700 p-5 rounded-3xl shadow-md space-y-2.5"
+            >
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200 font-extrabold text-xs font-mono uppercase tracking-wider">
+                  <Sparkles size={18} className="text-amber-500 animate-pulse shrink-0" />
+                  <span>NUEVO PROYECTO REASIGNADO A TU PORTAFOLIO</span>
+                </div>
+                <span className="text-[0.62rem] font-bold font-mono px-2.5 py-0.5 rounded-full bg-blue-200 text-blue-900 dark:bg-blue-900 dark:text-blue-200 border border-blue-300 dark:border-blue-700">
+                  Notificación Activa (Válida por 3 Días)
+                </span>
+              </div>
+
+              <p className="text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed">
+                Te ha sido asignada la dirección ejecutiva y supervisión CMMI de este proyecto por parte de la Coordinación General.
+              </p>
+
+              <div className="p-3 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-blue-200 dark:border-blue-800 text-xs">
+                <span className="font-mono font-extrabold text-blue-800 dark:text-blue-300 uppercase text-[0.62rem] block mb-0.5">Motivo / Justificación Registrada:</span>
+                <p className="text-zinc-800 dark:text-zinc-200 font-semibold">{proyectoSeleccionado.motivoReasignacion || 'Asignación de liderazgo de proyecto.'}</p>
+              </div>
+            </motion.div>
+          );
+        }
+
+        return null;
+      })()}
 
       {/* Banner Flotante de Retorno Rápido (Volver al Predictor de Burnout en 1 Clic) */}
       {navReturnContext && (

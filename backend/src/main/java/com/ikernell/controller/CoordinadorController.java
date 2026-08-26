@@ -106,8 +106,16 @@ public class CoordinadorController {
     @Operation(summary = "Reasignar Líder a un proyecto", description = "Transfiere la dirección de un proyecto específico a un nuevo Líder asignado")
     public ResponseEntity<Proyecto> reasignarLiderAProyecto(
             @PathVariable Long idProyecto,
-            @RequestParam Long idNuevoLiderTarget) {
-        Proyecto actualizado = coordinadorService.reasignarLiderAProyecto(idProyecto, idNuevoLiderTarget);
+            @RequestParam Long idNuevoLiderTarget,
+            @RequestParam(required = false) String motivo) {
+        Proyecto actualizado = coordinadorService.reasignarLiderAProyecto(idProyecto, idNuevoLiderTarget, motivo);
+        return ResponseEntity.ok(actualizado);
+    }
+
+    @PutMapping("/proyectos/{idProyecto}/confirmar-lectura-reasignacion")
+    @Operation(summary = "Confirmar lectura de reasignación", description = "Marca como leída la notificación de transferencia por parte del Líder anterior")
+    public ResponseEntity<Proyecto> confirmarLecturaReasignacion(@PathVariable Long idProyecto) {
+        Proyecto actualizado = coordinadorService.confirmarLecturaReasignacion(idProyecto);
         return ResponseEntity.ok(actualizado);
     }
 

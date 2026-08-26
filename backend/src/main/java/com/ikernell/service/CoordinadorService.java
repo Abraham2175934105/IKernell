@@ -154,8 +154,13 @@ public class CoordinadorService {
         // 1. Reasignar todos los proyectos del líder saliente al nuevo líder
         List<Proyecto> proyectosAfectados = proyectoRepository.findByLider(liderSaliente);
         for (Proyecto p : proyectosAfectados) {
+            p.setIdLiderAnterior(liderSaliente.getIdTrabajador());
+            p.setNombreLiderAnterior(liderSaliente.getNombre() + " " + liderSaliente.getApellido());
             p.setLider(nuevoLider);
             p.setReasignado(true);
+            p.setFechaReasignacion(java.time.LocalDateTime.now());
+            p.setMotivoReasignacion("Reasignación masiva de portafolio por inhabilitación directiva.");
+            p.setLeidoPorLiderAnterior(false);
             proyectoRepository.save(p);
         }
 
@@ -165,7 +170,8 @@ public class CoordinadorService {
     }
 
     // Reasigna la dirección de un proyecto específico a un nuevo Líder
-    public Proyecto reasignarLiderAProyecto(Long idProyecto, Long idNuevoLiderTarget) {
+    @Transactional
+    public Proyecto reasignarLiderAProyecto(Long idProyecto, Long idNuevoLiderTarget, String motivo) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
         Trabajador nuevoLider = obtenerPorId(idNuevoLiderTarget);
@@ -174,8 +180,25 @@ public class CoordinadorService {
             throw new IllegalArgumentException("El nuevo líder seleccionado no se encuentra activo en la empresa.");
         }
 
+        if (proyecto.getLider() != null) {
+            proyecto.setIdLiderAnterior(proyecto.getLider().getIdTrabajador());
+            proyecto.setNombreLiderAnterior(proyecto.getLider().getNombre() + " " + proyecto.getLider().getApellido());
+        }
+
         proyecto.setLider(nuevoLider);
         proyecto.setReasignado(true);
+        proyecto.setFechaReasignacion(java.time.LocalDateTime.now());
+        proyecto.setMotivoReasignacion(motivo != null && !motivo.isBlank() ? motivo : "Reasignación de dirección de proyecto.");
+        proyecto.setLeidoPorLiderAnterior(false);
+
+        return proyectoRepository.save(proyecto);
+    }
+
+    @Transactional
+    public Proyecto confirmarLecturaReasignacion(Long idProyecto) {
+        Proyecto proyecto = proyectoRepository.findById(idProyecto)
+                .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
+        proyecto.setLeidoPorLiderAnterior(true);
         return proyectoRepository.save(proyecto);
     }
 

@@ -1129,14 +1129,30 @@ export const CoordinadorDashboard = () => {
     return (trabajadores || []).filter(t => t.rol === 'LIDER' && t.estado);
   }, [trabajadores]);
 
+  // Helper para calcular horas transcurridas desde la reasignación
+  const getHoursSinceReassignment = (fechaReasignacion) => {
+    if (!fechaReasignacion) return Infinity;
+    const fecha = new Date(fechaReasignacion);
+    const ahora = new Date();
+    const diffMs = ahora.getTime() - fecha.getTime();
+    return diffMs / (1000 * 60 * 60);
+  };
+
   // 1. Subset de proyectos por Líder y Texto de Búsqueda (Sin filtrar por Estado Operativo)
   const proyectosBaseCoordinador = useMemo(() => {
     if (!Array.isArray(proyectos)) return [];
 
     return proyectos.filter(prj => {
-      // Filtro de Líder
+      // Filtro de Líder: Incluye proyectos donde el líder actual es filtroProyectoLider
+      // O proyectos donde filtroProyectoLider es el líder anterior (idLiderAnterior), en ventana de 24h sin leer.
       if (filtroProyectoLider !== 'TODOS') {
-        if (String(prj.lider?.idTrabajador) !== String(filtroProyectoLider)) return false;
+        const isCurrentLider = String(prj.lider?.idTrabajador) === String(filtroProyectoLider);
+        const isPastLiderPending = String(prj.idLiderAnterior) === String(filtroProyectoLider)
+          && prj.reasignado
+          && !prj.leidoPorLiderAnterior
+          && getHoursSinceReassignment(prj.fechaReasignacion) <= 24;
+
+        if (!isCurrentLider && !isPastLiderPending) return false;
       }
 
       // Búsqueda por texto
@@ -2154,6 +2170,16 @@ export const CoordinadorDashboard = () => {
                 const isPausado = prj.estado === 'PAUSADO';
                 const isHighlighted = Number(prj.idProyecto) === Number(highlightedProyectoId);
 
+                const isPastLiderPending = filtroProyectoLider !== 'TODOS'
+                  && String(prj.idLiderAnterior) === String(filtroProyectoLider)
+                  && prj.reasignado
+                  && !prj.leidoPorLiderAnterior
+                  && getHoursSinceReassignment(prj.fechaReasignacion) <= 24;
+
+                const isNewReassignment = prj.reasignado
+                  && prj.fechaReasignacion
+                  && getHoursSinceReassignment(prj.fechaReasignacion) <= 72;
+
                 return (
                   <motion.div
                     key={prj.idProyecto}
@@ -2167,6 +2193,8 @@ export const CoordinadorDashboard = () => {
                     className={`bg-white dark:bg-zinc-900 p-6 rounded-3xl border shadow-sm flex flex-col justify-between gap-5 transition-all duration-300 ${
                       isHighlighted
                         ? 'ring-4 ring-blue-500 animate-pulse border-blue-600 bg-blue-50/50 dark:bg-blue-950/50 shadow-2xl scale-[1.02] cursor-pointer'
+                        : isPastLiderPending
+                        ? 'border-amber-400 bg-amber-50/30 dark:bg-amber-950/20'
                         : 'border-zinc-200/90 dark:border-zinc-800 hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md'
                     }`}
                   >
@@ -2182,17 +2210,32 @@ export const CoordinadorDashboard = () => {
                       )}
 
                       {/* Cabecera de la Tarjeta */}
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
                         <span className="font-mono font-extrabold text-[0.68rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
                           PRJ-00{prj.idProyecto}
                         </span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase border ${
-                          isCompletado ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' :
-                          isPausado ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 animate-pulse' :
-                          'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
-                        }`}>
-                          {prj.estado || 'ACTIVO'}
-                        </span>
+
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {isPastLiderPending ? (
+                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 animate-pulse flex items-center gap-1">
+                              <AlertTriangle size={11} className="text-amber-600" />
+                              Proceso Reasignado (1d)
+                            </span>
+                          ) : isNewReassignment ? (
+                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase bg-indigo-100 text-indigo-900 border border-indigo-300 dark:bg-indigo-950 dark:text-indigo-200 dark:border-indigo-700 animate-pulse flex items-center gap-1">
+                              <Sparkles size={11} className="text-amber-500" />
+                              Nueva Reasignación (3d)
+                            </span>
+                          ) : null}
+
+                          <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase border ${
+                            isCompletado ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' :
+                            isPausado ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 animate-pulse' :
+                            'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
+                          }`}>
+                            {prj.estado || 'ACTIVO'}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Título y Cliente */}
@@ -3919,6 +3962,46 @@ export const CoordinadorDashboard = () => {
                     SISTEMA AUDITABLE
                   </span>
                 </div>
+
+                {selectedProyectoModal.reasignado && selectedProyectoModal.motivoReasignacion && (
+                  <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-blue-200 dark:border-blue-800 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[0.65rem] font-mono font-extrabold text-blue-800 dark:text-blue-300 uppercase flex items-center gap-1">
+                        <Sparkles size={12} className="text-amber-500" /> Motivo de Reasignación Registrado:
+                      </span>
+                      {selectedProyectoModal.nombreLiderAnterior && (
+                        <span className="text-[0.62rem] text-zinc-500 font-mono">
+                          Líder Previo: <strong>{selectedProyectoModal.nombreLiderAnterior}</strong>
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed">
+                      "{selectedProyectoModal.motivoReasignacion}"
+                    </p>
+
+                    {filtroProyectoLider !== 'TODOS' && String(selectedProyectoModal.idLiderAnterior) === String(filtroProyectoLider) && !selectedProyectoModal.leidoPorLiderAnterior && (
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await api.put(`/coordinador/proyectos/${selectedProyectoModal.idProyecto}/confirmar-lectura-reasignacion`);
+                              toast.success('Lectura de reasignación confirmada. El proyecto no volverá a figurar en tu panel individual.');
+                              setSelectedProyectoModal(null);
+                              await cargarDatos();
+                            } catch (err) {
+                              toast.error('Error al confirmar lectura.');
+                            }
+                          }}
+                          className="gradient-button text-xs py-2 px-4 font-extrabold inline-flex items-center gap-1.5 rounded-xl shadow-md cursor-pointer"
+                        >
+                          <CheckCircle2 size={14} />
+                          <span>Entendido / Confirmar Lectura</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex items-center gap-3 text-xs pt-0.5">
                   <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-[0.65rem] flex items-center justify-center shrink-0 shadow-xs">
