@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, CheckCircle2, MessageSquare, Phone, Mail, User, Tag, 
-  Loader2, AlertCircle, XCircle, HelpCircle, ArrowRight, Edit3, ShieldAlert 
+  Loader2, AlertCircle, XCircle, HelpCircle, ArrowRight, Edit3, ShieldAlert,
+  ChevronDown, Check, Search, Sparkles, Layers, ShieldCheck, Globe, FileText, Wrench, Palette, Headphones
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -11,6 +12,81 @@ import axios from 'axios';
 ──────────────────────────────────────────────────────────────────────── */
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+const ASUNTOS_CONSULTA = [
+  {
+    id: 'Desarrollo de Software a Medida (Proyecto Nuevo)',
+    title: 'Desarrollo de Software a Medida',
+    subtitle: 'Plataformas web, móviles o sistemas enterprise creados a la medida.',
+    icon: Sparkles,
+    badge: 'Proyecto Nuevo',
+    badgeColor: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+  },
+  {
+    id: 'Consultoría & Arquitectura de Software',
+    title: 'Consultoría & Arquitectura de Software',
+    subtitle: 'Asesoría técnica en microservicios, escalabilidad y diseño de sistemas.',
+    icon: Layers,
+    badge: 'Arquitectura',
+    badgeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+  },
+  {
+    id: 'Auditoría de Código & Ciberseguridad',
+    title: 'Auditoría de Código & Ciberseguridad',
+    subtitle: 'Revisión de vulnerabilidades, pruebas de penetración y hardening.',
+    icon: ShieldCheck,
+    badge: 'Ciberseguridad',
+    badgeColor: 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800'
+  },
+  {
+    id: 'Mantenimiento & Optimización de Aplicaciones',
+    title: 'Mantenimiento & Optimización',
+    subtitle: 'Refactorización, mejora de rendimiento y corrección de errores.',
+    icon: Wrench,
+    badge: 'Optimización',
+    badgeColor: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+  },
+  {
+    id: 'Integración de APIs & Servicios Web',
+    title: 'Integración de APIs & Webhooks',
+    subtitle: 'Conexión entre sistemas, pasarelas de pago y servicios REST/GraphQL.',
+    icon: Globe,
+    badge: 'Integraciones',
+    badgeColor: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+  },
+  {
+    id: 'Diseño UX/UI & Prototipado Interactivo',
+    title: 'Diseño UX/UI & Experiencia Digital',
+    subtitle: 'Interfaces modernas, prototipos interactivos en Figma y design systems.',
+    icon: Palette,
+    badge: 'Diseño UX',
+    badgeColor: 'bg-pink-50 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 border-pink-200 dark:border-pink-800'
+  },
+  {
+    id: 'Soporte Técnico & Capacitación Empresarial',
+    title: 'Soporte Técnico & Capacitación',
+    subtitle: 'Asistencia especializada y entrenamiento de equipos de ingeniería.',
+    icon: Headphones,
+    badge: 'Soporte TI',
+    badgeColor: 'bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 border-teal-200 dark:border-teal-800'
+  },
+  {
+    id: 'Solicitud de Cotización / Propuesta Comercial',
+    title: 'Solicitud de Cotización Comercial',
+    subtitle: 'Estimación de costos, plazos WBS e información de contratación.',
+    icon: FileText,
+    badge: 'Cotización',
+    badgeColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+  },
+  {
+    id: 'Otro Asunto / Consulta General',
+    title: 'Otro Asunto / Consulta General',
+    subtitle: 'Pregunta o solicitud no especificada en las categorías anteriores.',
+    icon: HelpCircle,
+    badge: 'General',
+    badgeColor: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+  }
+];
+
 const validate = (name, value) => {
   const str = (value || '').trim();
   switch (name) {
@@ -19,7 +95,7 @@ const validate = (name, value) => {
     case 'email':
       return !EMAIL_REGEX.test(str) ? 'Ingrese un correo electrónico válido (ej. nombre@empresa.com).' : '';
     case 'asunto':
-      return str.length < 4 ? 'El asunto debe tener al menos 4 caracteres.' : '';
+      return !str ? 'Seleccione el asunto de su consulta.' : '';
     case 'mensaje':
       return str.length < 20 ? `Mínimo 20 caracteres (${str.length} ingresados).` : '';
     default:
@@ -63,24 +139,172 @@ const Toast = ({ type, message, onClose }) => (
 );
 
 /* ────────────────────────────────────────────────────────────────────────
-   Field error inline
+   Field error inline (con key fija para evitar animaciones de salto al escribir)
 ──────────────────────────────────────────────────────────────────────── */
 const FieldError = ({ message }) => (
-  <AnimatePresence>
+  <AnimatePresence mode="wait">
     {message && (
       <motion.p
-        key={message}
+        key="field-error"
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
-        transition={{ duration: 0.2 }}
-        className="flex items-center gap-1 mt-1.5 text-[0.7rem] font-semibold text-red-600 dark:text-red-400"
+        transition={{ duration: 0.15 }}
+        className="flex items-center gap-1 mt-1.5 text-[0.7rem] font-semibold text-red-600 dark:text-red-400 overflow-hidden"
       >
-        <AlertCircle size={11} /> {message}
+        <AlertCircle size={11} className="shrink-0 text-red-500" />
+        <span>{message}</span>
       </motion.p>
     )}
   </AnimatePresence>
 );
+
+/* ────────────────────────────────────────────────────────────────────────
+   Componente Dropdown Interactivo Profesional para Asunto
+──────────────────────────────────────────────────────────────────────── */
+const AsuntoDropdown = ({ value, onChange, onBlur, hasError }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const containerRef = useRef(null);
+
+  const selectedItem = ASUNTOS_CONSULTA.find(item => item.id === value);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+        if (onBlur) onBlur();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onBlur]);
+
+  const filteredItems = ASUNTOS_CONSULTA.filter(item => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase().trim();
+    return item.title.toLowerCase().includes(q) || 
+           item.subtitle.toLowerCase().includes(q) || 
+           item.badge.toLowerCase().includes(q);
+  });
+
+  const handleSelect = (item) => {
+    onChange(item.id);
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      {/* Botón Principal (Trigger) */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border text-xs text-left transition-all cursor-pointer shadow-2xs ${
+          isOpen
+            ? 'bg-white dark:bg-zinc-900 border-blue-500 ring-2 ring-blue-500/20 text-blue-600 dark:text-blue-400'
+            : hasError
+            ? 'bg-white dark:bg-zinc-900 border-red-400 dark:border-red-600 text-zinc-900 dark:text-zinc-100'
+            : 'bg-white dark:bg-zinc-900/90 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-900 dark:text-zinc-100'
+        }`}
+      >
+        <span className="flex items-center gap-2.5 truncate min-w-0">
+          {selectedItem ? (
+            <>
+              <selectedItem.icon size={15} className="text-blue-500 shrink-0" />
+              <span className="font-extrabold truncate text-zinc-900 dark:text-zinc-100">{selectedItem.title}</span>
+            </>
+          ) : (
+            <span className="text-zinc-400 font-medium truncate">-- Seleccione el asunto de su consulta --</span>
+          )}
+        </span>
+        <ChevronDown
+          size={15}
+          className={`shrink-0 text-zinc-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-500' : ''}`}
+        />
+      </button>
+
+      {/* Menú Desplegable Flotante Moderno (Ampliado a 460px para aprovechar espacio) */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 4 }}
+            exit={{ opacity: 0, scale: 0.97, y: -4 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="absolute right-0 top-full z-50 mt-1.5 w-[calc(100vw-2.5rem)] sm:w-[440px] md:w-[470px] max-w-[470px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/90 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden p-2 space-y-1.5 max-h-[350px] overflow-y-auto"
+          >
+            {/* Buscador interno rápido */}
+            <div className="px-2 pt-1 pb-2 sticky top-0 bg-white dark:bg-zinc-900 z-10 border-b border-zinc-100 dark:border-zinc-800/80 mb-1">
+              <div className="relative">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar opción por palabra clave..."
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+            </div>
+
+            {/* Lista de Opciones Ricas */}
+            <div className="space-y-1">
+              {filteredItems.length > 0 ? (
+                filteredItems.map((item) => {
+                  const isSelected = value === item.id;
+                  const ItemIcon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleSelect(item)}
+                      className={`w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all cursor-pointer group ${
+                        isSelected
+                          ? 'bg-blue-50/80 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 shadow-xs'
+                          : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60 border border-transparent'
+                      }`}
+                    >
+                      <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+                        isSelected
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 group-hover:text-blue-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-950'
+                      }`}>
+                        <ItemIcon size={15} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-xs font-black leading-snug ${
+                            isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'
+                          }`}>
+                            {item.title}
+                          </span>
+                          <span className={`text-[0.62rem] font-bold font-mono px-2 py-0.5 rounded-md border shrink-0 ${item.badgeColor}`}>
+                            {item.badge}
+                          </span>
+                        </div>
+                        <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 leading-normal mt-0.5">
+                          {item.subtitle}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <Check size={16} className="text-blue-600 dark:text-blue-400 shrink-0 mt-1" />
+                      )}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="py-5 text-center text-xs text-zinc-400 font-medium">
+                  No se encontraron coincidencias.
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 /* ────────────────────────────────────────────────────────────────────────
    Micro-Tooltip helper
@@ -466,17 +690,20 @@ export const ContactForm = () => {
                 <label className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider">
                   <Tag size={13} className="text-zinc-400" /> Asunto de la Consulta *
                 </label>
-                <FieldTooltip text="Resume brevemente el motivo de tu consulta o área de interés." />
+                <FieldTooltip text="Selecciona el motivo principal de tu consulta o área de interés." />
               </div>
-              <input
-                type="text"
-                name="asunto"
-                required
+              <AsuntoDropdown
                 value={formData.asunto}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Motivo de su consulta"
-                className={inputCls('asunto')}
+                onChange={(val) => {
+                  setFormData((prev) => ({ ...prev, asunto: val }));
+                  setTouched((prev) => ({ ...prev, asunto: true }));
+                  setErrors((prev) => ({ ...prev, asunto: validate('asunto', val) }));
+                }}
+                onBlur={() => {
+                  setTouched((prev) => ({ ...prev, asunto: true }));
+                  setErrors((prev) => ({ ...prev, asunto: validate('asunto', formData.asunto) }));
+                }}
+                hasError={Boolean(touched.asunto && errors.asunto)}
               />
               <FieldError message={touched.asunto ? errors.asunto : ''} />
             </div>

@@ -3,23 +3,31 @@ import { Calendar, ArrowRight, Newspaper, Award, User, Tag, ShieldCheck } from '
 import { motion } from 'framer-motion';
 import { NewsModal } from './NewsModal';
 
-const containerVariants = {
+const newsContainerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.1
-    }
+    transition: { staggerChildren: 0.12, delayChildren: 0.05 }
   }
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
+const newsHeaderVariants = {
+  hidden: { opacity: 0, scale: 0.95, y: -20 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' }
+  }
+};
+
+const newsCardVariants = {
+  hidden: { opacity: 0, y: 45, scale: 0.96 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+    scale: 1,
+    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] }
   }
 };
 
@@ -108,16 +116,16 @@ export const News = () => {
   return (
     <section id="noticias" className="py-20 md:py-28 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/50 relative">
       <motion.div 
-        variants={containerVariants}
+        variants={newsContainerVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.1 }}
-        className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl"
+        viewport={{ once: true, amount: 0.05, margin: "0px 0px -30px 0px" }}
+        className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 max-w-7xl 2xl:max-w-screen-2xl transform-gpu"
       >
         
         {/* Section Header */}
         <motion.div 
-          variants={itemVariants}
+          variants={newsHeaderVariants}
           className="text-center mb-14 md:mb-20"
         >
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-5">
@@ -132,13 +140,13 @@ export const News = () => {
         </motion.div>
 
         {/* News Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {safeNews.map((news) => {
             if (!news) return null;
             return (
               <motion.article 
                 key={news.id} 
-                variants={itemVariants}
+                variants={newsCardVariants}
                 whileHover={{ y: -6 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className={`group relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border flex flex-col h-full transition-all duration-300 ${

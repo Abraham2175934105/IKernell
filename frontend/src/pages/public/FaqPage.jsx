@@ -208,8 +208,7 @@ export const FaqPage = () => {
         {/* Page Header */}
         <motion.div 
           initial={{ opacity: 0, y: 25 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.1 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="text-center mb-10 md:mb-12"
         >
@@ -227,8 +226,7 @@ export const FaqPage = () => {
         {/* ── BANNER GUÍA / PASO A PASO SUPERIOR ─────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.1 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.05 }}
           className="mb-10 p-5 sm:p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800 shadow-sm"
         >
@@ -275,8 +273,7 @@ export const FaqPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.05 }}
             className="glass-card p-6 flex flex-col items-center text-center border border-zinc-200 dark:border-zinc-800"
           >
@@ -289,8 +286,7 @@ export const FaqPage = () => {
 
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.15 }}
             className="glass-card p-6 flex flex-col items-center text-center border border-zinc-200 dark:border-zinc-800"
           >
@@ -303,8 +299,7 @@ export const FaqPage = () => {
 
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.25 }}
             className="glass-card p-6 flex flex-col items-center text-center border border-zinc-200 dark:border-zinc-800"
           >
@@ -319,8 +314,7 @@ export const FaqPage = () => {
         {/* Searchable FAQ Interactive Panel */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.1 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="glass-panel p-6 sm:p-10 border border-zinc-200 dark:border-zinc-800"
         >
@@ -554,8 +548,7 @@ export const FaqPage = () => {
         {/* Contact Assistance Callout Expandido */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, amount: 0.1 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
           className="mt-12 text-center bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 p-8 sm:p-10 rounded-3xl shadow-sm"
         >

@@ -9,20 +9,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import heroLightImg from '../../assets/hero-light.jpg';
 
-const containerVariants = {
+const heroContainerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.12, delayChildren: 0.05 }
+    transition: { staggerChildren: 0.1, delayChildren: 0.05 }
   }
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
+const heroItemVariants = {
+  hidden: { opacity: 0, y: 25, scale: 0.96 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+    scale: 1,
+    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] }
   }
 };
 
@@ -144,16 +145,17 @@ export const Hero = () => {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[560px] h-[560px] bg-blue-500/10 dark:bg-blue-500/12 rounded-full blur-[110px] pointer-events-none z-0" />
 
       {/* ── Main Content ────────────────────────────────────────────────── */}
+      {/* ── Main Content ────────────────────────────────────────────────── */}
       <motion.div
-        variants={containerVariants}
+        variants={heroContainerVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.1 }}
-        className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10 text-center"
+        viewport={{ once: true, amount: 0.05, margin: "0px 0px -30px 0px" }}
+        className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 max-w-7xl 2xl:max-w-screen-2xl relative z-10 text-center transform-gpu"
       >
         {/* Badge corporativo */}
         <motion.div
-          variants={itemVariants}
+          variants={heroItemVariants}
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md border border-zinc-200 dark:border-white/15 text-zinc-900 dark:text-zinc-100 text-xs md:text-sm font-bold mb-7 shadow-md transition-colors duration-300"
         >
           <Terminal size={14} className="text-blue-600 dark:text-blue-400" />
@@ -162,8 +164,8 @@ export const Hero = () => {
 
         {/* H1 */}
         <motion.h1
-          variants={itemVariants}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-950 dark:text-zinc-100 tracking-tight leading-[1.07] mb-5 max-w-5xl mx-auto transition-colors duration-300"
+          variants={heroItemVariants}
+          className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-zinc-950 dark:text-zinc-100 tracking-tight leading-[1.07] mb-5 max-w-5xl mx-auto transition-colors duration-300"
         >
           Construimos Soluciones Tecnológicas de{' '}
           <span className="relative inline-block">
@@ -176,15 +178,15 @@ export const Hero = () => {
 
         {/* Subtítulo */}
         <motion.p
-          variants={itemVariants}
-          className="text-zinc-900 dark:text-zinc-300 text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-10 font-semibold dark:font-medium leading-relaxed transition-colors duration-300"
+          variants={heroItemVariants}
+          className="text-zinc-900 dark:text-zinc-300 text-sm sm:text-lg md:text-xl max-w-3xl mx-auto mb-10 font-semibold dark:font-medium leading-relaxed transition-colors duration-300"
         >
           IKernell combina Java 17 LTS con Spring Boot 3, interfaces reactivas en React 18 (Vite) y analítica predictiva en tiempo real mediante el Semáforo Inteligente y el motor capacity.pulse.
         </motion.p>
 
         {/* CTAs */}
         <motion.div
-          variants={itemVariants}
+          variants={heroItemVariants}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto mb-12"
         >
           <Link
@@ -203,7 +205,7 @@ export const Hero = () => {
         </motion.div>
 
         {/* ── Indicador Guía de Telemetría con Alto Contraste ─────────────── */}
-        <motion.div variants={itemVariants} className="flex justify-center mb-6">
+        <motion.div variants={heroItemVariants} className="flex justify-center mb-6">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-zinc-200/90 dark:border-zinc-700/80 text-zinc-900 font-extrabold dark:text-zinc-300 text-xs shadow-sm tracking-wide">
             <Layers size={14} className="text-blue-600 dark:text-blue-400" strokeWidth={2} />
             Pase el cursor sobre cada tarjeta para desplegar la telemetría
@@ -211,7 +213,7 @@ export const Hero = () => {
         </motion.div>
 
         {/* ── TARJETAS APILADAS ────────────────────────────────────────── */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left pb-16 overflow-visible">
+        <motion.div variants={heroItemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 2xl:gap-10 text-left pb-16 overflow-visible">
 
           {safeStacks.map((s) => {
             if (!s) return null;

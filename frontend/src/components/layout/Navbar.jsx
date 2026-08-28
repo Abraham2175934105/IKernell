@@ -176,7 +176,7 @@ export const Navbar = () => {
                 to={getDashboardRoute()} 
                 className="text-xs font-bold py-2.5 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 backdrop-blur-md flex items-center gap-2 transition-all shadow-sm"
               >
-                <User size={14} className="text-blue-600 dark:text-blue-400" /> Panel ({user?.rol || 'Sesión'})
+                <User size={14} className="text-blue-600 dark:text-blue-400" /> {user?.nombre || user?.nombreCompleto || user?.correo?.split('@')[0] || user?.email?.split('@')[0] || `Panel (${user?.rol || 'Sesión'})`}
               </Link>
               <button 
                 onClick={handleLogout} 
@@ -274,7 +274,7 @@ export const Navbar = () => {
                     onClick={() => setMobileOpen(false)} 
                     className="gradient-button w-full py-3"
                   >
-                    <User size={16} /> Mi Panel de Trabajo
+                    <User size={16} /> {user?.nombre || user?.nombreCompleto || user?.correo?.split('@')[0] || user?.email?.split('@')[0] || 'Mi Panel de Trabajo'}
                   </Link>
                   <button 
                     onClick={() => { handleLogout(); setMobileOpen(false); }} 

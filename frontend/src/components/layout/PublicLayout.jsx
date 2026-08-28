@@ -7,10 +7,10 @@ import { FloatingActions } from './FloatingActions';
 
 export const PublicLayout = () => {
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-screen flex flex-col relative overflow-x-hidden w-full max-w-[100vw]">
       <DynamicBackground />
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 w-full">
         <Outlet />
       </main>
       <Footer />
