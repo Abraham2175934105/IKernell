@@ -176,7 +176,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
           </div>
 
           {/* Tarjeta de perfil con estado en línea */}
-          <div className="my-3.5 mx-3">
+          <div className="mt-5 mb-4 mx-3">
             {/* Vista Completa de Perfil: Visible en Móvil abierto o Desktop Expandido */}
             <div className={`${sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')}`}>
               <motion.div
@@ -198,14 +198,11 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                 {/* Información Jerárquica */}
                 <div className="min-w-0 text-left">
                   <div className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate leading-tight">
-                    {user?.nombre ? `${user.nombre} ${user.apellido || ''}` : user?.email}
+                    {user?.nombre ? `${user.nombre} ${user.apellido || ''}` : (user?.email || 'Usuario')}
                   </div>
-                  <div className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 truncate font-mono mt-0.5 leading-none">
-                    {user?.email}
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-1">
-                    <span className={`inline-block text-[0.55rem] font-black uppercase px-2 py-0.5 rounded-md border tracking-wider ${roleInfo.classes}`}>
-                      [{roleInfo.badgeText}]
+                  <div className="mt-1 flex items-center gap-1">
+                    <span className={`inline-block text-[0.58rem] font-black uppercase px-2.5 py-0.5 rounded-md border tracking-wider ${roleInfo.classes}`}>
+                      {roleInfo.badgeText}
                     </span>
                   </div>
                 </div>
@@ -216,7 +213,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             <div className={`${sidebarOpen ? 'hidden' : (isExpanded ? 'block lg:hidden' : 'block')}`}>
               <div className="flex justify-center p-1">
                 <div 
-                  title={`${user?.nombre} ${user?.apellido || ''} [${roleInfo.badgeText}] - En línea`}
+                  title={`${user?.nombre} ${user?.apellido || ''} (${roleInfo.badgeText}) - En línea`}
                   className="relative group cursor-pointer"
                 >
                   <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 group-hover:scale-105 transition-transform">
