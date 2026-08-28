@@ -3,17 +3,18 @@ import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { 
-  CheckSquare, Bug, AlertTriangle, X, CheckCircle2, 
+  CheckSquare, Bug, AlertTriangle, AlertCircle, X, CheckCircle2, 
   ChevronRight, ChevronDown, Clock, Plus, Activity, Layers, Sparkles,
   Loader2, Inbox, RefreshCw, Eye, RotateCcw, Info, ArrowRight,
   FileText, Calendar, User, ShieldAlert, Play, Check,
-  Filter, SlidersHorizontal, Search, FolderGit2, ArrowUpDown,
-  LayoutGrid, List, Lock
+  Filter, SlidersHorizontal, Search, FolderGit2, ArrowUpDown, Briefcase, Zap, ArrowLeft,
+  LayoutGrid, List, Lock, Server, WifiOff, Database, Wrench, Users, Code2, ShieldCheck, AlertOctagon, Cpu, Terminal
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SnippetInjectionCard } from '../../components/dashboard/SnippetInjectionCard';
 import { Skeleton, SkeletonCard, SkeletonTable } from '../../components/ui/Skeleton';
+import { CustomSelect } from '../../components/ui/CustomSelect';
 
 // Variantes de animación de alto rendimiento y ultra rápidas (0.25s)
 const containerVariants = {
@@ -65,6 +66,17 @@ const EmptyState = ({ icon: Icon, title, description, action }) => (
     {action && action}
   </div>
 );
+
+// Componente Auxiliar para Errores de Validación en Formularios
+const FieldError = ({ message }) => {
+  if (!message) return null;
+  return (
+    <span className="text-[0.7rem] text-red-600 dark:text-red-400 font-bold block mt-1 flex items-center gap-1 animate-fadeIn">
+      <AlertCircle size={12} className="shrink-0 text-red-500" />
+      <span>{message}</span>
+    </span>
+  );
+};
 
 // Componente Dropdown Personalizado Enterprise con Iconos, Micro-Badges y Click-Outside
 const CustomDropdown = ({ 
@@ -217,12 +229,25 @@ export const DesarrolladorDashboard = () => {
 
   // Estados locales
   const [activeTab, setActiveTab] = useState('actividades');
-  const [actividades, setActividades] = useState([]);
+const [actividades, setActividades] = useState([]);
   const [etapas, setEtapas] = useState([]);
   const [misReportes, setMisReportes] = useState({ errores: [], interrupciones: [], totalErrores: 0, totalInterrupciones: 0 });
   const [filtroHistorial, setFiltroHistorial] = useState('TODOS');
   
+  // Evaluador universal de Proyectos Finalizados / Archivados
+  const esProyectoFinalizado = useCallback((p) => {
+    if (!p) return false;
+    const st = String(p.estado || p.estadoProyecto || p.estado_proyecto || '').toUpperCase().trim();
+    return st === 'FINALIZADO' || st === 'COMPLETADO' || st === 'ARCHIVADO' || st === 'CANCELADO' || st === 'INACTIVO';
+  }, []);
+
+  // Filtros de Estado de Proyecto (Proyectos Activos por defecto vs Archivados)
+  const [filtroEstadoProyectoActividades, setFiltroEstadoProyectoActividades] = useState('ACTIVOS'); // 'ACTIVOS' (por defecto) | 'FINALIZADOS' | 'TODOS'
+  const [filtroEstadoProyectoReportes, setFiltroEstadoProyectoReportes] = useState('ACTIVOS'); // 'ACTIVOS' (por defecto) | 'FINALIZADOS' | 'TODOS'
+
   // Estados para Filtros, Buscador y Ordenamiento en Cliente (HU-16 / RF-21)
+  const [proyectoSeleccionadoDev, setProyectoSeleccionadoDev] = useState(null);
+  const [searchProjectQuery, setSearchProjectQuery] = useState('');
   const [searchTaskQuery, setSearchTaskQuery] = useState('');
   const [proyectoFilter, setProyectoFilter] = useState('TODOS');
   const [estadoFilter, setEstadoFilter] = useState('TODAS');
@@ -250,6 +275,7 @@ export const DesarrolladorDashboard = () => {
   const [submittingInterrupcion, setSubmittingInterrupcion] = useState(false);
 
   const [errorForm, setErrorForm] = useState({
+    idProyecto: '',
     idEtapa: '',
     tipoError: '',
     severidad: '',
@@ -260,6 +286,7 @@ export const DesarrolladorDashboard = () => {
   const [loadingSnippets, setLoadingSnippets] = useState(false);
 
   const [interrupcionForm, setInterrupcionForm] = useState({
+    idProyecto: '',
     idEtapa: '',
     tipoInterrupcion: '',
     duracionMinutos: '',
@@ -271,11 +298,11 @@ export const DesarrolladorDashboard = () => {
   const cargarActividades = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.get('/desarrollador/mis-actividades');
+      const data = await api.get('/desarrollador/mis-actividades').catch(() => []);
       setActividades(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error cargando actividades:', err);
-      toast.error(err.message || 'Error al cargar actividades desde el servidor.');
+      setActividades([]);
     } finally {
       setLoading(false);
     }
@@ -284,24 +311,93 @@ export const DesarrolladorDashboard = () => {
   const cargarEtapas = useCallback(async () => {
     try {
       setLoadingEtapas(true);
-      const data = await api.get('/desarrollador/etapas');
+      const data = await api.get('/desarrollador/etapas').catch(() => []);
       setEtapas(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error cargando etapas:', err);
-      toast.error('Error al cargar las etapas WBS.');
+      setEtapas([]);
     } finally {
       setLoadingEtapas(false);
     }
   }, [api]);
 
+  // Consolidación inteligente de Etapas WBS (Combina API de Etapas + Actividades Asignadas para NUNCA quedar vacías)
+  const etapasConsolidadas = useMemo(() => {
+    const map = new Map();
+
+    // 1. Etapas de la API
+    (etapas || []).forEach(et => {
+      if (et && et.idEtapa) {
+        const idEtStr = et.idEtapa.toString();
+        const p = et.proyecto;
+        const idPrjStr = p?.idProyecto?.toString() || p?.id?.toString() || '0';
+        const nomPrj = p?.nombre || 'Proyecto General';
+        map.set(idEtStr, {
+          idEtapa: idEtStr,
+          nombreEtapa: et.nombreEtapa || `Etapa #${idEtStr}`,
+          idProyecto: idPrjStr,
+          nombreProyecto: nomPrj,
+          etapaObj: et
+        });
+      }
+    });
+
+    // 2. Etapas extraídas de las actividades asignadas al desarrollador
+    (actividades || []).forEach(act => {
+      const et = act.etapa;
+      if (et && et.idEtapa) {
+        const idEtStr = et.idEtapa.toString();
+        const p = et.proyecto || act.proyecto;
+        const idPrjStr = p?.idProyecto?.toString() || p?.id?.toString() || '0';
+        const nomPrj = p?.nombre || 'Proyecto General';
+        if (!map.has(idEtStr)) {
+          map.set(idEtStr, {
+            idEtapa: idEtStr,
+            nombreEtapa: et.nombreEtapa || `Etapa #${idEtStr}`,
+            idProyecto: idPrjStr,
+            nombreProyecto: nomPrj,
+            etapaObj: et
+          });
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [etapas, actividades]);
+
+  // Lista única de Proyectos asociados para el selector Nivel 1 del modal
+  const proyectosDisponiblesModal = useMemo(() => {
+    const map = new Map();
+    etapasConsolidadas.forEach(et => {
+      if (et.idProyecto && !map.has(et.idProyecto)) {
+        map.set(et.idProyecto, {
+          idProyecto: et.idProyecto,
+          nombreProyecto: et.nombreProyecto
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [etapasConsolidadas]);
+
+  // Filtros de etapas por proyecto seleccionado para cada modal
+  const etapasFiltradasError = useMemo(() => {
+    if (!errorForm.idProyecto) return etapasConsolidadas;
+    return etapasConsolidadas.filter(et => et.idProyecto === errorForm.idProyecto);
+  }, [etapasConsolidadas, errorForm.idProyecto]);
+
+  const etapasFiltradasInterrupcion = useMemo(() => {
+    if (!interrupcionForm.idProyecto) return etapasConsolidadas;
+    return etapasConsolidadas.filter(et => et.idProyecto === interrupcionForm.idProyecto);
+  }, [etapasConsolidadas, interrupcionForm.idProyecto]);
+
   const cargarMisReportes = useCallback(async () => {
     try {
       setLoadingReportes(true);
-      const data = await api.get('/desarrollador/mis-reportes');
+      const data = await api.get('/desarrollador/mis-reportes').catch(() => null);
       setMisReportes(data || { errores: [], interrupciones: [], totalErrores: 0, totalInterrupciones: 0 });
     } catch (err) {
       console.error('Error cargando reportes:', err);
-      toast.error('Error al cargar historial de reportes.');
+      setMisReportes({ errores: [], interrupciones: [], totalErrores: 0, totalInterrupciones: 0 });
     } finally {
       setLoadingReportes(false);
     }
@@ -378,7 +474,10 @@ export const DesarrolladorDashboard = () => {
   // Accesos directos para precargar datos de la tarea en los modales
   const handleAbrirReporteErrorDesdeTarea = (actividad) => {
     const idEt = actividad.etapa?.idEtapa?.toString() || '';
+    const p = actividad.etapa?.proyecto || actividad.proyecto;
+    const idPrj = p?.idProyecto?.toString() || p?.id?.toString() || '';
     setErrorForm({
+      idProyecto: idPrj,
       idEtapa: idEt,
       tipoError: '',
       severidad: 'MEDIA',
@@ -391,7 +490,10 @@ export const DesarrolladorDashboard = () => {
 
   const handleAbrirInterrupcionDesdeTarea = (actividad) => {
     const idEt = actividad.etapa?.idEtapa?.toString() || '';
+    const p = actividad.etapa?.proyecto || actividad.proyecto;
+    const idPrj = p?.idProyecto?.toString() || p?.id?.toString() || '';
     setInterrupcionForm({
+      idProyecto: idPrj,
       idEtapa: idEt,
       tipoInterrupcion: 'CORTE_ENERGIA',
       duracionMinutos: '30',
@@ -405,7 +507,8 @@ export const DesarrolladorDashboard = () => {
   // Envío y validación del formulario de errores técnicos
   const validarErrorForm = () => {
     const errors = {};
-    if (!errorForm.idEtapa) errors.idEtapa = 'Seleccione la etapa afectada';
+    if (!errorForm.idProyecto) errors.idProyecto = 'Seleccione el proyecto afectado';
+    if (!errorForm.idEtapa) errors.idEtapa = 'Seleccione la etapa WBS afectada';
     if (!errorForm.tipoError) errors.tipoError = 'Seleccione el tipo de error';
     if (!errorForm.severidad) errors.severidad = 'Seleccione la severidad';
     if (!errorForm.descripcion || errorForm.descripcion.trim().length < 8) {
@@ -430,7 +533,7 @@ export const DesarrolladorDashboard = () => {
       
       toast.success('Caso de Error Técnico registrado con éxito. Guardado en PostgreSQL.', { duration: 3000 });
       setShowErrorModal(false);
-      setErrorForm({ idEtapa: '', tipoError: '', severidad: '', descripcion: '' });
+      setErrorForm({ idProyecto: '', idEtapa: '', tipoError: '', severidad: '', descripcion: '' });
       setEtapaPreseleccionada(null);
       setErrorFormErrors({});
     } catch (err) {
@@ -444,7 +547,8 @@ export const DesarrolladorDashboard = () => {
   // Envío y validación del formulario de interrupciones operativas
   const validarInterrupcionForm = () => {
     const errors = {};
-    if (!interrupcionForm.idEtapa) errors.idEtapa = 'Seleccione la etapa afectada';
+    if (!interrupcionForm.idProyecto) errors.idProyecto = 'Seleccione el proyecto afectado';
+    if (!interrupcionForm.idEtapa) errors.idEtapa = 'Seleccione la etapa WBS afectada';
     if (!interrupcionForm.tipoInterrupcion) errors.tipoInterrupcion = 'Seleccione el tipo de contingencia';
     const mins = parseInt(interrupcionForm.duracionMinutos);
     if (!interrupcionForm.duracionMinutos || isNaN(mins) || mins < 1) {
@@ -472,7 +576,7 @@ export const DesarrolladorDashboard = () => {
       
       toast.success(`Caso de Contingencia (${interrupcionForm.duracionMinutos} min) registrado con éxito. Guardado en PostgreSQL.`, { duration: 3000 });
       setShowInterrupcionModal(false);
-      setInterrupcionForm({ idEtapa: '', tipoInterrupcion: '', duracionMinutos: '', comentarios: '' });
+      setInterrupcionForm({ idProyecto: '', idEtapa: '', tipoInterrupcion: '', duracionMinutos: '', comentarios: '' });
       setEtapaPreseleccionada(null);
       setInterrupcionFormErrors({});
       cargarMisReportes();
@@ -486,52 +590,110 @@ export const DesarrolladorDashboard = () => {
 
   // Métricas calculadas para contadores y consolidación del historial
   const actividadesPendientes = useMemo(() => actividades.filter(a => a.estado === 'PENDIENTE').length, [actividades]);
-  const actividadesEnProgreso = useMemo(() => actividades.filter(a => a.estado === 'EN_PROGRESO').length, [actividades]);
-  const actividadesFinalizadas = useMemo(() => actividades.filter(a => a.estado === 'FINALIZADA').length, [actividades]);
+  const actividadesEnProgreso = useMemo(() => actividades.filter(a => a.estado === 'EN_PROGRESO' || a.estado === 'EN_CURSO').length, [actividades]);
+  const actividadesFinalizadas = useMemo(() => actividades.filter(a => a.estado === 'FINALIZADA' || a.estado === 'COMPLETADA').length, [actividades]);
 
-  // Proyectos extraídos dinámicamente de las tareas asignadas
-  const proyectosDisponibles = useMemo(() => {
-    const projMap = new Map();
-    (actividades || []).forEach(a => {
-      const pNom = a.etapa?.proyecto?.nombre || 'Proyecto General';
-      const pId = a.etapa?.proyecto?.idProyecto?.toString() || pNom;
-      if (!projMap.has(pId)) {
-        projMap.set(pId, pNom);
+  // Agrupar actividades por Proyecto para la Vista Nivel 1 (Tarjetas de Proyectos)
+  const proyectosAgrupados = useMemo(() => {
+    const map = new Map();
+    (actividades || []).forEach(act => {
+      const prj = act.etapa?.proyecto || act.proyectoObj || {};
+      const pId = prj.idProyecto || prj.id || 'GENERICO';
+      const pNombre = prj.nombre || 'Proyecto General';
+      const pCliente = prj.cliente || 'Cliente Corporativo';
+      const pEstado = prj.estado || 'ACTIVO';
+
+      if (!map.has(pId)) {
+        map.set(pId, {
+          idProyecto: pId,
+          nombre: pNombre,
+          cliente: pCliente,
+          estado: pEstado,
+          proyectoObj: prj,
+          actividades: [],
+          pendientes: 0,
+          enProgreso: 0,
+          finalizadas: 0
+        });
       }
+
+      const item = map.get(pId);
+      item.actividades.push(act);
+      if (act.estado === 'PENDIENTE') item.pendientes++;
+      else if (act.estado === 'EN_PROGRESO' || act.estado === 'EN_CURSO') item.enProgreso++;
+      else if (act.estado === 'FINALIZADA' || act.estado === 'COMPLETADA') item.finalizadas++;
     });
-    return Array.from(projMap.entries()).map(([id, nombre]) => ({ id, nombre }));
+
+    return Array.from(map.values());
   }, [actividades]);
 
-  // Lista de actividades filtradas y ordenadas en cliente (HU-16 / RF-21)
-  const actividadesFiltradasYOrdenadas = useMemo(() => {
-    let result = [...actividades];
+  // Contadores de Proyectos Activos vs Archivados / Concluidos
+  const conteoProyectosActivos = useMemo(() => {
+    return proyectosAgrupados.filter(p => !esProyectoFinalizado(p.proyectoObj || p)).length;
+  }, [proyectosAgrupados, esProyectoFinalizado]);
 
-    // 1. Buscador reactivo por texto (descripción, etapa o proyecto)
+  const conteoProyectosFinalizados = useMemo(() => {
+    return proyectosAgrupados.filter(p => esProyectoFinalizado(p.proyectoObj || p)).length;
+  }, [proyectosAgrupados, esProyectoFinalizado]);
+
+  const proyectosFiltrados = useMemo(() => {
+    let result = [...proyectosAgrupados];
+
+    // 1. Filtro por Estado del Proyecto (Proyectos Activos por defecto vs Archivados)
+    if (filtroEstadoProyectoActividades === 'ACTIVOS') {
+      result = result.filter(p => !esProyectoFinalizado(p.proyectoObj || p));
+    } else if (filtroEstadoProyectoActividades === 'FINALIZADOS') {
+      result = result.filter(p => esProyectoFinalizado(p.proyectoObj || p));
+    }
+
+    // 2. Buscador por texto
+    if (searchProjectQuery.trim()) {
+      const q = searchProjectQuery.trim().toLowerCase();
+      result = result.filter(p => 
+        p.nombre.toLowerCase().includes(q) || 
+        p.cliente.toLowerCase().includes(q) ||
+        `prj-00${p.idProyecto}`.toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [proyectosAgrupados, searchProjectQuery, filtroEstadoProyectoActividades, esProyectoFinalizado]);
+
+  // Actividades del proyecto seleccionado para Nivel 2
+  const actividadesDelProyectoSeleccionado = useMemo(() => {
+    if (!proyectoSeleccionadoDev) return [];
+    return (actividades || []).filter(act => {
+      const prj = act.etapa?.proyecto || act.proyectoObj || {};
+      const pId = prj.idProyecto || prj.id || 'GENERICO';
+      return String(pId) === String(proyectoSeleccionadoDev.idProyecto);
+    });
+  }, [actividades, proyectoSeleccionadoDev]);
+
+  // Lista de actividades filtradas y ordenadas del proyecto seleccionado
+  const actividadesFiltradasYOrdenadas = useMemo(() => {
+    let result = [...actividadesDelProyectoSeleccionado];
+
+    // 1. Buscador reactivo dentro del proyecto
     if (searchTaskQuery.trim()) {
       const q = searchTaskQuery.trim().toLowerCase();
       result = result.filter(a => {
         const desc = (a.descripcion || '').toLowerCase();
         const etapa = (a.etapa?.nombreEtapa || a.etapa?.nombre || '').toLowerCase();
-        const proy = (a.etapa?.proyecto?.nombre || '').toLowerCase();
-        return desc.includes(q) || etapa.includes(q) || proy.includes(q);
+        return desc.includes(q) || etapa.includes(q);
       });
     }
 
-    // 2. Filtro por proyecto
-    if (proyectoFilter !== 'TODOS') {
-      result = result.filter(a => {
-        const pId = a.etapa?.proyecto?.idProyecto?.toString();
-        const pNom = a.etapa?.proyecto?.nombre;
-        return pId === proyectoFilter || pNom === proyectoFilter;
-      });
-    }
-
-    // 3. Filtro por estado operativo
+    // 2. Filtro por estado operativo
     if (estadoFilter !== 'TODAS') {
-      result = result.filter(a => a.estado === estadoFilter);
+      result = result.filter(a => {
+        if (estadoFilter === 'PENDIENTE') return a.estado === 'PENDIENTE';
+        if (estadoFilter === 'EN_PROGRESO') return a.estado === 'EN_PROGRESO' || a.estado === 'EN_CURSO';
+        if (estadoFilter === 'FINALIZADA') return a.estado === 'FINALIZADA' || a.estado === 'COMPLETADA';
+        return true;
+      });
     }
 
-    // 4. Ordenamiento dinámico
+    // 3. Ordenamiento dinámico
     result.sort((a, b) => {
       if (ordenarPor === 'RECIENTES') {
         return (b.idActividad || 0) - (a.idActividad || 0);
@@ -542,22 +704,59 @@ export const DesarrolladorDashboard = () => {
       if (ordenarPor === 'DESCRIPCION') {
         return (a.descripcion || '').localeCompare(b.descripcion || '');
       }
-      if (ordenarPor === 'ETAPA') {
-        const eA = a.etapa?.nombreEtapa || a.etapa?.nombre || '';
-        const eB = b.etapa?.nombreEtapa || b.etapa?.nombre || '';
-        return eA.localeCompare(eB);
-      }
       return 0;
     });
 
     return result;
-  }, [actividades, searchTaskQuery, proyectoFilter, estadoFilter, ordenarPor]);
+  }, [actividadesDelProyectoSeleccionado, searchTaskQuery, estadoFilter, ordenarPor]);
 
-  const activeTaskFiltersCount = (searchTaskQuery ? 1 : 0) + (proyectoFilter !== 'TODOS' ? 1 : 0) + (estadoFilter !== 'TODAS' ? 1 : 0) + (ordenarPor !== 'RECIENTES' ? 1 : 0);
+  const activeTaskFiltersCount = (searchTaskQuery ? 1 : 0) + (estadoFilter !== 'TODAS' ? 1 : 0) + (ordenarPor !== 'RECIENTES' ? 1 : 0);
+
+  // Evaluador estricto de asignación reciente (< 24h)
+  const evaluarSiEsNuevaAsignacion24h = useCallback((act) => {
+    if (!act) return false;
+    
+    // 1. Tareas finalizadas o completadas NUNCA muestran la alerta
+    const st = (act.estado || '').toUpperCase();
+    if (st === 'FINALIZADA' || st === 'COMPLETADA' || st === 'FINALIZADO' || st === 'COMPLETADO') {
+      return false;
+    }
+
+    // 2. Si la actividad tiene la propiedad fechaAsignacion desde el backend
+    if (act.fechaAsignacion) {
+      const fechaAsig = new Date(act.fechaAsignacion).getTime();
+      if (!isNaN(fechaAsig)) {
+        const horasTranscurridas = (Date.now() - fechaAsig) / (1000 * 60 * 60);
+        return horasTranscurridas >= 0 && horasTranscurridas <= 24;
+      }
+    }
+
+    // 3. Si la actividad fue reasignada con timestamp en la descripción
+    if (act.descripcion && /reasignad/i.test(act.descripcion)) {
+      const match = act.descripcion.match(/\[Reasignad[ao]:?\s*([^\]]+)\]/i);
+      if (match) {
+        const strVal = match[1];
+        const matchFecha = strVal.match(/\b(\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4})\b/);
+        if (matchFecha) {
+          const fechaParsed = new Date(matchFecha[1]).getTime();
+          if (!isNaN(fechaParsed)) {
+            const horasDiff = (Date.now() - fechaParsed) / (1000 * 60 * 60);
+            return horasDiff >= 0 && horasDiff <= 24;
+          }
+        }
+      }
+    }
+
+    // 4. Si la tarea es antigua (hace más de 24h o datos semilla), NO es nueva asignación
+    return false;
+  }, []);
+
+  const totalNuevasGlobales = useMemo(() => {
+    return (actividades || []).filter(a => evaluarSiEsNuevaAsignacion24h(a)).length;
+  }, [actividades, evaluarSiEsNuevaAsignacion24h]);
 
   const handleClearTaskFilters = () => {
     setSearchTaskQuery('');
-    setProyectoFilter('TODOS');
     setEstadoFilter('TODAS');
     setOrdenarPor('RECIENTES');
   };
@@ -581,11 +780,23 @@ export const DesarrolladorDashboard = () => {
     return combined;
   }, [misReportes, filtroHistorial]);
 
-  // Filtros avanzados y ordenamiento sobre la lista unificada de reportes (HU-17 / RF-22 a RF-24)
   const listaReportesFiltradaYOrdenada = useMemo(() => {
     let list = [...listaReportesUnificada];
 
-    // 1. Buscador reactivo por texto (descripción, comentarios, etapa o nota de respuesta)
+    // 1. Filtro por Estado de Proyecto (Proyectos Activos por defecto vs Archivados / Concluidos)
+    if (filtroEstadoProyectoReportes === 'ACTIVOS') {
+      list = list.filter(item => {
+        const prj = item?.etapa?.proyecto || item?.proyectoObj;
+        return !esProyectoFinalizado(prj);
+      });
+    } else if (filtroEstadoProyectoReportes === 'FINALIZADOS') {
+      list = list.filter(item => {
+        const prj = item?.etapa?.proyecto || item?.proyectoObj;
+        return esProyectoFinalizado(prj);
+      });
+    }
+
+    // 2. Buscador por texto
     if (searchReportQuery.trim()) {
       const q = searchReportQuery.trim().toLowerCase();
       list = list.filter(item => {
@@ -598,12 +809,10 @@ export const DesarrolladorDashboard = () => {
       });
     }
 
-    // 2. Filtro por Severidad / Impacto (para Errores)
     if (filtroSeveridad !== 'TODAS') {
       list = list.filter(item => item?.severidad === filtroSeveridad);
     }
 
-    // 2b. Filtro por Duración de Bloqueo (para Interrupciones)
     if (filtroHistorial === 'INTERRUPCIONES' && filtroDuracion !== 'TODAS') {
       list = list.filter(item => {
         const mins = parseInt(item?.duracionMinutos || 0);
@@ -614,12 +823,10 @@ export const DesarrolladorDashboard = () => {
       });
     }
 
-    // 3. Filtro por Estado de Atención
     if (filtroEstadoAtencion !== 'TODOS') {
       list = list.filter(item => (item?.estadoAtencion || 'REGISTRADO') === filtroEstadoAtencion);
     }
 
-    // 4. Ordenamiento dinámico
     list.sort((a, b) => {
       if (ordenarReportesPor === 'RECIENTES') {
         return b._fecha - a._fecha;
@@ -642,9 +849,9 @@ export const DesarrolladorDashboard = () => {
     });
 
     return list;
-  }, [listaReportesUnificada, searchReportQuery, filtroSeveridad, filtroDuracion, filtroEstadoAtencion, ordenarReportesPor, filtroHistorial]);
+  }, [listaReportesUnificada, searchReportQuery, filtroSeveridad, filtroDuracion, filtroEstadoAtencion, ordenarReportesPor, filtroEstadoProyectoReportes, esProyectoFinalizado]);
 
-  const activeReportFiltersCount = (searchReportQuery ? 1 : 0) + (filtroHistorial !== 'TODOS' ? 1 : 0) + (filtroSeveridad !== 'TODAS' ? 1 : 0) + (filtroDuracion !== 'TODAS' ? 1 : 0) + (filtroEstadoAtencion !== 'TODOS' ? 1 : 0) + (ordenarReportesPor !== 'RECIENTES' ? 1 : 0);
+  const activeReportFiltersCount = (searchReportQuery ? 1 : 0) + (filtroHistorial !== 'TODOS' ? 1 : 0) + (filtroSeveridad !== 'TODAS' ? 1 : 0) + (filtroDuracion !== 'TODAS' ? 1 : 0) + (filtroEstadoAtencion !== 'TODOS' ? 1 : 0) + (ordenarReportesPor !== 'RECIENTES' ? 1 : 0) + (filtroEstadoProyectoReportes !== 'ACTIVOS' ? 1 : 0);
 
   const handleClearReportFilters = () => {
     setSearchReportQuery('');
@@ -652,14 +859,9 @@ export const DesarrolladorDashboard = () => {
     setFiltroSeveridad('TODAS');
     setFiltroDuracion('TODAS');
     setFiltroEstadoAtencion('TODOS');
+    setFiltroEstadoProyectoReportes('ACTIVOS');
     setOrdenarReportesPor('RECIENTES');
   };
-
-  const FieldError = ({ message }) => message ? (
-    <p className="text-[0.65rem] text-red-500 font-bold mt-1 flex items-center gap-1">
-      <AlertTriangle size={10} /> {message}
-    </p>
-  ) : null;
 
   return (
     <DashboardLayout
@@ -694,7 +896,7 @@ export const DesarrolladorDashboard = () => {
                 Tablero Personal de Actividades
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                Seguimiento en tiempo real de tareas WBS, especificaciones técnicas y trazabilidad de reasignación
+                Seleccione un proyecto asignado para visualizar sus tareas WBS y dar seguimiento operativo
               </p>
             </div>
 
@@ -727,10 +929,8 @@ export const DesarrolladorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Métricas KPI y Barra de Progreso Lineal (Estilo Corporativo Jira / GitHub Metrics) */}
+          {/* Métricas KPI General */}
           <motion.div variants={itemVariants} className="space-y-4">
-            
-            {/* Barra de Progreso General */}
             <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2.5">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div className="flex items-center gap-2">
@@ -755,420 +955,565 @@ export const DesarrolladorDashboard = () => {
                 </div>
               </div>
 
-              {/* Pista de la Barra de Progreso */}
               <div className="w-full h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${actividades.length > 0 ? (actividadesFinalizadas / actividades.length) * 100 : 0}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                   className="h-full bg-blue-600"
-                  title="Tareas Finalizadas"
                 />
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${actividades.length > 0 ? (actividadesEnProgreso / actividades.length) * 100 : 0}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
                   className="h-full bg-blue-400 dark:bg-blue-500"
-                  title="Tareas En Progreso"
                 />
               </div>
             </div>
 
-            {/* Grid de 3 Tarjetas Métricas KPI */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-              
-              {/* 1. Tarjeta: Pendientes */}
-              <motion.div 
-                whileHover={{ y: -3 }}
-                transition={{ duration: 0.2 }}
-                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 shadow-sm transition-colors flex items-center justify-between group h-full"
-              >
+              <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-[0.65rem] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-                      Por Iniciar
-                    </span>
-                    <span className="text-[0.6rem] font-mono font-bold text-zinc-400 px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800">
-                      {actividades.length > 0 ? Math.round((actividadesPendientes / actividades.length) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                    {actividadesPendientes}
-                  </div>
-                  <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium">Asignaciones en espera</span>
+                  <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Por Iniciar</span>
+                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">{actividadesPendientes}</div>
+                  <span className="text-[0.65rem] text-zinc-500">Asignaciones en espera</span>
                 </div>
-
-                <div className="w-11 h-11 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                  <Clock size={20} />
+                <div className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center">
+                  <Clock size={18} />
                 </div>
-              </motion.div>
-
-              {/* 2. Tarjeta: En Progreso */}
-              <motion.div 
-                whileHover={{ y: -3 }}
-                transition={{ duration: 0.2 }}
-                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800/60 hover:border-blue-400 dark:hover:border-blue-600 shadow-sm transition-colors flex items-center justify-between group h-full"
-              >
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                      En Desarrollo
-                    </span>
-                    <span className="text-[0.6rem] font-mono font-bold text-blue-600 dark:text-blue-400 px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-950/40">
-                      {actividades.length > 0 ? Math.round((actividadesEnProgreso / actividades.length) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                    {actividadesEnProgreso}
-                  </div>
-                  <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium">Trabajo activo en curso</span>
-                </div>
-
-                <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                  <Activity size={20} />
-                </div>
-              </motion.div>
-
-              {/* 3. Tarjeta: Finalizadas */}
-              <motion.div 
-                whileHover={{ y: -3 }}
-                transition={{ duration: 0.2 }}
-                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800/60 hover:border-emerald-400 dark:hover:border-emerald-600 shadow-sm transition-colors flex items-center justify-between group h-full"
-              >
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                      Completadas
-                    </span>
-                    <span className="text-[0.6rem] font-mono font-bold text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-950/40">
-                      {actividades.length > 0 ? Math.round((actividadesFinalizadas / actividades.length) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                    {actividadesFinalizadas}
-                  </div>
-                  <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium">Verificadas y cerradas</span>
-                </div>
-
-                <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                  <CheckCircle2 size={20} />
-                </div>
-              </motion.div>
-
-            </div>
-
-          </motion.div>
-
-          {/* Barra de Herramientas de Filtros, Búsqueda y Ordenamiento en Cliente (HU-16 / RF-21) */}
-          <motion.div 
-            variants={itemVariants}
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-3xl shadow-sm space-y-4"
-          >
-            {/* Fila Superior: Buscador, Selector de Proyecto y Selector de Ordenamiento */}
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-              
-              {/* Buscador Rápido Reactivo */}
-              <div className="relative flex-1">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
-                <input
-                  type="text"
-                  value={searchTaskQuery}
-                  onChange={(e) => setSearchTaskQuery(e.target.value)}
-                  placeholder="Buscar actividad por descripción, etapa WBS o proyecto..."
-                  className="input-field pl-10 pr-9 py-2 text-xs font-medium"
-                />
-                {searchTaskQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTaskQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
               </div>
 
-              {/* Controles Dropdown: Filtro por Proyecto y Ordenamiento */}
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+              <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800/60 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 uppercase">En Desarrollo</span>
+                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">{actividadesEnProgreso}</div>
+                  <span className="text-[0.65rem] text-zinc-500">Trabajo activo en curso</span>
+                </div>
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <Activity size={18} />
+                </div>
+              </div>
+
+              <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800/60 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Completadas</span>
+                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">{actividadesFinalizadas}</div>
+                  <span className="text-[0.65rem] text-zinc-500">Verificadas y cerradas</span>
+                </div>
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <CheckCircle2 size={18} />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* VISTA NIVEL 1: CATÁLOGO DE PROYECTOS ASIGNADOS AL DESARROLLADOR */}
+          {!proyectoSeleccionadoDev && (
+            <div className="space-y-6">
+              
+              {/* Notificación Destacada de Nuevas Asignaciones (< 24h) */}
+              {totalNuevasGlobales > 0 && (
+                <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                    <span className="relative flex h-2.5 w-2.5 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-emerald-600 dark:text-emerald-400" />
+                      Tiene <strong className="font-extrabold underline">{totalNuevasGlobales} nueva(s) tarea(s)</strong> asignada(s) en las últimas 24 horas.
+                    </span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-mono text-[0.62rem] font-black tracking-wider uppercase shadow-2xs">
+                    Notificación Reciente
+                  </span>
+                </div>
+              )}
+
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-3xl shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 flex-wrap">
                 
-                {/* Selector de Proyecto */}
-                <div className="relative flex-1 sm:flex-initial min-w-[200px]">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
-                    <FolderGit2 size={14} />
-                  </div>
-                  <select
-                    value={proyectoFilter}
-                    onChange={(e) => setProyectoFilter(e.target.value)}
-                    className="input-field pl-9 py-2 text-xs font-bold appearance-none cursor-pointer"
-                  >
-                    <option value="TODOS">Todos los Proyectos</option>
-                    {proyectosDisponibles.map(p => (
-                      <option key={p.id} value={p.id}>{p.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Selector de Ordenamiento */}
-                <div className="relative flex-1 sm:flex-initial min-w-[170px]">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
-                    <SlidersHorizontal size={14} />
-                  </div>
-                  <select
-                    value={ordenarPor}
-                    onChange={(e) => setOrdenarPor(e.target.value)}
-                    className="input-field pl-9 py-2 text-xs font-bold appearance-none cursor-pointer"
-                  >
-                    <option value="RECIENTES">Más Recientes primero</option>
-                    <option value="ANTIGUAS">Más Antiguas primero</option>
-                    <option value="DESCRIPCION">Ordenar por Descripción</option>
-                    <option value="ETAPA">Ordenar por Etapa WBS</option>
-                  </select>
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* Fila Inferior: Pestañas Rápidas de Estado Operativo & Contador de Resultados */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs">
-              
-              {/* Pestañas Rápidas de Estado Operativo */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mr-1 flex items-center gap-1">
-                  <Filter size={11} /> Estado:
-                </span>
-
-                {[
-                  { key: 'TODAS', label: 'Todas', count: actividades.length },
-                  { key: 'PENDIENTE', label: 'Pendientes', count: actividadesPendientes },
-                  { key: 'EN_PROGRESO', label: 'En Progreso', count: actividadesEnProgreso },
-                  { key: 'FINALIZADA', label: 'Finalizadas', count: actividadesFinalizadas }
-                ].map(tab => {
-                  const isActive = estadoFilter === tab.key;
-                  return (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      onClick={() => setEstadoFilter(tab.key)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer text-xs ${
-                        isActive
-                          ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs'
-                          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-                      }`}
-                    >
-                      <span>{tab.label}</span>
-                      <span className={`px-1.5 py-0.2 rounded-md font-mono text-[0.65rem] font-bold ${
-                        isActive 
-                          ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900' 
-                          : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
-                      }`}>
-                        {tab.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Contador de Resultados y Restablecer */}
-              <div className="flex items-center gap-2 self-end sm:self-auto font-medium text-zinc-500 dark:text-zinc-400 text-xs">
-                <span>
-                  Mostrando <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{actividadesFiltradasYOrdenadas.length}</strong> de <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{actividades.length}</strong> actividades
-                </span>
-
-                {activeTaskFiltersCount > 0 && (
+                {/* Segmented Filter Control: Activos vs Finalizados/Archivados */}
+                <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/80 p-1 rounded-2xl border border-zinc-200 dark:border-zinc-700">
                   <button
                     type="button"
-                    onClick={handleClearTaskFilters}
-                    className="text-[0.7rem] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer ml-2"
+                    onClick={() => setFiltroEstadoProyectoActividades('ACTIVOS')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoActividades === 'ACTIVOS'
+                        ? 'bg-white dark:bg-zinc-900 text-emerald-600 dark:text-emerald-400 shadow-xs border border-emerald-500/30'
+                        : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                    }`}
                   >
-                    <RotateCcw size={11} /> Limpiar Filtros
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Proyectos Activos</span>
+                    <span className="px-1.5 py-0.5 rounded-md text-[0.65rem] font-mono bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                      {conteoProyectosActivos}
+                    </span>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltroEstadoProyectoActividades('FINALIZADOS')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoActividades === 'FINALIZADOS'
+                        ? 'bg-white dark:bg-zinc-900 text-amber-600 dark:text-amber-400 shadow-xs border border-amber-500/30'
+                        : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                    }`}
+                  >
+                    <FolderGit2 size={13} className="text-amber-500" />
+                    <span>Finalizados / Archivados</span>
+                    <span className="px-1.5 py-0.5 rounded-md text-[0.65rem] font-mono bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+                      {conteoProyectosFinalizados}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltroEstadoProyectoActividades('TODOS')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      filtroEstadoProyectoActividades === 'TODOS'
+                        ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 shadow-xs border border-blue-500/30'
+                        : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>Todos</span>
+                    <span className="px-1.5 py-0.5 rounded-md text-[0.65rem] font-mono bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
+                      {proyectosAgrupados.length}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="relative flex-1 min-w-[240px]">
+                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                  <input
+                    type="text"
+                    value={searchProjectQuery}
+                    onChange={(e) => setSearchProjectQuery(e.target.value)}
+                    placeholder="Buscar por proyecto o cliente asignado..."
+                    className="input-field pl-10 pr-9 py-2 text-xs font-medium"
+                  />
+                  {searchProjectQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchProjectQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="text-xs text-zinc-500 font-medium">
+                  Proyectos Mostrados: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{proyectosFiltrados.length}</strong>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <SkeletonCard />
+                  <SkeletonCard />
+                  <SkeletonCard />
+                </div>
+              ) : proyectosFiltrados.length === 0 ? (
+                <EmptyState
+                  icon={FolderGit2}
+                  title={filtroEstadoProyectoActividades === 'FINALIZADOS' ? 'No hay proyectos archivados' : 'No hay proyectos asignados'}
+                  description={
+                    filtroEstadoProyectoActividades === 'FINALIZADOS'
+                      ? 'No tiene proyectos concluidos o archivados en su historial.'
+                      : 'No tiene actividades vinculadas a proyectos en este filtro.'
+                  }
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {proyectosFiltrados.map(prj => {
+                    const totalTasks = prj.actividades.length;
+                    const percentComplete = totalTasks > 0 ? Math.round((prj.finalizadas / totalTasks) * 100) : 0;
+                    const nuevasCount = prj.actividades.filter(a => evaluarSiEsNuevaAsignacion24h(a)).length;
+                    const hasActiveNew = nuevasCount > 0;
+
+                    return (
+                      <motion.div
+                        key={prj.idProyecto}
+                        whileHover={{ y: -3, scale: 1.01 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={() => {
+                          setProyectoSeleccionadoDev(prj);
+                          setEstadoFilter('TODAS');
+                          setSearchTaskQuery('');
+                        }}
+                        className={`p-6 rounded-3xl bg-white dark:bg-zinc-900 border cursor-pointer flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-200 space-y-5 relative ${
+                          hasActiveNew
+                            ? 'border-2 border-emerald-500/80 dark:border-emerald-400 ring-4 ring-emerald-500/10 shadow-lg shadow-emerald-500/10'
+                            : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400'
+                        }`}
+                      >
+                        <div className="space-y-3">
+                          {hasActiveNew && (
+                            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-[0.68rem] flex items-center justify-between text-emerald-800 dark:text-emerald-300 font-extrabold">
+                              <span className="flex items-center gap-1.5 font-mono">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                {nuevasCount} NUEVA(S) ASIGNACIÓN(ES)
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white font-mono text-[0.58rem]">
+                                Alerta 24h
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-start gap-2">
+                            <div>
+                              <span className="font-mono text-[0.65rem] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white shadow-2xs">
+                                PRJ-00{prj.idProyecto}
+                              </span>
+                              <h3 className="font-black text-base text-zinc-900 dark:text-zinc-100 mt-2 leading-snug">
+                                {prj.nombre}
+                              </h3>
+                            </div>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-bold border uppercase flex items-center gap-1 ${
+                              esProyectoFinalizado(prj.proyectoObj || prj)
+                                ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/40'
+                                : prj.estado === 'EN_PAUSA'
+                                ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
+                                : 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                            }`}>
+                              {esProyectoFinalizado(prj.proyectoObj || prj) && <FolderGit2 size={10} />}
+                              {esProyectoFinalizado(prj.proyectoObj || prj) ? 'Archivado' : prj.estado || 'ACTIVO'}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                            Cliente: <strong className="text-zinc-700 dark:text-zinc-300">{prj.cliente}</strong>
+                          </p>
+
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex items-center justify-between text-[0.68rem] font-bold">
+                              <span className="text-zinc-500 dark:text-zinc-400">Progreso del Proyecto</span>
+                              <span className="text-blue-600 dark:text-blue-400 font-mono">{percentComplete}%</span>
+                            </div>
+                            <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                              <div 
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full transition-all duration-500"
+                                style={{ width: `${percentComplete}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Métricas de 4 Cuadros: Total, Activas, Nuevas 24h, Hechas */}
+                          <div className="grid grid-cols-4 gap-1.5 pt-2 text-center text-[0.65rem]">
+                            <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-700/60">
+                              <span className="text-zinc-400 block text-[0.58rem] uppercase font-bold">Total</span>
+                              <strong className="text-zinc-900 dark:text-zinc-100 font-mono text-xs">{totalTasks}</strong>
+                            </div>
+                            <div className="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60">
+                              <span className="text-amber-700 dark:text-amber-300 block text-[0.58rem] uppercase font-bold">Activas</span>
+                              <strong className="text-amber-800 dark:text-amber-300 font-mono text-xs">{prj.pendientes + prj.enProgreso}</strong>
+                            </div>
+                            <div className={`p-2 rounded-xl border ${
+                              nuevasCount > 0 
+                                ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 font-bold' 
+                                : 'bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200/60 dark:border-zinc-700/60'
+                            }`}>
+                              <span className={`${nuevasCount > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-400'} block text-[0.58rem] uppercase font-bold`}>
+                                Nuevas
+                              </span>
+                              <strong className={`${nuevasCount > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-900 dark:text-zinc-100'} font-mono text-xs`}>
+                                {nuevasCount}
+                              </strong>
+                            </div>
+                            <div className="p-2 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/60">
+                              <span className="text-blue-700 dark:text-blue-300 block text-[0.58rem] uppercase font-bold">Hechas</span>
+                              <strong className="text-blue-800 dark:text-blue-300 font-mono text-xs">{prj.finalizadas}</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                          <button
+                            type="button"
+                            className="w-full gradient-button text-xs py-2.5 px-4 font-bold inline-flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                          >
+                            <span>Ver Actividades del Proyecto</span>
+                            <ArrowRight size={14} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* VISTA NIVEL 2: DETALLE DE TAREAS DEL PROYECTO SELECCIONADO */}
+          {proyectoSeleccionadoDev && (
+            <div className="space-y-6">
+              <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setProyectoSeleccionadoDev(null)}
+                    className="outline-button text-xs py-2 px-3.5 font-extrabold inline-flex items-center gap-1.5 rounded-2xl cursor-pointer"
+                  >
+                    <ArrowLeft size={15} />
+                    <span>Volver a Mis Proyectos</span>
+                  </button>
+                  <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[0.68rem] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white">
+                        PRJ-00{proyectoSeleccionadoDev.idProyecto}
+                      </span>
+                      <h2 className="font-black text-sm text-zinc-900 dark:text-zinc-100">
+                        {proyectoSeleccionadoDev.nombre}
+                      </h2>
+                    </div>
+                    <span className="text-xs text-zinc-500 font-medium">
+                      Cliente: {proyectoSeleccionadoDev.cliente}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  <span className="text-xs font-bold text-zinc-500">
+                    Tareas en este proyecto: <strong className="text-blue-600 dark:text-blue-400">{actividadesDelProyectoSeleccionado.length}</strong>
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-3xl shadow-sm space-y-4">
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                  <div className="relative flex-1">
+                    <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                    <input
+                      type="text"
+                      value={searchTaskQuery}
+                      onChange={(e) => setSearchTaskQuery(e.target.value)}
+                      placeholder="Buscar actividad en este proyecto..."
+                      className="input-field pl-10 pr-9 py-2 text-xs font-medium"
+                    />
+                    {searchTaskQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchTaskQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="relative flex-1 sm:flex-initial min-w-[180px]">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
+                      <SlidersHorizontal size={14} />
+                    </div>
+                    <select
+                      value={ordenarPor}
+                      onChange={(e) => setOrdenarPor(e.target.value)}
+                      className="input-field pl-9 py-2 text-xs font-bold appearance-none cursor-pointer"
+                    >
+                      <option value="RECIENTES">Más Recientes primero</option>
+                      <option value="ANTIGUAS">Más Antiguas primero</option>
+                      <option value="DESCRIPCION">Ordenar por Descripción</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mr-1 flex items-center gap-1">
+                      <Filter size={11} /> Estado Tarea:
+                    </span>
+
+                    {[
+                      { key: 'TODAS', label: 'Todas', count: actividadesDelProyectoSeleccionado.length },
+                      { key: 'PENDIENTE', label: 'Pendientes', count: actividadesDelProyectoSeleccionado.filter(a => a.estado === 'PENDIENTE').length },
+                      { key: 'EN_PROGRESO', label: 'En Progreso', count: actividadesDelProyectoSeleccionado.filter(a => a.estado === 'EN_PROGRESO' || a.estado === 'EN_CURSO').length },
+                      { key: 'FINALIZADA', label: 'Finalizadas', count: actividadesDelProyectoSeleccionado.filter(a => a.estado === 'FINALIZADA' || a.estado === 'COMPLETADA').length }
+                    ].map(tab => {
+                      const isActive = estadoFilter === tab.key;
+                      return (
+                        <button
+                          key={tab.key}
+                          type="button"
+                          onClick={() => setEstadoFilter(tab.key)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer text-xs ${
+                            isActive
+                              ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs'
+                              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                          }`}
+                        >
+                          <span>{tab.label}</span>
+                          <span className={`px-1.5 py-0.2 rounded-md font-mono text-[0.65rem] font-bold ${
+                            isActive ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+                          }`}>
+                            {tab.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <span className="text-zinc-500 font-medium">
+                    Mostrando <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{actividadesFiltradasYOrdenadas.length}</strong> de <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{actividadesDelProyectoSeleccionado.length}</strong>
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                {actividadesFiltradasYOrdenadas.length === 0 ? (
+                  <EmptyState
+                    icon={Search}
+                    title="Sin tareas encontradas"
+                    description="No hay actividades asignadas que coincidan con los filtros dentro de este proyecto."
+                  />
+                ) : (
+                  actividadesFiltradasYOrdenadas.map(act => {
+                    const { isReassigned, motivo, cleanDescripcion } = parseReasignacion(act.descripcion);
+                    const isNuevaAsignacion = evaluarSiEsNuevaAsignacion24h(act);
+
+                    return (
+                      <div 
+                        key={act.idActividad}
+                        className={`p-5 rounded-3xl bg-white dark:bg-zinc-900 border flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 space-y-4 h-full relative ${
+                          changingEstado === act.idActividad 
+                            ? 'border-blue-400 dark:border-blue-600 ring-2 ring-blue-100 dark:ring-blue-900/30' 
+                            : isNuevaAsignacion
+                            ? 'border-2 border-emerald-500/90 dark:border-emerald-400 ring-4 ring-emerald-500/15 shadow-lg shadow-emerald-500/10'
+                            : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600'
+                        }`}
+                      >
+                        <div>
+                          {isNuevaAsignacion && (
+                            <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 dark:border-emerald-400 mb-3 text-[0.7rem] flex items-center justify-between gap-2 shadow-2xs">
+                              <div className="flex items-center gap-2 font-black text-emerald-800 dark:text-emerald-300">
+                                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                </span>
+                                <span className="tracking-wide uppercase font-mono text-[0.65rem] flex items-center gap-1">
+                                  <Sparkles size={11} className="text-emerald-600 dark:text-emerald-400" />
+                                  NUEVA ASIGNACIÓN ACTIVA
+                                </span>
+                              </div>
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white font-mono text-[0.6rem] font-black shadow-2xs">
+                                Alerta 24h
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-start gap-2 mb-2">
+                            <div>
+                              <span className="text-[0.65rem] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
+                                {act.etapa?.nombreEtapa || act.etapa?.nombre || 'Etapa WBS'}
+                              </span>
+                            </div>
+                            <EstadoBadge estado={act.estado} />
+                          </div>
+
+                          {(act.etapa?.proyecto?.estado === 'PAUSADO' || act.proyectoObj?.estado === 'PAUSADO') && (
+                            <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/80 mb-3 text-[0.7rem] flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                              <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 shrink-0 animate-pulse" />
+                              <span>Proyecto en Pausa (Asignación Congelada)</span>
+                            </div>
+                          )}
+
+                          {isReassigned && (
+                            <div className="p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 mb-3 text-[0.7rem]">
+                              <div className="flex items-center gap-1.5 font-extrabold text-blue-700 dark:text-blue-300">
+                                <RotateCcw size={12} /> Tarea Reasignada por el Líder
+                              </div>
+                              {motivo && (
+                                <div className="text-zinc-600 dark:text-zinc-300 mt-1 italic leading-snug">
+                                  "{motivo}"
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm leading-snug">
+                            {cleanDescripcion}
+                          </h3>
+                        </div>
+
+                        <div className="space-y-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setDetalleModalDoc(act)}
+                              className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex-1 justify-center"
+                              title="Ver especificación completa y detalles"
+                            >
+                              <Eye size={13} />
+                              <span>Ver Detalles</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleAbrirReporteErrorDesdeTarea(act)}
+                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                              title="Reportar error en esta etapa WBS"
+                            >
+                              <Bug size={14} />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleAbrirInterrupcionDesdeTarea(act)}
+                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                              title="Registrar interrupción en esta etapa WBS"
+                            >
+                              <Clock size={14} />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            {act.estado === 'PENDIENTE' && (
+                              <button
+                                type="button"
+                                onClick={() => handleCambiarEstado(act.idActividad, 'EN_PROGRESO')}
+                                disabled={changingEstado === act.idActividad || act.etapa?.proyecto?.estado === 'PAUSADO'}
+                                className="gradient-button text-xs py-2 px-3 font-bold w-full justify-center inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              >
+                                {changingEstado === act.idActividad ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}
+                                <span>Iniciar Trabajo</span>
+                              </button>
+                            )}
+
+                            {(act.estado === 'EN_PROGRESO' || act.estado === 'EN_CURSO') && (
+                              <button
+                                type="button"
+                                onClick={() => handleCambiarEstado(act.idActividad, 'FINALIZADA')}
+                                disabled={changingEstado === act.idActividad || act.etapa?.proyecto?.estado === 'PAUSADO'}
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-3 font-bold rounded-2xl transition-all shadow-md inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              >
+                                {changingEstado === act.idActividad ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                                <span>Marcar Completada</span>
+                              </button>
+                            )}
+
+                            {(act.estado === 'FINALIZADA' || act.estado === 'COMPLETADA') && (
+                              <div className="w-full p-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-[0.7rem] font-extrabold text-emerald-800 dark:text-emerald-300 text-center flex items-center justify-center gap-1.5">
+                                <CheckCircle2 size={14} />
+                                <span>Actividad Finalizada</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
-
             </div>
-
-          </motion.div>
-
-          {/* Grid de Actividades */}
-          <motion.div 
-            variants={itemVariants}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
-          >
-            
-            {/* Loading Skeleton */}
-            {loading && (
-              <>
-                <SkeletonCard />
-                <SkeletonCard />
-                <SkeletonCard />
-              </>
-            )}
-
-            {/* Empty State General (Sin actividades asignadas) */}
-            {!loading && actividades.length === 0 && (
-              <EmptyState
-                icon={Inbox}
-                title="Sin actividades asignadas"
-                description="Aún no tiene actividades asignadas en ninguna etapa WBS. Su Líder de Proyecto o Coordinador se encargará de crearlas y asignarlas a su perfil."
-                action={
-                  <button
-                    type="button"
-                    onClick={cargarActividades}
-                    className="outline-button text-xs py-2.5 px-5 font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm"
-                  >
-                    <RefreshCw size={14} /> Verificar nuevamente
-                  </button>
-                }
-              />
-            )}
-
-            {/* Empty State por Filtros (Hay actividades pero ninguna coincide con la búsqueda) */}
-            {!loading && actividades.length > 0 && actividadesFiltradasYOrdenadas.length === 0 && (
-              <EmptyState
-                icon={Search}
-                title="No se encontraron actividades"
-                description="Ninguna actividad asignada coincide con los criterios de búsqueda, proyecto o estado operativo seleccionados."
-                action={
-                  <button
-                    type="button"
-                    onClick={handleClearTaskFilters}
-                    className="outline-button text-xs py-2.5 px-5 font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm"
-                  >
-                    <RotateCcw size={14} /> Restablecer Todos los Filtros
-                  </button>
-                }
-              />
-            )}
-
-            {/* Tarjetas de Actividades Reales Filtradas y Ordenadas */}
-            {!loading && actividadesFiltradasYOrdenadas.map(act => {
-              const { isReassigned, motivo, cleanDescripcion } = parseReasignacion(act.descripcion);
-
-              return (
-                <div 
-                  key={act.idActividad}
-                  className={`p-5 rounded-3xl bg-white dark:bg-zinc-900 border flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 space-y-4 h-full ${
-                    changingEstado === act.idActividad 
-                      ? 'border-blue-400 dark:border-blue-600 ring-2 ring-blue-100 dark:ring-blue-900/30' 
-                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600'
-                  }`}
-                >
-                  <div>
-                    {/* Header de la Tarjeta */}
-                    <div className="flex justify-between items-start gap-2 mb-2">
-                      <div>
-                        <span className="text-[0.65rem] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
-                          {act.etapa?.nombreEtapa || act.etapa?.nombre || 'Etapa WBS'}
-                        </span>
-                        {act.etapa?.proyecto?.nombre && (
-                          <span className="text-[0.6rem] font-bold text-zinc-500 dark:text-zinc-400">
-                            {act.etapa.proyecto.nombre}
-                          </span>
-                        )}
-                      </div>
-                      <EstadoBadge estado={act.estado} />
-                    </div>
-
-                    {/* Alerta de Proyecto en Pausa / Inhabilitado */}
-                    {(act.etapa?.proyecto?.estado === 'PAUSADO' || act.proyectoObj?.estado === 'PAUSADO') && (
-                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/80 mb-3 text-[0.7rem] flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                        <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 shrink-0 animate-pulse" />
-                        <span>Proyecto en Pausa (Asignación Congelada)</span>
-                      </div>
-                    )}
-                    {(act.etapa?.proyecto?.estado === 'INHABILITADO' || act.proyectoObj?.estado === 'INHABILITADO') && (
-                      <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/80 mb-3 text-[0.7rem] flex items-center gap-1.5 font-bold text-red-800 dark:text-red-300">
-                        <Lock size={14} className="text-red-600 dark:text-red-400 shrink-0" />
-                        <span>Proyecto Inhabilitado / Suspendido</span>
-                      </div>
-                    )}
-
-                    {/* Alerta de Reasignación en la Tarjeta */}
-                    {isReassigned && (
-                      <div className="p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 mb-3 text-[0.7rem]">
-                        <div className="flex items-center gap-1.5 font-extrabold text-blue-700 dark:text-blue-300">
-                          <RotateCcw size={12} /> Tarea Reasignada por el Líder
-                        </div>
-                        {motivo && (
-                          <div className="text-zinc-600 dark:text-zinc-300 mt-1 italic leading-snug">
-                            "{motivo}"
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Descripción de la Tarea */}
-                    <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm leading-snug">
-                      {cleanDescripcion}
-                    </h3>
-                  </div>
-
-                  {/* Acciones de la Tarjeta */}
-                  <div className="space-y-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                    
-                    {/* Botón Ver Detalles y Accesos Directos a Reportes */}
-                    <div className="flex items-center justify-between gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setDetalleModalDoc(act)}
-                        className="outline-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex-1 justify-center"
-                        title="Ver especificación completa y detalles"
-                      >
-                        <Eye size={13} />
-                        <span>Ver Detalles</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleAbrirReporteErrorDesdeTarea(act)}
-                        className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                        title="Reportar error en esta etapa WBS"
-                      >
-                        <Bug size={14} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleAbrirInterrupcionDesdeTarea(act)}
-                        className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
-                        title="Registrar interrupción en esta etapa WBS"
-                      >
-                        <Clock size={14} />
-                      </button>
-                    </div>
-
-                    {/* Control de Transición de Estados */}
-                    <div>
-                      <label className="text-[0.65rem] font-bold text-zinc-400 block mb-1">Estado de Avance:</label>
-                      <div className="relative">
-                        <select
-                          value={act.estado}
-                          disabled={changingEstado === act.idActividad || ['RESUELTO', 'SOLUCIONADO', 'FINALIZADA', 'CERRADO'].includes(act.estado)}
-                          onChange={(e) => handleCambiarEstado(act.idActividad, e.target.value)}
-                          className="input-field py-1.5 text-xs font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={['RESUELTO', 'SOLUCIONADO', 'FINALIZADA', 'CERRADO'].includes(act.estado) ? 'Actividad concluida. Estado no modificable.' : 'Seleccione el nuevo estado de avance de la actividad'}
-                        >
-                          <option value="PENDIENTE">Pendiente</option>
-                          <option value="EN_PROGRESO">En Progreso</option>
-                          <option value="FINALIZADA">Finalizada</option>
-                        </select>
-                        {changingEstado === act.idActividad && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <Loader2 size={14} className="animate-spin text-blue-500" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              );
-            })}
-          </motion.div>
+          )}
 
         </motion.div>
       )}
+
+
 
       {/* Pestaña: Módulo para registrar incidencias e interrupciones */}
       {(activeTab === 'reportar' || activeTab === 'interrupciones' || activeTab === 'contingencias') && (
@@ -1460,8 +1805,22 @@ export const DesarrolladorDashboard = () => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs">
               
               {/* Selectores Desplegables Enterprise */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 max-w-3xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 flex-1 w-full">
                 
+                {/* Selector 0: Estado de Proyectos (Activos por defecto vs Archivados) */}
+                <CustomDropdown
+                  icon={Briefcase}
+                  iconColor="text-blue-500"
+                  label="Estado del Proyecto"
+                  value={filtroEstadoProyectoReportes}
+                  onChange={setFiltroEstadoProyectoReportes}
+                  options={[
+                    { value: 'ACTIVOS', label: '🟢 Proyectos Activos (Por defecto)', badgeColor: 'bg-emerald-500' },
+                    { value: 'FINALIZADOS', label: '📁 Finalizados / Archivados', badgeColor: 'bg-amber-500' },
+                    { value: 'TODOS', label: '🌐 Todos los Proyectos', badgeColor: 'bg-blue-500' }
+                  ]}
+                />
+
                 {/* Selector 1: Severidad (Errores/Todos) o Duración (Interrupciones) */}
                 {filtroHistorial === 'INTERRUPCIONES' ? (
                   <CustomDropdown
@@ -1650,9 +2009,16 @@ export const DesarrolladorDashboard = () => {
                       </div>
 
                       {/* Pie de la Tarjeta: Metadatos de Fecha y Etapa WBS */}
-                      <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-[0.65rem] text-zinc-400 font-medium">
-                        <span className="truncate max-w-[180px]">
-                          {item?.etapa?.proyecto?.nombre ? `${item.etapa.proyecto.nombre} • ` : ''}{item?.etapa?.nombreEtapa || item?.etapa?.nombre || 'Etapa WBS'}
+                      <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-[0.65rem] text-zinc-400 font-medium gap-2">
+                        <span className="truncate max-w-[200px] flex items-center gap-1">
+                          {esProyectoFinalizado(item?.etapa?.proyecto || item?.proyectoObj) && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold border border-amber-500/20 text-[0.58rem] shrink-0">
+                              📁 Archivado
+                            </span>
+                          )}
+                          <span className="truncate">
+                            {item?.etapa?.proyecto?.nombre ? `${item.etapa.proyecto.nombre} • ` : ''}{item?.etapa?.nombreEtapa || item?.etapa?.nombre || 'Etapa WBS'}
+                          </span>
                         </span>
                         <span>{fechaStr}</span>
                       </div>
@@ -1718,7 +2084,14 @@ export const DesarrolladorDashboard = () => {
                             )}
                           </td>
                           <td className="py-3.5 px-4 text-zinc-500 dark:text-zinc-400 font-bold">
-                            {item?.etapa?.nombreEtapa || item?.etapa?.nombre || 'Etapa WBS'}
+                            <div className="flex items-center gap-1.5">
+                              {esProyectoFinalizado(item?.etapa?.proyecto || item?.proyectoObj) && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[0.6rem] font-mono font-black border border-amber-500/20 shrink-0">
+                                  📁 Archivado
+                                </span>
+                              )}
+                              <span>{item?.etapa?.nombreEtapa || item?.etapa?.nombre || 'Etapa WBS'}</span>
+                            </div>
                           </td>
                           <td className="py-3.5 px-4 text-zinc-400 text-[0.7rem] font-mono">
                             {fechaStr}
@@ -1737,10 +2110,11 @@ export const DesarrolladorDashboard = () => {
         </motion.div>
       )}
 
-      {/* Modal: Detalle completo de la tarea y acciones rápidas */}
+      {/* Modal: Detalle completo de la tarea y especificación técnica extendida */}
       <AnimatePresence>
         {detalleModalDoc && (() => {
           const { isReassigned, motivo, cleanDescripcion } = parseReasignacion(detalleModalDoc.descripcion);
+          const prj = detalleModalDoc.etapa?.proyecto || detalleModalDoc.proyectoObj || {};
 
           return (
             <div className="fixed inset-0 bg-black/65 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1749,78 +2123,144 @@ export const DesarrolladorDashboard = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-xl shadow-2xl space-y-5 max-h-[90dvh] overflow-y-auto"
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-[95%] sm:w-full max-w-3xl shadow-2xl space-y-6 max-h-[92dvh] overflow-y-auto"
               >
-                {/* Header del Modal */}
+                {/* Header del Modal (Sin botón X) */}
                 <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center shadow-md flex-shrink-0">
-                      <FileText size={20} />
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0">
+                      <FileText size={22} />
                     </div>
                     <div>
-                      <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
-                        Especificación de la Tarea #{detalleModalDoc.idActividad}
-                      </h3>
-                      <span className="text-xs text-zinc-500 font-medium">
-                        {detalleModalDoc.etapa?.proyecto?.nombre || 'Proyecto IKernell'}
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[0.68rem] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white">
+                          PRJ-00{prj.idProyecto || prj.id || '1'}
+                        </span>
+                        <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100">
+                          Especificación Técnica de la Tarea #{detalleModalDoc.idActividad}
+                        </h3>
+                      </div>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                        Proyecto: <strong className="text-zinc-700 dark:text-zinc-300">{prj.nombre || 'Sistema IKernell Software'}</strong> • Cliente: <strong>{prj.cliente || 'Empresa Corporativa'}</strong>
                       </span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => setDetalleModalDoc(null)} 
-                    className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
-                  >
-                    <X size={20} />
-                  </button>
+                  <div className="shrink-0">
+                    <EstadoBadge estado={detalleModalDoc.estado} />
+                  </div>
                 </div>
 
-                {/* Trazabilidad: Reasignación */}
+                {/* Banner Trazabilidad: Reasignación */}
                 {isReassigned && (
-                  <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 space-y-1.5">
-                    <div className="flex items-center gap-2 font-bold text-xs text-blue-800 dark:text-blue-300">
-                      <RotateCcw size={14} /> Tarea Reasignada por el Líder de Proyecto
+                  <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 space-y-1.5 shadow-2xs">
+                    <div className="flex items-center gap-2 font-black text-xs text-blue-800 dark:text-blue-300 uppercase tracking-wider">
+                      <RotateCcw size={14} /> Tarea Reasignada por la Dirección / Líder de Proyecto
                     </div>
                     {motivo && (
-                      <p className="text-xs text-zinc-700 dark:text-zinc-300 italic">
-                        <strong>Motivo de la reasignación:</strong> "{motivo}"
+                      <p className="text-xs text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
+                        <strong>Motivo de Reasignación:</strong> "{motivo}"
                       </p>
                     )}
                   </div>
                 )}
 
-                {/* Metadatos en Grid */}
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60">
-                    <span className="text-zinc-500 font-semibold block text-[0.65rem]">Fase / Etapa WBS:</span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
-                      {detalleModalDoc.etapa?.nombreEtapa || '#Etapa ' + detalleModalDoc.etapa?.idEtapa}
-                    </span>
+                {/* Grid de 4 Bloques con Información Detallada */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  
+                  {/* Bloque 1: Etapa WBS y Contexto del Proyecto */}
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-2">
+                    <div className="flex items-center gap-1.5 font-extrabold text-[0.68rem] uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                      <Layers size={13} /> Etapa WBS & Contexto
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block text-[0.62rem]">Fase Operativa:</span>
+                      <strong className="text-zinc-900 dark:text-zinc-100 text-xs block">
+                        {detalleModalDoc.etapa?.nombreEtapa || '#Etapa WBS ' + (detalleModalDoc.etapa?.idEtapa || '1')}
+                      </strong>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-zinc-200/60 dark:border-zinc-700/50 text-[0.68rem]">
+                      <span className="text-zinc-500 font-medium">Estado del Proyecto:</span>
+                      <span className="font-bold text-emerald-700 dark:text-emerald-300 uppercase">{prj.estado || 'ACTIVO'}</span>
+                    </div>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 flex flex-col justify-between">
-                    <span className="text-zinc-500 font-semibold block text-[0.65rem]">Estado Actual:</span>
-                    <div><EstadoBadge estado={detalleModalDoc.estado} /></div>
+                  {/* Bloque 2: Desarrollador Responsable & Stack */}
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-2">
+                    <div className="flex items-center gap-1.5 font-extrabold text-[0.68rem] uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                      <User size={13} /> Asignación & Perfil Técnico
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block text-[0.62rem]">Desarrollador Responsable:</span>
+                      <strong className="text-zinc-900 dark:text-zinc-100 text-xs block">
+                        {user?.nombre || 'Desarrollador'} {user?.apellido || 'Senior'}
+                      </strong>
+                    </div>
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {['React.js', 'TypeScript', 'Tailwind CSS', 'REST APIs', 'PostgreSQL', 'UI/UX'].map(tag => (
+                        <span key={tag} className="px-2 py-0.5 rounded-md bg-zinc-200/80 dark:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 text-[0.58rem] font-bold">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 col-span-2">
-                    <span className="text-zinc-500 font-semibold block text-[0.65rem]">Desarrollador Responsable:</span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
-                      {user?.nombre} {user?.apellido} ({user?.especialidad || 'Desarrollador'})
-                    </span>
+                  {/* Bloque 3: Indicadores de Salud Operativa */}
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-2">
+                    <div className="flex items-center gap-1.5 font-extrabold text-[0.68rem] uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                      <Activity size={13} /> SLA & Control de Calidad
+                    </div>
+                    <div className="flex items-center justify-between text-[0.68rem]">
+                      <span className="text-zinc-500 font-medium">Criterio de Calidad:</span>
+                      <span className="font-bold text-zinc-800 dark:text-zinc-200">Zero Critical Bugs</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[0.68rem]">
+                      <span className="text-zinc-500 font-medium">Trazabilidad WBS:</span>
+                      <span className="font-mono text-zinc-700 dark:text-zinc-300 font-bold">RF-21 • AUDITABLE</span>
+                    </div>
                   </div>
+
+                  {/* Bloque 4: Tiempos de Registro & Estado */}
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-2">
+                    <div className="flex items-center gap-1.5 font-extrabold text-[0.68rem] uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                      <Clock size={13} /> Registro & Timestamp
+                    </div>
+                    <div className="flex items-center justify-between text-[0.68rem]">
+                      <span className="text-zinc-500 font-medium">Fecha de Asignación:</span>
+                      <span className="font-mono text-zinc-800 dark:text-zinc-200 font-bold">
+                        {detalleModalDoc.fechaAsignacion ? new Date(detalleModalDoc.fechaAsignacion).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Reciente'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[0.68rem]">
+                      <span className="text-zinc-500 font-medium">Prioridad Estimada:</span>
+                      <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-bold text-[0.6rem]">
+                        ALTA
+                      </span>
+                    </div>
+                  </div>
+
                 </div>
 
-                {/* Requerimiento Técnico Completo */}
-                <div>
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-2">
-                    Descripción Completa del Requerimiento:
+                {/* Especificación Extendida del Requerimiento */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                    <FileText size={14} className="text-blue-600 dark:text-blue-400" /> Descripción Completa del Requerimiento Técnico:
                   </label>
-                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-sans">
+                  <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-sans font-medium">
                     {cleanDescripcion}
                   </div>
                 </div>
 
-                {/* Accesos Directos de Acción Rápida */}
+                {/* Estándares de Entrega y Calidad */}
+                <div className="p-3.5 rounded-2xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-[0.68rem] text-zinc-600 dark:text-zinc-400 space-y-1">
+                  <span className="font-extrabold text-blue-700 dark:text-blue-300 block uppercase tracking-wider">
+                    Estándares de Entrega Requeridos:
+                  </span>
+                  <p className="leading-snug">
+                    Asegúrese de realizar pruebas unitarias antes de cambiar el estado a <strong>FINALIZADA</strong>. Si surgen impedimentos de infraestructura o fallas de terceros, utilice el botón de <strong>Registrar Interrupción</strong> o <strong>Reportar Error</strong>.
+                  </p>
+                </div>
+
+                {/* Acciones Rápidas en la parte inferior */}
                 <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-3">
                   <div className="flex gap-2 w-full sm:w-auto">
                     <button
@@ -1830,9 +2270,9 @@ export const DesarrolladorDashboard = () => {
                         setDetalleModalDoc(null);
                         handleAbrirReporteErrorDesdeTarea(act);
                       }}
-                      className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-red-50 dark:hover:bg-red-950/30"
+                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-red-50 dark:hover:bg-red-950/30"
                     >
-                      <Bug size={13} /> Reportar Error
+                      <Bug size={14} /> Reportar Error
                     </button>
                     <button
                       type="button"
@@ -1841,9 +2281,9 @@ export const DesarrolladorDashboard = () => {
                         setDetalleModalDoc(null);
                         handleAbrirInterrupcionDesdeTarea(act);
                       }}
-                      className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-amber-50 dark:hover:bg-amber-950/30"
                     >
-                      <Clock size={13} /> Interrupción
+                      <Clock size={14} /> Interrupción
                     </button>
                   </div>
 
@@ -1857,11 +2297,11 @@ export const DesarrolladorDashboard = () => {
                         <Play size={13} /> Iniciar Tarea
                       </button>
                     )}
-                    {detalleModalDoc.estado === 'EN_PROGRESO' && (
+                    {(detalleModalDoc.estado === 'EN_PROGRESO' || detalleModalDoc.estado === 'EN_CURSO') && (
                       <button
                         type="button"
                         onClick={() => handleCambiarEstado(detalleModalDoc.idActividad, 'FINALIZADA')}
-                        className="gradient-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-4 font-bold rounded-2xl transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer"
                       >
                         <Check size={13} /> Finalizar Tarea
                       </button>
@@ -1869,7 +2309,7 @@ export const DesarrolladorDashboard = () => {
                     <button
                       type="button"
                       onClick={() => setDetalleModalDoc(null)}
-                      className="outline-button text-xs py-2 px-4 font-bold cursor-pointer"
+                      className="outline-button text-xs py-2 px-5 font-bold cursor-pointer"
                     >
                       Cerrar
                     </button>
@@ -1882,103 +2322,206 @@ export const DesarrolladorDashboard = () => {
         })()}
       </AnimatePresence>
 
-      {/* Modal: Registro de error técnico */}
+      {/* Modal: Registro de error técnico (Edición Visión Elegante y Desplegables CustomSelect) */}
       <AnimatePresence>
         {showErrorModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90dvh] overflow-y-auto"
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/90 dark:border-zinc-800/90 rounded-3xl p-6 sm:p-8 w-[95%] sm:w-full max-w-2xl sm:max-w-3xl shadow-2xl shadow-rose-950/15 max-h-[92dvh] overflow-y-auto"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Bug size={20} /> Reportar Error Técnico
-                </h3>
-                <button onClick={() => { setShowErrorModal(false); setErrorFormErrors({}); setEtapaPreseleccionada(null); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
-                  <X size={20} />
+              {/* Header con Acento Sutil */}
+              <div className="flex justify-between items-start mb-6 pb-4 border-b border-zinc-200/80 dark:border-zinc-800/80">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-1">
+                    <span className="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shadow-xs">
+                      <Bug size={20} />
+                    </span>
+                    <h3 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                      Reportar Error Técnico
+                    </h3>
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium ml-1">
+                    Registra la anomalía técnica para alimentar la telemetría del Semáforo Predictivo.
+                  </p>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => { setShowErrorModal(false); setErrorFormErrors({}); setEtapaPreseleccionada(null); }} 
+                  className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={18} />
                 </button>
               </div>
 
+              {/* Banner de Etapa Vinculada */}
               {etapaPreseleccionada && (
-                <div className="p-3 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-[0.7rem] text-blue-800 dark:text-blue-300 font-medium mb-4 flex items-center gap-2">
-                  <Info size={14} className="flex-shrink-0" />
+                <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-xs text-blue-800 dark:text-blue-300 font-semibold mb-5 flex items-center gap-2.5 shadow-xs">
+                  <Info size={16} className="text-blue-500 flex-shrink-0" />
                   <span>Fase WBS vinculada automáticamente: <strong>{etapaPreseleccionada.nombreEtapa}</strong></span>
                 </div>
               )}
 
               <form onSubmit={handleReportarError} className="space-y-4 text-xs" noValidate>
-                {/* Etapa WBS */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Etapa / Fase WBS Afectada *</label>
-                  {loadingEtapas ? (
-                    <div className="input-field py-2 flex items-center gap-2 text-zinc-400">
-                      <Loader2 size={14} className="animate-spin" /> Cargando etapas...
+                
+                {/* SECCIÓN 1: SELECCIÓN EN CASCADA DE PROYECTO Y ETAPA WBS */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/70 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 space-y-4 shadow-2xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    {/* Proyecto Afectado */}
+                    <div>
+                      <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block mb-2 flex items-center gap-1.5 text-[0.78rem]">
+                        <Briefcase size={14} className="text-blue-500" /> Proyecto Asociado *
+                      </label>
+                      <CustomSelect
+                        value={errorForm.idProyecto}
+                        onChange={(newIdPrj) => {
+                          const etapasDelNuevoPrj = newIdPrj ? etapasConsolidadas.filter(et => et.idProyecto === newIdPrj) : etapasConsolidadas;
+                          const sigueValida = etapasDelNuevoPrj.some(et => et.idEtapa === errorForm.idEtapa);
+                          setErrorForm(prev => ({
+                            ...prev,
+                            idProyecto: newIdPrj,
+                            idEtapa: sigueValida ? prev.idEtapa : ''
+                          }));
+                          setErrorFormErrors(prev => ({ ...prev, idProyecto: undefined, idEtapa: undefined }));
+                        }}
+                        options={[
+                          { value: '', label: '— Seleccione el proyecto —' },
+                          ...proyectosDisponiblesModal.map(prj => ({
+                            value: prj.idProyecto,
+                            label: prj.nombreProyecto
+                          }))
+                        ]}
+                        placeholder="— Seleccione el proyecto —"
+                        icon={Briefcase}
+                        maxWidth="w-full"
+                        searchable={true}
+                      />
+                      <FieldError message={errorFormErrors.idProyecto} />
                     </div>
-                  ) : (
-                    <select
-                      value={errorForm.idEtapa}
-                      onChange={(e) => { setErrorForm({ ...errorForm, idEtapa: e.target.value }); setErrorFormErrors(prev => ({ ...prev, idEtapa: undefined })); }}
-                      className={`input-field py-2 font-bold ${errorFormErrors.idEtapa ? 'border-red-400 dark:border-red-600' : ''}`}
-                    >
-                      <option value="">— Seleccione una etapa —</option>
-                      {etapas.map(et => (
-                        <option key={et.idEtapa} value={et.idEtapa}>
-                          {et.proyecto?.nombre ? `${et.proyecto.nombre} → ` : ''}{et.nombreEtapa}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  <FieldError message={errorFormErrors.idEtapa} />
+
+                    {/* Etapa WBS Afectada */}
+                    <div>
+                      <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block mb-2 flex items-center gap-1.5 text-[0.78rem]">
+                        <Layers size={14} className="text-blue-500" /> Etapa / Fase WBS Afectada *
+                      </label>
+                      {loadingEtapas && etapasConsolidadas.length === 0 ? (
+                        <div className="input-field py-2.5 flex items-center gap-2 text-zinc-400">
+                          <Loader2 size={14} className="animate-spin text-blue-500" /> Cargando etapas WBS...
+                        </div>
+                      ) : (
+                        <CustomSelect
+                          value={errorForm.idEtapa}
+                          onChange={(selectedIdEtapa) => {
+                            const targetEtapa = etapasConsolidadas.find(et => et.idEtapa === selectedIdEtapa);
+                            setErrorForm(prev => ({
+                              ...prev,
+                              idEtapa: selectedIdEtapa,
+                              idProyecto: targetEtapa ? targetEtapa.idProyecto : prev.idProyecto
+                            }));
+                            setErrorFormErrors(prev => ({ ...prev, idEtapa: undefined, idProyecto: undefined }));
+                          }}
+                          options={[
+                            { value: '', label: errorForm.idProyecto ? '— Seleccione la etapa de este proyecto —' : '— Seleccione una etapa —' },
+                            ...etapasFiltradasError.map(et => ({
+                              value: et.idEtapa,
+                              label: errorForm.idProyecto ? et.nombreEtapa : `${et.nombreProyecto} → ${et.nombreEtapa}`
+                            }))
+                          ]}
+                          placeholder="— Seleccione una etapa —"
+                          icon={Layers}
+                          maxWidth="w-full"
+                          searchable={true}
+                        />
+                      )}
+                      <FieldError message={errorFormErrors.idEtapa} />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Tipo de Error */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Tipo de Error *</label>
-                  <select
-                    value={errorForm.tipoError}
-                    onChange={(e) => { setErrorForm({ ...errorForm, tipoError: e.target.value }); setErrorFormErrors(prev => ({ ...prev, tipoError: undefined })); }}
-                    className={`input-field py-2 font-bold ${errorFormErrors.tipoError ? 'border-red-400 dark:border-red-600' : ''}`}
-                  >
-                    <option value="">— Seleccione el tipo —</option>
-                    <option value="LOGICO">Lógico</option>
-                    <option value="SINTAXIS">Sintaxis</option>
-                    <option value="CONCURRENCIA">Concurrencia</option>
-                    <option value="VALIDACION">Validación</option>
-                    <option value="INTEGRACION_REST">Integración REST / CORS</option>
-                    <option value="RENDIMIENTO">Rendimiento / Performance</option>
-                  </select>
-                  <FieldError message={errorFormErrors.tipoError} />
+                {/* SECCIÓN 2: TIPO DE ERROR Y SEVERIDAD */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/70 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 space-y-4 shadow-2xs">
+                  {/* Tipo de Error */}
+                  <div>
+                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block mb-2 flex items-center gap-1.5 text-[0.78rem]">
+                      <Filter size={14} className="text-blue-500" /> Tipo / Categoría de Error *
+                    </label>
+                    <CustomSelect
+                      value={errorForm.tipoError}
+                      onChange={(val) => { setErrorForm(prev => ({ ...prev, tipoError: val })); setErrorFormErrors(prev => ({ ...prev, tipoError: undefined })); }}
+                      options={[
+                        { value: '', label: '— Seleccione el tipo —' },
+                        { value: 'LOGICO', label: 'Error Lógico' },
+                        { value: 'SINTAXIS', label: 'Error de Sintaxis / Transpilador' },
+                        { value: 'CONCURRENCIA', label: 'Concurrencia / Race Condition' },
+                        { value: 'VALIDACION', label: 'Fallo de Validación' },
+                        { value: 'INTEGRACION_REST', label: 'Integración REST / CORS' },
+                        { value: 'RENDIMIENTO', label: 'Rendimiento / Performance' }
+                      ]}
+                      placeholder="— Seleccione el tipo —"
+                      icon={Filter}
+                      maxWidth="w-full"
+                    />
+                    <FieldError message={errorFormErrors.tipoError} />
+                  </div>
+
+                  {/* TARJETAS INTERACTIVAS DE SEVERIDAD DE COLOR */}
+                  <div>
+                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block mb-2 flex items-center gap-1.5 text-[0.78rem]">
+                      <ShieldAlert size={14} className="text-rose-500" /> Severidad del Error *
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {[
+                        { value: 'BAJA', label: 'BAJA', icon: <ShieldCheck size={18} className="text-emerald-500" />, style: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+                        { value: 'MEDIA', label: 'MEDIA', icon: <AlertTriangle size={18} className="text-amber-500" />, style: 'border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+                        { value: 'ALTA', label: 'ALTA', icon: <ShieldAlert size={18} className="text-orange-500" />, style: 'border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400' },
+                        { value: 'CRITICA', label: 'CRÍTICA', icon: <AlertOctagon size={18} className="text-rose-500" />, style: 'border-rose-500/50 bg-rose-500/10 text-rose-600 dark:text-rose-400' }
+                      ].map((sev) => {
+                        const isSelected = errorForm.severidad === sev.value;
+                        return (
+                          <button
+                            key={sev.value}
+                            type="button"
+                            onClick={() => {
+                              setErrorForm(prev => ({ ...prev, severidad: sev.value }));
+                              setErrorFormErrors(prev => ({ ...prev, severidad: undefined }));
+                            }}
+                            className={`p-3 rounded-2xl border text-center font-extrabold flex flex-col items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer ${
+                              isSelected 
+                                ? `${sev.style} shadow-sm ring-2 ring-blue-500/40 scale-[1.02]` 
+                                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
+                            }`}
+                          >
+                            <div>{sev.icon}</div>
+                            <span className="text-[0.72rem] tracking-wide uppercase">{sev.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <FieldError message={errorFormErrors.severidad} />
+                  </div>
                 </div>
 
-                {/* Severidad */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Severidad del Error *</label>
-                  <select
-                    value={errorForm.severidad}
-                    onChange={(e) => { setErrorForm({ ...errorForm, severidad: e.target.value }); setErrorFormErrors(prev => ({ ...prev, severidad: undefined })); }}
-                    className={`input-field py-2 font-bold uppercase ${errorFormErrors.severidad ? 'border-red-400 dark:border-red-600' : ''}`}
-                  >
-                    <option value="">— Seleccione severidad —</option>
-                    <option value="BAJA">Baja</option>
-                    <option value="MEDIA">Media</option>
-                    <option value="ALTA">Alta</option>
-                    <option value="CRITICA">Crítica (Impacto directo en Semáforo)</option>
-                  </select>
-                  <FieldError message={errorFormErrors.severidad} />
-                </div>
-
-                {/* Descripción */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción del Hallazgo *</label>
+                {/* SECCIÓN 3: DESCRIPCIÓN */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/70 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 space-y-2 shadow-2xs">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5 text-[0.78rem]">
+                      <FileText size={14} className="text-blue-500" /> Descripción del Hallazgo *
+                    </label>
+                    <span className={`text-[0.68rem] font-mono ${
+                      (errorForm.descripcion || '').length < 8 ? 'text-rose-500 font-bold' : 'text-zinc-400'
+                    }`}>
+                      {(errorForm.descripcion || '').length} / 500 caract.
+                    </span>
+                  </div>
                   <textarea
                     rows={3}
                     value={errorForm.descripcion}
                     onChange={(e) => { setErrorForm({ ...errorForm, descripcion: e.target.value }); setErrorFormErrors(prev => ({ ...prev, descripcion: undefined })); }}
                     placeholder="Detalle el comportamiento anómalo detectado, pasos para reproducir y módulo afectado..."
-                    className={`input-field py-2 ${errorFormErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
+                    className={`input-field py-3 leading-relaxed ${errorFormErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
                   />
                   <FieldError message={errorFormErrors.descripcion} />
 
@@ -1990,7 +2533,7 @@ export const DesarrolladorDashboard = () => {
                   )}
 
                   {Array.isArray(sugerenciasSnippets) && sugerenciasSnippets.length > 0 && (
-                    <div className="mt-2 space-y-2">
+                    <div className="mt-2.5 space-y-2">
                       <div className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
                         <span className="flex items-center gap-1">
                           <Sparkles size={12} className="text-amber-400" /> Soluciones Técnicas Sugeridas (Snippet.inject)
@@ -2004,22 +2547,22 @@ export const DesarrolladorDashboard = () => {
                   )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                {/* Botones de Acción */}
+                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200/80 dark:border-zinc-800/80">
                   <button
                     type="button"
                     onClick={() => { setShowErrorModal(false); setErrorFormErrors({}); setEtapaPreseleccionada(null); }}
                     disabled={submittingError}
-                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                    className="outline-button text-xs py-2.5 px-5 font-bold cursor-pointer disabled:opacity-50"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={submittingError}
-                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                    className="gradient-button text-xs py-2.5 px-6 font-bold cursor-pointer inline-flex items-center gap-2 shadow-lg shadow-rose-600/20 disabled:opacity-50"
                   >
-                    {submittingError ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : 'Registrar Error'}
+                    {submittingError ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : <><Bug size={15} /> Registrar Error</>}
                   </button>
                 </div>
               </form>
@@ -2028,121 +2571,230 @@ export const DesarrolladorDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal: Registro de interrupción o contingencia */}
+      {/* Modal: Registro de interrupción o contingencia (Edición Visión Elegante y Desplegables CustomSelect) */}
       <AnimatePresence>
         {showInterrupcionModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-lg shadow-2xl max-h-[90dvh] overflow-y-auto"
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/90 dark:border-zinc-800/90 rounded-3xl p-6 sm:p-8 w-[95%] sm:w-full max-w-2xl sm:max-w-3xl shadow-2xl shadow-amber-950/15 max-h-[92dvh] overflow-y-auto"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <AlertTriangle size={20} /> Registrar Interrupción Operativa
-                </h3>
-                <button onClick={() => { setShowInterrupcionModal(false); setInterrupcionFormErrors({}); setEtapaPreseleccionada(null); }} className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors">
-                  <X size={20} />
+              {/* Header con Acento Sutil */}
+              <div className="flex justify-between items-start mb-6 pb-4 border-b border-zinc-200/80 dark:border-zinc-800/80">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-1">
+                    <span className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-xs">
+                      <AlertTriangle size={20} />
+                    </span>
+                    <h3 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                      Registrar Interrupción Operativa
+                    </h3>
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium ml-1">
+                    Notifica indisponibilidad técnica o imprevistos de tiempo para recalibrar estimaciones.
+                  </p>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => { setShowInterrupcionModal(false); setInterrupcionFormErrors({}); setEtapaPreseleccionada(null); }} 
+                  className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={18} />
                 </button>
               </div>
 
+              {/* Banner de Etapa Vinculada */}
               {etapaPreseleccionada && (
-                <div className="p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[0.7rem] text-amber-800 dark:text-amber-300 font-medium mb-4 flex items-center gap-2">
-                  <Info size={14} className="flex-shrink-0" />
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-800 dark:text-amber-300 font-semibold mb-5 flex items-center gap-2.5 shadow-xs">
+                  <Info size={16} className="text-amber-500 flex-shrink-0" />
                   <span>Fase WBS vinculada automáticamente: <strong>{etapaPreseleccionada.nombreEtapa}</strong></span>
                 </div>
               )}
 
               <form onSubmit={handleReportarInterrupcion} className="space-y-4 text-xs" noValidate>
-                {/* Etapa WBS */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Etapa / Fase WBS Afectada *</label>
-                  {loadingEtapas ? (
-                    <div className="input-field py-2 flex items-center gap-2 text-zinc-400">
-                      <Loader2 size={14} className="animate-spin" /> Cargando etapas...
+                
+                {/* SECCIÓN 1: SELECCIÓN EN CASCADA DE PROYECTO Y ETAPA WBS */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/70 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 space-y-4 shadow-2xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    {/* Proyecto Afectado */}
+                    <div>
+                      <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block mb-2 flex items-center gap-1.5 text-[0.78rem]">
+                        <Briefcase size={14} className="text-amber-500" /> Proyecto Asociado *
+                      </label>
+                      <CustomSelect
+                        value={interrupcionForm.idProyecto}
+                        onChange={(newIdPrj) => {
+                          const etapasDelNuevoPrj = newIdPrj ? etapasConsolidadas.filter(et => et.idProyecto === newIdPrj) : etapasConsolidadas;
+                          const sigueValida = etapasDelNuevoPrj.some(et => et.idEtapa === interrupcionForm.idEtapa);
+                          setInterrupcionForm(prev => ({
+                            ...prev,
+                            idProyecto: newIdPrj,
+                            idEtapa: sigueValida ? prev.idEtapa : ''
+                          }));
+                          setInterrupcionFormErrors(prev => ({ ...prev, idProyecto: undefined, idEtapa: undefined }));
+                        }}
+                        options={[
+                          { value: '', label: '— Seleccione el proyecto —' },
+                          ...proyectosDisponiblesModal.map(prj => ({
+                            value: prj.idProyecto,
+                            label: prj.nombreProyecto
+                          }))
+                        ]}
+                        placeholder="— Seleccione el proyecto —"
+                        icon={Briefcase}
+                        maxWidth="w-full"
+                        searchable={true}
+                      />
+                      <FieldError message={interrupcionFormErrors.idProyecto} />
                     </div>
-                  ) : (
-                    <select
-                      value={interrupcionForm.idEtapa}
-                      onChange={(e) => { setInterrupcionForm({ ...interrupcionForm, idEtapa: e.target.value }); setInterrupcionFormErrors(prev => ({ ...prev, idEtapa: undefined })); }}
-                      className={`input-field py-2 font-bold ${interrupcionFormErrors.idEtapa ? 'border-red-400 dark:border-red-600' : ''}`}
-                    >
-                      <option value="">— Seleccione una etapa —</option>
-                      {etapas.map(et => (
-                        <option key={et.idEtapa} value={et.idEtapa}>
-                          {et.proyecto?.nombre ? `${et.proyecto.nombre} → ` : ''}{et.nombreEtapa}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  <FieldError message={interrupcionFormErrors.idEtapa} />
+
+                    {/* Etapa WBS Afectada */}
+                    <div>
+                      <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block mb-2 flex items-center gap-1.5 text-[0.78rem]">
+                        <Layers size={14} className="text-amber-500" /> Etapa / Fase WBS Afectada *
+                      </label>
+                      {loadingEtapas && etapasConsolidadas.length === 0 ? (
+                        <div className="input-field py-2.5 flex items-center gap-2 text-zinc-400">
+                          <Loader2 size={14} className="animate-spin text-amber-500" /> Cargando etapas WBS...
+                        </div>
+                      ) : (
+                        <CustomSelect
+                          value={interrupcionForm.idEtapa}
+                          onChange={(selectedIdEtapa) => {
+                            const targetEtapa = etapasConsolidadas.find(et => et.idEtapa === selectedIdEtapa);
+                            setInterrupcionForm(prev => ({
+                              ...prev,
+                              idEtapa: selectedIdEtapa,
+                              idProyecto: targetEtapa ? targetEtapa.idProyecto : prev.idProyecto
+                            }));
+                            setInterrupcionFormErrors(prev => ({ ...prev, idEtapa: undefined, idProyecto: undefined }));
+                          }}
+                          options={[
+                            { value: '', label: interrupcionForm.idProyecto ? '— Seleccione la etapa de este proyecto —' : '— Seleccione una etapa —' },
+                            ...etapasFiltradasInterrupcion.map(et => ({
+                              value: et.idEtapa,
+                              label: interrupcionForm.idProyecto ? et.nombreEtapa : `${et.nombreProyecto} → ${et.nombreEtapa}`
+                            }))
+                          ]}
+                          placeholder="— Seleccione una etapa —"
+                          icon={Layers}
+                          maxWidth="w-full"
+                          searchable={true}
+                        />
+                      )}
+                      <FieldError message={interrupcionFormErrors.idEtapa} />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Tipo de Contingencia */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Tipo de Contingencia *</label>
-                  <select
-                    value={interrupcionForm.tipoInterrupcion}
-                    onChange={(e) => { setInterrupcionForm({ ...interrupcionForm, tipoInterrupcion: e.target.value }); setInterrupcionFormErrors(prev => ({ ...prev, tipoInterrupcion: undefined })); }}
-                    className={`input-field py-2 font-bold ${interrupcionFormErrors.tipoInterrupcion ? 'border-red-400 dark:border-red-600' : ''}`}
-                  >
-                    <option value="">— Seleccione el tipo —</option>
-                    <option value="CORTE_ENERGIA">Corte Eléctrico / Energía</option>
-                    <option value="CAIDA_SERVIDOR">Caída de Servidor / Base de Datos</option>
-                    <option value="FALLA_RED">Corte de Fibra Óptica / Red ISP</option>
-                    <option value="MANTENIMIENTO">Mantenimiento de Infraestructura</option>
-                    <option value="DEPENDENCIA_EXTERNA">Indisponibilidad de Dependencia Externa</option>
-                    <option value="REUNION_NO_PROGRAMADA">Reunión No Programada</option>
-                    <option value="BLOQUEO_HERRAMIENTA">Bloqueo de Herramienta / Licencia</option>
-                  </select>
-                  <FieldError message={interrupcionFormErrors.tipoInterrupcion} />
+                {/* SECCIÓN 2: TIPO DE CONTINGENCIA Y DURACIÓN */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/70 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 space-y-4 shadow-2xs">
+                  {/* Tipo de Contingencia */}
+                  <div>
+                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block mb-2 flex items-center gap-1.5 text-[0.78rem]">
+                      <Activity size={14} className="text-amber-500" /> Tipo de Contingencia *
+                    </label>
+                    <CustomSelect
+                      value={interrupcionForm.tipoInterrupcion}
+                      onChange={(val) => { setInterrupcionForm(prev => ({ ...prev, tipoInterrupcion: val })); setInterrupcionFormErrors(prev => ({ ...prev, tipoInterrupcion: undefined })); }}
+                      options={[
+                        { value: '', label: '— Seleccione el tipo —' },
+                        { value: 'CORTE_ENERGIA', label: 'Corte Eléctrico / Energía' },
+                        { value: 'CAIDA_SERVIDOR', label: 'Caída de Servidor / Base de Datos' },
+                        { value: 'FALLA_RED', label: 'Corte de Fibra Óptica / Red ISP' },
+                        { value: 'MANTENIMIENTO', label: 'Mantenimiento de Infraestructura' },
+                        { value: 'DEPENDENCIA_EXTERNA', label: 'Indisponibilidad de Dependencia Externa' },
+                        { value: 'REUNION_NO_PROGRAMADA', label: 'Reunión No Programada' },
+                        { value: 'BLOQUEO_HERRAMIENTA', label: 'Bloqueo de Herramienta / Licencia' }
+                      ]}
+                      placeholder="— Seleccione el tipo —"
+                      icon={Activity}
+                      maxWidth="w-full"
+                    />
+                    <FieldError message={interrupcionFormErrors.tipoInterrupcion} />
+                  </div>
+
+                  {/* DURACIÓN EN MINUTOS + CHIPS DE SELECCIÓN RÁPIDA */}
+                  <div>
+                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block mb-2 flex items-center gap-1.5 text-[0.78rem]">
+                      <Clock size={14} className="text-amber-500" /> Duración en Minutos *
+                    </label>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                      <input
+                        type="number"
+                        min={1}
+                        value={interrupcionForm.duracionMinutos}
+                        onChange={(e) => { setInterrupcionForm({ ...interrupcionForm, duracionMinutos: e.target.value }); setInterrupcionFormErrors(prev => ({ ...prev, duracionMinutos: undefined })); }}
+                        placeholder="Ej: 45"
+                        className={`input-field py-2.5 font-mono font-bold text-sm w-full sm:w-36 text-center ${interrupcionFormErrors.duracionMinutos ? 'border-red-400 dark:border-red-600' : ''}`}
+                      />
+                      
+                      {/* Pills de minutos rápidos */}
+                      <div className="flex flex-wrap gap-1.5 flex-1">
+                        {['15', '30', '45', '60', '90', '120'].map((mins) => (
+                          <button
+                            key={mins}
+                            type="button"
+                            onClick={() => {
+                              setInterrupcionForm(prev => ({ ...prev, duracionMinutos: mins }));
+                              setInterrupcionFormErrors(prev => ({ ...prev, duracionMinutos: undefined }));
+                            }}
+                            className={`px-3 py-1.5 rounded-xl border text-[0.7rem] font-mono font-bold transition-all duration-200 cursor-pointer ${
+                              interrupcionForm.duracionMinutos === mins
+                                ? 'border-amber-500 bg-amber-500/15 text-amber-700 dark:text-amber-300 shadow-xs'
+                                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-amber-500/40'
+                            }`}
+                          >
+                            +{mins}m
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <FieldError message={interrupcionFormErrors.duracionMinutos} />
+                  </div>
                 </div>
 
-                {/* Duración */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Duración en Minutos *</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={interrupcionForm.duracionMinutos}
-                    onChange={(e) => { setInterrupcionForm({ ...interrupcionForm, duracionMinutos: e.target.value }); setInterrupcionFormErrors(prev => ({ ...prev, duracionMinutos: undefined })); }}
-                    placeholder="Ej: 45"
-                    className={`input-field py-2 font-mono font-bold ${interrupcionFormErrors.duracionMinutos ? 'border-red-400 dark:border-red-600' : ''}`}
-                  />
-                  <FieldError message={interrupcionFormErrors.duracionMinutos} />
-                </div>
-
-                {/* Justificación */}
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Justificación Técnica *</label>
+                {/* SECCIÓN 3: JUSTIFICACIÓN */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/70 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 space-y-2 shadow-2xs">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="font-extrabold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5 text-[0.78rem]">
+                      <FileText size={14} className="text-amber-500" /> Justificación Técnica *
+                    </label>
+                    <span className={`text-[0.68rem] font-mono ${
+                      (interrupcionForm.comentarios || '').length < 5 ? 'text-rose-500 font-bold' : 'text-zinc-400'
+                    }`}>
+                      {(interrupcionForm.comentarios || '').length} / 500 caract.
+                    </span>
+                  </div>
                   <textarea
                     rows={3}
                     value={interrupcionForm.comentarios}
                     onChange={(e) => { setInterrupcionForm({ ...interrupcionForm, comentarios: e.target.value }); setInterrupcionFormErrors(prev => ({ ...prev, comentarios: undefined })); }}
                     placeholder="Explique el motivo, impacto y acciones de mitigación tomadas..."
-                    className={`input-field py-2 ${interrupcionFormErrors.comentarios ? 'border-red-400 dark:border-red-600' : ''}`}
+                    className={`input-field py-3 leading-relaxed ${interrupcionFormErrors.comentarios ? 'border-red-400 dark:border-red-600' : ''}`}
                   />
                   <FieldError message={interrupcionFormErrors.comentarios} />
                 </div>
 
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                {/* Botones de Acción */}
+                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200/80 dark:border-zinc-800/80">
                   <button
                     type="button"
                     onClick={() => { setShowInterrupcionModal(false); setInterrupcionFormErrors({}); setEtapaPreseleccionada(null); }}
                     disabled={submittingInterrupcion}
-                    className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                    className="outline-button text-xs py-2.5 px-5 font-bold cursor-pointer disabled:opacity-50"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={submittingInterrupcion}
-                    className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                    className="gradient-button text-xs py-2.5 px-6 font-bold cursor-pointer inline-flex items-center gap-2 shadow-lg shadow-amber-600/20 disabled:opacity-50"
                   >
-                    {submittingInterrupcion ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : 'Registrar Contingencia'}
+                    {submittingInterrupcion ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : <><AlertTriangle size={15} /> Registrar Contingencia</>}
                   </button>
                 </div>
               </form>
@@ -2154,3 +2806,5 @@ export const DesarrolladorDashboard = () => {
     </DashboardLayout>
   );
 };
+
+export default DesarrolladorDashboard;
