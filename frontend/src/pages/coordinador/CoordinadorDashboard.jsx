@@ -3372,9 +3372,22 @@ export const CoordinadorDashboard = () => {
                                         {act.desarrollador.nombre} {act.desarrollador.apellido}
                                       </span>
                                     )}
-                                    <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
-                                      {act.estado || 'FINALIZADA'}
-                                    </span>
+                                    {(() => {
+                                      const st = (act.estado || 'PENDIENTE').toUpperCase().replace(/[\s_]+/g, '_');
+                                      const isFin = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO'].includes(st);
+                                      const isProg = ['EN_PROGRESO', 'EN_PROCESO', 'EN_CURSO', 'ACTIVO'].includes(st);
+                                      const text = (act.estado || 'PENDIENTE').replace(/_/g, ' ');
+                                      const colorClass = isFin
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                        : isProg
+                                          ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                                          : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300';
+                                      return (
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold uppercase border ${colorClass}`}>
+                                          {text}
+                                        </span>
+                                      );
+                                    })()}
 
                                     {modoEdicionCoordinador && (() => {
                                       const st = (act.estado || '').toUpperCase().replace(/[\s_]+/g, '_');
