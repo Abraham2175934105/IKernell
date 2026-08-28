@@ -5,10 +5,11 @@ import { authService } from '../../services/authService';
 import { ROUTES } from '../../config/routes';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Lock, Mail, ArrowLeft, ShieldCheck, Cpu, 
-  AlertCircle, Eye, EyeOff, Loader2, LogIn, Shield 
+import {
+  Lock, Mail, ArrowLeft, ShieldCheck, Cpu,
+  AlertCircle, Eye, EyeOff, Loader2, LogIn, Shield
 } from 'lucide-react';
+import PasswordResetFlow from '../../components/auth/PasswordResetFlow';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -17,7 +18,8 @@ export const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeDemo, setActiveDemo] = useState('');
-  
+  const [isResetMode, setIsResetMode] = useState(false);
+
   const { user, isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
 
@@ -32,7 +34,7 @@ export const LoginPage = () => {
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-    
+
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
 
@@ -87,17 +89,17 @@ export const LoginPage = () => {
   return (
     <div className="pt-32 pb-20 min-h-[90vh] flex items-center justify-center px-4 sm:px-6">
       <div className="w-full max-w-lg relative animate-slide-up">
-        
+
         {/* Glow ambient accent */}
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-50 pointer-events-none" />
 
         {/* Card: Radiant Pure White in Light Mode, Elegant Dark Zinc in Dark Mode */}
         <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/90 rounded-3xl p-6 sm:p-10 md:p-12 shadow-2xl shadow-zinc-300/60 dark:shadow-2xl dark:shadow-black/50 transition-all duration-300">
-          
+
           {/* Top back link */}
           <div className="mb-6 flex justify-between items-center">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
             >
               <ArrowLeft size={14} /> Volver al Inicio
@@ -107,105 +109,131 @@ export const LoginPage = () => {
             </span>
           </div>
 
-          {/* Logo & Header */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transition-transform hover:scale-105">
-              <Cpu size={32} />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-2">
-              Acceso al Portal
-            </h2>
-            <p className="text-zinc-600 dark:text-zinc-400 text-xs sm:text-sm font-medium">
-              Autenticación corporativa para Coordinadores, Líderes y Desarrolladores
-            </p>
-          </div>
-
-          {/* Feedback Visual de Error Obligatorio */}
-          <AnimatePresence>
-            {error && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.25 }}
-                className="bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 p-4 rounded-xl text-xs sm:text-sm flex items-start gap-3 mb-6 font-medium border border-red-200 dark:border-red-800 shadow-sm"
-              >
-                <AlertCircle size={20} className="flex-shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
-                <div className="flex-1">
-                  <span className="font-bold block mb-0.5">Error de Autenticación:</span>
-                  <span>{error}</span>
+          {isResetMode ? (
+            <PasswordResetFlow
+              onBackToLogin={() => setIsResetMode(false)}
+              onSuccessNotify={(msg) => toast.success(msg)}
+            />
+          ) : (
+            <>
+              {/* Logo & Header */}
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transition-transform hover:scale-105">
+                  <Cpu size={32} />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <form onSubmit={handleLogin} className="flex flex-col gap-5">
-            <div>
-              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider mb-2">
-                Correo Electrónico Corporativo
-              </label>
-              <div className="relative">
-                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (error) setError('');
-                  }}
-                  placeholder="Ingrese su correo electrónico corporativo"
-                  className="input-field pl-12 py-3"
-                  autoComplete="email"
-                />
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-2">
+                  Acceso al Portal
+                </h2>
+                <p className="text-zinc-600 dark:text-zinc-400 text-xs sm:text-sm font-medium">
+                  Autenticación corporativa para Coordinadores, Líderes y Desarrolladores
+                </p>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider mb-2">
-                Contraseña de Seguridad
-              </label>
-              <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (error) setError('');
-                  }}
-                  placeholder="••••••••••••"
-                  className="input-field pl-12 py-3"
-                  autoComplete="current-password"
-                />
+              {/* Feedback Visual de Error Obligatorio */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.25 }}
+                    className="bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 p-4 rounded-xl text-xs sm:text-sm flex items-start gap-3 mb-6 font-medium border border-red-200 dark:border-red-800 shadow-sm"
+                  >
+                    <AlertCircle size={20} className="flex-shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
+                    <div className="flex-1">
+                      <span className="font-bold block mb-0.5">Error de Autenticación:</span>
+                      <span>{error}</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <form onSubmit={handleLogin} className="flex flex-col gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider mb-2">
+                    Correo Electrónico Corporativo
+                  </label>
+                  <div className="relative">
+                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (error) setError('');
+                      }}
+                      placeholder="Ingrese su correo electrónico corporativo"
+                      className="input-field pl-12 py-3"
+                      autoComplete="email"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider">
+                      Contraseña de Seguridad
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsResetMode(true)}
+                      className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    >
+                      ¿Olvidó su contraseña?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error) setError('');
+                      }}
+                      placeholder="••••••••••••"
+                      className="input-field pl-12 pr-11 py-3"
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 p-1.5 rounded-lg transition-colors cursor-pointer"
+                      title={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="gradient-button w-full py-3.5 mt-2 font-bold text-sm shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  {loading ? (
+                    <span className="inline-flex items-center gap-2.5">
+                      <Loader2 size={18} className="animate-spin text-white dark:text-zinc-950" />
+                      <span>Validando credenciales...</span>
+                    </span>
+                  ) : (
+                    <>
+                      <span>Ingresar al Sistema</span>
+                      <LogIn size={18} />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800 text-center">
+                <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium flex items-center justify-center gap-1.5">
+                  <Shield size={12} /> Cifrado unidireccional BCrypt (RNF-10) • Acceso Restringido
+                </p>
               </div>
-            </div>
-
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="gradient-button w-full py-3.5 mt-2 font-bold text-sm shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed transition-all duration-200"
-            >
-              {loading ? (
-                <span className="inline-flex items-center gap-2.5">
-                  <Loader2 size={18} className="animate-spin text-white dark:text-zinc-950" />
-                  <span>Validando credenciales...</span>
-                </span>
-              ) : (
-                <>
-                  <span>Ingresar al Sistema</span>
-                  <LogIn size={18} />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800 text-center">
-            <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium flex items-center justify-center gap-1.5">
-              <Shield size={12} /> Cifrado unidireccional BCrypt (RNF-10) • Acceso Restringido
-            </p>
-          </div>
+            </>
+          )}
 
         </div>
       </div>
