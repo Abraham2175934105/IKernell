@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { 
-  User, Users, UserPlus, UserX, UserCheck, Search, Shield, ShieldCheck, ShieldAlert, CheckCircle2, 
+import {
+  User, Users, UserPlus, UserX, UserCheck, Search, Shield, ShieldCheck, ShieldAlert, CheckCircle2,
   Mail, Phone, Clock, FileText, AlertTriangle, Sparkles, Filter, X,
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
   ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag, FolderGit2, DollarSign, Building2,
-  Crown, ArrowRight, ArrowLeft, ClipboardList, RotateCw, Pause, Play, Zap, CheckCircle, Info
+  Crown, ArrowRight, ArrowLeft, ClipboardList, RotateCw, Pause, Play, Zap, CheckCircle, Info, PieChart, FileCheck, Activity, Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
@@ -67,12 +67,44 @@ const ROLE_SKILL_PROFILES = {
   }
 };
 
+// Listados Estandarizados & Formales para Perfil Profesional (Evita ingreso de datos arbitrarios)
+const TITULACIONES_PROFESIONALES = [
+  'Ingeniero(a) de Software',
+  'Ingeniero(a) de Sistemas',
+  'Ingeniero(a) Informático(a)',
+  'Ingeniero(a) de Computación',
+  'Tecnólogo(a) en Desarrollo de Software',
+  'Tecnólogo(a) en Análisis y Desarrollo de Sistemas (ADSI/ADSO)',
+  'Licenciado(a) en Ciencias de la Computación',
+  'Arquitecto(a) de Software & Soluciones',
+  'Ingeniero(a) de Telecomunicaciones & Redes',
+  'Ingeniero(a) de Datos & Inteligencia Artificial',
+  'Especialista en Ciberseguridad & Seguridad de la Información',
+  'Diseñador(a) UX/UI & Experiencia de Usuario',
+  'Magíster / Especialista en TI'
+];
+
+const ESPECIALIDADES_PRINCIPALES = [
+  'Desarrollo Backend & Java / Spring Boot',
+  'Desarrollo Frontend & React.js / TypeScript',
+  'Desarrollo Full Stack Web (Java & React)',
+  'Arquitectura Cloud & DevOps (AWS / Docker / K8s)',
+  'Ingeniería de Datos & PostgreSQL / SQL',
+  'QA, Testing & Automatización de Pruebas',
+  'Ciberseguridad & Auditoría de Código',
+  'Desarrollo Mobile (React Native / iOS / Android)',
+  'Inteligencia Artificial & Machine Learning',
+  'Gestión de Proyectos WBS & Scrum Master',
+  'UI/UX Design & Design Systems',
+  'Microservicios & Arquitectura Distribuida'
+];
+
 // Validador Estricto de Documentos de Identificación por País / Algoritmos Nacionales
 const PAISES_IDENTIFICACION = [
-  { 
-    code: 'CO', 
-    nombre: 'Colombia', 
-    docTipo: 'Cédula de Ciudadanía (CC)', 
+  {
+    code: 'CO',
+    nombre: 'Colombia',
+    docTipo: 'Cédula de Ciudadanía (CC)',
     flag: '🇨🇴',
     placeholder: 'Ej. 1018459203 (6 a 10 dígitos numéricos)',
     validate: (val) => {
@@ -83,10 +115,10 @@ const PAISES_IDENTIFICACION = [
       return { valid: true, message: 'Cédula de Ciudadanía Válida [Colombia]' };
     }
   },
-  { 
-    code: 'MX', 
-    nombre: 'México', 
-    docTipo: 'CURP / INE', 
+  {
+    code: 'MX',
+    nombre: 'México',
+    docTipo: 'CURP / INE',
     flag: '🇲🇽',
     placeholder: 'Ej. VECJ880326HDFRRN09 (18 caracteres)',
     validate: (val) => {
@@ -97,10 +129,10 @@ const PAISES_IDENTIFICACION = [
       return { valid: true, message: 'CURP Válido [México]' };
     }
   },
-  { 
-    code: 'ES', 
-    nombre: 'España', 
-    docTipo: 'DNI / NIE', 
+  {
+    code: 'ES',
+    nombre: 'España',
+    docTipo: 'DNI / NIE',
     flag: '🇪🇸',
     placeholder: 'Ej. 12345678Z (8 números + 1 letra control)',
     validate: (val) => {
@@ -117,10 +149,10 @@ const PAISES_IDENTIFICACION = [
       return { valid: true, message: 'DNI Válido [España]' };
     }
   },
-  { 
-    code: 'CL', 
-    nombre: 'Chile', 
-    docTipo: 'RUT / RUN', 
+  {
+    code: 'CL',
+    nombre: 'Chile',
+    docTipo: 'RUT / RUN',
     flag: '🇨🇱',
     placeholder: 'Ej. 12345678-K (7-8 dígitos + dígito verificador)',
     validate: (val) => {
@@ -145,10 +177,10 @@ const PAISES_IDENTIFICACION = [
       return { valid: true, message: 'RUT Válido [Chile]' };
     }
   },
-  { 
-    code: 'PE', 
-    nombre: 'Perú', 
-    docTipo: 'DNI', 
+  {
+    code: 'PE',
+    nombre: 'Perú',
+    docTipo: 'DNI',
     flag: '🇵🇪',
     placeholder: 'Ej. 72849102 (8 dígitos numéricos)',
     validate: (val) => {
@@ -158,10 +190,10 @@ const PAISES_IDENTIFICACION = [
       return { valid: true, message: 'DNI Válido [Perú]' };
     }
   },
-  { 
-    code: 'AR', 
-    nombre: 'Argentina', 
-    docTipo: 'DNI', 
+  {
+    code: 'AR',
+    nombre: 'Argentina',
+    docTipo: 'DNI',
     flag: '🇦🇷',
     placeholder: 'Ej. 40182938 (7 u 8 dígitos numéricos)',
     validate: (val) => {
@@ -171,10 +203,10 @@ const PAISES_IDENTIFICACION = [
       return { valid: true, message: 'DNI Válido [Argentina]' };
     }
   },
-  { 
-    code: 'US', 
-    nombre: 'Estados Unidos', 
-    docTipo: 'SSN / Tax ID', 
+  {
+    code: 'US',
+    nombre: 'Estados Unidos',
+    docTipo: 'SSN / Tax ID',
     flag: '🇺🇸',
     placeholder: 'Ej. 123-45-6789 (9 dígitos numéricos)',
     validate: (val) => {
@@ -184,10 +216,10 @@ const PAISES_IDENTIFICACION = [
       return { valid: true, message: 'SSN / Tax ID Válido [Estados Unidos]' };
     }
   },
-  { 
-    code: 'INT', 
-    nombre: 'Internacional / Pasaporte', 
-    docTipo: 'Pasaporte / ID Global', 
+  {
+    code: 'INT',
+    nombre: 'Internacional / Pasaporte',
+    docTipo: 'Pasaporte / ID Global',
     flag: '🌐',
     placeholder: 'Ej. PA8492019 (6 a 15 caracteres alfanuméricos)',
     validate: (val) => {
@@ -309,7 +341,8 @@ export const CoordinadorDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [rolSeleccionado, setRolSeleccionado] = useState('TODOS'); // 'TODOS' | 'DESARROLLADOR' | 'LIDER' | 'COORDINADOR'
   const [techsSeleccionadas, setTechsSeleccionadas] = useState([]); // [] = Todas
-  const [estadoSeleccionado, setEstadoSeleccionado] = useState('TODOS'); // 'TODOS' | 'ACTIVO' | 'INHABILITADO'
+  const [estadoSeleccionado, setEstadoSeleccionado] = useState('ACTIVO'); // 'ACTIVO' (Default) | 'INHABILITADO' | 'TODOS'
+  const [expandSkills, setExpandSkills] = useState(false); // Desplegable de habilidades Paso 3
   const [filtroSolicitudes, setFiltroSolicitudes] = useState('TODAS'); // 'TODAS' | 'PENDIENTE' | 'ATENDIDA' | 'REABIERTA' | 'EN_PROCESO'
   const [searchSolicitudQuery, setSearchSolicitudQuery] = useState('');
   const [fechaInicioSolicitud, setFechaInicioSolicitud] = useState('');
@@ -392,19 +425,77 @@ export const CoordinadorDashboard = () => {
   const [submittingEditarEtapaCoord, setSubmittingEditarEtapaCoord] = useState(false);
 
   const [showReasignarActividadModalCoord, setShowReasignarActividadModalCoord] = useState(false);
+  const [etapaAFinalizarModalCoord, setEtapaAFinalizarModalCoord] = useState(null);
+  const [etapaAReabrirModalCoord, setEtapaAReabrirModalCoord] = useState(null);
   const [actividadAReasignarCoord, setActividadAReasignarCoord] = useState(null);
   const [targetDevIdReasignarCoord, setTargetDevIdReasignarCoord] = useState('');
   const [motivoReasignarCoord, setMotivoReasignarCoord] = useState('');
   const [submittingReasignarActividadCoord, setSubmittingReasignarActividadCoord] = useState(false);
 
   const [submittingPausaFinalizarCoord, setSubmittingPausaFinalizarCoord] = useState(false);
+  const [showConfirmFinalizarCoord, setShowConfirmFinalizarCoord] = useState(false);
+  const [motivoCancelacionCoord, setMotivoCancelacionCoord] = useState('CANCELACION_CLIENTE');
+  const [justificacionCancelacionCoord, setJustificacionCancelacionCoord] = useState('');
+  const [cancelacionErrorCoord, setCancelacionErrorCoord] = useState('');
+  const [showGenerarReportePdfModalCoord, setShowGenerarReportePdfModalCoord] = useState(false);
+  const [pdfConfigCoord, setPdfConfigCoord] = useState({
+    nivelDetalle: 'DETALLADO',
+    incluirWbs: true,
+    incluirEquipo: true,
+    incluirPausas: true,
+    incluirAuditoriaCoordinador: true,
+    incluirMetricasKpi: true,
+    incluirMatrizRiesgos: true,
+    incluirFirmaDirectiva: true,
+    modoSensible: true
+  });
+
+  const seleccionarPerfilPdfCoord = (nivel) => {
+    if (nivel === 'RESUMIDO') {
+      setPdfConfigCoord({
+        nivelDetalle: 'RESUMIDO',
+        incluirWbs: true,
+        incluirEquipo: false,
+        incluirPausas: false,
+        incluirAuditoriaCoordinador: false,
+        incluirMetricasKpi: true,
+        incluirMatrizRiesgos: false,
+        incluirFirmaDirectiva: false,
+        modoSensible: true
+      });
+    } else if (nivel === 'DETALLADO') {
+      setPdfConfigCoord({
+        nivelDetalle: 'DETALLADO',
+        incluirWbs: true,
+        incluirEquipo: true,
+        incluirPausas: true,
+        incluirAuditoriaCoordinador: false,
+        incluirMetricasKpi: true,
+        incluirMatrizRiesgos: true,
+        incluirFirmaDirectiva: true,
+        modoSensible: true
+      });
+    } else if (nivel === 'AUDITORIA_COMPLETA') {
+      setPdfConfigCoord({
+        nivelDetalle: 'AUDITORIA_COMPLETA',
+        incluirWbs: true,
+        incluirEquipo: true,
+        incluirPausas: true,
+        incluirAuditoriaCoordinador: true,
+        incluirMetricasKpi: true,
+        incluirMatrizRiesgos: true,
+        incluirFirmaDirectiva: true,
+        modoSensible: true
+      });
+    }
+  };
 
   // Generador de Reporte PDF Directivo 100/10 - Arquitectura de Tabla Corporativa Tabular Sin Corchetes ni Superposiciones
   const handleGenerarReportePdfCoord = () => {
     if (!selectedProyectoModal) return;
     try {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      
+
       // Paleta de Colores Ejecutivo Corporativo (Estándar Slate & Navy)
       const navyColor = [30, 58, 138];      // #1e3a8a (Azul Marino Ejecutivo)
       const slateDark = [15, 23, 42];       // #0f172a (Slate Principal)
@@ -699,6 +790,7 @@ export const CoordinadorDashboard = () => {
       const cleanFileName = `Reporte_Directivo_PRJ-00${selectedProyectoModal.idProyecto}_${selectedProyectoModal.nombre.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
       doc.save(cleanFileName);
       toast.success('Reporte PDF corporativo generado exitosamente.');
+      setShowGenerarReportePdfModalCoord(false);
     } catch (e) {
       console.error('Error generando PDF:', e);
       toast.error('Error al generar reporte PDF.');
@@ -719,7 +811,7 @@ export const CoordinadorDashboard = () => {
       await api.patch(endpoint);
       setSelectedProyectoModal(prev => ({ ...prev, estado: nuevoEstado }));
       setProyectos(prev => prev.map(p => p.idProyecto === selectedProyectoModal.idProyecto ? { ...p, estado: nuevoEstado } : p));
-      
+
       await registrarAccionCoordinador(selectedProyectoModal.idProyecto, accion, detalles);
       toast.success(`Proyecto ${isPausado ? 'reactivado' : 'puesto en pausa'} exitosamente.`);
     } catch (err) {
@@ -730,17 +822,97 @@ export const CoordinadorDashboard = () => {
     }
   };
 
-  // Finalizar Proyecto con Auditoría Directiva
-  const handleFinalizarProyectoCoord = async () => {
+  // Evidencia de auditoría para finalización de proyecto en Coordinador (RF-20)
+  const evidenciaWbsFinalizacionCoord = useMemo(() => {
+    if (!proyectoEtapasModal || !Array.isArray(proyectoEtapasModal) || proyectoEtapasModal.length === 0) {
+      return {
+        etapasIncompletas: [],
+        actividadesIncompletas: [],
+        todasCompletadas: false,
+        esProyectoVacio: true,
+        totalEtapas: 0,
+        totalActividades: 0
+      };
+    }
+
+    const etapasIncompletas = [];
+    const actividadesIncompletas = [];
+    let totalActividades = 0;
+
+    proyectoEtapasModal.forEach(et => {
+      const isEtapaFin = et.estado === 'FINALIZADA' || et.estado === 'COMPLETADA';
+      const acts = Array.isArray(et.actividades) ? et.actividades : [];
+      totalActividades += acts.length;
+
+      const actsInc = acts.filter(a => a.estado !== 'FINALIZADA' && a.estado !== 'COMPLETADA');
+      if (actsInc.length > 0) {
+        actividadesIncompletas.push(...actsInc.map(a => ({ ...a, etapaNombre: et.nombreEtapa })));
+      }
+
+      if (!isEtapaFin || actsInc.length > 0) {
+        etapasIncompletas.push({
+          ...et,
+          actividadesIncompletas: actsInc,
+          actividadesPendientesCount: actsInc.length
+        });
+      }
+    });
+
+    return {
+      etapasIncompletas,
+      actividadesIncompletas,
+      todasCompletadas: etapasIncompletas.length === 0 && actividadesIncompletas.length === 0,
+      esProyectoVacio: false,
+      totalEtapas: proyectoEtapasModal.length,
+      totalActividades
+    };
+  }, [proyectoEtapasModal]);
+
+  // Abrir Modal de Confirmación Directiva de Cierre
+  const handleAbrirConfirmFinalizarCoord = () => {
     if (!selectedProyectoModal) return;
+    setMotivoCancelacionCoord('CANCELACION_CLIENTE');
+    setJustificacionCancelacionCoord('');
+    setCancelacionErrorCoord('');
+    setShowConfirmFinalizarCoord(true);
+  };
+
+  // Finalizar Proyecto con Auditoría Directiva y Verificación WBS Estricta
+  const handleEjecutarFinalizacionProyectoCoord = async () => {
+    if (!selectedProyectoModal) return;
+
+    // Validación si es un proyecto vacío
+    if (evidenciaWbsFinalizacionCoord.esProyectoVacio) {
+      if (!justificacionCancelacionCoord.trim() || justificacionCancelacionCoord.trim().length < 10) {
+        setCancelacionErrorCoord('La justificación de cierre prematuro debe tener al menos 10 caracteres.');
+        return;
+      }
+    }
+
+    // Regla estricta: NO se permite finalizar si el proyecto tiene fases o tareas incompletas
+    if (!evidenciaWbsFinalizacionCoord.esProyectoVacio && !evidenciaWbsFinalizacionCoord.todasCompletadas) {
+      toast.error('No se puede finalizar el proyecto. Aún existen etapas o tareas pendientes en la WBS.');
+      return;
+    }
+
     try {
       setSubmittingPausaFinalizarCoord(true);
-      await api.patch(`/lider/proyectos/${selectedProyectoModal.idProyecto}/finalizar`);
+      const payload = evidenciaWbsFinalizacionCoord.esProyectoVacio ? {
+        motivoCancelacion: motivoCancelacionCoord,
+        justificacionCancelacion: justificacionCancelacionCoord.trim()
+      } : {};
+
+      await api.patch(`/lider/proyectos/${selectedProyectoModal.idProyecto}/finalizar`, payload);
       setSelectedProyectoModal(prev => ({ ...prev, estado: 'FINALIZADO' }));
       setProyectos(prev => prev.map(p => p.idProyecto === selectedProyectoModal.idProyecto ? { ...p, estado: 'FINALIZADO' } : p));
-      
-      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'FINALIZACION_PROYECTO', 'El Coordinador dio por FINALIZADO el proyecto formalmente.');
-      toast.success('El proyecto ha sido marcado como FINALIZADO.');
+
+      const detallesAuditoria = evidenciaWbsFinalizacionCoord.esProyectoVacio
+        ? `Cierre prematuro de proyecto vacío. Motivo: ${motivoCancelacionCoord}. Justificación: ${justificacionCancelacionCoord.trim()}`
+        : 'Finalización formal de proyecto con 100% de cumplimiento WBS verificado por el Coordinador.';
+
+      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'FINALIZACION_PROYECTO', detallesAuditoria);
+      toast.success('El proyecto ha sido marcado oficialmente como FINALIZADO.');
+      setShowConfirmFinalizarCoord(false);
     } catch (err) {
       console.error('Error al finalizar el proyecto:', err);
       toast.error(err.message || 'Error al finalizar el proyecto.');
@@ -758,7 +930,7 @@ export const CoordinadorDashboard = () => {
       setSubmittingEtapaCoord(true);
       const body = { nombreEtapa: nuevaEtapaCoord.nombreEtapa.trim(), estado: 'PENDIENTE' };
       await api.post(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`, body);
-      
+
       const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
       setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
 
@@ -774,7 +946,7 @@ export const CoordinadorDashboard = () => {
     }
   };
 
-  // Asignar Nueva Actividad
+  // Asignar Nueva Actividad (con detección y confirmación de reapertura en modal si la etapa está FINALIZADA)
   const handleRegistrarActividadCoord = async (e) => {
     e.preventDefault();
     if (!selectedProyectoModal || !nuevaActividadCoord.nombreActividad.trim() || !nuevaActividadCoord.idEtapa || !nuevaActividadCoord.idDesarrollador) {
@@ -782,11 +954,30 @@ export const CoordinadorDashboard = () => {
       return;
     }
 
+    const etapaSeleccionada = (proyectoEtapasModal || []).find(et => String(et.idEtapa) === String(nuevaActividadCoord.idEtapa));
+    const estaFinalizada = etapaSeleccionada && (
+      (etapaSeleccionada.estado || '').toUpperCase() === 'FINALIZADA' ||
+      (etapaSeleccionada.estado || '').toUpperCase() === 'COMPLETADO'
+    );
+
+    const dev = trabajadores.find(t => String(t.idTrabajador) === String(nuevaActividadCoord.idDesarrollador));
+    const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${nuevaActividadCoord.idDesarrollador}`;
+    const etapaNombre = etapaSeleccionada ? etapaSeleccionada.nombreEtapa : `Etapa #${nuevaActividadCoord.idEtapa}`;
+
+    if (estaFinalizada) {
+      setEtapaAReabrirModalCoord({
+        idEtapa: nuevaActividadCoord.idEtapa,
+        etapaNombre,
+        nombreActividad: nuevaActividadCoord.nombreActividad.trim(),
+        idDesarrollador: nuevaActividadCoord.idDesarrollador,
+        devNombre,
+        etapaSeleccionada
+      });
+      return;
+    }
+
     try {
       setSubmittingActividadCoord(true);
-      const dev = trabajadores.find(t => String(t.idTrabajador) === String(nuevaActividadCoord.idDesarrollador));
-      const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${nuevaActividadCoord.idDesarrollador}`;
-
       const body = {
         nombreActividad: nuevaActividadCoord.nombreActividad.trim(),
         descripcion: nuevaActividadCoord.nombreActividad.trim(),
@@ -796,10 +987,15 @@ export const CoordinadorDashboard = () => {
 
       await api.post(`/lider/etapas/${nuevaActividadCoord.idEtapa}/desarrolladores/${nuevaActividadCoord.idDesarrollador}/actividades`, body);
 
+      registrarAccionCoordinador(
+        selectedProyectoModal.idProyecto,
+        'ASIGNACION_ACTIVIDAD',
+        `Actividad "${nuevaActividadCoord.nombreActividad.trim()}" asignada a ${devNombre} en fase "${etapaNombre}".`
+      );
+
       const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
       setProyectoEtapasModal(Array.isArray(etapasRes) ? etapasRes : []);
 
-      registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'ASIGNACION_ACTIVIDAD', `Actividad "${nuevaActividadCoord.nombreActividad.trim()}" asignada a ${devNombre}`);
       toast.success('Actividad asignada exitosamente.');
       setShowNuevaActividadModalCoord(false);
       setNuevaActividadCoord({ nombreActividad: '', idEtapa: '', idDesarrollador: '' });
@@ -838,17 +1034,17 @@ export const CoordinadorDashboard = () => {
       });
 
       // 2. Reactividad local instantánea en modales y tablas de vista
-      setProyectoEtapasModal(prev => (prev || []).map(et => 
-        String(et.idEtapa) === String(idModificada) 
-          ? { ...et, nombreEtapa: nuevoNombre, estado: nuevoEstado } 
+      setProyectoEtapasModal(prev => (prev || []).map(et =>
+        String(et.idEtapa) === String(idModificada)
+          ? { ...et, nombreEtapa: nuevoNombre, estado: nuevoEstado }
           : et
       ));
 
       setProyectos(prev => (prev || []).map(p => {
         if (String(p.idProyecto) === String(selectedProyectoModal.idProyecto)) {
-          const etapasActualizadas = (p.etapas || []).map(et => 
-            String(et.idEtapa) === String(idModificada) 
-              ? { ...et, nombreEtapa: nuevoNombre, estado: nuevoEstado } 
+          const etapasActualizadas = (p.etapas || []).map(et =>
+            String(et.idEtapa) === String(idModificada)
+              ? { ...et, nombreEtapa: nuevoNombre, estado: nuevoEstado }
               : et
           );
           return { ...p, etapas: etapasActualizadas };
@@ -861,7 +1057,7 @@ export const CoordinadorDashboard = () => {
         .then(etapasRes => {
           if (Array.isArray(etapasRes)) setProyectoEtapasModal(etapasRes);
         })
-        .catch(() => {});
+        .catch(() => { });
 
       // 4. Auditoría directiva y notificación de éxito
       registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'EDICION_ETAPA', `Fase #${idModificada} actualizada a "${nuevoNombre}" [${nuevoEstado}]`);
@@ -872,6 +1068,45 @@ export const CoordinadorDashboard = () => {
       toast.error(err.message || 'Error al actualizar etapa.');
     } finally {
       setSubmittingEditarEtapaCoord(false);
+    }
+  };
+
+  // Finalización formal de etapa WBS con alerta y auditoría
+  const handleFinalizarEtapaFormallyCoord = async (etapa) => {
+    if (!selectedProyectoModal || !etapa?.idEtapa) return;
+    const confirmName = etapa.nombreEtapa || `Fase #${etapa.idEtapa}`;
+    if (!window.confirm(`¿Está seguro de finalizar formalmente la etapa "${confirmName}"? Se registrará la acción en la auditoría.`)) return;
+
+    try {
+      await api.put(`/lider/etapas/${etapa.idEtapa}`, {
+        nombreEtapa: etapa.nombreEtapa,
+        estado: 'FINALIZADA'
+      });
+
+      setProyectoEtapasModal(prev => (prev || []).map(et =>
+        String(et.idEtapa) === String(etapa.idEtapa) ? { ...et, estado: 'FINALIZADA' } : et
+      ));
+
+      setProyectos(prev => (prev || []).map(p => {
+        if (String(p.idProyecto) === String(selectedProyectoModal.idProyecto)) {
+          const etapasActualizadas = (p.etapas || []).map(et =>
+            String(et.idEtapa) === String(etapa.idEtapa) ? { ...et, estado: 'FINALIZADA' } : et
+          );
+          return { ...p, etapas: etapasActualizadas };
+        }
+        return p;
+      }));
+
+      registrarAccionCoordinador(
+        selectedProyectoModal.idProyecto,
+        'FINALIZACION_ETAPA',
+        `Fase #${etapa.idEtapa} ("${confirmName}") finalizada formalmente por la Coordinación.`
+      );
+
+      toast.success(`Etapa "${confirmName}" finalizada exitosamente.`);
+    } catch (err) {
+      console.error('Error al finalizar etapa:', err);
+      toast.error(err.message || 'Error al finalizar la etapa.');
     }
   };
 
@@ -955,9 +1190,9 @@ export const CoordinadorDashboard = () => {
     setSearchQuery('');
     setRolSeleccionado('TODOS');
     setTechsSeleccionadas([]);
-    setEstadoSeleccionado('TODOS');
+    setEstadoSeleccionado('ACTIVO');
   };
-  
+
   // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedSolicitudModal, setSelectedSolicitudModal] = useState(null);
@@ -990,15 +1225,15 @@ export const CoordinadorDashboard = () => {
     return PAISES_IDENTIFICACION.find(p => p.code === (newTrabajador.paisCodigo || 'CO')) || PAISES_IDENTIFICACION[0];
   }, [newTrabajador.paisCodigo]);
 
-  // Validaciones estrictas en tiempo real por campo
+  // Validaciones strictly en tiempo real por campo
   const docValidationResult = useMemo(() => {
     const raw = (newTrabajador.identificacion || '').trim();
     if (!raw) return { valid: false, message: 'Ingrese el número de documento de identificación.' };
-    
+
     // Verificación de duplicados en la base de datos en tiempo real
     const existeDuplicado = (trabajadores || []).some(t => String(t.identificacion).trim() === raw);
     if (existeDuplicado) {
-      return { valid: false, message: `La cédula / documento (${raw}) ya está registrado en PostgreSQL.` };
+      return { valid: false, message: `La cédula / número de identificación (${raw}) ya se encuentra registrada en el sistema.` };
     }
 
     return paisActual.validate(raw);
@@ -1006,16 +1241,35 @@ export const CoordinadorDashboard = () => {
 
   const emailValidationResult = useMemo(() => {
     const raw = (newTrabajador.email || '').trim().toLowerCase();
-    if (!raw) return { valid: false, message: 'El correo electrónico es obligatorio.' };
+    if (!raw) return { valid: false, message: 'El correo electrónico corporativo es obligatorio.' };
     const rfcRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!rfcRegex.test(raw)) return { valid: false, message: 'Formato de correo electrónico inválido (ej. usuario@dominio.com).' };
-    
+    if (!rfcRegex.test(raw)) return { valid: false, message: 'Formato de correo electrónico inválido (ej. usuario@ikernell.org).' };
+
     const existeEmail = (trabajadores || []).some(t => String(t.email || '').trim().toLowerCase() === raw);
     if (existeEmail) {
-      return { valid: false, message: `El correo (${raw}) ya pertenece a otro colaborador registrado.` };
+      return { valid: false, message: `El correo corporativo (${raw}) ya pertenece a otro colaborador registrado.` };
     }
-    return { valid: true, message: 'Correo electrónico válido y disponible.' };
+    return { valid: true, message: 'Correo corporativo único válido y disponible.' };
   }, [newTrabajador.email, trabajadores]);
+
+  const emailPersonalValidationResult = useMemo(() => {
+    const raw = (newTrabajador.emailPersonal || '').trim().toLowerCase();
+    if (!raw) return { valid: false, message: 'El correo personal / alternativo es obligatorio.' };
+    const rfcRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!rfcRegex.test(raw)) return { valid: false, message: 'Formato de correo electrónico personal inválido (ej. usuario@gmail.com).' };
+
+    const existePersonal = (trabajadores || []).some(t => String(t.emailPersonal || '').trim().toLowerCase() === raw);
+    if (existePersonal) {
+      return { valid: false, message: `El correo personal (${raw}) ya pertenece a otro colaborador registrado en el sistema.` };
+    }
+
+    const existeComoCorporativo = (trabajadores || []).some(t => String(t.email || '').trim().toLowerCase() === raw);
+    if (existeComoCorporativo) {
+      return { valid: false, message: `El correo personal (${raw}) ya está registrado como correo corporativo.` };
+    }
+
+    return { valid: true, message: 'Correo personal válido y disponible.' };
+  }, [newTrabajador.emailPersonal, trabajadores]);
 
   const nombreValidationResult = useMemo(() => {
     const raw = (newTrabajador.nombre || '').trim();
@@ -1099,7 +1353,7 @@ export const CoordinadorDashboard = () => {
 
   // Manejadores de Habilidades Técnicas (Skills)
   const handleToggleSkill = (skill) => {
-    setSelectedSkills(prev => 
+    setSelectedSkills(prev =>
       prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
     );
   };
@@ -1132,8 +1386,8 @@ export const CoordinadorDashboard = () => {
     // Regla de Negocio: Bloqueo de auto-inhabilitación del usuario autenticado
     const targetUser = trabajadores.find(t => t.idTrabajador === id);
     const isSelf = user && (
-      user.idTrabajador === id || 
-      user.id === id || 
+      user.idTrabajador === id ||
+      user.id === id ||
       (user.email && targetUser?.email && user.email.toLowerCase() === targetUser.email.toLowerCase()) ||
       (user.identificacion && targetUser?.identificacion && String(user.identificacion) === String(targetUser.identificacion))
     );
@@ -1161,7 +1415,7 @@ export const CoordinadorDashboard = () => {
         }
       }
 
-      const proyectosAfectados = (listaProyectos || []).filter(p => 
+      const proyectosAfectados = (listaProyectos || []).filter(p =>
         (p.lider?.idTrabajador && String(p.lider.idTrabajador) === String(id)) ||
         (p.lider?.id && String(p.lider.id) === String(id))
       );
@@ -1169,12 +1423,12 @@ export const CoordinadorDashboard = () => {
       if (proyectosAfectados.length > 0) {
         setLiderAInhabilitar(targetUser);
         setProyectosDelLiderAfectado(proyectosAfectados);
-        
+
         // Buscar otros líderes activos disponibles
-        const otrosLideres = trabajadores.filter(t => 
-          String(t.idTrabajador) !== String(id) && 
-          t.estado && 
-          t.rol && 
+        const otrosLideres = trabajadores.filter(t =>
+          String(t.idTrabajador) !== String(id) &&
+          t.estado &&
+          t.rol &&
           String(t.rol).toUpperCase().includes('LIDER')
         );
 
@@ -1188,7 +1442,7 @@ export const CoordinadorDashboard = () => {
         });
         setReasignacionesMap(initialMap);
         setPasoModalReasignar('FORMULARIO');
-        
+
         setShowReasignarLiderModal(true);
         return;
       }
@@ -1198,7 +1452,7 @@ export const CoordinadorDashboard = () => {
     try {
       setTogglingId(id);
       const updated = await api.patch(`/coordinador/trabajadores/${id}/estado`);
-      
+
       setTrabajadores(prev => prev.map(t => t.idTrabajador === id ? updated : t));
       const estadoTexto = updated.estado ? 'Habilitado' : 'Inhabilitado';
       toast.success(`Trabajador marcado como ${estadoTexto} en la base de datos.`);
@@ -1286,29 +1540,41 @@ export const CoordinadorDashboard = () => {
     if (!docValidationResult.valid) {
       errors.identificacion = docValidationResult.message;
     }
+
     if (!nombreValidationResult.valid) {
       errors.nombre = nombreValidationResult.message;
     }
     if (!apellidoValidationResult.valid) {
       errors.apellido = apellidoValidationResult.message;
     }
+
     if (!emailValidationResult.valid) {
       errors.email = emailValidationResult.message;
     }
 
-    const pwd = data.passwordHash || '';
-    if (!pwd || pwd.length < 8 || pwd.length > 20) {
-      errors.passwordHash = 'La contraseña debe tener entre 8 y 20 caracteres';
-    } else if (!/[A-Z]/.test(pwd)) {
-      errors.passwordHash = 'La contraseña debe incluir al menos 1 letra mayúscula (A-Z)';
-    } else if (!/[a-z]/.test(pwd)) {
-      errors.passwordHash = 'La contraseña debe incluir al menos 1 letra minúscula (a-z)';
-    } else if (!/[0-9]/.test(pwd)) {
-      errors.passwordHash = 'La contraseña debe incluir al menos 1 número (0-9)';
+    if (!emailPersonalValidationResult.valid) {
+      errors.emailPersonal = emailPersonalValidationResult.message;
     }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  // Auto-generador de Correo Electrónico Corporativo Único (@ikernell.org)
+  const autoGenerarEmailCorporativo = (nombres, apellidos) => {
+    if (!nombres || !apellidos) return '';
+    const nomClean = nombres.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+    const apeClean = apellidos.trim().split(' ')[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+    if (!nomClean || !apeClean) return '';
+
+    let baseEmail = `${nomClean}.${apeClean}@ikernell.org`;
+    let contador = 1;
+    let candidateEmail = baseEmail;
+    while ((trabajadores || []).some(t => String(t.email || '').trim().toLowerCase() === candidateEmail.toLowerCase())) {
+      candidateEmail = `${nomClean}.${apeClean}${contador}@ikernell.org`;
+      contador++;
+    }
+    return candidateEmail;
   };
 
   const handleCrearTrabajador = async (e) => {
@@ -1322,8 +1588,8 @@ export const CoordinadorDashboard = () => {
       let especialidadFinal = newTrabajador.especialidad.trim();
       if (selectedSkills.length > 0) {
         const skillsFormatted = selectedSkills.join(', ');
-        especialidadFinal = especialidadFinal 
-          ? `${especialidadFinal} • [${skillsFormatted}]` 
+        especialidadFinal = especialidadFinal
+          ? `${especialidadFinal} • [${skillsFormatted}]`
           : `[${skillsFormatted}]`;
       }
 
@@ -1349,8 +1615,7 @@ export const CoordinadorDashboard = () => {
         passwordHash: newTrabajador.passwordHash
       });
 
-      setTrabajadores([nuevo, ...trabajadores]);
-      toast.success(`Colaborador ${nuevo.nombre} ${nuevo.apellido} registrado exitosamente. Credenciales temporales enviadas a ${nuevo.emailPersonal || emailFinal}.`);
+      toast.success(`Trabajador ${nuevo.nombre} ${nuevo.apellido} registrado exitosamente. Credenciales enviadas a ${nuevo.emailPersonal || emailFinal}.`);
       setShowCreateModal(false);
       setNewTrabajador({
         identificacion: '',
@@ -1367,9 +1632,11 @@ export const CoordinadorDashboard = () => {
       setCustomSkillInput('');
       setShowPasswordInput(false);
       setFormErrors({});
+      cargarDatos();
     } catch (err) {
-      console.error('Error creando trabajador:', err);
-      toast.error(err.message || 'Error al registrar el trabajador en el sistema.');
+      console.error('Error al registrar trabajador:', err);
+      const serverMsg = err.response?.data?.message || err?.message || 'Error al registrar trabajador.';
+      toast.error(serverMsg);
     } finally {
       setSubmitting(false);
     }
@@ -1500,7 +1767,7 @@ export const CoordinadorDashboard = () => {
     try {
       setTogglingSolicitudId(idSolicitud);
       const updated = await api.patch(`/coordinador/solicitudes/${idSolicitud}/atender`);
-      
+
       setSolicitudes(prev => prev.map(s => s.idSolicitud === idSolicitud ? updated : s));
       const estadoTxt = updated.estado || (updated.atendido ? 'ATENDIDA' : 'PENDIENTE');
       toast.success(`Solicitud actualizada a ${estadoTxt}.`);
@@ -1524,7 +1791,7 @@ export const CoordinadorDashboard = () => {
         )}
 
         {skills && skills.length > 0 && (
-          <div 
+          <div
             className="relative inline-block"
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
@@ -1603,7 +1870,7 @@ export const CoordinadorDashboard = () => {
 
   const filteredTrabajadores = trabajadores.filter(t => {
     const query = searchQuery.trim().toLowerCase();
-    const matchesSearch = !query || 
+    const matchesSearch = !query ||
       (t.nombre || '').toLowerCase().includes(query) ||
       (t.apellido || '').toLowerCase().includes(query) ||
       (t.identificacion || '').includes(query) ||
@@ -1618,14 +1885,14 @@ export const CoordinadorDashboard = () => {
       matchesTech = techsSeleccionadas.some(tech => spec.includes(tech.toLowerCase()));
     }
 
-    const matchesEstado = estadoSeleccionado === 'TODOS' || 
-      (estadoSeleccionado === 'ACTIVO' && t.estado) || 
+    const matchesEstado = estadoSeleccionado === 'TODOS' ||
+      (estadoSeleccionado === 'ACTIVO' && t.estado) ||
       (estadoSeleccionado === 'INHABILITADO' && !t.estado);
 
     return matchesSearch && matchesRol && matchesTech && matchesEstado;
   });
 
-  const activeFiltersCount = (searchQuery ? 1 : 0) + (rolSeleccionado !== 'TODOS' ? 1 : 0) + techsSeleccionadas.length + (estadoSeleccionado !== 'TODOS' ? 1 : 0);
+  const activeFiltersCount = (searchQuery ? 1 : 0) + (rolSeleccionado !== 'TODOS' ? 1 : 0) + techsSeleccionadas.length + (estadoSeleccionado !== 'ACTIVO' ? 1 : 0);
 
   // Cálculo Exigente de la Primera y Última Fecha de Solicitud en el Sistema
   const rangoFechasSolicitudes = React.useMemo(() => {
@@ -1709,7 +1976,7 @@ export const CoordinadorDashboard = () => {
   const totalFilteredCount = filteredTrabajadores.length;
   const totalPages = Math.ceil(totalFilteredCount / itemsPerPage) || 1;
   const safeCurrentPage = Math.min(currentPage, totalPages);
-  
+
   const startIndex = (safeCurrentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, totalFilteredCount);
   const paginatedTrabajadores = filteredTrabajadores.slice(startIndex, endIndex);
@@ -1755,7 +2022,7 @@ export const CoordinadorDashboard = () => {
       const next = [...prev, idNotif];
       try {
         localStorage.setItem(`dismissed_notifs_coord`, JSON.stringify(next));
-      } catch (e) {}
+      } catch (e) { }
       return next;
     });
   };
@@ -1766,8 +2033,8 @@ export const CoordinadorDashboard = () => {
     const notifs = [];
 
     proyectos.forEach(p => {
-      // Reasignación reciente (Vigencia 72h)
-      if (p.reasignado && getHoursSinceReassignment(p.fechaReasignacion) <= 72 && !dismissedNotifsCoord.includes(`coord_reasig_${p.idProyecto}`)) {
+      // Reasignación reciente (Vigencia 24h y no confirmada)
+      if (p.reasignado && !p.leidoPorLiderAnterior && getHoursSinceReassignment(p.fechaReasignacion) <= 24 && !dismissedNotifsCoord.includes(`coord_reasig_${p.idProyecto}`)) {
         notifs.push({
           tipo: 'REASIGNACION',
           idNotif: `coord_reasig_${p.idProyecto}`,
@@ -1776,7 +2043,7 @@ export const CoordinadorDashboard = () => {
           subtitulo: 'Reasignación de dirección técnica registrada por la Coordinación General.',
           motivo: p.motivoReasignacion || 'Reorganización de dirección técnica.',
           liderNombre: p.lider ? `${p.lider.nombre} ${p.lider.apellido}` : 'Líder Asignado',
-          vigencia: 'Vigencia de Auditoría (72h)'
+          vigencia: 'Vigencia de Auditoría (24h)'
         });
       }
 
@@ -1899,10 +2166,10 @@ export const CoordinadorDashboard = () => {
     try {
       setSubmittingReasignarLiderPrj(true);
       await api.put(`/coordinador/proyectos/${proyectoAReasignar.idProyecto}/reasignar-lider?idNuevoLiderTarget=${targetNuevoLiderPrjId}&motivo=${encodeURIComponent(motivoReasignacionPrj.trim())}`);
-      
+
       const nuevoLiderObj = (lideresActivos || []).find(l => String(l.idTrabajador) === String(targetNuevoLiderPrjId));
       const nuevoLiderNom = nuevoLiderObj ? `${nuevoLiderObj.nombre} ${nuevoLiderObj.apellido}` : 'Nuevo Líder';
-      
+
       await registrarAccionCoordinador(
         proyectoAReasignar.idProyecto,
         'REASIGNACIÓN_LÍDER',
@@ -1979,7 +2246,7 @@ export const CoordinadorDashboard = () => {
 
   const handleIrAWbsProyectoDesdeTrabajador = async (idProyecto, idActividad = null, idEtapa = null, devContext = null) => {
     const currentWorker = devContext || selectedTrabajadorModal;
-    
+
     // 1. Guardar contexto de trazabilidad para el botón "Regresar a Inspección"
     if (currentWorker) {
       setNavHistory({ fromTab: activeTab || 'personal', worker: currentWorker });
@@ -2075,8 +2342,11 @@ export const CoordinadorDashboard = () => {
   const topSkills = getTopSkillsByRole(trabajadores, rolSeleccionado);
 
   const getFilterExplanationText = () => {
-    if (activeFiltersCount === 0) {
-      return `Mostrando todo el personal registrado (${totalCount} trabajadores en total).`;
+    if (!searchQuery && rolSeleccionado === 'TODOS' && techsSeleccionadas.length === 0 && estadoSeleccionado === 'ACTIVO') {
+      return `Mostrando todo el personal activo habilitado (${filteredTrabajadores.length} trabajadores).`;
+    }
+    if (!searchQuery && rolSeleccionado === 'TODOS' && techsSeleccionadas.length === 0 && estadoSeleccionado === 'TODOS') {
+      return `Mostrando todo el personal registrado (${filteredTrabajadores.length} trabajadores en total).`;
     }
 
     const parts = [];
@@ -2088,7 +2358,9 @@ export const CoordinadorDashboard = () => {
     }
 
     if (estadoSeleccionado !== 'TODOS') {
-      parts.push(estadoSeleccionado === 'ACTIVO' ? 'Habilitados' : 'Inhabilitados');
+      parts.push(estadoSeleccionado === 'ACTIVO' ? '(Habilitados)' : '(Inhabilitados)');
+    } else {
+      parts.push('(Todos los estados)');
     }
 
     if (techsSeleccionadas.length > 0) {
@@ -2109,8 +2381,8 @@ export const CoordinadorDashboard = () => {
   };
 
   return (
-    <DashboardLayout 
-      activeTab={activeTab} 
+    <DashboardLayout
+      activeTab={activeTab}
       setActiveTab={setActiveTab}
       customMetrics={{
         metric1: loading ? 'Cargando...' : `Personal Activo: ${activosCount}`,
@@ -2119,16 +2391,16 @@ export const CoordinadorDashboard = () => {
     >
       {/* 1. SECCIÓN: GESTIÓN DE PERSONAL (Consola de Filtrado Organizada y Adaptativa) */}
       {activeTab === 'personal' && (
-        <motion.div 
+        <motion.div
           key="personal"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
           className="space-y-6"
         >
-          
+
           {/* Header de la Vista */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
@@ -2164,13 +2436,13 @@ export const CoordinadorDashboard = () => {
           </motion.div>
 
           {/* Consola Única de Filtrado Didáctico & Adaptativo (Foolproof Control Console) */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5"
           >
             {/* 1. Encabezado Didáctico & Banner Explicativo en Lenguaje Sencillo */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-              
+
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
                   <Filter size={20} />
@@ -2218,7 +2490,7 @@ export const CoordinadorDashboard = () => {
                   className="input-field pl-11 pr-10 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
                 />
                 {searchQuery && (
-                  <button 
+                  <button
                     onClick={() => setSearchQuery('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
                   >
@@ -2230,7 +2502,7 @@ export const CoordinadorDashboard = () => {
 
             {/* 3. Paso 1 (Selección Única de Rol) y Paso 2 (Estado Lógico) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-              
+
               {/* A. Selección Única de Rol (Paso 1) - Rediseñado sin enlace azul redundante */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -2253,15 +2525,13 @@ export const CoordinadorDashboard = () => {
                         key={r.key}
                         type="button"
                         onClick={() => handleSelectRole(r.key)}
-                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                          isSelected
+                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${isSelected
                             ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
                             : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                        }`}
+                          }`}
                       >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[0.65rem] font-bold ${
-                          isSelected ? 'bg-white text-blue-600' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
-                        }`}>
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[0.65rem] font-bold ${isSelected ? 'bg-white text-blue-600' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
+                          }`}>
                           {isSelected ? <Check size={10} /> : <span className="w-1 h-1 rounded-full bg-current inline-block" />}
                         </div>
                         <IconComponent size={14} className={`shrink-0 ${isSelected ? 'text-white' : r.color}`} />
@@ -2272,7 +2542,7 @@ export const CoordinadorDashboard = () => {
                 </div>
               </div>
 
-              {/* B. Estado Lógico del Acceso (Paso 2) */}
+              {/* B. Estado Lógico del Acceso (Paso 2) - Habilitados por Defecto */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 font-mono">
@@ -2282,9 +2552,9 @@ export const CoordinadorDashboard = () => {
 
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { key: 'TODOS', label: `Todos los Estados (${totalCount})`, icon: BadgeCheck, iconColor: 'text-blue-500' },
                     { key: 'ACTIVO', label: `Solo Habilitados (${activosCount})`, icon: CheckCircle2, iconColor: 'text-emerald-500' },
-                    { key: 'INHABILITADO', label: `Solo Inhabilitados (${inactivosCount})`, icon: UserX, iconColor: 'text-red-500' }
+                    { key: 'INHABILITADO', label: `Solo Inhabilitados (${inactivosCount})`, icon: UserX, iconColor: 'text-red-500' },
+                    { key: 'TODOS', label: `Todos los Estados (${totalCount})`, icon: BadgeCheck, iconColor: 'text-blue-500' }
                   ].map(s => {
                     const isSelected = estadoSeleccionado === s.key;
                     const StatusIcon = s.icon;
@@ -2293,11 +2563,10 @@ export const CoordinadorDashboard = () => {
                         key={s.key}
                         type="button"
                         onClick={() => setEstadoSeleccionado(s.key)}
-                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                          isSelected
+                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${isSelected
                             ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-xs ring-2 ring-zinc-500/20 font-bold'
                             : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                        }`}
+                          }`}
                       >
                         <StatusIcon size={14} className={`shrink-0 ${isSelected ? 'text-white dark:text-zinc-900' : s.iconColor}`} />
                         <span>{s.label}</span>
@@ -2309,64 +2578,109 @@ export const CoordinadorDashboard = () => {
 
             </div>
 
-            {/* 4. Paso 3: Habilidades Adaptativas */}
+            {/* 4. Paso 3: Habilidades Adaptativas (Desplegable Elegante) */}
             {rolSeleccionado !== 'TODOS' && topSkills.length > 0 && (
-              <div className="pt-3.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 font-mono">
+              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setExpandSkills(!expandSkills)}
+                    className="inline-flex items-center gap-2 text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer font-mono"
+                  >
                     <Sparkles size={14} className="text-amber-500 shrink-0" />
-                    Paso 3: Habilidades Específicas de {
-                      rolSeleccionado === 'DESARROLLADOR' ? 'Desarrollo WBS' : 
-                      rolSeleccionado === 'LIDER' ? 'Gestión Ágil & Liderazgo' : 
-                      'Administración Operativa'
-                    }:
-                  </span>
-                  {techsSeleccionadas.length > 0 && (
-                    <button 
-                      onClick={() => setTechsSeleccionadas([])}
-                      className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    <span>
+                      Paso 3: Habilidades Específicas de {
+                        rolSeleccionado === 'DESARROLLADOR' ? 'Desarrollo WBS' :
+                          rolSeleccionado === 'LIDER' ? 'Gestión Ágil & Liderazgo' :
+                            'Administración Operativa'
+                      } ({topSkills.length} Disponibles)
+                    </span>
+                    {techsSeleccionadas.length > 0 && (
+                      <span className="text-[0.6rem] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white font-sans shadow-2xs">
+                        {techsSeleccionadas.length} Activa{techsSeleccionadas.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <ChevronDown size={14} className={`transition-transform duration-200 text-blue-500 ${expandSkills ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <div className="flex items-center gap-3">
+                    {techsSeleccionadas.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setTechsSeleccionadas([])}
+                        className="text-[0.65rem] font-bold text-red-500 hover:underline cursor-pointer flex items-center gap-1"
+                      >
+                        <X size={11} /> Limpiar ({techsSeleccionadas.length})
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setExpandSkills(!expandSkills)}
+                      className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
                     >
-                      Limpiar habilidades ({techsSeleccionadas.length})
+                      {expandSkills ? 'Ocultar Opciones' : 'Desplegar Lista'}
                     </button>
-                  )}
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {topSkills.map(([skillName, count]) => {
-                    const isSelected = techsSeleccionadas.includes(skillName);
-                    return (
-                      <button
-                        key={skillName}
-                        type="button"
-                        onClick={() => handleToggleTechFilter(skillName)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all cursor-pointer border ${
-                          isSelected
-                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
-                            : 'bg-zinc-50 hover:bg-blue-50/80 dark:bg-zinc-800/60 dark:hover:bg-blue-950/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700/80'
-                        }`}
-                      >
-                        <div className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[0.6rem] font-bold ${
-                          isSelected ? 'bg-white/20 text-white' : 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300'
-                        }`}>
-                          {isSelected ? <Check size={10} /> : '+'}
-                        </div>
-                        <span>{skillName}</span>
-                        <span className={`text-[0.65rem] px-1.5 py-0.2 rounded-md font-bold ${
-                          isSelected ? 'bg-blue-700 text-white' : 'bg-zinc-200/80 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300'
-                        }`}>
-                          {count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* Vista resumida compacta de seleccionados si está colapsado */}
+                {!expandSkills && techsSeleccionadas.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {techsSeleccionadas.map(skill => (
+                      <span key={skill} className="px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[0.62rem] font-mono font-bold flex items-center gap-1">
+                        <span>✓ {skill}</span>
+                        <button type="button" onClick={() => handleToggleTechFilter(skill)} className="hover:text-red-500 cursor-pointer font-bold">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Vista Desplegable Expandida con animación suave */}
+                <AnimatePresence>
+                  {expandSkills && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-700/60 space-y-2 overflow-hidden"
+                    >
+                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+                        {topSkills.map(([skillName, count]) => {
+                          const isSelected = techsSeleccionadas.includes(skillName);
+                          return (
+                            <button
+                              key={skillName}
+                              type="button"
+                              onClick={() => handleToggleTechFilter(skillName)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all cursor-pointer border ${isSelected
+                                  ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
+                                  : 'bg-white hover:bg-blue-50/80 dark:bg-zinc-800 dark:hover:bg-blue-950/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                                }`}
+                            >
+                              <div className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[0.6rem] font-bold ${isSelected ? 'bg-white/20 text-white' : 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300'
+                                }`}>
+                                {isSelected ? <Check size={10} /> : '+'}
+                              </div>
+                              <span>{skillName}</span>
+                              <span className={`text-[0.65rem] px-1.5 py-0.2 rounded-md font-bold ${isSelected ? 'bg-blue-700 text-white' : 'bg-zinc-200/80 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300'
+                                }`}>
+                                {count}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
 
           </motion.div>
 
           {/* Tabla de Personal Reorganizada (Vista Ejecutiva Elegante) */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm"
           >
@@ -2419,8 +2733,8 @@ export const CoordinadorDashboard = () => {
                   )}
 
                   {!loading && paginatedTrabajadores.map(t => (
-                    <tr 
-                      key={t.idTrabajador} 
+                    <tr
+                      key={t.idTrabajador}
                       className="transition-colors duration-150 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group"
                     >
                       {/* Identificación (Badge Monospaciado) */}
@@ -2470,11 +2784,10 @@ export const CoordinadorDashboard = () => {
 
                       {/* Estado Lógico con Punto Animado */}
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border shadow-2xs ${
-                          t.estado 
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' 
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border shadow-2xs ${t.estado
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                             : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'
-                        }`}>
+                          }`}>
                           <span className={`w-2 h-2 rounded-full ${t.estado ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`} />
                           {t.estado ? 'Habilitado' : 'Inhabilitado'}
                         </span>
@@ -2499,7 +2812,7 @@ export const CoordinadorDashboard = () => {
                             (user.email && t.email && user.email.toLowerCase() === t.email.toLowerCase()) ||
                             (user.identificacion && t.identificacion && String(user.identificacion) === String(t.identificacion))
                           ) ? (
-                            <span 
+                            <span
                               title="Cuenta en sesión activa. No es posible auto-inhabilitarse por seguridad."
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold text-xs border border-zinc-200 dark:border-zinc-700 cursor-not-allowed opacity-80"
                             >
@@ -2511,11 +2824,10 @@ export const CoordinadorDashboard = () => {
                               type="button"
                               disabled={togglingId === t.idTrabajador}
                               onClick={() => handleInhabilitar(t.idTrabajador)}
-                              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs disabled:opacity-50 ${
-                                t.estado
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs disabled:opacity-50 ${t.estado
                                   ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-300 border-red-200 dark:border-red-800'
                                   : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                              }`}
+                                }`}
                             >
                               {togglingId === t.idTrabajador ? (
                                 <>
@@ -2543,7 +2855,7 @@ export const CoordinadorDashboard = () => {
             {/* Barra de Paginación Inteligente (Por Cantidad de Registros y Hojas) */}
             {!loading && totalFilteredCount > 0 && (
               <div className="bg-zinc-50/80 dark:bg-zinc-800/40 px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold">
-                
+
                 {/* 1. Selector de Cantidad de Registros por Página */}
                 <div className="flex items-center gap-2">
                   <span className="text-zinc-500 dark:text-zinc-400 font-medium">Mostrar por página:</span>
@@ -2565,7 +2877,7 @@ export const CoordinadorDashboard = () => {
 
                 {/* 2. Navegación por Hojas (Páginas Numeradas + Controles) */}
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  
+
                   {/* Botón Primera Hoja */}
                   <button
                     type="button"
@@ -2596,11 +2908,10 @@ export const CoordinadorDashboard = () => {
                           key={pageNumber}
                           type="button"
                           onClick={() => setCurrentPage(pageNumber)}
-                          className={`w-7 h-7 rounded-lg font-bold text-xs transition-all cursor-pointer ${
-                            isCurrent
+                          className={`w-7 h-7 rounded-lg font-bold text-xs transition-all cursor-pointer ${isCurrent
                               ? 'bg-blue-600 text-white border border-blue-700 shadow-2xs font-extrabold'
                               : 'bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'
-                          }`}
+                            }`}
                         >
                           {pageNumber}
                         </button>
@@ -2641,7 +2952,7 @@ export const CoordinadorDashboard = () => {
       {/* 2. SECCIÓN: GESTIÓN DE PROYECTOS & VISTA GLOBAL DEL PORTAFOLIO */}
       {/* 2. SECCIÓN: GESTIÓN DE PROYECTOS & VISTA GLOBAL DEL PORTAFOLIO */}
       {activeTab === 'proyectos' && (
-        <motion.div 
+        <motion.div
           key="proyectos"
           variants={containerVariants}
           initial="hidden"
@@ -2666,33 +2977,20 @@ export const CoordinadorDashboard = () => {
                     onClick={() => {
                       setSelectedProyectoModal(null);
                       setHighlightedActividadId(null);
+                      setHighlightedProyectoId(null);
                     }}
                     className="outline-button text-xs py-2.5 px-4 font-extrabold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 cursor-pointer shadow-2xs hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl"
                   >
                     <ArrowLeft size={16} />
                     <span>Volver al Catálogo de Proyectos</span>
                   </button>
-
-                  {navHistory && navHistory.worker && (
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      type="button"
-                      onClick={handleRegresarAInspeccionTrabajador}
-                      className="gradient-button text-xs py-2.5 px-4 font-extrabold inline-flex items-center gap-2 text-white cursor-pointer shadow-md rounded-2xl"
-                    >
-                      <RotateCcw size={15} />
-                      <span>Volver a Ficha de {navHistory.worker.nombre} {navHistory.worker.apellido}</span>
-                    </motion.button>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className={`px-3.5 py-1.5 rounded-2xl text-xs font-black inline-flex items-center gap-2 border ${
-                    modoEdicionCoordinador
+                  <span className={`px-3.5 py-1.5 rounded-2xl text-xs font-black inline-flex items-center gap-2 border ${modoEdicionCoordinador
                       ? 'bg-amber-50 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 animate-pulse'
                       : 'bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800'
-                  }`}>
+                    }`}>
                     {modoEdicionCoordinador ? (
                       <><Edit3 size={14} className="text-amber-600" /> Modo Edición Activo (Gestión Directiva Habilitada)</>
                     ) : (
@@ -2714,11 +3012,10 @@ export const CoordinadorDashboard = () => {
                         toast.info('Modo Visualización Activado (Supervisión).');
                       }
                     }}
-                    className={`text-xs py-2.5 px-5 rounded-2xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-2 shadow-sm ${
-                      modoEdicionCoordinador
+                    className={`text-xs py-2.5 px-5 rounded-2xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-2 shadow-sm ${modoEdicionCoordinador
                         ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20'
                         : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20'
-                    }`}
+                      }`}
                   >
                     {modoEdicionCoordinador ? (
                       <><Eye size={15} /> Cambiar a Modo Visualización</>
@@ -2741,13 +3038,12 @@ export const CoordinadorDashboard = () => {
                         <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
                           {selectedProyectoModal.nombre}
                         </h3>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-black uppercase border ${
-                          selectedProyectoModal.estado === 'FINALIZADO' || selectedProyectoModal.estado === 'COMPLETADO'
+                        <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-black uppercase border ${selectedProyectoModal.estado === 'FINALIZADO' || selectedProyectoModal.estado === 'COMPLETADO'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300' :
-                          selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO'
-                            ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 animate-pulse'
-                            : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
-                        }`}>
+                            selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO'
+                              ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 animate-pulse'
+                              : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                          }`}>
                           {selectedProyectoModal.estado === 'EN_PAUSA' ? '⏸️ EN PAUSA' : (selectedProyectoModal.estado || 'ACTIVO')}
                         </span>
                       </div>
@@ -2778,7 +3074,7 @@ export const CoordinadorDashboard = () => {
 
                     <button
                       type="button"
-                      onClick={handleGenerarReportePdfCoord}
+                      onClick={() => setShowGenerarReportePdfModalCoord(true)}
                       className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 bg-blue-50/40 hover:bg-blue-100 rounded-2xl shadow-xs cursor-pointer"
                       title="Generar y descargar informe técnico en PDF"
                     >
@@ -2802,11 +3098,10 @@ export const CoordinadorDashboard = () => {
                           type="button"
                           onClick={handlePausarReanudarProyectoCoord}
                           disabled={submittingPausaFinalizarCoord}
-                          className={`text-xs py-2 px-3.5 font-extrabold inline-flex items-center gap-2 rounded-2xl border transition-all cursor-pointer shadow-xs ${
-                            selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO'
+                          className={`text-xs py-2 px-3.5 font-extrabold inline-flex items-center gap-2 rounded-2xl border transition-all cursor-pointer shadow-xs ${selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO'
                               ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-200'
                               : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-200'
-                          }`}
+                            }`}
                         >
                           {selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO' ? (
                             <><Play size={15} className="text-emerald-600" /><span>Reanudar Proyecto</span></>
@@ -2817,7 +3112,7 @@ export const CoordinadorDashboard = () => {
 
                         <button
                           type="button"
-                          onClick={handleFinalizarProyectoCoord}
+                          onClick={handleAbrirConfirmFinalizarCoord}
                           disabled={submittingPausaFinalizarCoord || selectedProyectoModal.estado === 'FINALIZADO'}
                           className="text-xs py-2 px-3.5 font-extrabold inline-flex items-center gap-2 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 bg-red-50 hover:bg-red-100 rounded-2xl shadow-xs cursor-pointer disabled:opacity-40"
                         >
@@ -2950,39 +3245,91 @@ export const CoordinadorDashboard = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {proyectoEtapasModal.map((etapa, idx) => (
-                      <div key={etapa.idEtapa || idx} className="p-5 rounded-3xl bg-zinc-50/80 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80 space-y-3 shadow-2xs">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-[0.68rem] font-bold px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
-                              #ETAPA_{etapa.idEtapa || (idx + 1)}
-                            </span>
-                            <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
-                              Fase {idx + 1}: {etapa.nombreEtapa}
-                            </h4>
+                    {proyectoEtapasModal.map((etapa, idx) => {
+                      const acts = etapa.actividades || [];
+                      const totalTareas = acts.length;
+                      const tareasCompletadas = acts.filter(a => ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO'].includes((a.estado || '').toUpperCase())).length;
+                      const todasTareasCompletadas = totalTareas > 0 && tareasCompletadas === totalTareas;
+                      const estaFinalizada = (etapa.estado || '').toUpperCase() === 'FINALIZADA' || (etapa.estado || '').toUpperCase() === 'COMPLETADO';
+
+                      return (
+                        <div key={etapa.idEtapa || idx} className="p-5 rounded-3xl bg-zinc-50/80 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80 space-y-3 shadow-2xs">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-[0.68rem] font-bold px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                                #ETAPA_{etapa.idEtapa || (idx + 1)}
+                              </span>
+                              <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                                Fase {idx + 1}: {etapa.nombreEtapa}
+                              </h4>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-extrabold uppercase border ${estaFinalizada
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                  : todasTareasCompletadas
+                                  ? 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-300 animate-pulse'
+                                  : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                                }`}>
+                                {estaFinalizada ? 'FINALIZADA' : todasTareasCompletadas ? 'REVISIÓN REQUERIDA' : (etapa.estado || 'PENDIENTE')}
+                              </span>
+
+                              {modoEdicionCoordinador && !estaFinalizada && todasTareasCompletadas && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleFinalizarEtapaFormallyCoord(etapa)}
+                                  title="Marcar esta etapa como FINALIZADA oficialmente"
+                                  className="px-3 py-1.5 rounded-xl font-extrabold text-xs flex items-center gap-1.5 border transition-all cursor-pointer shadow-md bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 animate-bounce shrink-0"
+                                >
+                                  <CheckCircle2 size={14} />
+                                  <span>Finalizar Etapa</span>
+                                </button>
+                              )}
+
+                              {modoEdicionCoordinador && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleAbrirEditarEtapaCoord(etapa)}
+                                  className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
+                                >
+                                  <Edit3 size={13} className="text-blue-600" />
+                                  <span>Editar</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-extrabold uppercase border ${
-                              etapa.estado === 'FINALIZADA' || etapa.estado === 'COMPLETADO'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
-                                : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
-                            }`}>
-                              {etapa.estado || 'EN_PROGRESO'}
-                            </span>
+                          {/* Banner / Alerta de Fase Completada por Desarrolladores */}
+                          {modoEdicionCoordinador && todasTareasCompletadas && !estaFinalizada && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 via-emerald-50 to-amber-50 dark:from-amber-950/40 dark:via-emerald-950/40 dark:to-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-sm"
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm animate-pulse">
+                                  <AlertTriangle size={18} />
+                                </div>
+                                <div>
+                                  <strong className="block text-amber-950 dark:text-amber-100 font-extrabold text-[0.78rem]">
+                                    🎉 ¡Fase completada por los desarrolladores!
+                                  </strong>
+                                  <span className="text-[0.7rem] opacity-90 font-medium">
+                                    Todas las tareas internas ({tareasCompletadas}/{totalTareas}) han sido finalizadas. Ya puede revisar y hacer clic en <strong>Finalizar Etapa</strong> para cerrar formalmente esta etapa.
+                                  </span>
+                                </div>
+                              </div>
 
-                            {modoEdicionCoordinador && (
                               <button
                                 type="button"
-                                onClick={() => handleAbrirEditarEtapaCoord(etapa)}
-                                className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
+                                onClick={() => handleFinalizarEtapaFormallyCoord(etapa)}
+                                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-md transition-all hover:scale-105 active:scale-95 shrink-0"
                               >
-                                <Edit3 size={13} className="text-blue-600" />
-                                <span>Editar Etapa</span>
+                                <CheckCircle2 size={15} />
+                                <span>Finalizar Etapa Ahora</span>
                               </button>
-                            )}
-                          </div>
-                        </div>
+                            </motion.div>
+                          )}
 
                         {/* Actividades dentro de la Etapa */}
                         <div className="space-y-2 pt-2">
@@ -2994,21 +3341,26 @@ export const CoordinadorDashboard = () => {
                               );
 
                               return (
-                                <div 
-                                  key={act.idActividad || aIdx} 
-                                  className={`p-3.5 rounded-2xl transition-all ${
-                                    isHighlighted
-                                      ? 'bg-amber-100/90 dark:bg-amber-950/80 border-2 border-amber-500 dark:border-amber-400 ring-4 ring-amber-400/30 shadow-lg scale-[1.01]'
+                                <div
+                                  key={act.idActividad || aIdx}
+                                  className={`relative p-3.5 rounded-2xl transition-all duration-200 ease-out ${isHighlighted
+                                      ? 'bg-blue-50/80 dark:bg-blue-900/20 border-2 border-blue-500 dark:border-blue-400 ring-4 ring-blue-500/20 shadow-xl scale-[1.01] z-10'
                                       : 'bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800'
-                                  } flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-2xs`}
+                                    } flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs`}
                                 >
+                                  {isHighlighted && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                                      transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                                      className="absolute -top-3.5 -left-1.5 sm:left-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-2xl font-bold text-[0.62rem] tracking-wide flex items-center gap-1.5 shadow-lg shadow-blue-500/40 border-2 border-white dark:border-zinc-900 z-20"
+                                    >
+                                      <Zap size={11} className="fill-white" />
+                                      TAREA SELECCIONADA
+                                    </motion.div>
+                                  )}
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    {isHighlighted && (
-                                      <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white font-black text-[0.62rem] animate-pulse shrink-0">
-                                        🎯 TAREA SELECCIONADA
-                                      </span>
-                                    )}
-                                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                                    <span className="font-semibold text-zinc-800 dark:text-zinc-200 mt-1 sm:mt-0">
                                       {act.nombreActividad || act.descripcion}
                                     </span>
                                   </div>
@@ -3024,16 +3376,23 @@ export const CoordinadorDashboard = () => {
                                       {act.estado || 'FINALIZADA'}
                                     </span>
 
-                                    {modoEdicionCoordinador && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleAbrirReasignarActividadCoord(act, etapa)}
-                                        className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
-                                      >
-                                        <RotateCw size={13} className="text-purple-600" />
-                                        <span>Reasignar</span>
-                                      </button>
-                                    )}
+                                    {modoEdicionCoordinador && (() => {
+                                      const st = (act.estado || '').toUpperCase().replace(/[\s_]+/g, '_');
+                                      const isFinalizadaOEnProceso = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO', 'EN_PROGRESO', 'EN_PROCESO', 'EN_CURSO'].includes(st);
+
+                                      if (isFinalizadaOEnProceso) return null;
+
+                                      return (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleAbrirReasignarActividadCoord(act, etapa)}
+                                          className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
+                                        >
+                                          <RotateCw size={13} className="text-purple-600" />
+                                          <span>Reasignar</span>
+                                        </button>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
                               );
@@ -3043,7 +3402,8 @@ export const CoordinadorDashboard = () => {
                           )}
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                   </div>
                 )}
               </div>
@@ -3051,434 +3411,428 @@ export const CoordinadorDashboard = () => {
           ) : (
             <>
               {/* Header de Gestión Global de Proyectos */}
-          <motion.div 
-            variants={itemVariants}
-            className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
-          >
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                  <Briefcase size={22} />
-                </div>
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
+              >
                 <div>
-                  <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
-                    Catálogo Corporativo & Supervisión de Proyectos
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                      Vista Global
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                      <Briefcase size={22} />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                        Catálogo Corporativo & Supervisión de Proyectos
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          Vista Global
+                        </span>
+                      </h2>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                        Consola ejecutiva del Coordinador: Control de portafolio, reasignación de Líderes y consulta WBS.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {navHistory && navHistory.fromTab === 'personal' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetWorker = navHistory.worker;
+                        setNavHistory(null);
+                        setHighlightedProyectoId(null);
+                        setActiveTab('personal');
+                        if (targetWorker) {
+                          handleAbrirDetalleTrabajador(targetWorker);
+                          setShowTrabajosSubpanel(true);
+                        }
+                      }}
+                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 cursor-pointer shadow-xs"
+                      title="Regresar a la ficha de personal y menús anteriores"
+                    >
+                      <ChevronLeft size={14} />
+                      <span>Volver a Ficha de {navHistory.worker?.nombre}</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={cargarDatos}
+                    disabled={loading}
+                    className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-2xs"
+                    title="Sincronizar el catálogo corporativo desde PostgreSQL"
+                  >
+                    <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                    <span>Refrescar Catálogo</span>
+                  </button>
+                </div>
+              </motion.div>
+
+
+
+              {/* Tarjetas de Métricas Ejecutivas del Portafolio (Dinámicas por Filtro de Líder) */}
+              <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Proyectos en Portafolio</span>
+                    <Briefcase size={16} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-2">
+                    {proyectosBaseCoordinador.length} Proyectos
+                  </div>
+                  <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
+                    {filtroProyectoLider !== 'TODOS' ? 'Filtrado por Líder seleccionado' : 'Sincronizados en PostgreSQL'}
+                  </span>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Inversión Presupuestada</span>
+                    <DollarSign size={16} className="text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2 font-mono">
+                    ${proyectosBaseCoordinador.reduce((acc, p) => acc + (p.presupuesto || 0), 0).toLocaleString('es-CO')}
+                  </div>
+                  <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
+                    {filtroProyectoLider !== 'TODOS' ? 'Presupuesto del Líder' : 'Presupuesto acumulado activo'}
+                  </span>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Proyectos en Ejecución</span>
+                    <Clock size={16} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-2">
+                    {countsEstadoDinamicos.enProgreso} Activos
+                  </div>
+                  <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
+                    En desarrollo técnico activo
+                  </span>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Líderes Responsables</span>
+                    <Users size={16} className="text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-2">
+                    {filtroProyectoLider !== 'TODOS' ? '1 Líder' : `${lideresActivos.length} Líderes`}
+                  </div>
+                  <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
+                    {filtroProyectoLider !== 'TODOS' ? 'Líder filtrado en pantalla' : 'Dirección asignada'}
+                  </span>
+                </div>
+              </motion.div>
+
+              {/* Panel Integrado de Búsqueda y Filtros Avanzados */}
+              <motion.div variants={itemVariants} className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+                <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
+                  {/* Caja de Búsqueda */}
+                  <div className="relative flex-1">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                    <input
+                      type="text"
+                      value={searchProyectoQuery}
+                      onChange={(e) => {
+                        setSearchProyectoQuery(e.target.value);
+                        setCurrentProyectoPage(1);
+                      }}
+                      placeholder="Buscar por código (PRJ-001), nombre de proyecto, cliente o líder..."
+                      className="w-full pl-10 pr-4 py-2.5 text-xs rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium focus:ring-2 focus:ring-blue-500"
+                    />
+                    {searchProyectoQuery && (
+                      <button onClick={() => setSearchProyectoQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filtro por Líder de Proyecto Embellecido */}
+                  <div className="flex items-center gap-2.5 bg-zinc-50 dark:bg-zinc-800/80 p-2 px-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+                    <Crown size={16} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                    <span className="text-[0.68rem] font-mono font-extrabold uppercase text-zinc-500 dark:text-zinc-400 shrink-0">
+                      Filtrar por Líder:
                     </span>
-                  </h2>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                    Consola ejecutiva del Coordinador: Control de portafolio, reasignación de Líderes y consulta WBS.
+                    <select
+                      value={filtroProyectoLider}
+                      onChange={(e) => {
+                        setFiltroProyectoLider(e.target.value);
+                        setCurrentProyectoPage(1);
+                      }}
+                      className="bg-transparent text-xs font-extrabold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer pr-2"
+                    >
+                      <option value="TODOS">Todos los Líderes ({lideresActivos.length})</option>
+                      {lideresActivos.map(lider => (
+                        <option key={lider.idTrabajador} value={lider.idTrabajador}>
+                          {lider.nombre} {lider.apellido} &bull; [{lider.email}]
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Pestañas de Filtro por Estado Operativo (Dinámicas según el Líder seleccionado) */}
+                <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => { setFiltroProyectoEstado('TODOS'); setCurrentProyectoPage(1); }}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer ${filtroProyectoEstado === 'TODOS'
+                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
+                      }`}
+                  >
+                    Todos los Estados ({countsEstadoDinamicos.todos})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setFiltroProyectoEstado('EN_PROGRESO'); setCurrentProyectoPage(1); }}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${filtroProyectoEstado === 'EN_PROGRESO'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60'
+                      }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                    En Ejecución ({countsEstadoDinamicos.enProgreso})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setFiltroProyectoEstado('COMPLETADO'); setCurrentProyectoPage(1); }}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${filtroProyectoEstado === 'COMPLETADO'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60'
+                      }`}
+                  >
+                    <CheckCircle2 size={12} />
+                    Completados ({countsEstadoDinamicos.completados})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setFiltroProyectoEstado('PAUSADO'); setCurrentProyectoPage(1); }}
+                    className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${filtroProyectoEstado === 'PAUSADO'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
+                      }`}
+                  >
+                    <Clock size={12} />
+                    En Pausa ({countsEstadoDinamicos.pausados})
+                  </button>
+                </div>
+              </motion.div>
+
+              {/* Grilla Corporativa de Proyectos Rediseñada (Nivel Superior) */}
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+                  <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+                  <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+                </div>
+              ) : proyectosPaginados.length === 0 ? (
+                <div className="bg-white dark:bg-zinc-900 p-12 text-center rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800 space-y-3">
+                  <FolderGit2 size={40} className="mx-auto text-zinc-400" />
+                  <h3 className="text-base font-bold text-zinc-700 dark:text-zinc-300">
+                    No se encontraron proyectos con los criterios seleccionados.
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Intente ajustar el término de búsqueda o resetear los filtros por Líder / Estado.
                   </p>
                 </div>
-              </div>
-            </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {proyectosPaginados.map(prj => {
+                    const presupuestoFmt = Number(prj.presupuesto || 0).toLocaleString('es-CO');
+                    const isCompletado = prj.estado === 'COMPLETADO' || prj.estado === 'FINALIZADO';
+                    const isPausado = prj.estado === 'PAUSADO';
+                    const isHighlighted = Number(prj.idProyecto) === Number(highlightedProyectoId);
 
-            <div className="flex items-center gap-3">
-              {navHistory && navHistory.fromTab === 'personal' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const targetWorker = navHistory.worker;
-                    setNavHistory(null);
-                    setHighlightedProyectoId(null);
-                    setActiveTab('personal');
-                    if (targetWorker) {
-                      handleAbrirDetalleTrabajador(targetWorker);
-                      setShowTrabajosSubpanel(true);
-                    }
-                  }}
-                  className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 cursor-pointer shadow-xs"
-                  title="Regresar a la ficha de personal y menús anteriores"
-                >
-                  <ChevronLeft size={14} />
-                  <span>Volver a Ficha de {navHistory.worker?.nombre}</span>
-                </button>
+                    const isPastLiderPending = filtroProyectoLider !== 'TODOS'
+                      && String(prj.idLiderAnterior) === String(filtroProyectoLider)
+                      && prj.reasignado
+                      && !prj.leidoPorLiderAnterior
+                      && getHoursSinceReassignment(prj.fechaReasignacion) <= 24;
+
+                    const isReasig = prj.reasignado && !prj.leidoPorLiderAnterior && getHoursSinceReassignment(prj.fechaReasignacion) <= 24;
+                    const isNuevo = !prj.reasignado && (prj.fechaInicio || prj.createdAt) && getHoursSinceReassignment(prj.fechaInicio || prj.createdAt) <= 72;
+
+                    return (
+                      <motion.div
+                        key={prj.idProyecto}
+                        whileHover={{ y: -4, scale: 1.01 }}
+                        onClick={() => {
+                          if (isHighlighted) {
+                            setHighlightedProyectoId(null);
+                          }
+                          handleAbrirDetalleProyecto(prj);
+                        }}
+                        className={`p-6 rounded-3xl border shadow-sm flex flex-col justify-between gap-5 transition-all duration-300 cursor-pointer ${isHighlighted
+                            ? 'ring-4 ring-blue-500 animate-pulse border-blue-600 bg-blue-50/50 dark:bg-blue-950/50 shadow-2xl scale-[1.02]'
+                            : isReasig || isPastLiderPending
+                              ? 'border-amber-400 dark:border-amber-700/80 bg-gradient-to-b from-amber-50/40 via-amber-50/10 to-white dark:from-amber-950/20 dark:to-zinc-900 shadow-md shadow-amber-500/5 hover:border-amber-500'
+                              : isNuevo
+                                ? 'border-emerald-400 dark:border-emerald-700/80 bg-gradient-to-b from-emerald-50/40 via-emerald-50/10 to-white dark:from-emerald-950/20 dark:to-zinc-900 shadow-md shadow-emerald-500/5 hover:border-emerald-500'
+                                : 'bg-white dark:bg-zinc-900 border-zinc-200/90 dark:border-zinc-800 hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md'
+                          }`}
+                      >
+                        <div className="space-y-4">
+                          {isHighlighted && (
+                            <div className="bg-blue-600 text-white text-[0.68rem] font-black px-3 py-1.5 rounded-2xl flex items-center justify-between gap-1 -mx-2 -mt-2 mb-2 shadow-md">
+                              <span className="flex items-center gap-1.5">
+                                <Sparkles size={13} className="animate-spin text-amber-300" />
+                                <span>PROYECTO SELECCIONADO (Haga clic para abrir)</span>
+                              </span>
+                              <span className="text-[0.6rem] underline">Ver Detalle</span>
+                            </div>
+                          )}
+
+                          {/* Cabecera de la Tarjeta */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <span className="font-mono font-extrabold text-[0.68rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+                              PRJ-00{prj.idProyecto}
+                            </span>
+
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {isReasig || isPastLiderPending ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 animate-pulse flex items-center gap-1 shadow-2xs">
+                                  <AlertTriangle size={11} className="text-amber-600 shrink-0" />
+                                  PROCESO REASIGNADO (1D)
+                                </span>
+                              ) : isNuevo ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-700 animate-pulse flex items-center gap-1 shadow-2xs">
+                                  <Sparkles size={11} className="text-emerald-600 animate-bounce shrink-0" />
+                                  NUEVA ASIGNACIÓN (3D)
+                                </span>
+                              ) : null}
+
+                              <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase border ${isCompletado ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' :
+                                  isPausado ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 animate-pulse' :
+                                    'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
+                                }`}>
+                                {prj.estado || 'ACTIVO'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Título y Cliente */}
+                          <div className="space-y-1.5">
+                            <h4 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              {prj.nombre}
+                            </h4>
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                              <Building2 size={13} className="shrink-0 text-blue-500" />
+                              <span className="truncate">{prj.cliente || 'Cliente Corporativo'}</span>
+                            </div>
+                          </div>
+
+                          {/* Líder Asignado */}
+                          <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                                {prj.lider ? getInitials(prj.lider.nombre, prj.lider.apellido) : 'SD'}
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-[0.6rem] font-extrabold text-zinc-400 block uppercase font-mono tracking-wider">Líder Asignado:</span>
+                                <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate block">
+                                  {prj.lider ? `${prj.lider.nombre} ${prj.lider.apellido}` : 'Sin Líder Asignado'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {isReasig || isPastLiderPending ? (
+                              <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 text-[0.62rem] font-extrabold shrink-0 shadow-2xs">
+                                Reasignado
+                              </span>
+                            ) : isNuevo ? (
+                              <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 text-[0.62rem] font-extrabold shrink-0 shadow-2xs">
+                                Nuevo
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {/* Fechas e Inversión */}
+                          <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                            <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-0.5">
+                              <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono">Presupuesto:</span>
+                              <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">${presupuestoFmt}</span>
+                            </div>
+                            <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-0.5">
+                              <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono">Fin Estimado:</span>
+                              <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300 text-xs">{prj.fechaFinEstimada || '2027-12-31'}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Botones de Acción Claros & Explicitos (Reasignar Líder Rediseñado) */}
+                        <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleAbrirDetalleProyecto(prj)}
+                            className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-xs flex-1 justify-center rounded-xl cursor-pointer"
+                          >
+                            <Eye size={14} />
+                            <span>Revisar Proyecto</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleAbrirReasignarLiderPrj(prj)}
+                            className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50/50 hover:bg-purple-100 dark:bg-purple-950/40 cursor-pointer rounded-xl shrink-0"
+                            title="Reasignar la dirección de este proyecto a otro Líder con registro de auditoría"
+                          >
+                            <RotateCcw size={14} />
+                            <span>Reasignar Líder</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               )}
 
-              <button
-                type="button"
-                onClick={cargarDatos}
-                disabled={loading}
-                className="outline-button text-xs py-2 px-4 font-bold inline-flex items-center gap-2 cursor-pointer shadow-2xs"
-                title="Sincronizar el catálogo corporativo desde PostgreSQL"
-              >
-                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                <span>Refrescar Catálogo</span>
-              </button>
-            </div>
-          </motion.div>
-
-
-
-          {/* Tarjetas de Métricas Ejecutivas del Portafolio (Dinámicas por Filtro de Líder) */}
-          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Proyectos en Portafolio</span>
-                <Briefcase size={16} className="text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-2">
-                {proyectosBaseCoordinador.length} Proyectos
-              </div>
-              <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
-                {filtroProyectoLider !== 'TODOS' ? 'Filtrado por Líder seleccionado' : 'Sincronizados en PostgreSQL'}
-              </span>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Inversión Presupuestada</span>
-                <DollarSign size={16} className="text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2 font-mono">
-                ${proyectosBaseCoordinador.reduce((acc, p) => acc + (p.presupuesto || 0), 0).toLocaleString('es-CO')}
-              </div>
-              <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
-                {filtroProyectoLider !== 'TODOS' ? 'Presupuesto del Líder' : 'Presupuesto acumulado activo'}
-              </span>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Proyectos en Ejecución</span>
-                <Clock size={16} className="text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-2">
-                {countsEstadoDinamicos.enProgreso} Activos
-              </div>
-              <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
-                En desarrollo técnico activo
-              </span>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-[0.65rem] font-bold uppercase text-zinc-400">Líderes Responsables</span>
-                <Users size={16} className="text-purple-600 dark:text-purple-400" />
-              </div>
-              <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-2">
-                {filtroProyectoLider !== 'TODOS' ? '1 Líder' : `${lideresActivos.length} Líderes`}
-              </div>
-              <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-medium">
-                {filtroProyectoLider !== 'TODOS' ? 'Líder filtrado en pantalla' : 'Dirección asignada'}
-              </span>
-            </div>
-          </motion.div>
-
-          {/* Panel Integrado de Búsqueda y Filtros Avanzados */}
-          <motion.div variants={itemVariants} className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-            <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
-              {/* Caja de Búsqueda */}
-              <div className="relative flex-1">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-                <input
-                  type="text"
-                  value={searchProyectoQuery}
-                  onChange={(e) => {
-                    setSearchProyectoQuery(e.target.value);
-                    setCurrentProyectoPage(1);
-                  }}
-                  placeholder="Buscar por código (PRJ-001), nombre de proyecto, cliente o líder..."
-                  className="w-full pl-10 pr-4 py-2.5 text-xs rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium focus:ring-2 focus:ring-blue-500"
-                />
-                {searchProyectoQuery && (
-                  <button onClick={() => setSearchProyectoQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-
-              {/* Filtro por Líder de Proyecto Embellecido */}
-              <div className="flex items-center gap-2.5 bg-zinc-50 dark:bg-zinc-800/80 p-2 px-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-                <Crown size={16} className="text-purple-600 dark:text-purple-400 shrink-0" />
-                <span className="text-[0.68rem] font-mono font-extrabold uppercase text-zinc-500 dark:text-zinc-400 shrink-0">
-                  Filtrar por Líder:
-                </span>
-                <select
-                  value={filtroProyectoLider}
-                  onChange={(e) => {
-                    setFiltroProyectoLider(e.target.value);
-                    setCurrentProyectoPage(1);
-                  }}
-                  className="bg-transparent text-xs font-extrabold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer pr-2"
-                >
-                  <option value="TODOS">Todos los Líderes ({lideresActivos.length})</option>
-                  {lideresActivos.map(lider => (
-                    <option key={lider.idTrabajador} value={lider.idTrabajador}>
-                      {lider.nombre} {lider.apellido} &bull; [{lider.email}]
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Pestañas de Filtro por Estado Operativo (Dinámicas según el Líder seleccionado) */}
-            <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-zinc-100 dark:border-zinc-800">
-              <button
-                type="button"
-                onClick={() => { setFiltroProyectoEstado('TODOS'); setCurrentProyectoPage(1); }}
-                className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer ${
-                  filtroProyectoEstado === 'TODOS'
-                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
-                }`}
-              >
-                Todos los Estados ({countsEstadoDinamicos.todos})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { setFiltroProyectoEstado('EN_PROGRESO'); setCurrentProyectoPage(1); }}
-                className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  filtroProyectoEstado === 'EN_PROGRESO'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60'
-                }`}
-              >
-                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                En Ejecución ({countsEstadoDinamicos.enProgreso})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { setFiltroProyectoEstado('COMPLETADO'); setCurrentProyectoPage(1); }}
-                className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  filtroProyectoEstado === 'COMPLETADO'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60'
-                }`}
-              >
-                <CheckCircle2 size={12} />
-                Completados ({countsEstadoDinamicos.completados})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { setFiltroProyectoEstado('PAUSADO'); setCurrentProyectoPage(1); }}
-                className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  filtroProyectoEstado === 'PAUSADO'
-                    ? 'bg-amber-600 text-white shadow-sm'
-                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
-                }`}
-              >
-                <Clock size={12} />
-                En Pausa ({countsEstadoDinamicos.pausados})
-              </button>
-            </div>
-          </motion.div>
-
-          {/* Grilla Corporativa de Proyectos Rediseñada (Nivel Superior) */}
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
-              <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
-              <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
-            </div>
-          ) : proyectosPaginados.length === 0 ? (
-            <div className="bg-white dark:bg-zinc-900 p-12 text-center rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800 space-y-3">
-              <FolderGit2 size={40} className="mx-auto text-zinc-400" />
-              <h3 className="text-base font-bold text-zinc-700 dark:text-zinc-300">
-                No se encontraron proyectos con los criterios seleccionados.
-              </h3>
-              <p className="text-xs text-zinc-500">
-                Intente ajustar el término de búsqueda o resetear los filtros por Líder / Estado.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {proyectosPaginados.map(prj => {
-                const presupuestoFmt = Number(prj.presupuesto || 0).toLocaleString('es-CO');
-                const isCompletado = prj.estado === 'COMPLETADO' || prj.estado === 'FINALIZADO';
-                const isPausado = prj.estado === 'PAUSADO';
-                const isHighlighted = Number(prj.idProyecto) === Number(highlightedProyectoId);
-
-                const isPastLiderPending = filtroProyectoLider !== 'TODOS'
-                  && String(prj.idLiderAnterior) === String(filtroProyectoLider)
-                  && prj.reasignado
-                  && !prj.leidoPorLiderAnterior
-                  && getHoursSinceReassignment(prj.fechaReasignacion) <= 24;
-
-                const isReasig = prj.reasignado && getHoursSinceReassignment(prj.fechaReasignacion) <= 72;
-                const isNuevo = !prj.reasignado && (prj.fechaInicio || prj.createdAt) && getHoursSinceReassignment(prj.fechaInicio || prj.createdAt) <= 72;
-
-                return (
-                  <motion.div
-                    key={prj.idProyecto}
-                    whileHover={{ y: -4, scale: 1.01 }}
-                    onClick={() => {
-                      if (isHighlighted) {
-                        setHighlightedProyectoId(null);
-                      }
-                      handleAbrirDetalleProyecto(prj);
-                    }}
-                    className={`p-6 rounded-3xl border shadow-sm flex flex-col justify-between gap-5 transition-all duration-300 cursor-pointer ${
-                      isHighlighted
-                        ? 'ring-4 ring-blue-500 animate-pulse border-blue-600 bg-blue-50/50 dark:bg-blue-950/50 shadow-2xl scale-[1.02]'
-                        : isReasig || isPastLiderPending
-                        ? 'border-amber-400 dark:border-amber-700/80 bg-gradient-to-b from-amber-50/40 via-amber-50/10 to-white dark:from-amber-950/20 dark:to-zinc-900 shadow-md shadow-amber-500/5 hover:border-amber-500'
-                        : isNuevo
-                        ? 'border-emerald-400 dark:border-emerald-700/80 bg-gradient-to-b from-emerald-50/40 via-emerald-50/10 to-white dark:from-emerald-950/20 dark:to-zinc-900 shadow-md shadow-emerald-500/5 hover:border-emerald-500'
-                        : 'bg-white dark:bg-zinc-900 border-zinc-200/90 dark:border-zinc-800 hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="space-y-4">
-                      {isHighlighted && (
-                        <div className="bg-blue-600 text-white text-[0.68rem] font-black px-3 py-1.5 rounded-2xl flex items-center justify-between gap-1 -mx-2 -mt-2 mb-2 shadow-md">
-                          <span className="flex items-center gap-1.5">
-                            <Sparkles size={13} className="animate-spin text-amber-300" />
-                            <span>PROYECTO SELECCIONADO (Haga clic para abrir)</span>
-                          </span>
-                          <span className="text-[0.6rem] underline">Ver Detalle</span>
-                        </div>
-                      )}
-
-                      {/* Cabecera de la Tarjeta */}
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="font-mono font-extrabold text-[0.68rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
-                          PRJ-00{prj.idProyecto}
-                        </span>
-
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {isReasig || isPastLiderPending ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 animate-pulse flex items-center gap-1 shadow-2xs">
-                              <AlertTriangle size={11} className="text-amber-600 shrink-0" />
-                              PROCESO REASIGNADO (1D)
-                            </span>
-                          ) : isNuevo ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-700 animate-pulse flex items-center gap-1 shadow-2xs">
-                              <Sparkles size={11} className="text-emerald-600 animate-bounce shrink-0" />
-                              NUEVA ASIGNACIÓN (3D)
-                            </span>
-                          ) : null}
-
-                          <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase border ${
-                            isCompletado ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' :
-                            isPausado ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 animate-pulse' :
-                            'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
-                          }`}>
-                            {prj.estado || 'ACTIVO'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Título y Cliente */}
-                      <div className="space-y-1.5">
-                        <h4 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                          {prj.nombre}
-                        </h4>
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                          <Building2 size={13} className="shrink-0 text-blue-500" />
-                          <span className="truncate">{prj.cliente || 'Cliente Corporativo'}</span>
-                        </div>
-                      </div>
-
-                      {/* Líder Asignado */}
-                      <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
-                            {prj.lider ? getInitials(prj.lider.nombre, prj.lider.apellido) : 'SD'}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-[0.6rem] font-extrabold text-zinc-400 block uppercase font-mono tracking-wider">Líder Asignado:</span>
-                            <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate block">
-                              {prj.lider ? `${prj.lider.nombre} ${prj.lider.apellido}` : 'Sin Líder Asignado'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {isReasig || isPastLiderPending ? (
-                          <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 text-[0.62rem] font-extrabold shrink-0 shadow-2xs">
-                            Reasignado
-                          </span>
-                        ) : isNuevo ? (
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 text-[0.62rem] font-extrabold shrink-0 shadow-2xs">
-                            Nuevo
-                          </span>
-                        ) : null}
-                      </div>
-
-                      {/* Fechas e Inversión */}
-                      <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                        <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-0.5">
-                          <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono">Presupuesto:</span>
-                          <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">${presupuestoFmt}</span>
-                        </div>
-                        <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-0.5">
-                          <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono">Fin Estimado:</span>
-                          <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300 text-xs">{prj.fechaFinEstimada || '2027-12-31'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Botones de Acción Claros & Explicitos (Reasignar Líder Rediseñado) */}
-                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleAbrirDetalleProyecto(prj)}
-                        className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-xs flex-1 justify-center rounded-xl cursor-pointer"
-                      >
-                        <Eye size={14} />
-                        <span>Revisar Proyecto</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleAbrirReasignarLiderPrj(prj)}
-                        className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50/50 hover:bg-purple-100 dark:bg-purple-950/40 cursor-pointer rounded-xl shrink-0"
-                        title="Reasignar la dirección de este proyecto a otro Líder con registro de auditoría"
-                      >
-                        <RotateCcw size={14} />
-                        <span>Reasignar Líder</span>
-                      </button>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+              {/* Paginación Integrada de Proyectos */}
+              {totalProyectoPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-500">
+                  <span>Mostrando {startProyectoIdx + 1} - {Math.min(startProyectoIdx + proyectosPerPage, totalFilteredProyectos)} de {totalFilteredProyectos} proyectos</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={safeProyectoPage <= 1}
+                      onClick={() => setCurrentProyectoPage(prev => Math.max(prev - 1, 1))}
+                      className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                    >
+                      <ChevronLeft size={14} />
+                    </button>
+                    <span>Página {safeProyectoPage} de {totalProyectoPages}</span>
+                    <button
+                      type="button"
+                      disabled={safeProyectoPage >= totalProyectoPages}
+                      onClick={() => setCurrentProyectoPage(prev => Math.min(prev + 1, totalProyectoPages))}
+                      className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
-
-          {/* Paginación Integrada de Proyectos */}
-          {totalProyectoPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-500">
-              <span>Mostrando {startProyectoIdx + 1} - {Math.min(startProyectoIdx + proyectosPerPage, totalFilteredProyectos)} de {totalFilteredProyectos} proyectos</span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={safeProyectoPage <= 1}
-                  onClick={() => setCurrentProyectoPage(prev => Math.max(prev - 1, 1))}
-                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer"
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                <span>Página {safeProyectoPage} de {totalProyectoPages}</span>
-                <button
-                  type="button"
-                  disabled={safeProyectoPage >= totalProyectoPages}
-                  onClick={() => setCurrentProyectoPage(prev => Math.min(prev + 1, totalProyectoPages))}
-                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer"
-                >
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
-          )}
-        </>
+        </motion.div>
       )}
-    </motion.div>
-  )}
 
       {/* 2. SECCIÓN: SOLICITUDES DE CONTACTO WEB */}
       {activeTab === 'solicitudes' && (
-        <motion.div 
+        <motion.div
           key="solicitudes"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
           className="space-y-6"
         >
-          
-          <motion.div 
+
+          <motion.div
             variants={itemVariants}
             className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
@@ -3507,7 +3861,7 @@ export const CoordinadorDashboard = () => {
           </motion.div>
 
           {/* Consola Única y Optimizada de Búsqueda, Fechas y Filtros */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4"
           >
@@ -3553,22 +3907,20 @@ export const CoordinadorDashboard = () => {
 
             {/* 2. Fila Inferior: Filtros de Estado a la Izquierda + Selector Estricto de Fechas a la Derecha */}
             <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
-              
+
               {/* Píldoras de Estado (Izquierda) */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setFiltroSolicitudes('TODAS')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
-                    filtroSolicitudes === 'TODAS'
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'TODAS'
                       ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-md scale-[1.02]'
                       : 'bg-zinc-100 dark:bg-zinc-800/70 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                  }`}
+                    }`}
                 >
                   <span>Todas</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
-                    filtroSolicitudes === 'TODAS' ? 'bg-white/20 dark:bg-black/20 font-extrabold' : 'bg-zinc-200 dark:bg-zinc-700'
-                  }`}>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'TODAS' ? 'bg-white/20 dark:bg-black/20 font-extrabold' : 'bg-zinc-200 dark:bg-zinc-700'
+                    }`}>
                     {solicitudes.length}
                   </span>
                 </button>
@@ -3576,17 +3928,15 @@ export const CoordinadorDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setFiltroSolicitudes('PENDIENTE')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
-                    filtroSolicitudes === 'PENDIENTE'
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'PENDIENTE'
                       ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20 scale-[1.02]'
                       : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60 hover:bg-blue-100'
-                  }`}
+                    }`}
                 >
                   <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                   <span>Pendientes</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
-                    filtroSolicitudes === 'PENDIENTE' ? 'bg-white/20 font-extrabold' : 'bg-blue-100 dark:bg-blue-900/60'
-                  }`}>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'PENDIENTE' ? 'bg-white/20 font-extrabold' : 'bg-blue-100 dark:bg-blue-900/60'
+                    }`}>
                     {solicitudes.filter(s => (s.estado === 'PENDIENTE' || (!s.estado && !s.atendido))).length}
                   </span>
                 </button>
@@ -3594,17 +3944,15 @@ export const CoordinadorDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setFiltroSolicitudes('EN_PROCESO')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
-                    filtroSolicitudes === 'EN_PROCESO'
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'EN_PROCESO'
                       ? 'bg-amber-600 text-white shadow-md shadow-amber-600/20 scale-[1.02]'
                       : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 hover:bg-amber-100'
-                  }`}
+                    }`}
                 >
                   <span className="w-2 h-2 rounded-full bg-amber-400" />
                   <span>En Proceso</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
-                    filtroSolicitudes === 'EN_PROCESO' ? 'bg-white/20 font-extrabold' : 'bg-amber-100 dark:bg-amber-900/60'
-                  }`}>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'EN_PROCESO' ? 'bg-white/20 font-extrabold' : 'bg-amber-100 dark:bg-amber-900/60'
+                    }`}>
                     {solicitudes.filter(s => s.estado === 'EN_PROCESO').length}
                   </span>
                 </button>
@@ -3612,17 +3960,15 @@ export const CoordinadorDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setFiltroSolicitudes('ATENDIDA')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
-                    filtroSolicitudes === 'ATENDIDA'
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'ATENDIDA'
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20 scale-[1.02]'
                       : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100'
-                  }`}
+                    }`}
                 >
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
                   <span>Atendidas</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
-                    filtroSolicitudes === 'ATENDIDA' ? 'bg-white/20 font-extrabold' : 'bg-emerald-100 dark:bg-emerald-900/60'
-                  }`}>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'ATENDIDA' ? 'bg-white/20 font-extrabold' : 'bg-emerald-100 dark:bg-emerald-900/60'
+                    }`}>
                     {solicitudes.filter(s => s.estado === 'ATENDIDA' || (s.atendido && !s.estado)).length}
                   </span>
                 </button>
@@ -3630,17 +3976,15 @@ export const CoordinadorDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setFiltroSolicitudes('REABIERTA')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${
-                    filtroSolicitudes === 'REABIERTA'
+                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'REABIERTA'
                       ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20 scale-[1.02]'
                       : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60 hover:bg-purple-100'
-                  }`}
+                    }`}
                 >
                   <RotateCcw size={13} />
                   <span>Reabiertas</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
-                    filtroSolicitudes === 'REABIERTA' ? 'bg-white/20 font-extrabold' : 'bg-purple-100 dark:bg-purple-900/60'
-                  }`}>
+                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'REABIERTA' ? 'bg-white/20 font-extrabold' : 'bg-purple-100 dark:bg-purple-900/60'
+                    }`}>
                     {solicitudes.filter(s => s.estado === 'REABIERTA').length}
                   </span>
                 </button>
@@ -3681,11 +4025,10 @@ export const CoordinadorDashboard = () => {
                     setFechaInicioSolicitud('');
                     setFechaFinSolicitud('');
                   }}
-                  className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer border ${
-                    !fechaInicioSolicitud && !fechaFinSolicitud
+                  className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer border ${!fechaInicioSolicitud && !fechaFinSolicitud
                       ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                       : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
-                  }`}
+                    }`}
                   title="Mostrar todo el historial disponible"
                 >
                   Todo
@@ -3748,136 +4091,135 @@ export const CoordinadorDashboard = () => {
             )}
 
             {!loading && solicitudesFiltradas.map(sol => {
-                const estInfo = getEstadoSolicitudInfo(sol);
-                const isReabierta = sol.estado === 'REABIERTA' || (sol.contadorReaperturas && sol.contadorReaperturas > 0);
+              const estInfo = getEstadoSolicitudInfo(sol);
+              const isReabierta = sol.estado === 'REABIERTA' || (sol.contadorReaperturas && sol.contadorReaperturas > 0);
 
-                return (
-                  <div 
-                    key={sol.idSolicitud} 
-                    className={`bg-white dark:bg-zinc-900 p-6 rounded-3xl border flex flex-col justify-between shadow-sm hover:shadow-[0_0_18px_rgba(59,130,246,0.14)] hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-200 h-full ${
-                      sol.atendido || sol.estado === 'ATENDIDA'
-                        ? 'border-zinc-200 dark:border-zinc-800/80' 
-                        : sol.estado === 'REABIERTA'
+              return (
+                <div
+                  key={sol.idSolicitud}
+                  className={`bg-white dark:bg-zinc-900 p-6 rounded-3xl border flex flex-col justify-between shadow-sm hover:shadow-[0_0_18px_rgba(59,130,246,0.14)] hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-200 h-full ${sol.atendido || sol.estado === 'ATENDIDA'
+                      ? 'border-zinc-200 dark:border-zinc-800/80'
+                      : sol.estado === 'REABIERTA'
                         ? 'border-purple-300 dark:border-purple-800 ring-1 ring-purple-100 dark:ring-purple-950/40'
                         : 'border-blue-300 dark:border-blue-700/80 ring-1 ring-blue-100 dark:ring-blue-950/30'
                     }`}
-                  >
-                    <div className="space-y-3">
-                      {/* Cabecera de la Tarjeta */}
-                      <div className="flex justify-between items-center gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60">
-                            SOL-00{sol.idSolicitud}
-                          </span>
-                          <span className={`inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full border ${estInfo.badge}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
-                            <span>{estInfo.label}</span>
+                >
+                  <div className="space-y-3">
+                    {/* Cabecera de la Tarjeta */}
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/60">
+                          SOL-00{sol.idSolicitud}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2 py-0.5 rounded-full border ${estInfo.badge}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${estInfo.dot}`}></span>
+                          <span>{estInfo.label}</span>
+                        </span>
+                      </div>
+                      <span className="text-[0.65rem] text-zinc-400 flex items-center gap-1 font-semibold shrink-0">
+                        <Clock size={11} /> {sol.fechaEnvio ? new Date(sol.fechaEnvio).toLocaleDateString() : 'Reciente'}
+                      </span>
+                    </div>
+
+                    {/* Asunto y Remitente */}
+                    <div>
+                      <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 mb-0.5 line-clamp-1" title={sol.asunto}>
+                        {sol.asunto}
+                      </h3>
+                      <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{sol.nombreRemitente}</p>
+                    </div>
+
+                    {/* Mensaje original */}
+                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed italic line-clamp-3">
+                      "{sol.mensaje}"
+                    </div>
+
+                    {/* Datos de contacto */}
+                    <div className="flex flex-col gap-1 text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                      <div className="flex items-center gap-1.5 truncate"><Mail size={12} className="shrink-0 text-zinc-400" /> <span className="truncate">{sol.emailRemitente}</span></div>
+                      {sol.telefono && <div className="flex items-center gap-1.5"><Phone size={12} className="shrink-0 text-zinc-400" /> <span>{sol.telefono}</span></div>}
+                    </div>
+
+                    {/* Badge Destacado: Coordinador Atención / Auditoría de Responsable */}
+                    <div className="pt-2 pb-1 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                      <span className="text-[0.62rem] font-bold uppercase text-zinc-400 font-mono">
+                        Coordinador Responsable:
+                      </span>
+                      {sol.coordinador ? (
+                        <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2.5 py-0.5 rounded-xl">
+                          <div className="w-4 h-4 rounded-full bg-blue-600 text-white font-extrabold text-[0.55rem] flex items-center justify-center">
+                            {getInitials(sol.coordinador.nombre, sol.coordinador.apellido)}
+                          </div>
+                          <span className="text-[0.68rem] font-extrabold text-blue-700 dark:text-blue-300">
+                            {sol.coordinador.nombre} {sol.coordinador.apellido}
                           </span>
                         </div>
-                        <span className="text-[0.65rem] text-zinc-400 flex items-center gap-1 font-semibold shrink-0">
-                          <Clock size={11} /> {sol.fechaEnvio ? new Date(sol.fechaEnvio).toLocaleDateString() : 'Reciente'}
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[0.65rem] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-xl border border-amber-200 dark:border-amber-800">
+                          <Clock size={10} /> Sin Asignar (Pendiente)
                         </span>
-                      </div>
+                      )}
+                    </div>
 
-                      {/* Asunto y Remitente */}
-                      <div>
-                        <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 mb-0.5 line-clamp-1" title={sol.asunto}>
-                          {sol.asunto}
-                        </h3>
-                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{sol.nombreRemitente}</p>
-                      </div>
-                      
-                      {/* Mensaje original */}
-                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed italic line-clamp-3">
-                        "{sol.mensaje}"
-                      </div>
-
-                      {/* Datos de contacto */}
-                      <div className="flex flex-col gap-1 text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">
-                        <div className="flex items-center gap-1.5 truncate"><Mail size={12} className="shrink-0 text-zinc-400" /> <span className="truncate">{sol.emailRemitente}</span></div>
-                        {sol.telefono && <div className="flex items-center gap-1.5"><Phone size={12} className="shrink-0 text-zinc-400" /> <span>{sol.telefono}</span></div>}
-                      </div>
-
-                      {/* Badge Destacado: Coordinador Atención / Auditoría de Responsable */}
-                      <div className="pt-2 pb-1 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
-                        <span className="text-[0.62rem] font-bold uppercase text-zinc-400 font-mono">
-                          Coordinador Responsable:
-                        </span>
-                        {sol.coordinador ? (
-                          <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2.5 py-0.5 rounded-xl">
-                            <div className="w-4 h-4 rounded-full bg-blue-600 text-white font-extrabold text-[0.55rem] flex items-center justify-center">
-                              {getInitials(sol.coordinador.nombre, sol.coordinador.apellido)}
-                            </div>
-                            <span className="text-[0.68rem] font-extrabold text-blue-700 dark:text-blue-300">
-                              {sol.coordinador.nombre} {sol.coordinador.apellido}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[0.65rem] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-xl border border-amber-200 dark:border-amber-800">
-                            <Clock size={10} /> Sin Asignar (Pendiente)
-                          </span>
+                    {/* Bloque Informativo: Notas de Atención Registradas */}
+                    {sol.notasAtencion && (
+                      <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 text-xs space-y-1">
+                        <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-extrabold text-[0.7rem]">
+                          <FileText size={12} />
+                          <span>Acciones Realizadas / Contexto:</span>
+                        </div>
+                        <p className="text-[0.72rem] text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+                          {sol.notasAtencion}
+                        </p>
+                        {sol.fechaAtencion && (
+                          <p className="text-[0.62rem] text-emerald-700 dark:text-emerald-400 font-mono pt-0.5">
+                            Atendido {new Date(sol.fechaAtencion).toLocaleString()} {sol.coordinador ? `por ${sol.coordinador.nombre}` : ''}
+                          </p>
                         )}
                       </div>
+                    )}
 
-                      {/* Bloque Informativo: Notas de Atención Registradas */}
-                      {sol.notasAtencion && (
-                        <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 text-xs space-y-1">
-                          <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-extrabold text-[0.7rem]">
-                            <FileText size={12} />
-                            <span>Acciones Realizadas / Contexto:</span>
-                          </div>
-                          <p className="text-[0.72rem] text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
-                            {sol.notasAtencion}
-                          </p>
-                          {sol.fechaAtencion && (
-                            <p className="text-[0.62rem] text-emerald-700 dark:text-emerald-400 font-mono pt-0.5">
-                              Atendido {new Date(sol.fechaAtencion).toLocaleString()} {sol.coordinador ? `por ${sol.coordinador.nombre}` : ''}
-                            </p>
-                          )}
+                    {/* Bloque Informativo: Motivo de Reapertura */}
+                    {sol.motivoReapertura && (
+                      <div className="p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 text-xs space-y-1">
+                        <div className="flex items-center gap-1.5 text-purple-800 dark:text-purple-300 font-extrabold text-[0.7rem]">
+                          <RotateCcw size={12} />
+                          <span>Motivo de Reapertura {sol.contadorReaperturas > 0 ? `(#${sol.contadorReaperturas})` : ''}:</span>
                         </div>
-                      )}
-
-                      {/* Bloque Informativo: Motivo de Reapertura */}
-                      {sol.motivoReapertura && (
-                        <div className="p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 text-xs space-y-1">
-                          <div className="flex items-center gap-1.5 text-purple-800 dark:text-purple-300 font-extrabold text-[0.7rem]">
-                            <RotateCcw size={12} />
-                            <span>Motivo de Reapertura {sol.contadorReaperturas > 0 ? `(#${sol.contadorReaperturas})` : ''}:</span>
-                          </div>
-                          <p className="text-[0.72rem] text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
-                            {sol.motivoReapertura}
+                        <p className="text-[0.72rem] text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+                          {sol.motivoReapertura}
+                        </p>
+                        {sol.fechaReapertura && (
+                          <p className="text-[0.62rem] text-purple-700 dark:text-purple-400 font-mono pt-0.5">
+                            Reabierto el {new Date(sol.fechaReapertura).toLocaleString()}
                           </p>
-                          {sol.fechaReapertura && (
-                            <p className="text-[0.62rem] text-purple-700 dark:text-purple-400 font-mono pt-0.5">
-                              Reabierto el {new Date(sol.fechaReapertura).toLocaleString()}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Botones de Acción Adaptados al Estado */}
-                    <div className="pt-3.5 border-t border-zinc-100 dark:border-zinc-800/80 mt-4">
-                      {(() => {
-                        const botonInfo = getBotonAccionSolicitud(sol);
-                        const IconComponent = botonInfo.icono;
-
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenGestionModal(sol)}
-                            className={`text-xs py-2 px-3 w-full font-bold cursor-pointer rounded-xl inline-flex items-center justify-center gap-2 transition-all ${botonInfo.className}`}
-                            title={botonInfo.subtexto}
-                          >
-                            <IconComponent size={14} className="shrink-0" />
-                            <span>{botonInfo.texto}</span>
-                          </button>
-                        );
-                      })()}
-                    </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                );
-              })}
+
+                  {/* Botones de Acción Adaptados al Estado */}
+                  <div className="pt-3.5 border-t border-zinc-100 dark:border-zinc-800/80 mt-4">
+                    {(() => {
+                      const botonInfo = getBotonAccionSolicitud(sol);
+                      const IconComponent = botonInfo.icono;
+
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenGestionModal(sol)}
+                          className={`text-xs py-2 px-3 w-full font-bold cursor-pointer rounded-xl inline-flex items-center justify-center gap-2 transition-all ${botonInfo.className}`}
+                          title={botonInfo.subtexto}
+                        >
+                          <IconComponent size={14} className="shrink-0" />
+                          <span>{botonInfo.texto}</span>
+                        </button>
+                      );
+                    })()}
+                  </div>
+                </div>
+              );
+            })}
           </motion.div>
 
         </motion.div>
@@ -3885,14 +4227,14 @@ export const CoordinadorDashboard = () => {
 
       {/* 3. SECCIÓN: PREDICTOR DE BURNOUT HISTÓRICO */}
       {activeTab === 'burnout' && (
-        <motion.div 
+        <motion.div
           key="burnout"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
           className="space-y-6"
         >
-          <PredictorBurnout 
+          <PredictorBurnout
             onNavigateToWbs={(proyectoObj, devObj, taskObj) => {
               const idPrj = proyectoObj?.idProyecto || taskObj?.idProyecto;
               const idAct = taskObj?.idActividad || taskObj?.id;
@@ -3908,473 +4250,420 @@ export const CoordinadorDashboard = () => {
       <AnimatePresence>
         {showCreateModal && (() => {
           const currentSkillProfile = ROLE_SKILL_PROFILES[newTrabajador.rol] || ROLE_SKILL_PROFILES.DESARROLLADOR;
-          const RoleIconComponent = newTrabajador.rol === 'DESARROLLADOR' 
-            ? Code2 
-            : newTrabajador.rol === 'LIDER' 
-              ? Briefcase 
+          const RoleIconComponent = newTrabajador.rol === 'DESARROLLADOR'
+            ? Code2
+            : newTrabajador.rol === 'LIDER'
+              ? Briefcase
               : Shield;
 
           return (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-9 w-[96%] sm:w-full max-w-3xl shadow-2xl max-h-[90dvh] overflow-y-auto space-y-6"
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[98%] sm:w-full max-w-5xl shadow-2xl max-h-[92dvh] overflow-y-auto space-y-5"
               >
                 {/* Encabezado del Modal */}
-                <div className="flex justify-between items-start pb-4 border-b border-zinc-200 dark:border-zinc-800">
+                <div className="flex justify-between items-start pb-3 border-b border-zinc-200 dark:border-zinc-800">
                   <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
-                      <UserPlus size={24} />
+                    <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
+                      <UserPlus size={22} />
                     </div>
                     <div>
-                      <h3 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+                      <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
                         <span>Registrar Nuevo Colaborador</span>
-                        <span className={`text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-full border ${currentSkillProfile.badgeTagStyle}`}>
+                        <span className={`text-[0.62rem] font-bold font-mono px-2 py-0.5 rounded-full border ${currentSkillProfile.badgeTagStyle}`}>
                           {newTrabajador.rol}
                         </span>
                       </h3>
-                      <p className="text-xs text-zinc-500 font-medium mt-0.5">
-                        Alta corporativa en PostgreSQL, asignación de rol de seguridad y configuración de perfil profesional
+                      <p className="text-[0.72rem] text-zinc-500 font-medium mt-0.5">
+                        Alta corporativa en PostgreSQL, asignación de rol de seguridad y credenciales iniciales
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <form onSubmit={handleCrearTrabajador} className="space-y-4 text-xs" noValidate>
-                  {/* 1. Información Personal & Identificación */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
-                        <Shield size={14} className="text-blue-500" />
-                        <span>1. Identificación & Credenciales de Acceso</span>
-                      </div>
-                      <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        Validación Algorítmica Internacional
-                      </span>
-                    </div>
+                  {/* Grid de 2 Columnas aprovechando el Ancho Horizontal */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
-                    {/* Selector de País de Emisión / Nacionalidad y Número de Identificación Validado */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    {/* COLUMNA IZQUIERDA: 1. Identificación & Credenciales */}
+                    <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3">
+                      <div className="flex items-center justify-between pb-1 border-b border-zinc-200/60 dark:border-zinc-700/60">
+                        <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
+                          <Shield size={14} className="text-blue-500" />
+                          <span>1. Identificación & Credenciales de Acceso</span>
+                        </div>
+                        <span className="text-[0.62rem] font-bold font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          PostgreSQL Auth
+                        </span>
+                      </div>
+
+                      {/* Nombres, Apellidos y Rol */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-[0.68rem]">
+                            Nombres *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              required
+                              value={newTrabajador.nombre}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const autoEmail = autoGenerarEmailCorporativo(val, newTrabajador.apellido);
+                                setNewTrabajador(prev => ({ ...prev, nombre: val, email: autoEmail || prev.email }));
+                                setFormErrors(p => ({ ...p, nombre: undefined }));
+                              }}
+                              placeholder="Nombres"
+                              className={`input-field py-1.5 text-xs ${newTrabajador.nombre ? (nombreValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
+                                }`}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-[0.68rem]">
+                            Apellidos *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              required
+                              value={newTrabajador.apellido}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const autoEmail = autoGenerarEmailCorporativo(newTrabajador.nombre, val);
+                                setNewTrabajador(prev => ({ ...prev, apellido: val, email: autoEmail || prev.email }));
+                                setFormErrors(p => ({ ...p, apellido: undefined }));
+                              }}
+                              placeholder="Apellidos"
+                              className={`input-field py-1.5 text-xs ${newTrabajador.apellido ? (apellidoValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
+                                }`}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-[0.68rem]">
+                            Rol de Seguridad *
+                          </label>
+                          <select
+                            value={newTrabajador.rol}
+                            onChange={(e) => setNewTrabajador({ ...newTrabajador, rol: e.target.value })}
+                            className="input-field py-1.5 text-xs font-bold uppercase"
+                          >
+                            <option value="DESARROLLADOR">DESARROLLADOR</option>
+                            <option value="LIDER">LÍDER DE PROYECTO</option>
+                            <option value="COORDINADOR">COORDINADOR</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Selector de País de Emisión y Cédula */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-[0.68rem]">
+                            País / Documento *
+                          </label>
+                          <select
+                            value={newTrabajador.paisCodigo}
+                            onChange={(e) => setNewTrabajador({ ...newTrabajador, paisCodigo: e.target.value })}
+                            className="input-field py-1.5 text-xs font-bold"
+                          >
+                            {PAISES_IDENTIFICACION.map(p => (
+                              <option key={p.code} value={p.code}>
+                                {p.flag} {p.docTipo}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="col-span-2">
+                          <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-[0.68rem]">
+                            Número de Identificación / Cédula *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              required
+                              value={newTrabajador.identificacion}
+                              onChange={(e) => {
+                                setNewTrabajador({ ...newTrabajador, identificacion: e.target.value });
+                                setFormErrors(p => ({ ...p, identificacion: undefined }));
+                              }}
+                              placeholder={paisActual.placeholder}
+                              className={`input-field py-1.5 text-xs font-mono font-bold pr-8 ${
+                                newTrabajador.identificacion
+                                  ? (docValidationResult.valid ? 'border-emerald-500 dark:border-emerald-500' : 'border-red-500 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20')
+                                  : ''
+                              }`}
+                            />
+                            {newTrabajador.identificacion && (
+                              <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                {docValidationResult.valid ? (
+                                  <CheckCircle2 size={14} className="text-emerald-500" />
+                                ) : (
+                                  <AlertTriangle size={14} className="text-red-500" />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {newTrabajador.identificacion && !docValidationResult.valid && (
+                            <p className="text-[0.63rem] text-red-500 dark:text-red-400 font-bold mt-1 flex items-center gap-1">
+                              <AlertTriangle size={12} className="shrink-0" /> {docValidationResult.message}
+                            </p>
+                          )}
+                          {newTrabajador.identificacion && docValidationResult.valid && (
+                            <p className="text-[0.63rem] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                              <CheckCircle2 size={12} className="shrink-0" /> Cédula válida y disponible
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Correo Electrónico Corporativo Único */}
                       <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
-                          País de Emisión / Documento *
-                        </label>
-                        <select
-                          value={newTrabajador.paisCodigo}
-                          onChange={(e) => {
-                            setNewTrabajador({ ...newTrabajador, paisCodigo: e.target.value });
-                            setFormErrors(p => ({ ...p, identificacion: undefined }));
-                          }}
-                          className="input-field py-2 text-xs font-bold"
-                        >
-                          {PAISES_IDENTIFICACION.map(p => (
-                            <option key={p.code} value={p.code}>
-                              {p.flag} {p.nombre} ({p.docTipo})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="sm:col-span-2 space-y-1">
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between text-xs mb-1">
-                          <span>Número de Identificación / {paisActual.docTipo} *</span>
-                          <span className="text-[0.62rem] font-mono text-blue-600 dark:text-blue-400 font-extrabold">
-                            {paisActual.flag} {paisActual.nombre}
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="font-bold text-zinc-700 dark:text-zinc-300 text-[0.68rem]">
+                            Correo Electrónico Corporativo Único *
+                          </label>
+                          <span className={`text-[0.6rem] font-bold px-2 py-0.5 rounded-full border ${
+                            emailValidationResult.valid 
+                              ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800'
+                              : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 border-red-200 dark:border-red-800'
+                          }`}>
+                            {emailValidationResult.valid ? '✓ @ikernell.org (Auto-Generado Único)' : '✕ Correo Corporativo Duplicado / Inválido'}
                           </span>
-                        </label>
+                        </div>
                         <div className="relative">
                           <input
                             type="text"
                             required
-                            value={newTrabajador.identificacion}
-                            onChange={(e) => { 
-                              setNewTrabajador({ ...newTrabajador, identificacion: e.target.value }); 
-                              setFormErrors(p => ({ ...p, identificacion: undefined })); 
+                            value={newTrabajador.email}
+                            onChange={(e) => {
+                              setNewTrabajador({ ...newTrabajador, email: e.target.value });
+                              setFormErrors(p => ({ ...p, email: undefined }));
                             }}
-                            placeholder={paisActual.placeholder}
-                            className={`input-field py-2 text-xs font-mono font-bold pr-9 ${
-                              newTrabajador.identificacion 
-                                ? (docValidationResult.valid ? 'border-blue-500 ring-2 ring-blue-500/10 dark:border-blue-500' : 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10') 
+                            onBlur={() => {
+                              if (newTrabajador.email && !newTrabajador.email.includes('@')) {
+                                setNewTrabajador(prev => ({ ...prev, email: `${prev.email.trim()}@ikernell.org` }));
+                              }
+                            }}
+                            placeholder="correo.corporativo@ikernell.org"
+                            className={`input-field py-1.5 text-xs font-mono font-bold pr-8 ${
+                              newTrabajador.email
+                                ? (emailValidationResult.valid ? 'border-emerald-500 dark:border-emerald-500' : 'border-red-500 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20')
                                 : ''
                             }`}
                           />
-                          {newTrabajador.identificacion && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              {docValidationResult.valid ? (
-                                <CheckCircle2 size={16} className="text-blue-500" />
+                          {newTrabajador.email && (
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                              {emailValidationResult.valid ? (
+                                <CheckCircle2 size={14} className="text-emerald-500" />
                               ) : (
-                                <AlertTriangle size={16} className="text-red-500 animate-bounce" />
+                                <AlertTriangle size={14} className="text-red-500" />
                               )}
                             </div>
                           )}
                         </div>
-
-                        {/* Mensaje de Validación de Algoritmo de País */}
-                        {newTrabajador.identificacion && (
-                          <p className={`text-[0.65rem] font-bold mt-1 flex items-center gap-1.5 ${
-                            docValidationResult.valid ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400'
-                          }`}>
-                            <span>{docValidationResult.message}</span>
+                        {newTrabajador.email && !emailValidationResult.valid && (
+                          <p className="text-[0.63rem] text-red-500 dark:text-red-400 font-bold mt-1 flex items-center gap-1">
+                            <AlertTriangle size={12} className="shrink-0" /> {emailValidationResult.message}
                           </p>
                         )}
-                        {formErrors.identificacion && !newTrabajador.identificacion && (
-                          <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.identificacion}</p>
+                        {newTrabajador.email && emailValidationResult.valid && (
+                          <p className="text-[0.63rem] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                            <CheckCircle2 size={12} className="shrink-0" /> {emailValidationResult.message}
+                          </p>
                         )}
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      {/* Correo Electrónico Personal / Alternativo */}
                       <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
-                          Nombres del Colaborador *
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-[0.68rem]">
+                          Correo Electrónico Personal / Alternativo (Notificación y Copia CC) *
                         </label>
                         <div className="relative">
                           <input
-                            type="text"
+                            type="email"
                             required
-                            value={newTrabajador.nombre}
-                            onChange={(e) => { setNewTrabajador({ ...newTrabajador, nombre: e.target.value }); setFormErrors(p => ({ ...p, nombre: undefined })); }}
-                            placeholder="Nombres del colaborador"
-                            className={`input-field py-2 text-xs ${
-                              newTrabajador.nombre ? (nombreValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
+                            value={newTrabajador.emailPersonal || ''}
+                            onChange={(e) => {
+                              setNewTrabajador({ ...newTrabajador, emailPersonal: e.target.value });
+                              setFormErrors(p => ({ ...p, emailPersonal: undefined }));
+                            }}
+                            placeholder="correo.personal@gmail.com"
+                            className={`input-field py-1.5 text-xs font-semibold pr-8 ${
+                              newTrabajador.emailPersonal
+                                ? (emailPersonalValidationResult.valid ? 'border-emerald-500 dark:border-emerald-500' : 'border-red-500 dark:border-red-500 bg-red-50/30 dark:bg-red-950/20')
+                                : ''
                             }`}
                           />
-                          {newTrabajador.nombre && (
+                          {newTrabajador.emailPersonal && (
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                              {nombreValidationResult.valid ? <CheckCircle2 size={14} className="text-blue-500" /> : <AlertTriangle size={14} className="text-red-500" />}
+                              {emailPersonalValidationResult.valid ? (
+                                <CheckCircle2 size={14} className="text-emerald-500" />
+                              ) : (
+                                <AlertTriangle size={14} className="text-red-500" />
+                              )}
                             </div>
                           )}
                         </div>
-                        {newTrabajador.nombre && !nombreValidationResult.valid && (
-                          <p className="text-[0.63rem] text-red-500 font-bold mt-0.5">{nombreValidationResult.message}</p>
+                        {newTrabajador.emailPersonal && !emailPersonalValidationResult.valid && (
+                          <p className="text-[0.63rem] text-red-500 dark:text-red-400 font-bold mt-1 flex items-center gap-1">
+                            <AlertTriangle size={12} className="shrink-0" /> {emailPersonalValidationResult.message}
+                          </p>
+                        )}
+                        {newTrabajador.emailPersonal && emailPersonalValidationResult.valid && (
+                          <p className="text-[0.63rem] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                            <CheckCircle2 size={12} className="shrink-0" /> {emailPersonalValidationResult.message}
+                          </p>
                         )}
                       </div>
 
-                      <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
-                          Apellidos del Colaborador *
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            required
-                            value={newTrabajador.apellido}
-                            onChange={(e) => { setNewTrabajador({ ...newTrabajador, apellido: e.target.value }); setFormErrors(p => ({ ...p, apellido: undefined })); }}
-                            placeholder="Apellidos del colaborador"
-                            className={`input-field py-2 text-xs ${
-                              newTrabajador.apellido ? (apellidoValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
-                            }`}
-                          />
-                          {newTrabajador.apellido && (
-                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                              {apellidoValidationResult.valid ? <CheckCircle2 size={14} className="text-blue-500" /> : <AlertTriangle size={14} className="text-red-500" />}
-                            </div>
-                          )}
-                        </div>
-                        {newTrabajador.apellido && !apellidoValidationResult.valid && (
-                          <p className="text-[0.63rem] text-red-500 font-bold mt-0.5">{apellidoValidationResult.message}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
-                          Rol de Seguridad *
-                        </label>
-                        <select
-                          value={newTrabajador.rol}
-                          onChange={(e) => {
-                            const selectedRol = e.target.value;
-                            setNewTrabajador({ ...newTrabajador, rol: selectedRol });
-                          }}
-                          className="input-field py-2 text-xs font-bold uppercase"
-                        >
-                          <option value="DESARROLLADOR">DESARROLLADOR (WBS)</option>
-                          <option value="LIDER">LÍDER DE PROYECTO</option>
-                          <option value="COORDINADOR">COORDINADOR GLOBAL</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
-                        Correo Electrónico Corporativo *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          required
-                          value={newTrabajador.email}
-                          onChange={(e) => { setNewTrabajador({ ...newTrabajador, email: e.target.value }); setFormErrors(p => ({ ...p, email: undefined })); }}
-                          onBlur={() => {
-                            if (newTrabajador.email && !newTrabajador.email.includes('@')) {
-                              setNewTrabajador(prev => ({ ...prev, email: `${prev.email.trim()}@ikernell.org` }));
-                            }
-                          }}
-                          placeholder="correo.corporativo@ikernell.org"
-                          className={`input-field py-2 text-xs font-mono pr-9 ${
-                            newTrabajador.email ? (emailValidationResult.valid ? 'border-blue-500' : 'border-red-400 dark:border-red-600') : ''
-                          }`}
-                        />
-                        {newTrabajador.email && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            {emailValidationResult.valid ? <CheckCircle2 size={16} className="text-blue-500" /> : <AlertTriangle size={16} className="text-red-500" />}
-                          </div>
-                        )}
-                      </div>
-                      {newTrabajador.email && (
-                        <p className={`text-[0.65rem] font-bold mt-1 ${emailValidationResult.valid ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400'}`}>
-                          {emailValidationResult.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Correo Electrónico Personal / Alternativo */}
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-xs">
-                        Correo Electrónico Personal / Alternativo *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={newTrabajador.emailPersonal || ''}
-                        onChange={(e) => setNewTrabajador({ ...newTrabajador, emailPersonal: e.target.value })}
-                        placeholder="correo.personal@gmail.com"
-                        className="input-field py-2 text-xs font-semibold"
-                      />
-                      <p className="text-[0.65rem] text-zinc-500 font-medium mt-1">
-                        Las credenciales temporales de acceso inicial se enviarán a este correo alternativo.
-                      </p>
-                    </div>
-
-                    {/* Campo de Contraseña de Acceso Inicial y Generador de Clave Segura */}
-                    <div className="space-y-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
-                      <div className="flex items-center justify-between">
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 text-xs">
-                          <Lock size={13} className="text-blue-500" /> Contraseña de Acceso Inicial *
-                        </label>
-                        <button
-                          type="button"
-                          onClick={generarPasswordAleatoria}
-                          className="text-[0.68rem] font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-950/80 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800/80 px-2.5 py-1 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
-                          title="Genera una clave aleatoria que cumple todos los requisitos de seguridad"
-                        >
-                          <Sparkles size={12} className="text-amber-500" />
-                          <span>Generar Clave Segura</span>
-                        </button>
-                      </div>
-
-                      <div className="relative">
-                        <input
-                          type={showPasswordInput ? "text" : "password"}
-                          required
-                          value={newTrabajador.passwordHash}
-                          onChange={(e) => {
-                            setNewTrabajador({ ...newTrabajador, passwordHash: e.target.value });
-                            setFormErrors(p => ({ ...p, passwordHash: undefined }));
-                          }}
-                          placeholder="Mínimo 8 y máximo 20 caracteres (Ej. Ikernell2026*)"
-                          className={`input-field py-2 pl-3.5 pr-10 text-xs font-mono font-bold ${formErrors.passwordHash ? 'border-red-400 dark:border-red-600' : ''}`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswordInput(!showPasswordInput)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg transition-colors cursor-pointer"
-                          title={showPasswordInput ? "Ocultar contraseña" : "Ver contraseña"}
-                        >
-                          {showPasswordInput ? <EyeOff size={15} /> : <Eye size={15} />}
-                        </button>
-                      </div>
-
-                      {/* Checklist de Validación en Tiempo Real (Mín 1 Mayúscula, 1 Minúscula, 1 Número, 8-20 Caracteres) */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
-                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                          pwdValidity.minMax ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
-                        }`}>
-                          {pwdValidity.minMax ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
-                          <span>8 a 20 Caracteres</span>
-                        </div>
-
-                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                          pwdValidity.hasUpper ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
-                        }`}>
-                          {pwdValidity.hasUpper ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
-                          <span>1 Mayúscula (A-Z)</span>
-                        </div>
-
-                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                          pwdValidity.hasLower ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
-                        }`}>
-                          {pwdValidity.hasLower ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
-                          <span>1 Minúscula (a-z)</span>
-                        </div>
-
-                        <div className={`text-[0.63rem] font-extrabold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                          pwdValidity.hasNumber ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-400 border-zinc-200/60 dark:border-zinc-800'
-                        }`}>
-                          {pwdValidity.hasNumber ? <Check size={11} className="stroke-[3]" /> : <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
-                          <span>1 Número (0-9)</span>
+                      {/* Informativo de Contraseña Temporal Automática del Sistema */}
+                      <div className="p-3.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/80 text-blue-900 dark:text-blue-200 flex items-start gap-3 text-xs font-medium">
+                        <ShieldCheck size={20} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <span className="font-bold block text-blue-950 dark:text-blue-100">Contraseña Temporal Automática</span>
+                          <p className="text-[0.7rem] text-blue-800/90 dark:text-blue-300 leading-relaxed">
+                            La contraseña de acceso inicial será generada automáticamente por el sistema con alta seguridad (8-20 caracteres, Mayúscula, Minúscula, Número y Símbolo) y enviada al correo personal indicado.
+                          </p>
                         </div>
                       </div>
-
-                      {formErrors.passwordHash && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.passwordHash}</p>}
-                    </div>
-                  </div>
-
-                  {/* 2. Perfil Profesional & Especialidad Principal (Adaptado al Rol) */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xs font-black text-zinc-900 dark:text-zinc-100">
-                        <GraduationCap size={14} className="text-indigo-500" />
-                        <span>2. Perfil Profesional & Especialidad Principal</span>
-                      </div>
-                      <span className={`text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md border ${currentSkillProfile.badgeTagStyle}`}>
-                        {currentSkillProfile.badgeTag}
-                      </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                          Profesión / Titulación
-                        </label>
-                        <input
-                          type="text"
-                          value={newTrabajador.profesion}
-                          onChange={(e) => setNewTrabajador({ ...newTrabajador, profesion: e.target.value })}
-                          placeholder={currentSkillProfile.placeholderProfesion}
-                          className="input-field py-2 text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-                          Especialidad Principal
-                        </label>
-                        <input
-                          type="text"
-                          value={newTrabajador.especialidad}
-                          onChange={(e) => setNewTrabajador({ ...newTrabajador, especialidad: e.target.value })}
-                          placeholder={currentSkillProfile.placeholderEspecialidad}
-                          className="input-field py-2 text-xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 3. Habilidades Técnicas & Competencias por Rol */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/40 space-y-3.5">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-2 text-xs font-black text-blue-950 dark:text-blue-200">
-                        <RoleIconComponent size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                        <span>{currentSkillProfile.tituloModulo}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[0.65rem] font-bold font-mono text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-md">
-                          {selectedSkills.length} Habilidades
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 font-medium">
-                      {currentSkillProfile.subtitulo}
-                    </p>
-
-                    {/* Input para agregar habilidad personalizada */}
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={customSkillInput}
-                        onChange={(e) => setCustomSkillInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddCustomSkill();
-                          }
-                        }}
-                        placeholder="Escriba una habilidad o competencia y presione Enter o Agregar..."
-                        className="input-field py-2 text-xs flex-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddCustomSkill}
-                        disabled={!customSkillInput.trim()}
-                        className="gradient-button text-xs py-2 px-3.5 font-bold cursor-pointer inline-flex items-center gap-1 shrink-0 disabled:opacity-40"
-                      >
-                        <Plus size={14} />
-                        <span>Agregar</span>
-                      </button>
-                    </div>
-
-                    {/* Chips de Habilidades Seleccionadas */}
-                    <div className="min-h-[42px] p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/60 flex flex-wrap gap-1.5 items-center">
-                      {selectedSkills.length === 0 ? (
-                        <span className="text-[0.7rem] text-zinc-400 dark:text-zinc-500 italic">
-                          {newTrabajador.rol === 'DESARROLLADOR' 
-                            ? 'Ninguna habilidad agregada aún. Selecciona de las sugerencias recomendadas para desarrollo o escribe una personalizada.'
-                            : 'Habilidades opcionales para este rol. Puedes seleccionar sugerencias de gestión o escribir competencias personalizadas.'}
-                        </span>
-                      ) : (
-                        selectedSkills.map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-mono font-bold shadow-2xs group"
-                          >
-                            <span>{skill}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSkill(skill)}
-                              className="text-blue-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
-                              title="Eliminar habilidad"
-                            >
-                              <X size={12} />
-                            </button>
+                    {/* COLUMNA DERECHA: 2 & 3 Perfil Profesional y Stack Habilidades (WBS) */}
+                    <div className="space-y-4">
+                      {/* 2. Perfil Profesional */}
+                      <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-800/70 space-y-3">
+                        <div className="flex items-center justify-between pb-1 border-b border-zinc-200/60 dark:border-zinc-700/60">
+                          <span className="font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                            <GraduationCap size={14} className="text-indigo-500" /> 2. Perfil Profesional
                           </span>
-                        ))
-                      )}
-                    </div>
-
-                    {/* Píldoras Sugeridas Rápidas Adaptadas al Rol */}
-                    <div className="space-y-1.5 pt-1">
-                      <span className="text-[0.68rem] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
-                        Sugerencias Rápidas para {currentSkillProfile.label} (clic para activar/desactivar):
-                      </span>
-                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-                        {currentSkillProfile.sugerencias.map((skill) => {
-                          const isSelected = selectedSkills.includes(skill);
-                          return (
-                            <button
-                              key={skill}
-                              type="button"
-                              onClick={() => handleToggleSkill(skill)}
-                              className={`text-[0.68rem] px-2.5 py-1 rounded-lg font-mono font-semibold transition-all cursor-pointer inline-flex items-center gap-1 ${
-                                isSelected
-                                  ? 'bg-blue-600 text-white shadow-xs'
-                                  : 'bg-white dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/50'
-                              }`}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-[0.68rem]">
+                              Profesión / Titulación *
+                            </label>
+                            <select
+                              required
+                              value={newTrabajador.profesion}
+                              onChange={(e) => setNewTrabajador({ ...newTrabajador, profesion: e.target.value })}
+                              className="input-field py-2 text-xs font-semibold cursor-pointer bg-white dark:bg-zinc-900"
                             >
-                              {isSelected ? <Check size={11} className="stroke-[3]" /> : <Plus size={11} />}
-                              <span>{skill}</span>
-                            </button>
-                          );
-                        })}
+                              <option value="">-- Seleccionar Titulación --</option>
+                              {TITULACIONES_PROFESIONALES.map((tit) => (
+                                <option key={tit} value={tit}>{tit}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1 text-[0.68rem]">
+                              Especialidad Principal *
+                            </label>
+                            <select
+                              required
+                              value={newTrabajador.especialidad}
+                              onChange={(e) => setNewTrabajador({ ...newTrabajador, especialidad: e.target.value })}
+                              className="input-field py-2 text-xs font-semibold cursor-pointer bg-white dark:bg-zinc-900"
+                            >
+                              <option value="">-- Seleccionar Especialidad --</option>
+                              {ESPECIALIDADES_PRINCIPALES.map((esp) => (
+                                <option key={esp} value={esp}>{esp}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Stack Habilidades (WBS) */}
+                      <div className="p-4 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-900/40 space-y-3">
+                        <div className="flex items-center justify-between pb-1 border-b border-blue-200/60 dark:border-blue-800/60">
+                          <span className="font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                            <RoleIconComponent size={14} className="text-blue-500" /> 3. Stack Técnico & Habilidades WBS
+                          </span>
+                          <span className="text-[0.62rem] font-bold font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                            {selectedSkills.length} Habilidades
+                          </span>
+                        </div>
+
+                        {/* Input para agregar habilidad personalizada */}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={customSkillInput}
+                            onChange={(e) => setCustomSkillInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddCustomSkill();
+                              }
+                            }}
+                            placeholder="Escriba una habilidad y presione Enter..."
+                            className="input-field py-1.5 text-xs flex-1"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddCustomSkill}
+                            className="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors cursor-pointer"
+                          >
+                            + Agregar
+                          </button>
+                        </div>
+
+                        {/* Habilidades Seleccionadas (Tags) */}
+                        <div className="flex flex-wrap gap-1 min-h-[32px] p-2 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                          {selectedSkills.length === 0 ? (
+                            <span className="text-[0.65rem] text-zinc-400 italic">Seleccione de las sugerencias rápidas abajo o agregue una personalizada.</span>
+                          ) : (
+                            selectedSkills.map(skill => (
+                              <span key={skill} className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[0.62rem] font-bold flex items-center gap-1">
+                                <span>{skill}</span>
+                                <button type="button" onClick={() => handleRemoveSkill(skill)} className="hover:text-red-500 cursor-pointer">×</button>
+                              </span>
+                            ))
+                          )}
+                        </div>
+
+                        {/* Sugerencias Rápidas Compactas */}
+                        <div className="space-y-1">
+                          <span className="text-[0.62rem] font-bold text-zinc-500 uppercase block">Sugerencias Rápidas (Clic para Activar):</span>
+                          <div className="flex flex-wrap gap-1 max-h-[100px] overflow-y-auto pr-1">
+                            {currentSkillProfile.sugerencias.map(skill => {
+                              const isSelected = selectedSkills.includes(skill);
+                              return (
+                                <button
+                                  key={skill}
+                                  type="button"
+                                  onClick={() => handleToggleSkill(skill)}
+                                  className={`px-2 py-0.5 rounded-md text-[0.6rem] font-bold border transition-colors cursor-pointer ${isSelected
+                                      ? 'bg-blue-600 text-white border-blue-600'
+                                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200'
+                                    }`}
+                                >
+                                  {isSelected ? '✓ ' : '+ '}{skill}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
                     </div>
+
                   </div>
 
-                  {/* Botones de Acción */}
-                  <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                  {/* Acciones de Footer del Formulario */}
+                  <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
                     <button
                       type="button"
-                      onClick={() => { 
-                        setShowCreateModal(false); 
-                        setFormErrors({}); 
-                        setSelectedSkills([]); 
-                        setCustomSkillInput(''); 
-                      }}
-                      disabled={submitting}
-                      className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                      onClick={() => setShowCreateModal(false)}
+                      className="outline-button text-xs py-2 px-4 font-bold cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -4397,7 +4686,7 @@ export const CoordinadorDashboard = () => {
       <AnimatePresence>
         {selectedSolicitudModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -4453,11 +4742,10 @@ export const CoordinadorDashboard = () => {
                     <button
                       type="button"
                       onClick={() => setSolicitudActionForm(prev => ({ ...prev, estado: 'ATENDIDA' }))}
-                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                        solicitudActionForm.estado === 'ATENDIDA'
+                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${solicitudActionForm.estado === 'ATENDIDA'
                           ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-400 dark:border-emerald-600 shadow-sm ring-2 ring-emerald-500/20'
                           : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-emerald-300'
-                      }`}
+                        }`}
                     >
                       <CheckCircle2 size={16} />
                       <span>Atendida</span>
@@ -4466,11 +4754,10 @@ export const CoordinadorDashboard = () => {
                     <button
                       type="button"
                       onClick={() => setSolicitudActionForm(prev => ({ ...prev, estado: 'REABIERTA' }))}
-                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                        solicitudActionForm.estado === 'REABIERTA'
+                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${solicitudActionForm.estado === 'REABIERTA'
                           ? 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-400 dark:border-purple-600 shadow-sm ring-2 ring-purple-500/20'
                           : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-purple-300'
-                      }`}
+                        }`}
                     >
                       <RotateCcw size={16} />
                       <span>Reabrir Caso</span>
@@ -4479,11 +4766,10 @@ export const CoordinadorDashboard = () => {
                     <button
                       type="button"
                       onClick={() => setSolicitudActionForm(prev => ({ ...prev, estado: 'EN_PROCESO' }))}
-                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                        solicitudActionForm.estado === 'EN_PROCESO'
+                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${solicitudActionForm.estado === 'EN_PROCESO'
                           ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-400 dark:border-amber-600 shadow-sm ring-2 ring-amber-500/20'
                           : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-amber-300'
-                      }`}
+                        }`}
                     >
                       <Clock size={16} />
                       <span>En Proceso</span>
@@ -4492,11 +4778,10 @@ export const CoordinadorDashboard = () => {
                     <button
                       type="button"
                       onClick={() => setSolicitudActionForm(prev => ({ ...prev, estado: 'PENDIENTE' }))}
-                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                        solicitudActionForm.estado === 'PENDIENTE'
+                      className={`p-2.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${solicitudActionForm.estado === 'PENDIENTE'
                           ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-400 dark:border-blue-600 shadow-sm ring-2 ring-blue-500/20'
                           : 'bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-300'
-                      }`}
+                        }`}
                     >
                       <Inbox size={16} />
                       <span>Pendiente</span>
@@ -4640,12 +4925,12 @@ export const CoordinadorDashboard = () => {
               {/* Contenido Dinámico según Paso (FORMULARIO / CONFIRMACION) */}
               <AnimatePresence mode="wait">
                 {pasoModalReasignar === 'FORMULARIO' ? (
-                  <motion.form 
+                  <motion.form
                     key="step-formulario"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
-                    onSubmit={handleIrAConfirmacionReasignacion} 
+                    onSubmit={handleIrAConfirmacionReasignacion}
                     className="space-y-6 text-xs"
                   >
                     {/* Alerta Informativa Enriquecida del Líder Afectado */}
@@ -4727,13 +5012,12 @@ export const CoordinadorDashboard = () => {
                           const estaAsignado = Boolean(reasignacionesMap[p.idProyecto]);
 
                           return (
-                            <div 
-                              key={p.idProyecto} 
-                              className={`p-5 rounded-3xl bg-white dark:bg-zinc-800/80 border space-y-3.5 text-xs shadow-2xs transition-all ${
-                                estaAsignado 
-                                  ? 'border-zinc-200 dark:border-zinc-700/80 hover:border-blue-400' 
+                            <div
+                              key={p.idProyecto}
+                              className={`p-5 rounded-3xl bg-white dark:bg-zinc-800/80 border space-y-3.5 text-xs shadow-2xs transition-all ${estaAsignado
+                                  ? 'border-zinc-200 dark:border-zinc-700/80 hover:border-blue-400'
                                   : 'border-amber-300 dark:border-amber-700 bg-amber-50/20 dark:bg-amber-950/10'
-                              }`}
+                                }`}
                             >
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-700/50 pb-2.5">
                                 <div className="flex items-center gap-2.5">
@@ -4770,11 +5054,10 @@ export const CoordinadorDashboard = () => {
                                     required
                                     value={reasignacionesMap[p.idProyecto] || ''}
                                     onChange={(e) => handleCambiarLiderDeProyecto(p.idProyecto, e.target.value)}
-                                    className={`input-field w-full py-2.5 px-3.5 text-xs font-bold appearance-none cursor-pointer rounded-xl border-2 ${
-                                      estaAsignado 
-                                        ? 'border-zinc-200 dark:border-zinc-700 focus:border-blue-500' 
+                                    className={`input-field w-full py-2.5 px-3.5 text-xs font-bold appearance-none cursor-pointer rounded-xl border-2 ${estaAsignado
+                                        ? 'border-zinc-200 dark:border-zinc-700 focus:border-blue-500'
                                         : 'border-amber-400 dark:border-amber-600 bg-amber-50/50 dark:bg-amber-950/30'
-                                    }`}
+                                      }`}
                                   >
                                     <option value="">— ⚠️ Seleccionar Líder Receptor Obligatorio —</option>
                                     {otrosLideresList.map(l => (
@@ -4811,7 +5094,7 @@ export const CoordinadorDashboard = () => {
                     </div>
                   </motion.form>
                 ) : (
-                  <motion.div 
+                  <motion.div
                     key="step-confirmacion"
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -4915,7 +5198,7 @@ export const CoordinadorDashboard = () => {
       <AnimatePresence>
         {showReasignarLiderModalPrj && proyectoAReasignar && (
           <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -5026,15 +5309,14 @@ export const CoordinadorDashboard = () => {
       <AnimatePresence>
         {selectedTrabajadorModal && (
           <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-10 w-full transition-all duration-300 shadow-2xl max-h-[92dvh] overflow-y-auto space-y-7 ${
-                showTrabajosSubpanel && !selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR')
-                  ? 'max-w-6xl' 
+              className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-10 w-full transition-all duration-300 shadow-2xl max-h-[92dvh] overflow-y-auto space-y-7 ${showTrabajosSubpanel && !selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR')
+                  ? 'max-w-6xl'
                   : 'max-w-2xl'
-              }`}
+                }`}
             >
               {/* Encabezado Principal */}
               <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-5">
@@ -5062,7 +5344,7 @@ export const CoordinadorDashboard = () => {
 
               {/* Grid Dual Responsive: 5 cols (Ficha) + 7 cols (Subpanel Proyectos) */}
               <div className={`grid gap-8 ${showTrabajosSubpanel && !selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR') ? 'grid-cols-1 lg:grid-cols-12' : 'grid-cols-1'}`}>
-                
+
                 {/* Panel Izquierdo: Ficha Personal, Credenciales & Stack (5 de 12 columnas en Pantalla Ancha) */}
                 <div className={`space-y-5 ${showTrabajosSubpanel && !selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR') ? 'lg:col-span-5' : ''}`}>
                   <div className="flex items-center gap-2 pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
@@ -5073,28 +5355,29 @@ export const CoordinadorDashboard = () => {
                   </div>
 
                   <div className="grid grid-cols-1 gap-3.5 text-xs">
-                    {/* Correo Corporativo */}
-                    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo Principal:</span>
-                      <div className="flex items-center gap-2.5 mt-1.5">
-                        <Mail size={15} className="text-blue-600 shrink-0" />
-                        <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-sm truncate">
-                          {selectedTrabajadorModal.email}
-                        </span>
-                        <Lock size={13} className="text-zinc-400 ml-auto shrink-0" title="Correo Corporativo Protegido" />
+                    {/* Correos de Contacto (Corporativo y Personal) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {/* Correo Corporativo */}
+                      <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo Principal:</span>
+                        <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
+                          <Mail size={15} className="text-blue-600 shrink-0" />
+                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.email}>
+                            {selectedTrabajadorModal.email}
+                          </span>
+                          <Lock size={13} className="text-zinc-400 ml-auto shrink-0" title="Correo Corporativo Protegido" />
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Correo Personal Alternativo */}
-                    <div className="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 hover:border-purple-400 dark:hover:border-purple-600 transition-colors">
-                      <span className="text-[0.62rem] font-extrabold uppercase text-purple-700 dark:text-purple-300 block font-mono">
-                        Correo Personal Alternativo (Credenciales Temporales):
-                      </span>
-                      <div className="flex items-center gap-2.5 mt-1.5">
-                        <Mail size={15} className="text-purple-600 shrink-0" />
-                        <span className="font-mono font-bold text-purple-900 dark:text-purple-200 text-xs truncate">
-                          {selectedTrabajadorModal.correoPersonal || selectedTrabajadorModal.emailPersonal || 'No registrado / Asignado al crear'}
-                        </span>
+                      {/* Correo Personal Alternativo */}
+                      <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Personal Alternativo:</span>
+                        <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
+                          <Mail size={15} className="text-zinc-500 shrink-0" />
+                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.correoPersonal || selectedTrabajadorModal.emailPersonal || 'No registrado'}>
+                            {selectedTrabajadorModal.correoPersonal || selectedTrabajadorModal.emailPersonal || 'No registrado / Asignado al crear'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -5104,7 +5387,7 @@ export const CoordinadorDashboard = () => {
                       <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm block">
                         {selectedTrabajadorModal.profesion || 'Ingeniero de Software'}
                       </span>
-                      
+
                       {/* Tech Pills Parser */}
                       <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-700/50">
                         <span className="text-[0.65rem] font-bold text-zinc-500 block mb-2 flex items-center gap-1.5">
@@ -5117,7 +5400,7 @@ export const CoordinadorDashboard = () => {
                             .map(item => item.trim())
                             .filter(item => item.length > 0)
                             .map((tech, idx) => (
-                              <motion.span 
+                              <motion.span
                                 key={idx}
                                 whileHover={{ scale: 1.06, y: -1 }}
                                 whileTap={{ scale: 0.96 }}
@@ -5141,8 +5424,9 @@ export const CoordinadorDashboard = () => {
                       </div>
                       <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
                         <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Primer Login:</span>
-                        <span className="font-extrabold text-zinc-800 dark:text-zinc-200 text-xs block mt-1">
-                          {selectedTrabajadorModal.primerLoginRealizado ? 'Sí (Validado)' : 'Pendiente primera sesión'}
+                        <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                          <span className={`w-2.5 h-2.5 rounded-full ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+                          {(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'Sí (Validado)' : 'Pendiente primera sesión'}
                         </span>
                       </div>
                     </div>
@@ -5160,8 +5444,8 @@ export const CoordinadorDashboard = () => {
                       >
                         <FolderGit2 size={18} />
                         <span>
-                          {showTrabajosSubpanel 
-                            ? '◄ Ocultar Proyectos Asociados' 
+                          {showTrabajosSubpanel
+                            ? '◄ Ocultar Proyectos Asociados'
                             : `Desplegar Proyectos Asociados (${workerProyectos.length}) ►`}
                         </span>
                       </motion.button>
@@ -5171,7 +5455,7 @@ export const CoordinadorDashboard = () => {
 
                 {/* Panel Derecho: Subpanel Lateral de Proyectos (7 de 12 columnas en Pantalla Ancha con Holgura) */}
                 {showTrabajosSubpanel && !selectedTrabajadorModal.rol?.toUpperCase().includes('DESARROLLADOR') && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     className="space-y-5 border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 lg:pl-8 pt-6 lg:pt-0 lg:col-span-7"
@@ -5205,7 +5489,7 @@ export const CoordinadorDashboard = () => {
                           );
 
                           return (
-                            <motion.div 
+                            <motion.div
                               key={prj.idProyecto}
                               initial={{ opacity: 0, y: 15 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -5218,11 +5502,10 @@ export const CoordinadorDashboard = () => {
                                 <span className="font-mono font-extrabold text-[0.7rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-3 py-1 rounded-lg border border-blue-200 dark:border-blue-800">
                                   PRJ-00{prj.idProyecto}
                                 </span>
-                                <span className={`px-3 py-1 rounded-full text-[0.63rem] font-black uppercase inline-flex items-center gap-1.5 ${
-                                  isLider 
-                                    ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300' 
+                                <span className={`px-3 py-1 rounded-full text-[0.63rem] font-black uppercase inline-flex items-center gap-1.5 ${isLider
+                                    ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300'
                                     : 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
-                                }`}>
+                                  }`}>
                                   {isLider ? <Crown size={13} className="text-amber-500 shrink-0" /> : <Code2 size={13} className="shrink-0" />}
                                   <span>{isLider ? 'Líder Directivo' : 'Desarrollador'}</span>
                                 </span>
@@ -5369,7 +5652,7 @@ export const CoordinadorDashboard = () => {
       <AnimatePresence>
         {showNuevaEtapaModalCoord && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -5417,59 +5700,127 @@ export const CoordinadorDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal: Asignar Nueva Actividad WBS (Modo Edición Coordinador) */}
+      {/* Modal: Asignar Actividad a Desarrollador (Versión Ampliada, Buscable y con Sugerencias) */}
       <AnimatePresence>
         {showNuevaActividadModalCoord && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ duration: 0.2 }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-5"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl space-y-6 my-6"
             >
-              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Zap size={20} className="text-blue-600" />
-                  <span>Asignar Actividad a Desarrollador</span>
-                </h3>
-                <button type="button" onClick={() => setShowNuevaActividadModalCoord(false)} className="text-zinc-400 hover:text-zinc-600 p-1">
+              {/* Encabezado Principal */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/25">
+                    <Zap size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                      Asignar Actividad a Desarrollador
+                    </h3>
+                    <p className="text-zinc-500 text-xs font-medium mt-0.5">
+                      Vincule una nueva tarea operativa a una fase WBS y defina el desarrollador responsable.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowNuevaActividadModalCoord(false)}
+                  className="p-2 rounded-2xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                >
                   <X size={18} />
                 </button>
               </div>
 
-              <form onSubmit={handleRegistrarActividadCoord} className="space-y-4 text-xs">
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción / Nombre de la Tarea *</label>
+              <form onSubmit={handleRegistrarActividadCoord} className="space-y-5 text-xs">
+                {/* 1. Descripción / Nombre de la Tarea */}
+                <div className="space-y-2">
+                  <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block text-xs">
+                    1. Descripción / Nombre de la Tarea *
+                  </label>
                   <input
                     type="text"
                     required
                     value={nuevaActividadCoord.nombreActividad}
                     onChange={(e) => setNuevaActividadCoord({ ...nuevaActividadCoord, nombreActividad: e.target.value })}
                     placeholder="Ej. Documentar contratos OpenAPI 3.0 para la API pública"
-                    className="input-field py-2.5 font-semibold"
+                    className="input-field py-3 text-xs font-semibold w-full"
                   />
-                </div>
-
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Seleccionar Fase / Etapa *</label>
-                  <select
-                    required
-                    value={nuevaActividadCoord.idEtapa}
-                    onChange={(e) => setNuevaActividadCoord({ ...nuevaActividadCoord, idEtapa: e.target.value })}
-                    className="input-field py-2.5 font-bold"
-                  >
-                    <option value="">-- Seleccionar Etapa WBS --</option>
-                    {proyectoEtapasModal.map((et) => (
-                      <option key={et.idEtapa} value={et.idEtapa}>
-                        Fase #{et.idEtapa}: {et.nombreEtapa}
-                      </option>
+                  {/* Sugerencias Rápidas de Tarea */}
+                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                    <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Sugerencias rápidas:</span>
+                    {[
+                      'Documentación OpenAPI 3.0',
+                      'Pruebas Unitarias JUnit & Mockito',
+                      'Integración API REST',
+                      'Optimización de Consultas SQL',
+                      'Refactorización Módulo Backend',
+                      'Diseño e Implementación UI React'
+                    ].map((sug, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setNuevaActividadCoord({ ...nuevaActividadCoord, nombreActividad: sug })}
+                        className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 dark:hover:text-blue-300 text-zinc-600 dark:text-zinc-300 text-[0.65rem] font-bold border border-zinc-200/80 dark:border-zinc-700/80 transition-all cursor-pointer flex items-center gap-1"
+                      >
+                        <Plus size={11} className="text-blue-500" />
+                        <span>{sug}</span>
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Desarrollador Asignado *</label>
+                {/* 2. Seleccionar Fase / Etapa WBS */}
+                <div className="space-y-2">
+                  <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block text-xs">
+                    2. Seleccionar Fase / Etapa WBS *
+                  </label>
+                  <CustomSelect
+                    value={nuevaActividadCoord.idEtapa}
+                    onChange={(val) => setNuevaActividadCoord({ ...nuevaActividadCoord, idEtapa: val })}
+                    options={[
+                      { value: '', label: '— Seleccionar Etapa WBS —' },
+                      ...(proyectoEtapasModal || []).map((et) => {
+                        const isFin = (et.estado || '').toUpperCase() === 'FINALIZADA' || (et.estado || '').toUpperCase() === 'COMPLETADO';
+                        return {
+                          value: String(et.idEtapa),
+                          label: `Fase #${et.idEtapa}: ${et.nombreEtapa}`,
+                          subtitle: isFin
+                            ? '⚠️ Etapa Finalizada (Se reabrirá a EN_PROCESO al asignar)'
+                            : `Estado: ${et.estado || 'PENDIENTE'} • ${et.actividades ? et.actividades.length : 0} tareas vinculadas`
+                        };
+                      })
+                    ]}
+                    maxWidth="w-full"
+                    searchable={true}
+                    icon={Layers}
+                    placeholder="— Seleccionar Etapa WBS —"
+                  />
+
+                  {/* Indicador Informativo si la Etapa Seleccionada está FINALIZADA */}
+                  {(() => {
+                    const selectedEt = (proyectoEtapasModal || []).find(et => String(et.idEtapa) === String(nuevaActividadCoord.idEtapa));
+                    const isFin = selectedEt && ((selectedEt.estado || '').toUpperCase() === 'FINALIZADA' || (selectedEt.estado || '').toUpperCase() === 'COMPLETADO');
+                    if (!isFin) return null;
+                    return (
+                      <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-center gap-2 text-[0.72rem] font-semibold animate-fadeIn">
+                        <AlertTriangle size={15} className="text-amber-600 shrink-0" />
+                        <span>
+                          <strong>Atención:</strong> La fase <strong>&quot;{selectedEt.nombreEtapa}&quot;</strong> está finalizada. Al asignar la tarea, la fase se reabrirá automáticamente a <strong>EN_PROCESO</strong> y se guardará en auditoría.
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* 3. Desarrollador Asignado */}
+                <div className="space-y-2">
+                  <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block text-xs">
+                    3. Desarrollador Asignado Responsable *
+                  </label>
                   <CustomSelect
                     value={nuevaActividadCoord.idDesarrollador}
                     onChange={(val) => setNuevaActividadCoord({ ...nuevaActividadCoord, idDesarrollador: val })}
@@ -5480,21 +5831,41 @@ export const CoordinadorDashboard = () => {
                         .map(dev => ({
                           value: String(dev?.idTrabajador),
                           label: `${dev?.nombre} ${dev?.apellido}`,
-                          subtitle: dev?.profesion || dev?.especialidad || 'Desarrollador'
+                          subtitle: `${dev?.profesion || dev?.especialidad || 'Desarrollador'} • ${dev?.email || ''}`
                         }))
                     ]}
                     maxWidth="w-full"
                     searchable={true}
                     icon={User}
+                    placeholder="— Seleccionar Desarrollador —"
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                  <button type="button" onClick={() => setShowNuevaActividadModalCoord(false)} className="outline-button px-4 py-2 text-xs font-bold rounded-2xl">
+                {/* Pie del Formulario con Botones */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowNuevaActividadModalCoord(false)}
+                    className="px-5 py-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-xs cursor-pointer"
+                  >
                     Cancelar
                   </button>
-                  <button type="submit" disabled={submittingActividadCoord} className="gradient-button px-5 py-2 text-xs font-bold rounded-2xl">
-                    {submittingActividadCoord ? 'Asignando...' : 'Asignar Tarea'}
+                  <button
+                    type="submit"
+                    disabled={submittingActividadCoord || !nuevaActividadCoord.nombreActividad.trim() || !nuevaActividadCoord.idEtapa || !nuevaActividadCoord.idDesarrollador}
+                    className="gradient-button px-6 py-2.5 text-xs font-extrabold rounded-2xl inline-flex items-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                    {submittingActividadCoord ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Asignando Actividad...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={16} />
+                        <span>Asignar Actividad al Desarrollador</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -5507,7 +5878,7 @@ export const CoordinadorDashboard = () => {
       <AnimatePresence>
         {showEditarEtapaModalCoord && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -5537,16 +5908,18 @@ export const CoordinadorDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Estado de la Etapa *</label>
-                  <select
-                    value={etapaAEditarCoord.estado}
-                    onChange={(e) => setEtapaAEditarCoord({ ...etapaAEditarCoord, estado: e.target.value })}
-                    className="input-field py-2.5 font-bold uppercase"
-                  >
-                    <option value="PENDIENTE">PENDIENTE</option>
-                    <option value="EN_PROGRESO">EN PROGRESO</option>
-                    <option value="FINALIZADA">FINALIZADA</option>
-                  </select>
+                  <label className="font-extrabold text-zinc-700 dark:text-zinc-300 block mb-1">Estado de la Etapa</label>
+                  <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+                    <span className="font-extrabold text-xs text-blue-700 dark:text-blue-400 uppercase tracking-wide">
+                      {etapaAEditarCoord.estado || 'PENDIENTE'}
+                    </span>
+                    <span className="text-[0.68rem] text-zinc-400 font-medium italic">
+                      (Administrado automáticamente por el sistema)
+                    </span>
+                  </div>
+                  <p className="text-[0.65rem] text-zinc-400 font-medium mt-1">
+                    El estado cambia a EN_PROCESO cuando hay tareas en progreso y a FINALIZADA al presionar &quot;Finalizar Etapa&quot;.
+                  </p>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
@@ -5563,11 +5936,137 @@ export const CoordinadorDashboard = () => {
         )}
       </AnimatePresence>
 
+      {/* Modal Emergente Interactivo: Confirmar Finalización de Etapa WBS */}
+      <AnimatePresence>
+        {etapaAFinalizarModalCoord && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-md">
+                  <CheckCircle2 size={26} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
+                    Confirmar Finalización de Etapa
+                  </h3>
+                  <span className="text-[0.68rem] text-zinc-400 font-bold uppercase tracking-wider">
+                    Cierre Formal de Fase #{etapaAFinalizarModalCoord.idEtapa}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 space-y-2 text-xs">
+                <p className="text-zinc-700 dark:text-zinc-300 font-semibold leading-relaxed">
+                  ¿Está seguro de finalizar formalmente la etapa <strong className="text-zinc-900 dark:text-zinc-100">&quot;{etapaAFinalizarModalCoord.nombreEtapa}&quot;</strong>?
+                </p>
+                <div className="pt-2 border-t border-zinc-200 dark:border-zinc-700/60 text-[0.7rem] text-zinc-500 space-y-1">
+                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                    <CheckCircle2 size={13} /> Todas las tareas internas han sido completadas por los desarrolladores.
+                  </div>
+                  <div className="flex items-center gap-1.5 text-zinc-500">
+                    <ShieldCheck size={13} className="text-blue-500" /> Esta acción quedará registrada en la auditoría oficial del proyecto.
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEtapaAFinalizarModalCoord(null)}
+                  className="px-4 py-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={ejecutarFinalizarEtapaCoord}
+                  className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                >
+                  <CheckCircle2 size={16} />
+                  <span>Sí, Finalizar Etapa</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Emergente Interactivo: Confirmar Reapertura de Etapa WBS */}
+      <AnimatePresence>
+        {etapaAReabrirModalCoord && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-md">
+                  <AlertTriangle size={26} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
+                    Confirmar Reapertura de Etapa
+                  </h3>
+                  <span className="text-[0.68rem] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider">
+                    Asignación en Etapa Concluida
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 space-y-2 text-xs">
+                <p className="text-amber-950 dark:text-amber-200 font-extrabold">
+                  La etapa &quot;{etapaAReabrirModalCoord.etapaNombre}&quot; se encuentra actualmente FINALIZADA.
+                </p>
+                <div className="pt-2 border-t border-amber-200/80 dark:border-amber-800/60 text-[0.7rem] text-amber-900 dark:text-amber-300 space-y-1.5">
+                  <div className="flex items-start gap-1.5">
+                    <span className="font-bold text-amber-600">1.</span>
+                    <span>La etapa se reabrirá automáticamente y su estado cambiará a <strong>EN_PROCESO</strong>.</span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="font-bold text-amber-600">2.</span>
+                    <span>Se asignará la tarea <strong>&quot;{etapaAReabrirModalCoord.nombreActividad}&quot;</strong> a {etapaAReabrirModalCoord.devNombre}.</span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="font-bold text-amber-600">3.</span>
+                    <span>Esta acción quedará registrada en el historial de auditoría del proyecto.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEtapaAReabrirModalCoord(null)}
+                  className="px-4 py-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={ejecutarReaperturaYAsignarCoord}
+                  className="px-5 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                >
+                  <RotateCcw size={16} />
+                  <span>Sí, Reabrir y Asignar</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Modal: Reasignar Actividad WBS con CustomSelect & Motivo Obligatorio */}
       <AnimatePresence>
         {showReasignarActividadModalCoord && actividadAReasignarCoord && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -5652,6 +6151,724 @@ export const CoordinadorDashboard = () => {
             </motion.div>
           </div>
         )}
+        {/* Modal: Generador de Reportes PDF Configurable del Coordinador */}
+        {showGenerarReportePdfModalCoord && selectedProyectoModal && (() => {
+          const seccionesActivas = [
+            pdfConfigCoord.incluirPausas,
+            pdfConfigCoord.incluirAuditoriaCoordinador,
+            pdfConfigCoord.incluirWbs,
+            pdfConfigCoord.incluirEquipo,
+            pdfConfigCoord.modoSensible,
+            pdfConfigCoord.incluirMetricasKpi,
+            pdfConfigCoord.incluirMatrizRiesgos,
+            pdfConfigCoord.incluirFirmaDirectiva
+          ].filter(Boolean).length;
+
+          return (
+            <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 12 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-4xl shadow-2xl space-y-6 max-h-[92dvh] overflow-y-auto"
+              >
+                {/* Header del Modal sin botón X */}
+                <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/25 shrink-0">
+                      <FileText size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                        <span>Configuración Avanzada de Reporte PDF & Auditoría</span>
+                      </h3>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                        Selecciona un perfil predeterminado o personaliza los 8 módulos e información confidencial a incluir
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tarjeta Informativa del Proyecto Seleccionado */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-purple-50/70 dark:from-blue-950/50 dark:via-indigo-950/40 dark:to-purple-950/40 border border-blue-200/80 dark:border-blue-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[0.68rem] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white shadow-2xs">
+                        PRJ-00{selectedProyectoModal.idProyecto}
+                      </span>
+                      <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                        {selectedProyectoModal.nombre}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium">
+                      Cliente: <strong>{selectedProyectoModal.cliente || 'Interno'}</strong> • Líder: <strong>{selectedProyectoModal.lider ? `${selectedProyectoModal.lider.nombre} ${selectedProyectoModal.lider.apellido}` : 'Carlos Mendoza'}</strong>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`px-3 py-1 rounded-full text-xs font-black border flex items-center gap-1.5 ${selectedProyectoModal.estado === 'EN_PAUSA'
+                        ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800'
+                      }`}>
+                      {selectedProyectoModal.estado === 'EN_PAUSA' ? <Pause size={13} /> : <CheckCircle2 size={13} />}
+                      {selectedProyectoModal.estado || 'ACTIVO'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Disposición en 2 Columnas de Configuración */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start text-xs">
+                  {/* Columna Izquierda: Perfil (5 cols) */}
+                  <div className="md:col-span-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="font-extrabold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider text-[0.7rem]">
+                        1. Perfil del Documento PDF *
+                      </label>
+                      <span className="text-[0.62rem] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                        Configuración Dinámica
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {/* Perfil 1: Resumido */}
+                      <button
+                        type="button"
+                        onClick={() => seleccionarPerfilPdfCoord('RESUMIDO')}
+                        className={`w-full p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${pdfConfigCoord.nivelDetalle === 'RESUMIDO'
+                            ? 'bg-blue-50/90 dark:bg-blue-950/80 border-blue-600 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                          }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <PieChart size={15} className={pdfConfigCoord.nivelDetalle === 'RESUMIDO' ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400'} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100">
+                              Reporte Resumido (Ejecutivo)
+                            </span>
+                          </div>
+                          {pdfConfigCoord.nivelDetalle === 'RESUMIDO' && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                        </div>
+                        <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 leading-relaxed pl-5">
+                          Visión estratégica de alto nivel con presupuesto, WBS y métricas de salud operativa.
+                        </p>
+                        <div className="mt-2 pl-5 flex items-center gap-1.5">
+                          <span className="text-[0.6rem] font-mono font-bold px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                            3 Secciones
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Perfil 2: Operativo (Estándar) */}
+                      <button
+                        type="button"
+                        onClick={() => seleccionarPerfilPdfCoord('DETALLADO')}
+                        className={`w-full p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${pdfConfigCoord.nivelDetalle === 'DETALLADO'
+                            ? 'bg-blue-50/90 dark:bg-blue-950/80 border-blue-600 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                          }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <Activity size={15} className={pdfConfigCoord.nivelDetalle === 'DETALLADO' ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400'} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100">
+                              Reporte Operativo (Estándar)
+                            </span>
+                          </div>
+                          {pdfConfigCoord.nivelDetalle === 'DETALLADO' && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                        </div>
+                        <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 leading-relaxed pl-5">
+                          WBS completo, pausas, nómina, finanzas, matriz de riesgos y firmas directivas.
+                        </p>
+                        <div className="mt-2 pl-5 flex items-center gap-1.5">
+                          <span className="text-[0.6rem] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                            7 Secciones
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Perfil 3: Audit-Ready Completo */}
+                      <button
+                        type="button"
+                        onClick={() => seleccionarPerfilPdfCoord('AUDITORIA_COMPLETA')}
+                        className={`w-full p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${pdfConfigCoord.nivelDetalle === 'AUDITORIA_COMPLETA'
+                            ? 'bg-blue-50/90 dark:bg-blue-950/80 border-blue-600 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                          }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck size={15} className={pdfConfigCoord.nivelDetalle === 'AUDITORIA_COMPLETA' ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400'} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100">
+                              Consolidado Audit-Ready (Completo)
+                            </span>
+                          </div>
+                          {pdfConfigCoord.nivelDetalle === 'AUDITORIA_COMPLETA' && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                        </div>
+                        <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 leading-relaxed pl-5">
+                          Audit trail completo del coordinador, pausas, WBS, equipo, finanzas, KPIs, riesgos y firmas.
+                        </p>
+                        <div className="mt-2 pl-5 flex items-center gap-1.5">
+                          <span className="text-[0.6rem] font-mono font-bold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                            8 Secciones Totales
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Columna Derecha: Opciones a Incluir (7 cols) */}
+                  <div className="md:col-span-7 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="font-extrabold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider text-[0.7rem]">
+                        2. Secciones e Información a Imprimir *
+                      </label>
+
+                      {/* Botones de Selección Rápida */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setPdfConfigCoord({
+                            ...pdfConfigCoord,
+                            incluirPausas: true,
+                            incluirAuditoriaCoordinador: true,
+                            incluirWbs: true,
+                            incluirEquipo: true,
+                            modoSensible: true,
+                            incluirMetricasKpi: true,
+                            incluirMatrizRiesgos: true,
+                            incluirFirmaDirectiva: true
+                          })}
+                          className="text-[0.62rem] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                        >
+                          Marcar Todas
+                        </button>
+                        <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                        <button
+                          type="button"
+                          onClick={() => setPdfConfigCoord({
+                            ...pdfConfigCoord,
+                            incluirPausas: false,
+                            incluirAuditoriaCoordinador: false,
+                            incluirWbs: false,
+                            incluirEquipo: false,
+                            modoSensible: false,
+                            incluirMetricasKpi: false,
+                            incluirMatrizRiesgos: false,
+                            incluirFirmaDirectiva: false
+                          })}
+                          className="text-[0.62rem] font-bold text-zinc-400 hover:underline cursor-pointer"
+                        >
+                          Desmarcar Todas
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
+                      {/* Opción 1: Pausas */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${pdfConfigCoord.incluirPausas
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfigCoord.incluirPausas}
+                          onChange={(e) => setPdfConfigCoord({ ...pdfConfigCoord, incluirPausas: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Pause size={14} className={pdfConfigCoord.incluirPausas ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Trazabilidad de Pausas y Suspensión de Producción
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
+                            Fechas de inicio/fin de pausa, duración acumulada y postergación de fecha de entrega.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 2: Gestiones del Coordinador */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${pdfConfigCoord.incluirAuditoriaCoordinador
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfigCoord.incluirAuditoriaCoordinador}
+                          onChange={(e) => setPdfConfigCoord({ ...pdfConfigCoord, incluirAuditoriaCoordinador: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck size={14} className={pdfConfigCoord.incluirAuditoriaCoordinador ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Historial de Gestiones y Auditoría del Coordinador
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
+                            Registro de modificaciones directivas de presupuesto, plazos y supervisión acumulada.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 3: Estructura WBS */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${pdfConfigCoord.incluirWbs
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfigCoord.incluirWbs}
+                          onChange={(e) => setPdfConfigCoord({ ...pdfConfigCoord, incluirWbs: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Layers size={14} className={pdfConfigCoord.incluirWbs ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Estructura WBS, Fases y Actividades del Proyecto
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
+                            Desglose por etapas, actividades técnicas, desarrolladores y % de avance.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 4: Equipo */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${pdfConfigCoord.incluirEquipo
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfigCoord.incluirEquipo}
+                          onChange={(e) => setPdfConfigCoord({ ...pdfConfigCoord, incluirEquipo: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Users size={14} className={pdfConfigCoord.incluirEquipo ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Nómina de Desarrolladores y Control de Jornada (48h)
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
+                            Lista de desarrolladores vinculados, especialidades y dedicación de jornada.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 5: Finanzas */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${pdfConfigCoord.modoSensible
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfigCoord.modoSensible}
+                          onChange={(e) => setPdfConfigCoord({ ...pdfConfigCoord, modoSensible: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <DollarSign size={14} className={pdfConfigCoord.modoSensible ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Información Financiera Sensible (Presupuesto USD)
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
+                            Presupuesto financiero confidencial asignado y métricas de costo.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 6: KPIs */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${pdfConfigCoord.incluirMetricasKpi
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfigCoord.incluirMetricasKpi}
+                          onChange={(e) => setPdfConfigCoord({ ...pdfConfigCoord, incluirMetricasKpi: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Activity size={14} className={pdfConfigCoord.incluirMetricasKpi ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Métricas de Salud Operativa, KPIs & Carga Laboral
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
+                            Estatus de salud del proyecto (Semáforo), % de avance global y métrica de cumplimiento de 48h.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 7: Riesgos */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${pdfConfigCoord.incluirMatrizRiesgos
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfigCoord.incluirMatrizRiesgos}
+                          onChange={(e) => setPdfConfigCoord({ ...pdfConfigCoord, incluirMatrizRiesgos: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <ShieldAlert size={14} className={pdfConfigCoord.incluirMatrizRiesgos ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Matriz de Riesgos y Evaluación de Contingencias
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
+                            Evaluación de riesgos operativos, alertas de postergación y planes de mitigación.
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Opción 8: Firmas */}
+                      <label className={`p-3 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all ${pdfConfigCoord.incluirFirmaDirectiva
+                          ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-500 dark:border-blue-600 shadow-2xs'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={pdfConfigCoord.incluirFirmaDirectiva}
+                          onChange={(e) => setPdfConfigCoord({ ...pdfConfigCoord, incluirFirmaDirectiva: e.target.checked })}
+                          className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <FileCheck size={14} className={pdfConfigCoord.incluirFirmaDirectiva ? "text-blue-600 dark:text-blue-400 shrink-0" : "text-zinc-400 shrink-0"} />
+                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 block">
+                              Bloque Oficial de Firmas, Conformidad y Validación
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 block leading-tight pl-5">
+                            Sección formal para firmas manuscritas/digitales de Líder, Coordinación y Cliente/Auditor.
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Resumen de Secciones Seleccionadas */}
+                    <div className="pt-2 flex items-center justify-between text-[0.68rem] text-zinc-500 dark:text-zinc-400">
+                      <span>Secciones habilitadas: <strong className="text-blue-600 dark:text-blue-400">{seccionesActivas} de 8</strong></span>
+                      <span className="font-mono text-[0.62rem] text-zinc-400">Formato: PDF Document (A4)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Acciones del Modal */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                  <span className="text-[0.68rem] text-zinc-400 font-medium">
+                    * Los módulos excluidos no aparecerán impresos en el documento generado.
+                  </span>
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowGenerarReportePdfModalCoord(false)}
+                      className="outline-button text-xs py-2.5 px-4 font-bold cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <motion.button
+                      type="button"
+                      onClick={handleGenerarReportePdfCoord}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="gradient-button text-xs py-2.5 px-6 font-bold cursor-pointer inline-flex items-center gap-2 shadow-md hover:shadow-blue-500/20"
+                    >
+                      <Download size={16} />
+                      <span>Descargar Reporte PDF Audit-Ready</span>
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
+
+        {/* Modal: Doble Confirmación & Auditoría WBS de Finalización del Proyecto (Coordinador) */}
+        {showConfirmFinalizarCoord && selectedProyectoModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl space-y-6 max-h-[90dvh] overflow-y-auto my-auto relative text-left"
+            >
+              {/* Cabecera Principal Ampliada */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5 pr-8">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-red-500/20 ring-4 ring-red-500/10">
+                    <ShieldAlert size={24} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                        Confirmar Cierre & Finalización del Proyecto
+                      </h3>
+                      <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.68rem] font-bold bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800">
+                        Acción Irreversible
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5 flex items-center gap-1.5">
+                      <Briefcase size={13} className="text-blue-500 shrink-0" />
+                      <span>Proyecto:</span>
+                      <strong className="text-zinc-800 dark:text-zinc-200 font-bold font-mono">[PRJ-00{selectedProyectoModal?.idProyecto}]</strong>
+                      <span className="truncate max-w-md">{selectedProyectoModal?.nombre}</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmFinalizarCoord(false)}
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer absolute top-6 right-6"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Cuerpo Organizado en 2 Columnas */}
+              {evidenciaWbsFinalizacionCoord.esProyectoVacio ? (
+                /* CASO A: PROYECTO VACÍO (0 ETAPAS / 0 TAREAS WBS) */
+                <div className="space-y-5">
+                  <div className="p-5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 space-y-3 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-extrabold text-amber-900 dark:text-amber-300 text-xs uppercase tracking-wider">
+                        <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>Cierre Prematuro: Proyecto Sin Estructura Ni Avances WBS</span>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-lg bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-[0.68rem] font-bold font-mono">
+                        0 Etapas | 0 Actividades
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed font-medium">
+                      Este proyecto no contiene fases ni tareas WBS registradas. No se puede catalogar como <strong>"Culminación Exitosa"</strong> dado que no tuvo ejecución técnica real. Para proceder con su clausura o cancelación, es obligatorio justificar la causa del cierre en la trazabilidad de auditoría directiva.
+                    </p>
+                  </div>
+
+                  {/* Formulario de Justificación de Cierre Prematuro */}
+                  <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-4">
+                    <div className="flex items-center gap-2 text-xs font-extrabold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+                      <FileText size={15} className="text-blue-500 shrink-0" />
+                      <span>Registro Obligatorio de Auditoría de Cierre Prematuro</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                          Motivo Principal de Cierre:
+                        </label>
+                        <CustomSelect
+                          value={motivoCancelacionCoord}
+                          onChange={(val) => setMotivoCancelacionCoord(val)}
+                          options={[
+                            { value: 'CANCELACION_CLIENTE', label: '1. Cancelación o desestimación por el cliente' },
+                            { value: 'REESTRUCTURACION_PROYECTO', label: '2. Reestructurado o migrado a otro código de proyecto' },
+                            { value: 'RECHAZO_PRESUPUESTO', label: '3. Insuficiencia presupuestaria o de recursos' },
+                            { value: 'INVIABILIDAD_TECNICA', label: '4. Inviabilidad técnica o cambio de alcance' },
+                            { value: 'OTRO_MOTIVO', label: '5. Otro motivo (especificar en la justificación)' }
+                          ]}
+                          maxWidth="w-full"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
+                          <span>Justificación Detallada (Mínimo 10 caracteres): *</span>
+                          <span className="text-[0.68rem] text-zinc-400 font-mono">
+                            {justificacionCancelacionCoord.length} caracteres
+                          </span>
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={justificacionCancelacionCoord}
+                          onChange={(e) => {
+                            setJustificacionCancelacionCoord(e.target.value);
+                            if (cancelacionErrorCoord) setCancelacionErrorCoord('');
+                          }}
+                          placeholder="Ej: El proyecto se cierra prematuramente por decisión estratégica de la dirección comercial..."
+                          className="w-full p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed font-medium"
+                        />
+                        {cancelacionErrorCoord && (
+                          <span className="text-[0.72rem] text-red-600 dark:text-red-400 font-bold block mt-1 flex items-center gap-1">
+                            <AlertTriangle size={14} className="shrink-0" /> {cancelacionErrorCoord}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* CASO B: PROYECTO CON FASES / WBS CONFIGURADO */
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                  {/* Columna Izquierda (7 cols): Estado de Auditoría WBS */}
+                  <div className="lg:col-span-7 space-y-4">
+                    {!evidenciaWbsFinalizacionCoord.todasCompletadas ? (
+                      <div className="p-5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 space-y-3.5 shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 font-extrabold text-amber-900 dark:text-amber-300 text-xs uppercase tracking-wider">
+                            <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            <span>Alerta de Auditoría: Fases & Tareas Pendientes</span>
+                          </div>
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-200/70 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-[0.68rem] font-bold font-mono">
+                            {evidenciaWbsFinalizacionCoord.etapasIncompletas.length} Etapas | {evidenciaWbsFinalizacionCoord.actividadesIncompletas.length} Tareas
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed font-medium">
+                          No es posible finalizar el proyecto porque aún existen elementos incompletos en la WBS. Para proceder con el cierre formal, es obligatorio que todas las etapas y tareas estén 100% completadas.
+                        </p>
+
+                        {/* Contenedor Adaptativo de Evidencia WBS */}
+                        <div className="max-h-56 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                          {(evidenciaWbsFinalizacionCoord?.etapasIncompletas || []).map(et => (
+                            <div
+                              key={et.idEtapa}
+                              className="p-3 rounded-xl bg-white/90 dark:bg-zinc-900/90 border border-amber-200/80 dark:border-amber-800/60 space-y-2 shadow-2xs"
+                            >
+                              <div className="flex items-center justify-between text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                                <span className="flex items-center gap-1.5 truncate max-w-[280px]">
+                                  <Layers size={14} className="text-amber-500 shrink-0" />
+                                  <span>Etapa: {et.nombreEtapa}</span>
+                                </span>
+                                <span className="text-[0.65rem] uppercase px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-extrabold border border-amber-200 dark:border-amber-800">
+                                  {et.estado}
+                                </span>
+                              </div>
+
+                              {et.actividadesIncompletas && et.actividadesIncompletas.length > 0 && (
+                                <div className="pl-4 border-l-2 border-amber-200 dark:border-amber-800/60 space-y-1 mt-1 text-[0.72rem]">
+                                  {et.actividadesIncompletas.map(act => (
+                                    <div key={act.idActividad} className="flex items-center justify-between text-zinc-700 dark:text-zinc-300 font-medium">
+                                      <span className="truncate max-w-[240px] flex items-center gap-1">
+                                        <Clock size={11} className="text-amber-500 shrink-0" />
+                                        <span>{act.nombreActividad || act.descripcion}</span>
+                                      </span>
+                                      <span className="text-[0.62rem] font-mono text-zinc-500 font-semibold">{act.estado || 'PENDIENTE'}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-amber-100/60 dark:bg-amber-900/30 text-[0.68rem] text-amber-900 dark:text-amber-300 font-semibold flex items-center gap-2">
+                          <Info size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                          <span>Completa todas las etapas y actividades en el panel de WBS para desbloquear el botón de cierre.</span>
+                        </div>
+                      </div>
+                    ) : (
+                      /* VERIFICACIÓN CUMPLIDA 100% (Réplica Foto 1) */
+                      <div className="p-5 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-xs text-emerald-900 dark:text-emerald-300 space-y-3 shadow-xs">
+                        <div className="flex items-center gap-2 font-extrabold uppercase tracking-wider text-xs text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle2 size={18} className="shrink-0" />
+                          <span>VERIFICACIÓN WBS CUMPLIDA (100%)</span>
+                        </div>
+                        <p className="leading-relaxed font-medium">
+                          Todas las etapas y actividades del cronograma WBS han sido marcadas como finalizadas satisfactoriamente. El proyecto cumple íntegramente con los requisitos de liberación formal.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Columna Derecha (5 cols): Consecuencias & Reglas de Gobernanza (Réplica Foto 1) */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-4 shadow-2xs">
+                      <div className="flex items-center gap-2 font-extrabold text-zinc-900 dark:text-zinc-100 text-xs uppercase tracking-wider">
+                        <Lock size={15} className="text-zinc-600 dark:text-zinc-400 shrink-0" />
+                        <span>IMPACTO & CONSECUENCIAS DEL CIERRE:</span>
+                      </div>
+
+                      <div className="space-y-3 text-xs">
+                        <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
+                          <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 font-bold">
+                            1
+                          </div>
+                          <div>
+                            <strong className="block text-zinc-900 dark:text-zinc-100 font-bold text-[0.75rem]">Cambio de Estado a FINALIZADO</strong>
+                            <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">El proyecto quedará oficialmente clausurado en el portal corporativo.</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
+                          <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 font-bold">
+                            2
+                          </div>
+                          <div>
+                            <strong className="block text-zinc-900 dark:text-zinc-100 font-bold text-[0.75rem]">Congelamiento Total de WBS</strong>
+                            <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">Toda la estructura de tareas y tiempos pasa a modo de lectura inmutable.</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
+                          <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 font-bold">
+                            3
+                          </div>
+                          <div>
+                            <strong className="block text-zinc-900 dark:text-zinc-100 font-bold text-[0.75rem]">Liberación en Predictor Burnout</strong>
+                            <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">Se libera la carga horaria y dedicación asignada a todos los desarrolladores.</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* Pie del Modal con Botones de Acción */}
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmFinalizarCoord(false)}
+                  disabled={submittingPausaFinalizarCoord}
+                  className="w-full sm:w-auto outline-button text-xs py-2.5 px-5 font-bold cursor-pointer disabled:opacity-50 text-zinc-700 dark:text-zinc-300"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEjecutarFinalizacionProyectoCoord}
+                  disabled={
+                    submittingPausaFinalizarCoord ||
+                    (!evidenciaWbsFinalizacionCoord.esProyectoVacio && !evidenciaWbsFinalizacionCoord.todasCompletadas)
+                  }
+                  title={
+                    !evidenciaWbsFinalizacionCoord.esProyectoVacio && !evidenciaWbsFinalizacionCoord.todasCompletadas
+                      ? 'Debe completar el 100% de la WBS para finalizar el proyecto'
+                      : 'Confirmar Cierre Formal'
+                  }
+                  className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs py-2.5 px-6 rounded-xl font-extrabold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all transform active:scale-95"
+                >
+                  {submittingPausaFinalizarCoord ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Procesando Cierre...
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={15} /> Confirmar Cierre Formal
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
       </AnimatePresence>
 
     </DashboardLayout>
