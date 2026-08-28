@@ -77,7 +77,7 @@ VALUES
   (2, 'Core Bancario & Microservicios Cloud', 'Itaú Unibanco Holding', 'Modernización de la arquitectura financiera con servicios transaccionales idempotentes, seguridad stateless JWT y alta concurrencia.', 120000.00, '2026-02-01', '2026-12-15', 'ACTIVO', 5),
   (3, 'App Móvil Fintech & Billetera Digital', 'Nubank Brasil S.A.', 'Billetera digital multiplataforma con pagos QR dinámicos, autenticación biométrica y transferencias interbancarias inmediatas.', 65000.00, '2026-03-01', '2026-10-30', 'ACTIVO', 8),
   (4, 'Plataforma Telemedicina & Triaje Inteligente', 'Hospital Israelita Albert Einstein', 'Sistema de atención médica virtual con streaming WebRTC de baja latencia, recetas digitales encriptadas y triaje automatizado.', 48000.00, '2026-04-10', '2026-09-30', 'ACTIVO', 8),
-  (5, 'Migración ERP Empresarial & Data Warehouse', 'Embraer Enterprise Solutions', 'Migración masiva de base de datos legada hacia cluster PostgreSQL con pipelines de analítica predictiva en tiempo real.', 95000.00, '2025-06-01', '2026-01-30', 'COMPLETADO', 2)
+  (5, 'Migración ERP Empresarial & Data Warehouse', 'Embraer Enterprise Solutions', 'Migración masiva de base de datos legada hacia cluster PostgreSQL con pipelines de analítica predictiva en tiempo real.', 95000.00, '2025-06-01', '2026-01-30', 'ACTIVO', 2)
 ON CONFLICT (id_proyecto) DO UPDATE SET
   nombre = EXCLUDED.nombre,
   cliente = EXCLUDED.cliente,
@@ -1339,5 +1339,36 @@ VALUES
   (3, 'Interpretación del Semáforo Inteligente de Riesgos para Líderes', 'Aprende a gestionar contingencias operacionales y evaluar la salud integral de tus proyectos.', 'https://www.youtube.com/embed/dQw4w9WgXcQ', 'Liderazgo', NOW() - INTERVAL '5 days', 5);
 
 SELECT setval('tutorial_id_tutorial_seq', (SELECT MAX(id_tutorial) FROM tutorial));
+
+-- 16. CHAT CORPORATIVO TRANSVERSAL (MENSAJES SEMILLA REALISTAS DE TELEMETRÍA Y OPERACIONES)
+DELETE FROM mensaje_chat;
+INSERT INTO mensaje_chat (id_mensaje, canal, contenido, fecha_envio, remitente_id, destinatario_id)
+VALUES 
+  -- Canal: general
+  (101, 'general', 'Buenos días a todo el equipo IKernell. Se ha desplegado la versión 2.4.0 del Semáforo Predictivo con telemetría en tiempo real. Por favor reporten cualquier contingencia u holgura crítica directamente en su etapa WBS asignada.', NOW() - INTERVAL '4 hours', 2, NULL),
+  (102, 'general', 'Super confirmado #Revisión. Se completaron las pruebas de integración en el endpoint de autenticación JWT y la trazabilidad de auditoría en PostgreSQL.', NOW() - INTERVAL '3 hours', 5, NULL),
+  (103, 'general', 'Recibido #Tarea. Registré el avance de la Fase 2 de maquetado UI. El módulo responde con 100% de fluidez en dispositivos móviles, tablets y Brave/Chrome.', NOW() - INTERVAL '2 hours', 6, NULL),
+  (104, 'general', '[REPORTE AUTOMÁTICO WBS] Avance consolidado del proyecto "Core Bancario & Microservicios Cloud" alcanzado al 82%. Próximo hito de entrega programado en calendario.', NOW() - INTERVAL '1 hour', 2, NULL),
+  (105, 'general', 'Excelente ritmo equipo. Recuerden revisar el tablero personal de actividades para dar seguimiento a los items pendientes.', NOW() - INTERVAL '30 minutes', 2, NULL),
+
+  -- Canal: arquitectura
+  (201, 'arquitectura', 'Equipo de Backend: Se ajustó la configuración del pool de conexiones HikariCP en PostgreSQL (maximum-pool-size: 20, idle-timeout: 30000ms) para optimizar transacciones concurrentes en el módulo de telemetría.', NOW() - INTERVAL '5 hours', 5, NULL),
+  (202, 'arquitectura', 'Excelente #Arquitectura. Verifiqué las métricas de rendimiento y las consultas JPA de las etapas WBS están ejecutándose en menos de 12ms sin sobrecarga de N+1 query overhead.', NOW() - INTERVAL '3 hours', 6, NULL),
+  (203, 'arquitectura', 'Recuerden aplicar las migraciones Flyway/DDL en orden estricto manteniendo los esquemas alineados con las clases de entidad Hibernate. #WBS #Backend', NOW() - INTERVAL '1 hour', 2, NULL),
+  (204, 'arquitectura', 'Agregado índice compuesto en la tabla mensaje_chat (canal, fecha_envio ASC) para acelerar el tiempo de respuesta del chat en vivo a < 5ms.', NOW() - INTERVAL '20 minutes', 5, NULL),
+
+  -- Canal: soporte-brasil
+  (301, 'soporte-brasil', '#Urgente Se detectó una contingencia técnica tipo 500 REST API en el módulo de facturación por un time-out en la conexión hacia el servicio externo de la DIAN. Registrado reporte de incidencia #Bug.', NOW() - INTERVAL '6 hours', 6, NULL),
+  (302, 'soporte-brasil', 'Incidencia atenuada. Se aplicó mecanismo de mitigación mediante retries exponenciales y fallback transparente. El servicio restableció operaciones normales a las 14:30 UTC.', NOW() - INTERVAL '4 hours', 5, NULL),
+  (303, 'soporte-brasil', 'Registrada interrupción operativa no planificada de 35 minutos por mantenimiento preventivo en el servidor secundario PostgreSQL. Tiempos calibrados en el Semáforo.', NOW() - INTERVAL '2 hours', 2, NULL),
+  (304, 'soporte-brasil', 'Confirmado #Soporte. El entorno de staging volvió a estado VERDE y todos los tests sintéticos pasaron correctamente.', NOW() - INTERVAL '15 minutes', 6, NULL),
+
+  -- Canal: alertas-wbs
+  (401, 'alertas-wbs', '⚠️ [ALERTA PREDICTIVA] Se detectó holgura crítica (-45 min) en la Etapa WBS #104 "Integración REST API". Se recomienda reasignar soporte técnico.', NOW() - INTERVAL '7 hours', 2, NULL),
+  (402, 'alertas-wbs', 'Reasignando actividad #104 al equipo de arquitectura senior. Holgura recalculada a estado VERDE.', NOW() - INTERVAL '5 hours', 5, NULL),
+  (403, 'alertas-wbs', 'Confirmado #WBS. Pruebas de integración superadas con éxito. La holgura volvió a valores óptimos de seguridad.', NOW() - INTERVAL '1 hour', 6, NULL),
+  (404, 'alertas-wbs', '[TELEMETRÍA SEMÁFORO] Todas las etapas WBS activas registran índice de holgura positivo (+120 min). Riesgo de atraso en 0%.', NOW() - INTERVAL '10 minutes', 2, NULL);
+
+SELECT setval('mensaje_chat_id_mensaje_seq', (SELECT MAX(id_mensaje) FROM mensaje_chat));
 
 COMMIT;
