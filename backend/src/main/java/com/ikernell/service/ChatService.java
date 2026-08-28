@@ -6,6 +6,7 @@ import com.ikernell.model.MensajeChat;
 import com.ikernell.model.Trabajador;
 import com.ikernell.repository.MensajeChatRepository;
 import com.ikernell.repository.TrabajadorRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,5 +78,23 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<Trabajador> obtenerUsuariosDisponibles() {
         return trabajadorRepository.findByEstadoTrue();
+    }
+
+    /**
+     * Mantenimiento batch automatizado de optimización PostgreSQL (RF-31 / Optimización BD):
+     * Depura automáticamente todos los mensajes con antigüedad superior a 90 días (3 meses)
+     * para evitar sobrecrecimiento de la base de datos.
+     * Se ejecuta automáticamente todos los días a las 03:00 AM UTC.
+     */
+    @Scheduled(cron = "0 0 3 * * ?")
+    @Transactional
+    public int depurarMensajesAntiguos() {
+        LocalDateTime hace90Dias = LocalDateTime.now().minusDays(90);
+        int depurados = mensajeChatRepository.eliminarMensajesAnterioresA(hace90Dias);
+        if (depurados > 0) {
+            System.out.println("[OPTIMIZACIÓN CHAT POSTGRESQL] Depuración automática completada: " 
+                    + depurados + " mensajes con más de 90 días de antigüedad fueron eliminados de PostgreSQL.");
+        }
+        return depurados;
     }
 }

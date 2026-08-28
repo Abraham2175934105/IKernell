@@ -32,6 +32,16 @@ public class Actividad {
     @Column(name = "estado", nullable = false, length = 20)
     private String estado;
 
+    @Column(name = "fecha_asignacion")
+    private java.time.LocalDateTime fechaAsignacion;
+
+    @PrePersist
+    public void onCreate() {
+        if (this.fechaAsignacion == null) {
+            this.fechaAsignacion = java.time.LocalDateTime.now();
+        }
+    }
+
     // Constructores
     public Actividad() {}
 
@@ -82,5 +92,13 @@ public class Actividad {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public java.time.LocalDateTime getFechaAsignacion() {
+        return fechaAsignacion;
+    }
+
+    public void setFechaAsignacion(java.time.LocalDateTime fechaAsignacion) {
+        this.fechaAsignacion = fechaAsignacion;
     }
 }

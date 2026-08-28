@@ -8,9 +8,8 @@ import java.util.List;
 // Entidad JPA que representa a los empleados y usuarios del sistema (Coordinadores, Líderes y Desarrolladores)
 @Entity
 @Table(name = "trabajador")
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Trabajador {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -78,14 +77,14 @@ public class Trabajador {
     @OneToMany(mappedBy = "desarrollador")
     private List<Interrupcion> interrupciones = new ArrayList<>();
 
-
     // Constructores
-    public Trabajador() {}
+    public Trabajador() {
+    }
 
-    public Trabajador(Long idTrabajador, String identificacion, String nombre, String apellido, 
-                      LocalDate fechaNacimiento, String direccion, String profesion, 
-                      String especialidad, String fotoUrl, Rol rol, String email, 
-                      String passwordHash, Boolean estado) {
+    public Trabajador(Long idTrabajador, String identificacion, String nombre, String apellido,
+            LocalDate fechaNacimiento, String direccion, String profesion,
+            String especialidad, String fotoUrl, Rol rol, String email,
+            String passwordHash, Boolean estado) {
         this.idTrabajador = idTrabajador;
         this.identificacion = identificacion;
         this.nombre = nombre;

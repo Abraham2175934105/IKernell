@@ -33,25 +33,37 @@ public class CoordinadorService {
     private final SolicitudContactoRepository solicitudContactoRepository;
     private final PasswordEncoder passwordEncoder;
     private final HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository;
+    private final EmailService emailService;
 
     public CoordinadorService(TrabajadorRepository trabajadorRepository,
-                              ProyectoRepository proyectoRepository,
-                              ProyectoDesarrolladorRepository proyectoDesarrolladorRepository,
-                              SolicitudContactoRepository solicitudContactoRepository,
-                              PasswordEncoder passwordEncoder,
-                              HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository) {
+            ProyectoRepository proyectoRepository,
+            ProyectoDesarrolladorRepository proyectoDesarrolladorRepository,
+            SolicitudContactoRepository solicitudContactoRepository,
+            PasswordEncoder passwordEncoder,
+            HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository,
+            EmailService emailService) {
         this.trabajadorRepository = trabajadorRepository;
         this.proyectoRepository = proyectoRepository;
         this.proyectoDesarrolladorRepository = proyectoDesarrolladorRepository;
         this.solicitudContactoRepository = solicitudContactoRepository;
         this.passwordEncoder = passwordEncoder;
         this.historialCambiosCoordinadorRepository = historialCambiosCoordinadorRepository;
+        this.emailService = emailService;
     }
 
     // Registra un nuevo empleado cifrando la contraseña con BCrypt
     public Trabajador registrarTrabajador(Trabajador trabajador) {
-        // Auto-completado de dominio corporativo si falta @ikernell.org
-        if (trabajador.getEmail() != null) {
+        // 1. Validación de Unicidad de Cédula / Número de Identificación
+        if (trabajador.getIdentificacion() != null && !trabajador.getIdentificacion().isBlank()) {
+            String cleanId = trabajador.getIdentificacion().trim();
+            trabajador.setIdentificacion(cleanId);
+            if (trabajadorRepository.findByIdentificacionIgnoreCase(cleanId).isPresent()) {
+                throw new IllegalArgumentException("La cédula / número de identificación '" + cleanId + "' ya se encuentra registrada en el sistema.");
+            }
+        }
+
+        // 2. Validación de Unicidad de Correo Corporativo Único (@ikernell.org)
+        if (trabajador.getEmail() != null && !trabajador.getEmail().isBlank()) {
             String cleanEmail = trabajador.getEmail().trim();
             if (!cleanEmail.toLowerCase().endsWith("@ikernell.org")) {
                 if (cleanEmail.contains("@")) {
@@ -60,23 +72,60 @@ public class CoordinadorService {
                     cleanEmail = cleanEmail + "@ikernell.org";
                 }
             }
+
+            if (trabajadorRepository.findByEmailIgnoreCase(cleanEmail).isPresent()) {
+                throw new IllegalArgumentException("El correo electrónico corporativo '" + cleanEmail + "' ya se encuentra registrado por otro colaborador.");
+            }
             trabajador.setEmail(cleanEmail);
         }
 
-        if (trabajador.getEmailPersonal() != null) {
-            trabajador.setEmailPersonal(trabajador.getEmailPersonal().trim());
+        // 3. Validación de Unicidad de Correo Personal / Alternativo
+        if (trabajador.getEmailPersonal() != null && !trabajador.getEmailPersonal().isBlank()) {
+            String cleanPersonal = trabajador.getEmailPersonal().trim();
+            trabajador.setEmailPersonal(cleanPersonal);
+            if (trabajadorRepository.findByEmailPersonalIgnoreCase(cleanPersonal).isPresent()) {
+                throw new IllegalArgumentException("El correo electrónico personal '" + cleanPersonal + "' ya pertenece a otro colaborador registrado.");
+            }
         }
 
-        // Validaciones
-        String rawPassword = (trabajador.getPasswordHash() != null && !trabajador.getPasswordHash().isBlank())
-                ? trabajador.getPasswordHash()
-                : "abrah1234";
+        // Generar contraseña temporal segura SIEMPRE (aleatoria, nunca la del frontend)
+        String rawPassword = generarPasswordTemporalSegura();
 
         // Persistencia
         trabajador.setPasswordHash(passwordEncoder.encode(rawPassword));
         trabajador.setEstado(true);
         trabajador.setPrimerLogin(true);
-        return trabajadorRepository.save(trabajador);
+        Trabajador guardado = trabajadorRepository.save(trabajador);
+
+        // Envío de correo electrónico con copia de prueba
+        emailService.enviarCorreoCredencialesTemporales(
+                guardado.getEmailPersonal(),
+                guardado.getEmail(),
+                rawPassword,
+                guardado.getNombre() + " " + guardado.getApellido(),
+                guardado.getRol() != null ? guardado.getRol().name() : "TRABAJADOR");
+
+        return guardado;
+    }
+
+    private String generarPasswordTemporalSegura() {
+        String uppers = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        String lowers = "abcdefghijkmnopqrstuvwxyz";
+        String numbers = "23456789";
+        String symbols = "!@#$%&*";
+        java.security.SecureRandom random = new java.security.SecureRandom();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(uppers.charAt(random.nextInt(uppers.length())));
+        sb.append(lowers.charAt(random.nextInt(lowers.length())));
+        sb.append(numbers.charAt(random.nextInt(numbers.length())));
+        sb.append(symbols.charAt(random.nextInt(symbols.length())));
+
+        String allChars = uppers + lowers + numbers + symbols;
+        for (int i = 4; i < 12; i++) {
+            sb.append(allChars.charAt(random.nextInt(allChars.length())));
+        }
+        return sb.toString();
     }
 
     // Consulta el listado completo de trabajadores
@@ -134,7 +183,7 @@ public class CoordinadorService {
     public Trabajador cambiarEstadoTrabajador(Long id) {
         // Validaciones
         Trabajador trabajador = obtenerPorId(id);
-        
+
         // Persistencia
         boolean nuevoEstado = !Boolean.TRUE.equals(trabajador.getEstado());
         trabajador.setEstado(nuevoEstado);
@@ -148,7 +197,8 @@ public class CoordinadorService {
         trabajadorRepository.save(trabajador);
     }
 
-    // Inhabilita a un Líder y transfiere todos sus proyectos activos a un nuevo Líder asignado
+    // Inhabilita a un Líder y transfiere todos sus proyectos activos a un nuevo
+    // Líder asignado
     public Trabajador inhabilitarLiderYReasignarProyectos(Long idLiderInhabilitar, Long idNuevoLiderTarget) {
         Trabajador liderSaliente = obtenerPorId(idLiderInhabilitar);
         Trabajador nuevoLider = obtenerPorId(idNuevoLiderTarget);
@@ -194,7 +244,8 @@ public class CoordinadorService {
         proyecto.setLider(nuevoLider);
         proyecto.setReasignado(true);
         proyecto.setFechaReasignacion(java.time.LocalDateTime.now());
-        proyecto.setMotivoReasignacion(motivo != null && !motivo.isBlank() ? motivo : "Reasignación de dirección de proyecto.");
+        proyecto.setMotivoReasignacion(
+                motivo != null && !motivo.isBlank() ? motivo : "Reasignación de dirección de proyecto.");
         proyecto.setLeidoPorLiderAnterior(false);
 
         return proyectoRepository.save(proyecto);
@@ -223,18 +274,23 @@ public class CoordinadorService {
         return proyectoDesarrolladorRepository.save(asignacion);
     }
 
-    // Listado de solicitudes de contacto ordenadas de la más reciente a la más antigua
+    // Listado de solicitudes de contacto ordenadas de la más reciente a la más
+    // antigua
     @Transactional(readOnly = true)
     public List<SolicitudContacto> listarSolicitudes() {
         return solicitudContactoRepository.findAllByOrderByFechaEnvioDesc();
     }
 
-    // Gestiona una solicitud con notas de atención detalladas o justificación de reapertura
-    public SolicitudContacto gestionarSolicitud(Long idSolicitud, com.ikernell.dto.GestionarSolicitudRequest request, String emailCoordinador) {
+    // Gestiona una solicitud con notas de atención detalladas o justificación de
+    // reapertura
+    public SolicitudContacto gestionarSolicitud(Long idSolicitud, com.ikernell.dto.GestionarSolicitudRequest request,
+            String emailCoordinador) {
         SolicitudContacto solicitud = solicitudContactoRepository.findById(idSolicitud)
-                .orElseThrow(() -> new ResourceNotFoundException("Solicitud de contacto no encontrada con ID: " + idSolicitud));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Solicitud de contacto no encontrada con ID: " + idSolicitud));
 
-        String nuevoEstado = request != null && request.getEstado() != null ? request.getEstado().toUpperCase() : "ATENDIDA";
+        String nuevoEstado = request != null && request.getEstado() != null ? request.getEstado().toUpperCase()
+                : "ATENDIDA";
         String coordInfo = "Coordinador";
         if (emailCoordinador != null) {
             var coordOpt = trabajadorRepository.findByEmail(emailCoordinador);
@@ -258,8 +314,11 @@ public class CoordinadorService {
                 solicitud.setNotasAtencion(request.getNotasAtencion().trim());
             }
             auditLog.append("[").append(ahora).append("] ATENDIDA por ").append(coordInfo)
-                    .append(" | Acciones/Notas: ").append(solicitud.getNotasAtencion() != null ? solicitud.getNotasAtencion() : "Sin observaciones adicionales");
-        } else if ("REABIERTA".equals(nuevoEstado) || "PENDIENTE".equals(nuevoEstado) || "EN_PROCESO".equals(nuevoEstado)) {
+                    .append(" | Acciones/Notas: ")
+                    .append(solicitud.getNotasAtencion() != null ? solicitud.getNotasAtencion()
+                            : "Sin observaciones adicionales");
+        } else if ("REABIERTA".equals(nuevoEstado) || "PENDIENTE".equals(nuevoEstado)
+                || "EN_PROCESO".equals(nuevoEstado)) {
             solicitud.setAtendido(false);
             solicitud.setEstado(nuevoEstado);
             solicitud.setFechaReapertura(ahora);
@@ -267,21 +326,27 @@ public class CoordinadorService {
             if (request != null && request.getMotivoReapertura() != null && !request.getMotivoReapertura().isBlank()) {
                 solicitud.setMotivoReapertura(request.getMotivoReapertura().trim());
             }
-            auditLog.append("[").append(ahora).append("] REABIERTA a estado ").append(nuevoEstado).append(" por ").append(coordInfo)
+            auditLog.append("[").append(ahora).append("] REABIERTA a estado ").append(nuevoEstado).append(" por ")
+                    .append(coordInfo)
                     .append(" (Reapertura #").append(solicitud.getContadorReaperturas()).append(")")
-                    .append(" | Motivo: ").append(solicitud.getMotivoReapertura() != null ? solicitud.getMotivoReapertura() : "Reapertura de caso para seguimiento comercial");
+                    .append(" | Motivo: ")
+                    .append(solicitud.getMotivoReapertura() != null ? solicitud.getMotivoReapertura()
+                            : "Reapertura de caso para seguimiento comercial");
         }
 
         solicitud.setHistorialAtencion(auditLog.toString());
         return solicitudContactoRepository.save(solicitud);
     }
 
-    // Alterna el estado de atención de la solicitud y asocia al coordinador responsable
+    // Alterna el estado de atención de la solicitud y asocia al coordinador
+    // responsable
     public SolicitudContacto toggleEstadoSolicitud(Long idSolicitud, String emailCoordinador) {
         SolicitudContacto solicitud = solicitudContactoRepository.findById(idSolicitud)
-                .orElseThrow(() -> new ResourceNotFoundException("Solicitud de contacto no encontrada con ID: " + idSolicitud));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Solicitud de contacto no encontrada con ID: " + idSolicitud));
 
-        boolean esAtendida = "ATENDIDA".equalsIgnoreCase(solicitud.getEstado()) || Boolean.TRUE.equals(solicitud.getAtendido());
+        boolean esAtendida = "ATENDIDA".equalsIgnoreCase(solicitud.getEstado())
+                || Boolean.TRUE.equals(solicitud.getAtendido());
         String targetEstado = esAtendida ? "REABIERTA" : "ATENDIDA";
         com.ikernell.dto.GestionarSolicitudRequest req = new com.ikernell.dto.GestionarSolicitudRequest();
         req.setEstado(targetEstado);
@@ -299,18 +364,20 @@ public class CoordinadorService {
         solicitud.setAtendido(false);
         solicitud.setEstado("PENDIENTE");
         solicitud.setContadorReaperturas(0);
-        solicitud.setHistorialAtencion("[" + LocalDateTime.now() + "] Solicitud registrada desde el formulario web público.");
+        solicitud.setHistorialAtencion(
+                "[" + LocalDateTime.now() + "] Solicitud registrada desde el formulario web público.");
         return solicitudContactoRepository.save(solicitud);
     }
 
     @Transactional
-    public HistorialCambiosCoordinador registrarCambioCoordinador(Long idProyecto, Long idCoordinador, String nombreCoordinador, String emailCoordinador, String accion, String detalles, String batchId) {
+    public HistorialCambiosCoordinador registrarCambioCoordinador(Long idProyecto, Long idCoordinador,
+            String nombreCoordinador, String emailCoordinador, String accion, String detalles, String batchId) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
 
         HistorialCambiosCoordinador registro = new HistorialCambiosCoordinador(
-                proyecto, idCoordinador, nombreCoordinador, emailCoordinador, accion, detalles, LocalDateTime.now(), batchId
-        );
+                proyecto, idCoordinador, nombreCoordinador, emailCoordinador, accion, detalles, LocalDateTime.now(),
+                batchId);
         return historialCambiosCoordinadorRepository.save(registro);
     }
 

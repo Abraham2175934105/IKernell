@@ -65,7 +65,7 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateToken(authentication);
 
-        Trabajador trabajador = trabajadorRepository.findByEmail(loginRequest.getEmail())
+        Trabajador trabajador = trabajadorRepository.findByEmailIgnoreCase(loginRequest.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("Trabajador autenticado no encontrado en la base de datos"));
 
         AuthResponse authResponse = new AuthResponse(
@@ -89,8 +89,20 @@ public class AuthController {
     @PostMapping("/completar-primer-login")
     @Operation(summary = "Verificar datos y cambiar clave obligatoria en primer acceso", description = "Permite actualizar perfil (salvo correo corporativo), establece contraseña definitiva y desactiva primerLogin")
     public ResponseEntity<AuthResponse> completarPrimerLogin(@Valid @RequestBody com.ikernell.dto.PrimerLoginRequest request) {
-        Trabajador trabajador = trabajadorRepository.findById(request.getIdTrabajador())
-                .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + request.getIdTrabajador()));
+        Trabajador trabajador = null;
+        if (request.getIdTrabajador() != null) {
+            trabajador = trabajadorRepository.findById(request.getIdTrabajador()).orElse(null);
+        }
+        if (trabajador == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String currentEmail = auth != null ? auth.getName() : null;
+            if (currentEmail != null && !currentEmail.isBlank()) {
+                trabajador = trabajadorRepository.findByEmailIgnoreCase(currentEmail).orElse(null);
+            }
+        }
+        if (trabajador == null) {
+            throw new ResourceNotFoundException("Trabajador no encontrado con ID: " + request.getIdTrabajador());
+        }
 
         // Actualizar datos permitidos (el correo corporativo es INMUTABLE)
         trabajador.setNombre(request.getNombre().trim());
@@ -112,11 +124,18 @@ public class AuthController {
 
         Trabajador guardado = trabajadorRepository.save(trabajador);
 
-        // Re-autenticar o generar nuevo token
+        // Re-autenticar con UserDetails real para que generateToken pueda hacer el cast correctamente
+        org.springframework.security.core.userdetails.UserDetails userDetails =
+                org.springframework.security.core.userdetails.User.builder()
+                        .username(guardado.getEmail())
+                        .password(guardado.getPasswordHash())
+                        .authorities("ROLE_" + guardado.getRol().name())
+                        .build();
+
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                guardado.getEmail(),
+                userDetails,
                 null,
-                java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + guardado.getRol().name()))
+                userDetails.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         String jwt = jwtUtils.generateToken(authenticationToken);
@@ -150,6 +169,38 @@ public class AuthController {
         java.util.Map<String, String> response = new java.util.HashMap<>();
         response.put("message", "Sesión cerrada e invalidada exitosamente en el servidor.");
         return ResponseEntity.ok(response);
+    }
+
+    // Valida disponibilidad en tiempo real de Cédula y Correo Personal
+    @GetMapping("/validar-unicidad")
+    @Operation(summary = "Validar disponibilidad de cédula y correo personal", description = "Verifica en tiempo real que cédula y correo personal no pertenezcan a otro usuario")
+    public ResponseEntity<java.util.Map<String, Boolean>> validarUnicidad(
+            @RequestParam(required = false) String cedula,
+            @RequestParam(required = false) String emailPersonal,
+            @RequestParam(required = false) Long idExcluir) {
+        
+        boolean cedulaDuplicada = false;
+        if (cedula != null && !cedula.isBlank()) {
+            String targetCedula = cedula.trim();
+            cedulaDuplicada = trabajadorRepository.findAll().stream()
+                    .anyMatch(t -> (idExcluir == null || !t.getIdTrabajador().equals(idExcluir)) 
+                            && t.getIdentificacion() != null 
+                            && targetCedula.equalsIgnoreCase(t.getIdentificacion().trim()));
+        }
+
+        boolean emailPersonalDuplicado = false;
+        if (emailPersonal != null && !emailPersonal.isBlank()) {
+            String targetEmail = emailPersonal.trim();
+            emailPersonalDuplicado = trabajadorRepository.findAll().stream()
+                    .anyMatch(t -> (idExcluir == null || !t.getIdTrabajador().equals(idExcluir)) 
+                            && ((t.getEmailPersonal() != null && targetEmail.equalsIgnoreCase(t.getEmailPersonal().trim()))
+                             || (t.getEmail() != null && targetEmail.equalsIgnoreCase(t.getEmail().trim()))));
+        }
+
+        java.util.Map<String, Boolean> res = new java.util.HashMap<>();
+        res.put("cedulaDuplicada", cedulaDuplicada);
+        res.put("emailPersonalDuplicado", emailPersonalDuplicado);
+        return ResponseEntity.ok(res);
     }
 
     // Guarda mensajes del formulario de contacto público en la bandeja de entrada del Coordinador

@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Size;
 
 public class PrimerLoginRequest {
 
-    @NotNull(message = "El ID del trabajador es obligatorio")
     private Long idTrabajador;
 
     @NotBlank(message = "El nombre es obligatorio")

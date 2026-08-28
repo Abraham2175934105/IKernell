@@ -27,13 +27,14 @@ public class LiderService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public LiderService(ProyectoRepository proyectoRepository,
-                        EtapaRepository etapaRepository,
-                        ActividadRepository actividadRepository,
-                        ErrorRepository errorRepository,
-                        InterrupcionRepository interrupcionRepository,
-                        TrabajadorRepository trabajadorRepository,
-                        ProyectoDesarrolladorRepository proyectoDesarrolladorRepository,
-                        org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+            EtapaRepository etapaRepository,
+            ActividadRepository actividadRepository,
+            ErrorRepository errorRepository,
+            InterrupcionRepository interrupcionRepository,
+            TrabajadorRepository trabajadorRepository,
+            ProyectoDesarrolladorRepository proyectoDesarrolladorRepository,
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+            EmailService emailService) {
         this.proyectoRepository = proyectoRepository;
         this.etapaRepository = etapaRepository;
         this.actividadRepository = actividadRepository;
@@ -42,7 +43,10 @@ public class LiderService {
         this.trabajadorRepository = trabajadorRepository;
         this.proyectoDesarrolladorRepository = proyectoDesarrolladorRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
+
+    private final EmailService emailService;
 
     // Registra un nuevo colaborador (solo LIDER o DESARROLLADOR) por un Líder
     public Trabajador registrarTrabajadorPorLider(Trabajador trabajador) {
@@ -51,11 +55,21 @@ public class LiderService {
         }
         String rolNorm = trabajador.getRol().name().toUpperCase();
         if (!rolNorm.contains("LIDER") && !rolNorm.contains("DESARROLLADOR")) {
-            throw new IllegalArgumentException("Los líderes solo tienen autorización para registrar colaboradores con rol Líder o Desarrollador.");
+            throw new IllegalArgumentException(
+                    "Los líderes solo tienen autorización para registrar colaboradores con rol Líder o Desarrollador.");
         }
 
-        // Auto-completado de dominio corporativo si falta @ikernell.org
-        if (trabajador.getEmail() != null) {
+        // 1. Validación de Unicidad de Cédula / Número de Identificación
+        if (trabajador.getIdentificacion() != null && !trabajador.getIdentificacion().isBlank()) {
+            String cleanId = trabajador.getIdentificacion().trim();
+            trabajador.setIdentificacion(cleanId);
+            if (trabajadorRepository.findByIdentificacionIgnoreCase(cleanId).isPresent()) {
+                throw new IllegalArgumentException("La cédula / número de identificación '" + cleanId + "' ya se encuentra registrada en el sistema.");
+            }
+        }
+
+        // 2. Validación de Unicidad de Correo Corporativo Único (@ikernell.org)
+        if (trabajador.getEmail() != null && !trabajador.getEmail().isBlank()) {
             String cleanEmail = trabajador.getEmail().trim();
             if (!cleanEmail.toLowerCase().endsWith("@ikernell.org")) {
                 if (cleanEmail.contains("@")) {
@@ -64,26 +78,66 @@ public class LiderService {
                     cleanEmail = cleanEmail + "@ikernell.org";
                 }
             }
+
+            if (trabajadorRepository.findByEmailIgnoreCase(cleanEmail).isPresent()) {
+                throw new IllegalArgumentException("El correo electrónico corporativo '" + cleanEmail + "' ya se encuentra registrado por otro colaborador.");
+            }
             trabajador.setEmail(cleanEmail);
         }
 
-        if (trabajador.getEmailPersonal() != null) {
-            trabajador.setEmailPersonal(trabajador.getEmailPersonal().trim());
+        // 3. Validación de Unicidad de Correo Personal / Alternativo
+        if (trabajador.getEmailPersonal() != null && !trabajador.getEmailPersonal().isBlank()) {
+            String cleanPersonal = trabajador.getEmailPersonal().trim();
+            trabajador.setEmailPersonal(cleanPersonal);
+            if (trabajadorRepository.findByEmailPersonalIgnoreCase(cleanPersonal).isPresent()) {
+                throw new IllegalArgumentException("El correo electrónico personal '" + cleanPersonal + "' ya pertenece a otro colaborador registrado.");
+            }
         }
 
-        String rawPassword = (trabajador.getPasswordHash() != null && !trabajador.getPasswordHash().isBlank())
-                ? trabajador.getPasswordHash()
-                : "abrah1234";
+        // Generar contraseña temporal segura SIEMPRE (aleatoria, nunca la del frontend)
+        String rawPassword = generarPasswordTemporalSegura();
 
         trabajador.setPasswordHash(passwordEncoder.encode(rawPassword));
         trabajador.setEstado(true);
         trabajador.setPrimerLogin(true);
-        return trabajadorRepository.save(trabajador);
+        Trabajador guardado = trabajadorRepository.save(trabajador);
+
+        // Envío de correo electrónico con copia de prueba
+        emailService.enviarCorreoCredencialesTemporales(
+                guardado.getEmailPersonal(),
+                guardado.getEmail(),
+                rawPassword,
+                guardado.getNombre() + " " + guardado.getApellido(),
+                guardado.getRol() != null ? guardado.getRol().name() : "TRABAJADOR");
+
+        return guardado;
     }
 
-    // Registra un nuevo proyecto en estado ACTIVO y lo vincula con el líder asignado (HU-11 / RF-13 / RF-14)
+    private String generarPasswordTemporalSegura() {
+        String uppers = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        String lowers = "abcdefghijkmnopqrstuvwxyz";
+        String numbers = "23456789";
+        String symbols = "!@#$%&*";
+        java.security.SecureRandom random = new java.security.SecureRandom();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(uppers.charAt(random.nextInt(uppers.length())));
+        sb.append(lowers.charAt(random.nextInt(lowers.length())));
+        sb.append(numbers.charAt(random.nextInt(numbers.length())));
+        sb.append(symbols.charAt(random.nextInt(symbols.length())));
+
+        String allChars = uppers + lowers + numbers + symbols;
+        for (int i = 4; i < 12; i++) {
+            sb.append(allChars.charAt(random.nextInt(allChars.length())));
+        }
+        return sb.toString();
+    }
+
+    // Registra un nuevo proyecto en estado ACTIVO y lo vincula con el líder
+    // asignado (HU-11 / RF-13 / RF-14)
     public Proyecto crearProyecto(Proyecto proyecto, Long idLider) {
-        // Validación Condición 02 de la HU-11: Validar campos obligatorios y coherencia de fechas
+        // Validación Condición 02 de la HU-11: Validar campos obligatorios y coherencia
+        // de fechas
         if (proyecto.getNombre() == null || proyecto.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre del proyecto es obligatorio.");
         }
@@ -94,7 +148,7 @@ public class LiderService {
             throw new IllegalArgumentException("La fecha de finalización estimada del proyecto es obligatoria.");
         }
         if (proyecto.getFechaFinEstimada().isBefore(proyecto.getFechaInicio())) {
-            throw new IllegalArgumentException("La fecha de finalización estimada (" + proyecto.getFechaFinEstimada() 
+            throw new IllegalArgumentException("La fecha de finalización estimada (" + proyecto.getFechaFinEstimada()
                     + ") no puede ser anterior a la fecha de inicio (" + proyecto.getFechaInicio() + ").");
         }
         if (proyecto.getPresupuesto() != null && proyecto.getPresupuesto().compareTo(java.math.BigDecimal.ZERO) < 0) {
@@ -108,16 +162,18 @@ public class LiderService {
                     .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + idLider));
         } else if (proyecto.getLider() != null && proyecto.getLider().getIdTrabajador() != null) {
             lider = trabajadorRepository.findById(proyecto.getLider().getIdTrabajador())
-                    .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + proyecto.getLider().getIdTrabajador()));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Líder no encontrado con ID: " + proyecto.getLider().getIdTrabajador()));
         } else {
             List<Trabajador> lideres = trabajadorRepository.findByRolAndEstado(Rol.LIDER, true);
             if (lideres.isEmpty()) {
                 lideres = trabajadorRepository.findByRolAndEstado(Rol.COORDINADOR, true);
             }
             lider = lideres.stream().findFirst()
-                    .orElseThrow(() -> new ResourceNotFoundException("No se encontró ningún Líder o Coordinador activo para asociar al proyecto."));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "No se encontró ningún Líder o Coordinador activo para asociar al proyecto."));
         }
-        
+
         // Persistencia (HU-11: Estado inicial EN_PLANIFICACION o ACTIVO)
         proyecto.setLider(lider);
         if (proyecto.getEstado() == null || proyecto.getEstado().isBlank()) {
@@ -131,44 +187,56 @@ public class LiderService {
         // Validaciones
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        
+
         if (datos.getFechaFinEstimada() != null && datos.getFechaInicio() != null) {
             if (datos.getFechaFinEstimada().isBefore(datos.getFechaInicio())) {
-                throw new IllegalArgumentException("La fecha de finalización estimada no puede ser anterior a la fecha de inicio.");
+                throw new IllegalArgumentException(
+                        "La fecha de finalización estimada no puede ser anterior a la fecha de inicio.");
             }
         }
-        
+
         // Persistencia
-        if (datos.getNombre() != null) proyecto.setNombre(datos.getNombre());
-        if (datos.getCliente() != null) proyecto.setCliente(datos.getCliente());
-        if (datos.getDescripcion() != null) proyecto.setDescripcion(datos.getDescripcion());
-        if (datos.getPresupuesto() != null) proyecto.setPresupuesto(datos.getPresupuesto());
-        if (datos.getFechaInicio() != null) proyecto.setFechaInicio(datos.getFechaInicio());
-        if (datos.getFechaFinEstimada() != null) proyecto.setFechaFinEstimada(datos.getFechaFinEstimada());
-        if (datos.getEstado() != null) proyecto.setEstado(datos.getEstado());
+        if (datos.getNombre() != null)
+            proyecto.setNombre(datos.getNombre());
+        if (datos.getCliente() != null)
+            proyecto.setCliente(datos.getCliente());
+        if (datos.getDescripcion() != null)
+            proyecto.setDescripcion(datos.getDescripcion());
+        if (datos.getPresupuesto() != null)
+            proyecto.setPresupuesto(datos.getPresupuesto());
+        if (datos.getFechaInicio() != null)
+            proyecto.setFechaInicio(datos.getFechaInicio());
+        if (datos.getFechaFinEstimada() != null)
+            proyecto.setFechaFinEstimada(datos.getFechaFinEstimada());
+        if (datos.getEstado() != null)
+            proyecto.setEstado(datos.getEstado());
         return proyectoRepository.save(proyecto);
     }
 
-    // Finaliza formalmente un proyecto de software, congela su estructura WBS y libera la carga horaria de los desarrolladores asignados (RF-20)
+    // Finaliza formalmente un proyecto de software, congela su estructura WBS y
+    // libera la carga horaria de los desarrolladores asignados (RF-20)
     @Transactional
     public Proyecto finalizarProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
 
-        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado())
+                || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
             throw new IllegalStateException("El proyecto ya se encuentra finalizado.");
         }
 
         // 1. Marcar estado del proyecto como FINALIZADO
         proyecto.setEstado("FINALIZADO");
 
-        // 2. Marcar todas las fases WBS y sus actividades como FINALIZADA (Congelamiento WBS)
+        // 2. Marcar todas las fases WBS y sus actividades como FINALIZADA
+        // (Congelamiento WBS)
         List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
         for (Etapa etapa : etapas) {
             etapa.setEstado("FINALIZADA");
             if (etapa.getActividades() != null) {
                 for (Actividad act : etapa.getActividades()) {
-                    if (!"FINALIZADA".equalsIgnoreCase(act.getEstado()) && !"COMPLETADA".equalsIgnoreCase(act.getEstado())) {
+                    if (!"FINALIZADA".equalsIgnoreCase(act.getEstado())
+                            && !"COMPLETADA".equalsIgnoreCase(act.getEstado())) {
                         act.setEstado("FINALIZADA");
                         actividadRepository.save(act);
                     }
@@ -177,13 +245,15 @@ public class LiderService {
             etapaRepository.save(etapa);
         }
 
-        // 3. Liberar carga de los desarrolladores asignados eliminando las relaciones en proyecto_desarrollador
+        // 3. Liberar carga de los desarrolladores asignados eliminando las relaciones
+        // en proyecto_desarrollador
         List<ProyectoDesarrollador> asignaciones = proyectoDesarrolladorRepository.findByProyecto(proyecto);
         if (!asignaciones.isEmpty()) {
             proyectoDesarrolladorRepository.deleteAll(asignaciones);
         }
 
-        // 4. Guardar y retornar proyecto finalizado (datos históricos preservados para auditoría y ETL Brasil)
+        // 4. Guardar y retornar proyecto finalizado (datos históricos preservados para
+        // auditoría y ETL Brasil)
         return proyectoRepository.save(proyecto);
     }
 
@@ -191,7 +261,8 @@ public class LiderService {
     public Proyecto pausarProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado())
+                || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
             throw new IllegalStateException("Un proyecto finalizado no puede ser pausado.");
         }
         proyecto.setEstado("EN_PAUSA");
@@ -202,7 +273,8 @@ public class LiderService {
     public Proyecto reactivarProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado())
+                || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
             throw new IllegalStateException("Un proyecto finalizado no puede ser reactivado.");
         }
         proyecto.setEstado("ACTIVO");
@@ -231,18 +303,21 @@ public class LiderService {
         // Validaciones
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        
-        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
-            throw new IllegalStateException("El proyecto se encuentra finalizado. No se pueden registrar nuevas etapas en un proyecto cerrado.");
+
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado())
+                || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+            throw new IllegalStateException(
+                    "El proyecto se encuentra finalizado. No se pueden registrar nuevas etapas en un proyecto cerrado.");
         }
-        
+
         // Persistencia
         etapa.setProyecto(proyecto);
         if (etapa.getEstado() == null || etapa.getEstado().isBlank()) {
             etapa.setEstado("PENDIENTE");
         }
         Etapa guardada = etapaRepository.save(etapa);
-        if (guardada.getActividades() != null) guardada.getActividades().size();
+        if (guardada.getActividades() != null)
+            guardada.getActividades().size();
         return guardada;
     }
 
@@ -253,9 +328,11 @@ public class LiderService {
             throw new ResourceNotFoundException("Etapa no encontrada con ID: " + idEtapa);
         }
         Etapa etapa = etapaRepository.findById(idEtapa).get();
-        if (etapa.getProyecto() != null && 
-            ("FINALIZADO".equalsIgnoreCase(etapa.getProyecto().getEstado()) || "COMPLETADO".equalsIgnoreCase(etapa.getProyecto().getEstado()))) {
-            throw new IllegalStateException("El proyecto se encuentra finalizado. No se pueden alterar fases de un proyecto cerrado.");
+        if (etapa.getProyecto() != null &&
+                ("FINALIZADO".equalsIgnoreCase(etapa.getProyecto().getEstado())
+                        || "COMPLETADO".equalsIgnoreCase(etapa.getProyecto().getEstado()))) {
+            throw new IllegalStateException(
+                    "El proyecto se encuentra finalizado. No se pueden alterar fases de un proyecto cerrado.");
         }
         etapaRepository.deleteById(idEtapa);
     }
@@ -274,6 +351,9 @@ public class LiderService {
         Etapa guardada = etapaRepository.save(etapa);
         if (guardada.getProyecto() != null) {
             org.hibernate.Hibernate.initialize(guardada.getProyecto());
+            if (guardada.getProyecto().getLider() != null) {
+                org.hibernate.Hibernate.initialize(guardada.getProyecto().getLider());
+            }
         }
         if (guardada.getActividades() != null) {
             org.hibernate.Hibernate.initialize(guardada.getActividades());
@@ -286,24 +366,29 @@ public class LiderService {
         return guardada;
     }
 
-    // Asigna un desarrollador a la nómina de trabajo del proyecto con control de cargas de 48h (HU-12 / RF-16)
+    // Asigna un desarrollador a la nómina de trabajo del proyecto con control de
+    // cargas de 48h (HU-12 / RF-16)
     public ProyectoDesarrollador asignarDesarrollador(Long idProyecto, Long idDesarrollador, Integer horasSemanales) {
         if (horasSemanales == null || horasSemanales <= 0) {
             throw new IllegalArgumentException("La dedicación semanal debe ser de al menos 1 hora.");
         }
         if (horasSemanales > 48) {
-            throw new IllegalArgumentException("La asignación semanal (" + horasSemanales + "h) no puede exceder el límite legal máximo de 48 horas semanales.");
+            throw new IllegalArgumentException("La asignación semanal (" + horasSemanales
+                    + "h) no puede exceder el límite legal máximo de 48 horas semanales.");
         }
 
         // Validaciones de existencia
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        
-        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado()) || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
-            throw new IllegalStateException("El proyecto se encuentra finalizado. No se pueden asignar desarrolladores a un proyecto cerrado.");
+
+        if ("FINALIZADO".equalsIgnoreCase(proyecto.getEstado())
+                || "COMPLETADO".equalsIgnoreCase(proyecto.getEstado())) {
+            throw new IllegalStateException(
+                    "El proyecto se encuentra finalizado. No se pueden asignar desarrolladores a un proyecto cerrado.");
         }
         Trabajador desarrollador = trabajadorRepository.findById(idDesarrollador)
-                .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
 
         // Condición Crítica HU-12: Regla de las 48 horas semanales acumuladas
         int horasOtrasAsignaciones = proyectoDesarrolladorRepository
@@ -311,9 +396,10 @@ public class LiderService {
 
         int horasTotalesProyectadas = horasOtrasAsignaciones + horasSemanales;
         if (horasTotalesProyectadas > 48) {
-            throw new IllegalArgumentException("Sobreasignación de capacidad: El desarrollador " + desarrollador.getNombre() 
-                    + " " + desarrollador.getApellido() + " ya tiene " + horasOtrasAsignaciones 
-                    + "h asignadas en otros proyectos activos. Asignar " + horasSemanales 
+            throw new IllegalArgumentException("Sobreasignación de capacidad: El desarrollador "
+                    + desarrollador.getNombre()
+                    + " " + desarrollador.getApellido() + " ya tiene " + horasOtrasAsignaciones
+                    + "h asignadas en otros proyectos activos. Asignar " + horasSemanales
                     + "h superaría el límite máximo de 48 horas semanales (Total: " + horasTotalesProyectadas + "h).");
         }
 
@@ -332,19 +418,23 @@ public class LiderService {
         return asignarDesarrollador(idProyecto, idDesarrollador, 40);
     }
 
-    // Asigna una tarea a un desarrollador estableciendo PENDIENTE como estado inicial
+    // Asigna una tarea a un desarrollador estableciendo PENDIENTE como estado
+    // inicial
     @Transactional
     public Actividad asignarActividad(Long idEtapa, Long idDesarrollador, Actividad actividad) {
         // Validaciones
         Etapa etapa = etapaRepository.findById(idEtapa)
                 .orElseThrow(() -> new ResourceNotFoundException("Etapa no encontrada con ID: " + idEtapa));
-        
-        if (etapa.getProyecto() != null && 
-            ("FINALIZADO".equalsIgnoreCase(etapa.getProyecto().getEstado()) || "COMPLETADO".equalsIgnoreCase(etapa.getProyecto().getEstado()))) {
-            throw new IllegalStateException("El proyecto se encuentra finalizado. No se pueden registrar actividades en un proyecto cerrado.");
+
+        if (etapa.getProyecto() != null &&
+                ("FINALIZADO".equalsIgnoreCase(etapa.getProyecto().getEstado())
+                        || "COMPLETADO".equalsIgnoreCase(etapa.getProyecto().getEstado()))) {
+            throw new IllegalStateException(
+                    "El proyecto se encuentra finalizado. No se pueden registrar actividades en un proyecto cerrado.");
         }
         Trabajador desarrollador = trabajadorRepository.findById(idDesarrollador)
-                .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
 
         // Persistencia
         actividad.setEtapa(etapa);
@@ -355,28 +445,36 @@ public class LiderService {
         return actividadRepository.save(actividad);
     }
 
-    // Reasigna la actividad a otro desarrollador registrando el motivo en la descripción (HU-25)
+    // Reasigna la actividad a otro desarrollador registrando el motivo en la
+    // descripción (HU-25)
     @Transactional
     public Actividad reasignarActividad(Long idActividad, Long nuevoDesarrolladorId, String motivo) {
         // Validaciones
         Actividad actividad = actividadRepository.findById(idActividad)
                 .orElseThrow(() -> new ResourceNotFoundException("Actividad no encontrada con ID: " + idActividad));
 
-        // Validación Defensiva HU-25: Proteger trazabilidad histórica y cálculo de horas reales
-        if ("FINALIZADA".equalsIgnoreCase(actividad.getEstado()) || "COMPLETADA".equalsIgnoreCase(actividad.getEstado())) {
-            throw new IllegalStateException("No se puede reasignar una actividad que ya ha sido finalizada.");
+        // Validación Defensiva HU-25: Solo se permite reasignar tareas en estado
+        // PENDIENTE
+        String actSt = actividad.getEstado() != null ? actividad.getEstado().toUpperCase().replace(" ", "_") : "";
+        if ("FINALIZADA".equals(actSt) || "COMPLETADA".equals(actSt) || "FINALIZADO".equals(actSt)
+                || "COMPLETADO".equals(actSt) ||
+                "EN_PROGRESO".equals(actSt) || "EN_PROCESO".equals(actSt) || "EN_CURSO".equals(actSt)) {
+            throw new IllegalStateException("Solo se pueden reasignar actividades que estén en estado PENDIENTE.");
         }
 
         if (actividad.getEtapa() != null && actividad.getEtapa().getProyecto() != null &&
-            ("FINALIZADO".equalsIgnoreCase(actividad.getEtapa().getProyecto().getEstado()) || "COMPLETADO".equalsIgnoreCase(actividad.getEtapa().getProyecto().getEstado()))) {
+                ("FINALIZADO".equalsIgnoreCase(actividad.getEtapa().getProyecto().getEstado())
+                        || "COMPLETADO".equalsIgnoreCase(actividad.getEtapa().getProyecto().getEstado()))) {
             throw new IllegalStateException("No se puede reasignar actividades en un proyecto finalizado.");
         }
 
         Trabajador nuevoDesarrollador = trabajadorRepository.findById(nuevoDesarrolladorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + nuevoDesarrolladorId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Desarrollador no encontrado con ID: " + nuevoDesarrolladorId));
 
         // Persistencia
         actividad.setDesarrollador(nuevoDesarrollador);
+        actividad.setFechaAsignacion(java.time.LocalDateTime.now());
         if (motivo != null && !motivo.isBlank()) {
             actividad.setDescripcion(actividad.getDescripcion() + " [Reasignada: " + motivo.trim() + "]");
         }
@@ -399,18 +497,21 @@ public class LiderService {
 
     // Consultas paginadas para tablas con alto volumen de proyectos
     @Transactional(readOnly = true)
-    public org.springframework.data.domain.Page<Proyecto> listarProyectosPorLiderPaginado(Long idLider, org.springframework.data.domain.Pageable pageable) {
+    public org.springframework.data.domain.Page<Proyecto> listarProyectosPorLiderPaginado(Long idLider,
+            org.springframework.data.domain.Pageable pageable) {
         Trabajador lider = trabajadorRepository.findById(idLider)
                 .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + idLider));
         return proyectoRepository.findByLider(lider, pageable);
     }
 
     @Transactional(readOnly = true)
-    public org.springframework.data.domain.Page<Proyecto> listarTodosProyectosPaginado(org.springframework.data.domain.Pageable pageable) {
+    public org.springframework.data.domain.Page<Proyecto> listarTodosProyectosPaginado(
+            org.springframework.data.domain.Pageable pageable) {
         return proyectoRepository.findAll(pageable);
     }
 
-    // Obtiene las etapas WBS y sus actividades asociadas en 1 sola consulta optimizada (Anti N+1)
+    // Obtiene las etapas WBS y sus actividades asociadas en 1 sola consulta
+    // optimizada (Anti N+1)
     @Transactional(readOnly = true)
     public List<Etapa> obtenerEtapasPorProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
@@ -424,13 +525,15 @@ public class LiderService {
         return trabajadorRepository.findByRolAndEstado(Rol.DESARROLLADOR, true);
     }
 
-    // Lista desarrolladores con su balance de horas semanales y estado de capacidad (HU-12 / RF-16) - Optimizado (Anti N+1)
+    // Lista desarrolladores con su balance de horas semanales y estado de capacidad
+    // (HU-12 / RF-16) - Optimizado (Anti N+1)
     @Transactional(readOnly = true)
     public List<com.ikernell.dto.DesarrolladorCargaDTO> listarDesarrolladoresConCarga() {
         List<Trabajador> devs = trabajadorRepository.findByRolAndEstado(Rol.DESARROLLADOR, true);
         List<com.ikernell.dto.DesarrolladorCargaDTO> resultado = new ArrayList<>();
 
-        // Consulta agregada única para traer las horas asignadas de todos los desarrolladores de 1 sola vez
+        // Consulta agregada única para traer las horas asignadas de todos los
+        // desarrolladores de 1 sola vez
         List<Object[]> resumenHoras = proyectoDesarrolladorRepository.obtenerHorasTotalesPorDesarrollador();
         Map<Long, Integer> mapHoras = new HashMap<>();
         for (Object[] row : resumenHoras) {
@@ -457,18 +560,17 @@ public class LiderService {
             }
 
             resultado.add(new com.ikernell.dto.DesarrolladorCargaDTO(
-                dev.getIdTrabajador(),
-                dev.getNombre(),
-                dev.getApellido(),
-                dev.getEspecialidad(),
-                dev.getProfesion(),
-                dev.getEmail(),
-                horasAsignadas,
-                horasDisponibles,
-                limiteMaximo,
-                porcentaje,
-                nivel
-            ));
+                    dev.getIdTrabajador(),
+                    dev.getNombre(),
+                    dev.getApellido(),
+                    dev.getEspecialidad(),
+                    dev.getProfesion(),
+                    dev.getEmail(),
+                    horasAsignadas,
+                    horasDisponibles,
+                    limiteMaximo,
+                    porcentaje,
+                    nivel));
         }
 
         return resultado;
@@ -482,18 +584,21 @@ public class LiderService {
         return proyectoDesarrolladorRepository.findByProyectoWithDesarrollador(proyecto);
     }
 
-    // Desvincula a un desarrollador del proyecto liberando su dedicación horaria (HU-12 / RF-16)
+    // Desvincula a un desarrollador del proyecto liberando su dedicación horaria
+    // (HU-12 / RF-16)
     @Transactional
     public void desasignarDesarrolladorDeProyecto(Long idProyecto, Long idDesarrollador) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
         Trabajador dev = trabajadorRepository.findById(idDesarrollador)
-                .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
 
         proyectoDesarrolladorRepository.deleteByProyectoAndDesarrollador(proyecto, dev);
     }
 
-    // Consulta errores técnicos reportados en las fases del proyecto en 1 sola consulta (Anti N+1)
+    // Consulta errores técnicos reportados en las fases del proyecto en 1 sola
+    // consulta (Anti N+1)
     @Transactional(readOnly = true)
     public List<Error> obtenerErroresPorProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
@@ -501,13 +606,15 @@ public class LiderService {
         return errorRepository.findByProyectoWithDetails(proyecto);
     }
 
-    // Consulta todos los errores técnicos globales reportados en la organización con JOIN FETCH
+    // Consulta todos los errores técnicos globales reportados en la organización
+    // con JOIN FETCH
     @Transactional(readOnly = true)
     public List<Error> obtenerTodosLosErrores() {
         return errorRepository.findAllWithDetails();
     }
 
-    // Consulta interrupciones y contingencias operativas reportadas en 1 sola consulta (Anti N+1)
+    // Consulta interrupciones y contingencias operativas reportadas en 1 sola
+    // consulta (Anti N+1)
     @Transactional(readOnly = true)
     public List<Interrupcion> obtenerInterrupcionesPorProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
@@ -530,7 +637,8 @@ public class LiderService {
         return response;
     }
 
-    // Calcula el semáforo de riesgo ponderando errores críticos y minutos de contingencia (Anti N+1)
+    // Calcula el semáforo de riesgo ponderando errores críticos y minutos de
+    // contingencia (Anti N+1)
     @Transactional(readOnly = true)
     public SemaforoMetricsDto calcularMetricasSemaforo(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
@@ -540,7 +648,8 @@ public class LiderService {
         List<Error> todosErrores = errorRepository.findByProyectoWithDetails(proyecto);
         List<Interrupcion> todasInterrupciones = interrupcionRepository.findByProyectoWithDetails(proyecto);
 
-        // Conteo por severidad con normalización insensible a mayúsculas/minúsculas y acentos
+        // Conteo por severidad con normalización insensible a mayúsculas/minúsculas y
+        // acentos
         Map<String, Integer> severityCount = new HashMap<>();
         severityCount.put("BAJA", 0);
         severityCount.put("MEDIA", 0);
@@ -582,13 +691,16 @@ public class LiderService {
         if (totalHorasPerdidas > 15.0 || erroresCriticosOAltos >= 3) {
             nivel = "ROJO";
             titulo = "ALERTA CRÍTICA DE RIESGO";
-            recomendacion = "¡Atención Urgente! Las horas de contingencia (" + totalHorasPerdidas + "h) o errores críticos (" + erroresCriticosOAltos + ") superan el umbral tolerable. Acción recomendada: Reasignar desarrolladores inmediatamente o extender plazo de entrega.";
+            recomendacion = "¡Atención Urgente! Las horas de contingencia (" + totalHorasPerdidas
+                    + "h) o errores críticos (" + erroresCriticosOAltos
+                    + ") superan el umbral tolerable. Acción recomendada: Reasignar desarrolladores inmediatamente o extender plazo de entrega.";
             badgeClass = "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800/60";
             iconClass = "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 shadow-lg";
         } else if (totalHorasPerdidas >= 5.0 || erroresCriticosOAltos >= 1) {
             nivel = "NARANJA";
             titulo = "Riesgo Moderado (Atención Requerida)";
-            recomendacion = "Se identifican cuellos de botella moderados (" + totalHorasPerdidas + "h de retraso, " + erroresCriticosOAltos + " errores de alto impacto). Se sugiere balance preventivo de tareas WBS.";
+            recomendacion = "Se identifican cuellos de botella moderados (" + totalHorasPerdidas + "h de retraso, "
+                    + erroresCriticosOAltos + " errores de alto impacto). Se sugiere balance preventivo de tareas WBS.";
             badgeClass = "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60";
             iconClass = "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
         } else {
@@ -611,11 +723,11 @@ public class LiderService {
                 erroresCriticosOAltos,
                 todosErrores.size(),
                 todasInterrupciones.size(),
-                severityCount
-        );
+                severityCount);
     }
 
-    // Calcula el semáforo de riesgo corporativo global consolidando todos los proyectos
+    // Calcula el semáforo de riesgo corporativo global consolidando todos los
+    // proyectos
     @Transactional(readOnly = true)
     public SemaforoMetricsDto calcularMetricasSemaforoGlobal() {
         List<Error> todosErrores = errorRepository.findAll();
@@ -660,13 +772,17 @@ public class LiderService {
         if (totalHorasPerdidas > 25.0 || erroresCriticosOAltos >= 6) {
             nivel = "ROJO";
             titulo = "ALERTA CRÍTICA CORPORATIVA (Nivel Crítico)";
-            recomendacion = "Sobrecarga o incidencias críticas detectadas a nivel organizacional (" + totalHorasPerdidas + "h de contingencia, " + erroresCriticosOAltos + " errores de alto impacto). Se aconseja rebalancear prioridades y recursos entre proyectos activos.";
+            recomendacion = "Sobrecarga o incidencias críticas detectadas a nivel organizacional (" + totalHorasPerdidas
+                    + "h de contingencia, " + erroresCriticosOAltos
+                    + " errores de alto impacto). Se aconseja rebalancear prioridades y recursos entre proyectos activos.";
             badgeClass = "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800/60";
             iconClass = "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300 shadow-lg";
         } else if (totalHorasPerdidas >= 10.0 || erroresCriticosOAltos >= 3) {
             nivel = "NARANJA";
             titulo = "Riesgo Moderado Organizacional (Nivel Alto / Atención Requerida)";
-            recomendacion = "El ecosistema global presenta " + totalHorasPerdidas + "h acumuladas de contingencias y " + erroresCriticosOAltos + " incidencias críticas/altas. Mantener seguimiento preventivo en sprints activos.";
+            recomendacion = "El ecosistema global presenta " + totalHorasPerdidas + "h acumuladas de contingencias y "
+                    + erroresCriticosOAltos
+                    + " incidencias críticas/altas. Mantener seguimiento preventivo en sprints activos.";
             badgeClass = "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60";
             iconClass = "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
         } else {
@@ -689,16 +805,16 @@ public class LiderService {
                 erroresCriticosOAltos,
                 todosErrores.size(),
                 todasInterrupciones.size(),
-                severityCount
-        );
+                severityCount);
     }
 
-    // Bandeja de reportes consolidados (errores e interrupciones) del equipo optimizada (Anti N+1)
+    // Bandeja de reportes consolidados (errores e interrupciones) del equipo
+    // optimizada (Anti N+1)
     @Transactional(readOnly = true)
     public Map<String, Object> obtenerReportesConsolidadosProyecto(Long idProyecto) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
-        
+
         List<Error> errores = errorRepository.findByProyectoWithDetails(proyecto);
         List<Interrupcion> interrupciones = interrupcionRepository.findByProyectoWithDetails(proyecto);
 
@@ -712,15 +828,19 @@ public class LiderService {
         return respuesta;
     }
 
-    // Actualiza el estado de atención y nota de respuesta para un error técnico (RF-24)
+    // Actualiza el estado de atención y nota de respuesta para un error técnico
+    // (RF-24)
     public Error atenderError(Long idError, String estadoAtencion, String resolucionNota) {
         // Validaciones
         Error error = errorRepository.findById(idError)
                 .orElseThrow(() -> new ResourceNotFoundException("Error no encontrado con ID: " + idError));
-        
-        // Validación Defensiva RF-24: Proteger trazabilidad y auditoría de incidencias ya resueltas
-        if ("SOLUCIONADO".equalsIgnoreCase(error.getEstadoAtencion()) || "RESUELTO".equalsIgnoreCase(error.getEstadoAtencion())) {
-            throw new BusinessLogicException("No se puede modificar una incidencia que ya ha sido marcada como resuelta.");
+
+        // Validación Defensiva RF-24: Proteger trazabilidad y auditoría de incidencias
+        // ya resueltas
+        if ("SOLUCIONADO".equalsIgnoreCase(error.getEstadoAtencion())
+                || "RESUELTO".equalsIgnoreCase(error.getEstadoAtencion())) {
+            throw new BusinessLogicException(
+                    "No se puede modificar una incidencia que ya ha sido marcada como resuelta.");
         }
 
         // Persistencia
@@ -734,15 +854,20 @@ public class LiderService {
         return errorRepository.save(error);
     }
 
-    // Actualiza el estado de atención y observaciones para una interrupción operativa (RF-24)
+    // Actualiza el estado de atención y observaciones para una interrupción
+    // operativa (RF-24)
     public Interrupcion atenderInterrupcion(Long idInterrupcion, String estadoAtencion, String resolucionNota) {
         // Validaciones
         Interrupcion interrupcion = interrupcionRepository.findById(idInterrupcion)
-                .orElseThrow(() -> new ResourceNotFoundException("Interrupción no encontrada con ID: " + idInterrupcion));
-        
-        // Validación Defensiva RF-24: Proteger trazabilidad y auditoría de contingencias ya resueltas
-        if ("SOLUCIONADO".equalsIgnoreCase(interrupcion.getEstadoAtencion()) || "RESUELTO".equalsIgnoreCase(interrupcion.getEstadoAtencion())) {
-            throw new BusinessLogicException("No se puede modificar una incidencia que ya ha sido marcada como resuelta.");
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Interrupción no encontrada con ID: " + idInterrupcion));
+
+        // Validación Defensiva RF-24: Proteger trazabilidad y auditoría de
+        // contingencias ya resueltas
+        if ("SOLUCIONADO".equalsIgnoreCase(interrupcion.getEstadoAtencion())
+                || "RESUELTO".equalsIgnoreCase(interrupcion.getEstadoAtencion())) {
+            throw new BusinessLogicException(
+                    "No se puede modificar una incidencia que ya ha sido marcada como resuelta.");
         }
 
         // Persistencia

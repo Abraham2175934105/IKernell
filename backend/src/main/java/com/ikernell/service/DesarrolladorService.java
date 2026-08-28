@@ -114,9 +114,24 @@ public class DesarrolladorService {
             throw new BusinessLogicException("No tiene permisos para modificar esta actividad. Solo el desarrollador asignado puede cambiar su estado.");
         }
 
-        // Persistencia
+        // Persistencia de la actividad
         actividad.setEstado(nuevoEstado);
-        return actividadRepository.save(actividad);
+        Actividad guardada = actividadRepository.save(actividad);
+
+        // Lógica de transición de estado de la Etapa
+        Etapa etapa = guardada.getEtapa();
+        if (etapa != null) {
+            String estadoNormalizado = (nuevoEstado != null ? nuevoEstado.trim().toUpperCase() : "");
+            boolean enProgreso = estadoNormalizado.contains("PROCESO") || estadoNormalizado.contains("PROGRESO") || estadoNormalizado.contains("CURSO");
+
+            // Si la etapa estaba PENDIENTE y la tarea entra en progreso, la etapa pasa a EN_PROCESO
+            if (enProgreso && ("PENDIENTE".equalsIgnoreCase(etapa.getEstado()) || "EN_ESPERA".equalsIgnoreCase(etapa.getEstado()))) {
+                etapa.setEstado("EN_PROCESO");
+                etapaRepository.save(etapa);
+            }
+        }
+
+        return guardada;
     }
 
     // Listado de etapas para alimentar los selectores en el frontend

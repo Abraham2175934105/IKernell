@@ -41,9 +41,34 @@ public class LiderController {
     }
 
     @GetMapping("/proyectos/{idProyecto}/historial-cambios")
-    @Operation(summary = "Obtener historial de cambios realizados por Coordinador", description = "Permite al Líder consultar todas las modificaciones directivas registradas en el proyecto")
+    @Operation(summary = "Obtener historial de cambios realizados por Coordinador o Líder", description = "Permite consultar todas las modificaciones directivas registradas en el proyecto")
     public ResponseEntity<List<com.ikernell.model.HistorialCambiosCoordinador>> obtenerHistorialCambiosProyecto(@PathVariable Long idProyecto) {
         return ResponseEntity.ok(historialCambiosCoordinadorRepository.findByProyectoIdProyectoOrderByFechaCambioDesc(idProyecto));
+    }
+
+    @PostMapping("/proyectos/{idProyecto}/historial-cambios")
+    @Operation(summary = "Registrar acción de auditoría en proyecto", description = "Guarda un registro acumulado de modificaciones registradas en el proyecto")
+    public ResponseEntity<HistorialCambiosCoordinador> registrarCambio(
+            @PathVariable Long idProyecto,
+            @RequestParam Long idCoordinador,
+            @RequestParam String nombreCoordinador,
+            @RequestParam String emailCoordinador,
+            @RequestParam String accion,
+            @RequestParam String detalles,
+            @RequestParam(required = false) String batchId) {
+        HistorialCambiosCoordinador reg = new HistorialCambiosCoordinador();
+        Proyecto p = new Proyecto();
+        p.setIdProyecto(idProyecto);
+        reg.setProyecto(p);
+        reg.setIdCoordinador(idCoordinador);
+        reg.setNombreCoordinador(nombreCoordinador);
+        reg.setEmailCoordinador(emailCoordinador);
+        reg.setAccion(accion);
+        reg.setDetalles(detalles);
+        reg.setBatchId(batchId);
+        reg.setFechaCambio(java.time.LocalDateTime.now());
+        HistorialCambiosCoordinador guardado = historialCambiosCoordinadorRepository.save(reg);
+        return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
     }
 
     @PutMapping("/proyectos/{idProyecto}/confirmar-lectura-reasignacion")
