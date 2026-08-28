@@ -92,7 +92,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
     } else if (user?.rol === 'LIDER') {
       return [
         { id: 'wbs', label: 'WBS y Proyectos', icon: Layers, desc: 'Desglose por etapas' },
-        { id: 'personal', label: 'Nómina & Personal', icon: Users, desc: 'Líderes y Desarrolladores' },
+        { id: 'personal', label: 'Gestión de Personal', icon: Users, desc: 'Líderes y Desarrolladores' },
         { id: 'semaforo', label: 'Semáforo Predictivo', icon: Activity, desc: 'Matriz de riesgo en tiempo real' },
         { id: 'incidencias', label: 'Gestión de Incidencias', icon: AlertTriangle, desc: 'Bandeja de reportes de equipo' },
         { id: 'burnout', label: 'Predictor de Burnout', icon: Activity, desc: 'Carga histórica de 21 días' },
