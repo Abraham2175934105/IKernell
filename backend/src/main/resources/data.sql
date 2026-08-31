@@ -345,17 +345,23 @@ VALUES
   (1010, 101, 15, 'Diseño de componentes UI y prototipo de consola web de facturación', 'FINALIZADA'),
 
   -- Asignaciones Especiales RF-20 (Doble Rol Funcional: Líderes actuando como Desarrolladores en OTROS proyectos)
-  -- Elena Nito (id: 2 - Líder Proy 1 & 5) -> Asignada como Desarrolladora en Proy 2 & 3
-  (8001, 202, 2, 'Desarrollar módulo de encriptación HSM para tarjetas de crédito en Itaú Bank', 'EN_PROGRESO'),
-  (8002, 302, 2, 'Optimizar rendimiento de WebSocket para transferencias en tiempo real en Nubank', 'EN_PROGRESO'),
+  -- Ana Martínez (id: 2 - Líder Proy 1 & 5) -> Asignada como Desarrolladora en Proy 2 & 3
+  (8001, 201, 2, 'Diseñar modelo relacional de auditoría transaccional idempotente (6h/sem)', 'FINALIZADA'),
+  (8002, 202, 2, 'Desarrollar módulo de encriptación HSM para tarjetas de crédito en Itaú Bank (12h/sem)', 'EN_PROGRESO'),
+  (8003, 302, 2, 'Optimizar rendimiento de WebSocket para transferencias en tiempo real en Nubank (12h/sem)', 'EN_PROGRESO'),
+  (8004, 303, 2, 'Implementar suite de pruebas automatizadas de integración para pasarela QR (6h/sem)', 'PENDIENTE'),
 
   -- Carlos Mendoza (id: 5 - Líder Proy 2 & 6) -> Asignado como Desarrollador en Proy 1 & 4
-  (8003, 102, 5, 'Implementar módulo de validación fiscal XML para Santander Brasil', 'EN_PROGRESO'),
-  (8004, 402, 5, 'Configurar servidor STUN/TURN para videoconsultas de baja latencia', 'EN_PROGRESO'),
+  (8005, 101, 5, 'Auditar contratos de API N-Capas y especificación OpenAPI 3.0 (8h/sem)', 'FINALIZADA'),
+  (8006, 102, 5, 'Implementar módulo de validación fiscal XML para Santander Brasil (16h/sem)', 'EN_PROGRESO'),
+  (8007, 402, 5, 'Configurar servidor STUN/TURN para videoconsultas de baja latencia (8h/sem)', 'EN_PROGRESO'),
+  (8008, 403, 5, 'Diseñar algoritmo de triaje médico asistido por árbol de decisión (8h/sem)', 'PENDIENTE'),
 
-  -- Ana María Silva (id: 8 - Líder Proy 3 & 4) -> Asignada como Desarrolladora en Proy 5 & 2
-  (8005, 502, 8, 'Construir pipeline de transformación ETL en Python para datos de Embraer', 'EN_PROGRESO'),
-  (8006, 203, 8, 'Diseñar esquemas de almacenamiento para tokens transaccionales PCI-DSS', 'EN_PROGRESO'),
+  -- Elena Rostova (id: 8 - Líder Proy 3 & 4) -> Asignada como Desarrolladora en Proy 5 & 2
+  (8009, 501, 8, 'Validar sanitización y migración de esquemas legados hacia PostgreSQL (10h/sem)', 'FINALIZADA'),
+  (8010, 502, 8, 'Construir pipeline de transformación ETL en Python para datos de Embraer (14h/sem)', 'EN_PROGRESO'),
+  (8011, 203, 8, 'Diseñar esquemas de almacenamiento para tokens transaccionales PCI-DSS (10h/sem)', 'EN_PROGRESO'),
+  (8012, 103, 8, 'Automatizar transmisión SFTP con cifrado asimétrico ISO 8601 (6h/sem)', 'PENDIENTE'),
   (3007, 301, 15, 'Maquetación de pantallas principales del dashboard móvil y flujo de transferencias', 'FINALIZADA'),
   (3008, 302, 15, 'Integración de animaciones de confirmación de pago y micro-interacciones hápticas', 'EN_PROGRESO'),
   (3009, 303, 15, 'Desarrollo del componente de previsualización y copiado rápido de código snippet', 'PENDIENTE'),

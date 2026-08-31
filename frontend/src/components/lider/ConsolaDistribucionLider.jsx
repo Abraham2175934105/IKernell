@@ -15,6 +15,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
   const [semanaCodigo, setSemanaCodigo] = useState('2026-W36');
 
   const [horasDevReales, setHorasDevReales] = useState(devAssignedHours);
+  const [actividadesDevList, setActividadesDevList] = useState([]);
 
   // Cargar tareas de desarrollo asignadas en otros proyectos desde backend
   useEffect(() => {
@@ -29,12 +30,19 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         });
         if (res.ok) {
           const actividades = await res.json();
-          const sumaHoras = (actividades || [])
+          const list = Array.isArray(actividades) ? actividades : [];
+          setActividadesDevList(list);
+
+          const sumaHoras = list
             .filter(a => {
               const st = (a.estado || '').toUpperCase();
               return st !== 'COMPLETADA' && st !== 'FINALIZADA';
             })
-            .reduce((acc, a) => acc + (parseInt(a.horasEstimadas || a.horas) || 0), 0);
+            .reduce((acc, a) => {
+              const match = (a.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+              const val = match ? parseInt(match[1]) : (parseInt(a.horasEstimadas || a.horas) || 6);
+              return acc + val;
+            }, 0);
           if (sumaHoras > 0) setHorasDevReales(sumaHoras);
         }
       } catch (err) {
@@ -233,6 +241,68 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             <span>Distribución de jornada balanceada y validada</span>
           </div>
         </div>
+      </div>
+
+      {/* Sección de Desglose de Tareas WBS del Líder actuando como Desarrollador */}
+      <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-3">
+        <div className="flex justify-between items-center flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Code2 size={16} className="text-indigo-600 dark:text-indigo-400" />
+            <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+              Entregables WBS Asignados como Desarrollador ({actividadesDevList.length} Tareas)
+            </span>
+          </div>
+          <span className="text-[0.68rem] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono">
+            {horasDevReales}h/sem Activas en Desarrollo
+          </span>
+        </div>
+
+        {actividadesDevList.length === 0 ? (
+          <div className="p-4 text-center text-xs text-zinc-500 font-medium bg-white dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+            No tienes tareas de desarrollo asignadas en otros proyectos actualmente.
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+            {actividadesDevList.map((a, idx) => {
+              const match = (a.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+              const hTask = match ? parseInt(match[1]) : (parseInt(a.horasEstimadas || a.horas) || 6);
+              const estUpper = (a.estado || 'PENDIENTE').toUpperCase();
+              const isFin = estUpper === 'FINALIZADA' || estUpper === 'COMPLETADO';
+              const isProc = estUpper === 'EN_PROGRESO' || estUpper === 'EN_EJECUCION';
+
+              return (
+                <div key={a.idActividad || idx} className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs gap-3 shadow-2xs">
+                  <div className="min-w-0 flex-1">
+                    <span className="font-extrabold text-zinc-800 dark:text-zinc-200 block truncate">
+                      • {a.descripcion}
+                    </span>
+                    <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 block mt-0.5">
+                      Fase #{a.etapa?.idEtapa || a.idEtapa}: {a.etapa?.nombreEtapa || a.etapaNombre || 'Etapa WBS'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-mono font-black text-xs border border-indigo-200 dark:border-indigo-800">
+                      {hTask}h/sem
+                    </span>
+                    {isFin ? (
+                      <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.62rem] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                        <CheckCircle2 size={11} /> FINALIZADA (🔒 Cumplida)
+                      </span>
+                    ) : isProc ? (
+                      <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.62rem] bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 flex items-center gap-1">
+                        <Activity size={11} /> EN PROGRESO (🔒 En Ejecución)
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.62rem] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                        <Clock size={11} /> PENDIENTE
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Barra Proporcional Interactivamente Ajustable */}
