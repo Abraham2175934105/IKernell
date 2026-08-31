@@ -5977,7 +5977,7 @@ export const LiderDashboard = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full shadow-2xl max-h-[90dvh] overflow-y-auto max-w-xl transition-all duration-300"
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-full shadow-2xl max-h-[90dvh] overflow-y-auto max-w-2xl sm:max-w-3xl transition-all duration-300"
               >
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -6206,70 +6206,35 @@ export const LiderDashboard = () => {
                       rows={3}
                       value={nuevaActividad.descripcion}
                       onChange={(e) => { setNuevaActividad({ ...nuevaActividad, descripcion: e.target.value }); setFormErrors(p => ({ ...p, descripcion: undefined })); }}
-                      placeholder="Descripción de la tarea técnica a ejecutar (Ej: Diseños Figma de pantallas, REST API Spring Boot, etc.)"
+                      placeholder="Escriba aquí la descripción técnica de la tarea a realizar..."
                       className={`input-field py-2 ${formErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
                     />
                     {formErrors.descripcion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.descripcion}</p>}
 
-                    {/* Detector Inteligente de Cualidad Técnica */}
-                    {(() => {
-                      const desc = (nuevaActividad.descripcion || '').toLowerCase();
-                      let detectedKey = '';
-                      let detectedLabel = '';
-                      let DetectedIcon = Sparkles;
+                    {/* Subtítulo / Clasificación por Cualidad Técnica Activa */}
+                    {nuevaActividad.cualidadNombre && (
+                      <div className="p-2.5 rounded-2xl bg-blue-50/90 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 text-xs flex items-center justify-between gap-2 font-semibold shadow-2xs animate-fadeIn">
+                        <span className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <Sparkles size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                          <span className="truncate">Subtítulo / Clasificación Técnica: <strong>{nuevaActividad.cualidadNombre}</strong></span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSkillFilterForModal(nuevaActividad.cualidadTecnica || 'TODOS');
+                            setIsAsignarTareaDevListOpen(true);
+                          }}
+                          className="px-2.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[0.65rem] transition-all cursor-pointer shadow-xs flex items-center gap-1 shrink-0"
+                        >
+                          <Search size={11} />
+                          <span>Buscar Desarrolladores Idóneos</span>
+                        </button>
+                      </div>
+                    )}
 
-                      if (desc.includes('figma') || desc.includes('ui') || desc.includes('ux') || desc.includes('mockup') || desc.includes('pantalla') || desc.includes('diseñ')) {
-                        detectedKey = 'FIGMA';
-                        detectedLabel = 'Figma & UI/UX';
-                        DetectedIcon = Figma;
-                      } else if (desc.includes('react') || desc.includes('front') || desc.includes('componente') || desc.includes('web') || desc.includes('tailwind')) {
-                        detectedKey = 'FRONTEND';
-                        detectedLabel = 'Frontend (React/Vue)';
-                        DetectedIcon = Code2;
-                      } else if (desc.includes('openapi') || desc.includes('api') || desc.includes('rest') || desc.includes('spring') || desc.includes('back') || desc.includes('java') || desc.includes('microservicio')) {
-                        detectedKey = 'BACKEND';
-                        detectedLabel = 'Backend (Java/Spring)';
-                        DetectedIcon = Server;
-                      } else if (desc.includes('docker') || desc.includes('cloud') || desc.includes('devops') || desc.includes('aws') || desc.includes('ci/cd') || desc.includes('despliegue')) {
-                        detectedKey = 'DEVOPS';
-                        detectedLabel = 'DevOps & Cloud';
-                        DetectedIcon = Cloud;
-                      } else if (desc.includes('sql') || desc.includes('consulta') || desc.includes('database') || desc.includes('postgre') || desc.includes('db') || desc.includes('tuning')) {
-                        detectedKey = 'DATABASE';
-                        detectedLabel = 'SQL & Bases de Datos';
-                        DetectedIcon = Database;
-                      } else if (desc.includes('junit') || desc.includes('mockito') || desc.includes('qa') || desc.includes('prueba') || desc.includes('test') || desc.includes('cypress')) {
-                        detectedKey = 'QA';
-                        detectedLabel = 'Pruebas & QA';
-                        DetectedIcon = TestTube2;
-                      }
-
-                      if (!detectedKey) return null;
-
-                      return (
-                        <div className="p-3 rounded-2xl bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 text-xs flex items-center justify-between gap-2 font-semibold shadow-2xs animate-fadeIn">
-                          <span className="flex items-center gap-1.5 min-w-0 flex-1">
-                            <DetectedIcon size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                            <span className="truncate">Cualidad Requerida: <strong>{detectedLabel}</strong></span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSkillFilterForModal(detectedKey);
-                              setIsAsignarTareaDevListOpen(true);
-                            }}
-                            className="px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[0.68rem] transition-all cursor-pointer shadow-xs flex items-center gap-1 shrink-0"
-                          >
-                            <Search size={12} />
-                            <span>Buscar Desarrolladores Idóneos</span>
-                          </button>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Sugerencias Rápidas */}
+                    {/* Clasificación por Cualidad Técnica (Abre modal pre-filtrado sin sobrescribir la descripción) */}
                     <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                      <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Sugerencias por Cualidad:</span>
+                      <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Clasificación / Cualidad Técnica de la Tarea:</span>
                       {[
                         { text: 'Diseño Figma & Wireframes', key: 'FIGMA', icon: Figma },
                         { text: 'Diseño e Implementación UI React', key: 'FRONTEND', icon: Code2 },
@@ -6279,18 +6244,24 @@ export const LiderDashboard = () => {
                         { text: 'Despliegue CI/CD & Docker', key: 'DEVOPS', icon: Cloud }
                       ].map((sug, idx) => {
                         const SugIcon = sug.icon;
+                        const isCurrentSkill = nuevaActividad.cualidadTecnica === sug.key;
                         return (
                           <button
                             key={idx}
                             type="button"
                             onClick={() => {
-                              setNuevaActividad({ ...nuevaActividad, descripcion: sug.text });
-                              setFormErrors(p => ({ ...p, descripcion: undefined }));
                               setSkillFilterForModal(sug.key);
+                              setNuevaActividad(prev => ({ ...prev, cualidadTecnica: sug.key, cualidadNombre: sug.text }));
+                              setIsAsignarTareaDevListOpen(true);
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 text-zinc-600 dark:text-zinc-300 text-[0.62rem] font-bold border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer flex items-center gap-1.5"
+                            className={`px-2.5 py-1 rounded-lg text-[0.62rem] font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                              isCurrentSkill
+                                ? 'bg-blue-600 text-white border-blue-600 font-extrabold shadow-xs'
+                                : 'bg-zinc-100 dark:bg-zinc-800/80 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                            }`}
+                            title="Filtrar desarrolladores por esta cualidad sin alterar la descripción escrita"
                           >
-                            <SugIcon size={12} className="text-blue-500 shrink-0" />
+                            <SugIcon size={12} className={isCurrentSkill ? 'text-white' : 'text-blue-500 shrink-0'} />
                             <span>{sug.text}</span>
                           </button>
                         );
