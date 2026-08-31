@@ -36,8 +36,20 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
     return localStorage.getItem('sidebar_collapsed') === 'true';
   });
   const [isHovered, setIsHovered] = useState(false);
-  const [currentTool, setCurrentTool] = useState(null); // 'chat' | 'biblioteca' | 'tutoriales' | null
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Estado para la Intercepción de Navegación por Seguridad (Cambio de Contraseña o Datos no Guardados)
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavAction, setPendingNavAction] = useState(null);
+
+  const confirmOrNavigate = (action) => {
+    if (hasUnsavedChanges) {
+      setPendingNavAction(() => action);
+      setShowUnsavedModal(true);
+    } else {
+      action();
+    }
+  };
 
   const isExpanded = !isCollapsed || isHovered;
 
@@ -116,16 +128,6 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
     { id: 'tutoriales', label: 'Tutoriales e Inducción', icon: GraduationCap, badge: '3 Guías' }
   ];
 
-  const confirmOrNavigate = (navigationCallback) => {
-    if (hasUnsavedChanges) {
-      if (window.confirm('Tienes cambios no guardados en el formulario de la etapa. ¿Deseas descartarlos y continuar?')) {
-        if (onCancelUnsavedChanges) onCancelUnsavedChanges();
-        navigationCallback();
-      }
-    } else {
-      navigationCallback();
-    }
-  };
 
   const handleLogoutClick = () => {
     const skipConfirm = localStorage.getItem('ikernell_skip_logout_confirm') === 'true';
