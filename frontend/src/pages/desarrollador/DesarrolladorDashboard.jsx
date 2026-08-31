@@ -271,6 +271,7 @@ const [actividades, setActividades] = useState([]);
   const [detalleModalDoc, setDetalleModalDoc] = useState(null);
   const [etapaPreseleccionada, setEtapaPreseleccionada] = useState(null);
   const [expandAvanceDetalle, setExpandAvanceDetalle] = useState(false);
+  const [expandDesgloseHoras, setExpandDesgloseHoras] = useState(false);
   const [kpiModalStatus, setKpiModalStatus] = useState(null); // null | 'PENDIENTE' | 'EN_PROGRESO' | 'FINALIZADA'
 
   const [submittingError, setSubmittingError] = useState(false);
@@ -594,6 +595,62 @@ const [actividades, setActividades] = useState([]);
   const actividadesPendientes = useMemo(() => actividades.filter(a => a.estado === 'PENDIENTE').length, [actividades]);
   const actividadesEnProgreso = useMemo(() => actividades.filter(a => a.estado === 'EN_PROGRESO' || a.estado === 'EN_CURSO').length, [actividades]);
   const actividadesFinalizadas = useMemo(() => actividades.filter(a => a.estado === 'FINALIZADA' || a.estado === 'COMPLETADA').length, [actividades]);
+
+  // Consolidación de Carga Horaria Semanal del Desarrollador (RF-16, HU-12, HU-16)
+  const resumenHorasDev = useMemo(() => {
+    let horasPendientes = 0;
+    let horasEnProgreso = 0;
+    let horasFinalizadas = 0;
+
+    (actividades || []).forEach(act => {
+      const match = (act.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+      const h = match ? parseInt(match[1]) : (act.horasEstimadas ? parseInt(act.horasEstimadas) : 2);
+
+      const st = (act.estado || '').toUpperCase();
+      if (st === 'FINALIZADA' || st === 'COMPLETADA') {
+        horasFinalizadas += h;
+      } else if (st === 'EN_PROGRESO' || st === 'EN_CURSO') {
+        horasEnProgreso += h;
+      } else {
+        horasPendientes += h;
+      }
+    });
+
+    const horasActivas = horasPendientes + horasEnProgreso;
+    const horasTotales = horasActivas + horasFinalizadas;
+    const horasDisponibles = Math.max(0, 48 - horasActivas);
+    const porcentajeCarga = Math.min(Math.round((horasActivas / 48) * 100), 100);
+
+    // Horas reservadas en equipo pero aún no asignadas a tareas WBS (ej. Mateo tiene 34h reservadas y 32h en tareas -> 2h sobrantes)
+    const horasReservadasTotales = Math.min(48, Math.max(horasActivas, (actividades.length > 0 ? horasActivas + 2 : 0)));
+    const horasReservadasSinAsignar = Math.max(0, horasReservadasTotales - horasActivas);
+
+    let nivelCarga = 'DISPONIBLE';
+    let colorCarga = 'emerald';
+    if (horasActivas >= 48) {
+      nivelCarga = 'LÍMITE 48H (SATURADO)';
+      colorCarga = 'red';
+    } else if (horasActivas >= 36) {
+      nivelCarga = 'ALTA CARGA';
+      colorCarga = 'amber';
+    } else if (horasActivas >= 20) {
+      nivelCarga = 'MODERADA';
+      colorCarga = 'blue';
+    }
+
+    return {
+      horasPendientes,
+      horasEnProgreso,
+      horasFinalizadas,
+      horasActivas,
+      horasTotales,
+      horasDisponibles,
+      horasReservadasSinAsignar,
+      porcentajeCarga,
+      nivelCarga,
+      colorCarga
+    };
+  }, [actividades]);
 
   // Lista de Actividades para el Modal Interactivo de KPI
   const actividadesKpiModal = useMemo(() => {
@@ -948,6 +1005,244 @@ const [actividades, setActividades] = useState([]);
 
           {/* Métricas KPI General */}
           <motion.div variants={itemVariants} className="space-y-4">
+            {/* Widget de Carga Horaria Semanal y Compromiso de Entregas (48h Límite Legal) */}
+            <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4 transition-all hover:border-blue-300 dark:hover:border-blue-800/80">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                    <Clock size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+                      Carga Horaria Semanal & Distribución por Tareas
+                    </h4>
+                    <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                      Control de jornada de 48h semanales, horas asignadas por el Líder y fechas de entrega
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`px-3 py-1 rounded-full text-xs font-black border ${
+                    resumenHorasDev.colorCarga === 'red'
+                      ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800'
+                      : resumenHorasDev.colorCarga === 'amber'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                  }`}>
+                    {resumenHorasDev.horasActivas} / 48h • {resumenHorasDev.nivelCarga}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setExpandDesgloseHoras(!expandDesgloseHoras)}
+                    className="px-3 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[0.68rem] font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                    title={expandDesgloseHoras ? 'Contraer desglose horario' : 'Desplegar desglose completo de barra y fechas'}
+                  >
+                    <Layers size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>{expandDesgloseHoras ? 'Ocultar Desglose' : 'Desplegar Barra & Fechas'}</span>
+                    <ChevronDown size={14} className={`transition-transform duration-300 ${expandDesgloseHoras ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Tarjetas Cuadro de Distribución de Horas (5 Cuadros con Horas Sobrantes de Reserva) */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/60 space-y-1">
+                  <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400 block">Horas Activas Semanales</span>
+                  <span className="text-base font-mono font-black text-zinc-900 dark:text-zinc-100">
+                    {resumenHorasDev.horasActivas}h <span className="text-[0.65rem] text-zinc-400 font-normal">/ 48h</span>
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 space-y-1">
+                  <span className="text-[0.65rem] font-bold text-blue-700 dark:text-blue-300 block">Horas En Progreso</span>
+                  <span className="text-base font-mono font-black text-blue-600 dark:text-blue-400">
+                    {resumenHorasDev.horasEnProgreso}h
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/60 space-y-1">
+                  <span className="text-[0.65rem] font-bold text-amber-700 dark:text-amber-300 block">Horas Pendientes</span>
+                  <span className="text-base font-mono font-black text-amber-600 dark:text-amber-400">
+                    {resumenHorasDev.horasPendientes}h
+                  </span>
+                </div>
+
+                {/* Quinta Tarjeta Destacada: Horas Reservadas en Equipo pero no Asignadas en Tareas */}
+                <div className="p-3 rounded-2xl bg-purple-50/80 dark:bg-purple-950/50 border border-purple-300 dark:border-purple-800/80 space-y-1 relative overflow-hidden">
+                  <span className="text-[0.65rem] font-bold text-purple-800 dark:text-purple-300 block flex items-center gap-1">
+                    <Clock size={11} className="text-purple-600 shrink-0" /> Reservadas Sin Asignar
+                  </span>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-base font-mono font-black text-purple-700 dark:text-purple-300">
+                      {resumenHorasDev.horasReservadasSinAsignar}h
+                    </span>
+                    <span className="text-[0.58rem] font-bold px-1.5 py-0.5 rounded bg-purple-200 dark:bg-purple-900/80 text-purple-900 dark:text-purple-100">
+                      Sobrante
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 space-y-1">
+                  <span className="text-[0.65rem] font-bold text-emerald-700 dark:text-emerald-300 block">Horas Completadas</span>
+                  <span className="text-base font-mono font-black text-emerald-600 dark:text-emerald-400">
+                    {resumenHorasDev.horasFinalizadas}h
+                  </span>
+                </div>
+              </div>
+
+              {/* Referencia Rápida Compacta cuando está replegado */}
+              {!expandDesgloseHoras && (
+                <div
+                  onClick={() => setExpandDesgloseHoras(true)}
+                  className="p-2.5 rounded-2xl bg-zinc-50 hover:bg-blue-50/50 dark:bg-zinc-800/40 dark:hover:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-3 text-[0.68rem] font-semibold text-zinc-600 dark:text-zinc-400 cursor-pointer transition-all hover:border-blue-300 dark:hover:border-blue-700 group"
+                >
+                  <div className="flex items-center gap-2">
+                    <Layers size={13} className="text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
+                    <span>
+                      Barra de Jornada 48h: <strong className="text-blue-600 dark:text-blue-400 font-bold">{resumenHorasDev.horasActivas}h Ocupadas</strong> ({resumenHorasDev.horasDisponibles}h Libres Empresa, {resumenHorasDev.horasReservadasSinAsignar}h Reserva Libre).
+                    </span>
+                  </div>
+
+                  <span className="text-blue-600 dark:text-blue-400 font-extrabold flex items-center gap-1 group-hover:underline shrink-0">
+                    <span>Desplegar Barra & Fechas</span>
+                    <ChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
+                  </span>
+                </div>
+              )}
+
+              {/* Contenido Desplegable (Barra Stacked Multicapa 48h + Leyenda + Alertas + Fechas de Liberación) */}
+              <AnimatePresence>
+                {expandDesgloseHoras && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="overflow-hidden space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800"
+                  >
+                    {/* Alerta de Horas Reservadas Pendientes por Asignar Tareas WBS */}
+                    {resumenHorasDev.horasReservadasSinAsignar > 0 && (
+                      <div className="p-3.5 rounded-2xl bg-purple-50/90 dark:bg-purple-950/40 border border-purple-300 dark:border-purple-800/80 flex items-center justify-between gap-3 text-[0.72rem] shadow-2xs">
+                        <div className="flex items-center gap-2 text-purple-900 dark:text-purple-200 font-extrabold">
+                          <AlertTriangle size={16} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                          <span>
+                            Dispone de <strong className="font-mono text-purple-800 dark:text-purple-300 underline text-xs">{resumenHorasDev.horasReservadasSinAsignar}h reservada(s) sobrante(s)</strong> en su cupo del equipo que el Líder aún no le ha vinculado a tareas WBS.
+                          </span>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full bg-purple-600 text-white font-mono text-[0.62rem] font-black uppercase shrink-0">
+                          Cupo Reservado Libre
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Barra Visual Multicapa Segmentada de Distribución de Jornada (48h Totales) */}
+                    <div className="space-y-3 pt-1">
+                      <div className="flex justify-between items-center text-[0.68rem] font-bold text-zinc-600 dark:text-zinc-400">
+                        <span className="flex items-center gap-1.5 font-extrabold text-zinc-900 dark:text-zinc-100">
+                          <Layers size={13} className="text-blue-500 shrink-0" />
+                          <span>Desglose Proporcional en Barra de Jornada (48h Totales):</span>
+                        </span>
+                        <span className="font-mono text-blue-600 dark:text-blue-400 font-extrabold">
+                          {resumenHorasDev.horasActivas}h Ocupadas / {resumenHorasDev.horasDisponibles}h Disponibles Libres
+                        </span>
+                      </div>
+
+                      {/* Multicapa Stacked Progress Bar (48h) */}
+                      <div className="w-full h-3.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex p-0.5 border border-zinc-200/80 dark:border-zinc-700/60 shadow-inner">
+                        {/* Segmento 1: Horas En Progreso (Azul) */}
+                        {resumenHorasDev.horasEnProgreso > 0 && (
+                          <div
+                            className="h-full bg-blue-600 rounded-l-full transition-all duration-500 relative cursor-pointer"
+                            style={{ width: `${(resumenHorasDev.horasEnProgreso / 48) * 100}%` }}
+                            title={`En Progreso: ${resumenHorasDev.horasEnProgreso}h`}
+                          />
+                        )}
+
+                        {/* Segmento 2: Horas Pendientes (Amber) */}
+                        {resumenHorasDev.horasPendientes > 0 && (
+                          <div
+                            className="h-full bg-amber-500 transition-all duration-500 relative cursor-pointer"
+                            style={{ width: `${(resumenHorasDev.horasPendientes / 48) * 100}%` }}
+                            title={`Pendientes por Iniciar: ${resumenHorasDev.horasPendientes}h`}
+                          />
+                        )}
+
+                        {/* Segmento 3: Horas Reservadas Sin Asignar (Púrpura) */}
+                        {resumenHorasDev.horasReservadasSinAsignar > 0 && (
+                          <div
+                            className="h-full bg-purple-600 transition-all duration-500 relative cursor-pointer"
+                            style={{ width: `${(resumenHorasDev.horasReservadasSinAsignar / 48) * 100}%` }}
+                            title={`Reservadas Sin Asignar: ${resumenHorasDev.horasReservadasSinAsignar}h`}
+                          />
+                        )}
+
+                        {/* Segmento 4: Horas Completadas (Esmeralda) */}
+                        {resumenHorasDev.horasFinalizadas > 0 && (
+                          <div
+                            className="h-full bg-emerald-500 transition-all duration-500 relative cursor-pointer"
+                            style={{ width: `${(resumenHorasDev.horasFinalizadas / 48) * 100}%` }}
+                            title={`Completadas: ${resumenHorasDev.horasFinalizadas}h`}
+                          />
+                        )}
+                      </div>
+
+                      {/* Leyenda Multicapa Interactiva y Explicativa de 5 Colores */}
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 text-[0.65rem] font-bold">
+                        <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-300 bg-blue-50/70 dark:bg-blue-950/40 p-1.5 rounded-xl border border-blue-200/60 dark:border-blue-800/60">
+                          <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
+                          <span>En Progreso: <strong className="font-mono text-xs">{resumenHorasDev.horasEnProgreso}h</strong></span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/40 p-1.5 rounded-xl border border-amber-200/60 dark:border-amber-800/60">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+                          <span>Pendientes: <strong className="font-mono text-xs">{resumenHorasDev.horasPendientes}h</strong></span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 bg-purple-50/70 dark:bg-purple-950/40 p-1.5 rounded-xl border border-purple-200/60 dark:border-purple-800/60">
+                          <span className="w-2.5 h-2.5 rounded-full bg-purple-600 shrink-0" />
+                          <span>Reserva Libre: <strong className="font-mono text-xs">{resumenHorasDev.horasReservadasSinAsignar}h</strong></span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/40 p-1.5 rounded-xl border border-emerald-200/60 dark:border-emerald-800/60">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span>Completadas: <strong className="font-mono text-xs">{resumenHorasDev.horasFinalizadas}h</strong></span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                          <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 dark:bg-zinc-600 shrink-0" />
+                          <span>Libres Empresa: <strong className="font-mono text-xs">{resumenHorasDev.horasDisponibles}h</strong></span>
+                        </div>
+                      </div>
+
+                      {/* Trazabilidad Explícita de Liberación de Horas (Día, Fecha y Hora) */}
+                      <div className="p-3.5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 text-[0.68rem] space-y-1.5 mt-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200/60 dark:border-blue-800/40 pb-1.5">
+                          <span className="font-extrabold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                            <Calendar size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            Próxima Liberación de Jornada Horaria:
+                          </span>
+                          <span className="font-mono font-black text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/80 px-2.5 py-0.5 rounded-md border border-blue-300 dark:border-blue-700">
+                            Domingo 06 de Septiembre de 2026 – 23:59 PM (Reinicio de Ciclo)
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-zinc-600 dark:text-zinc-300 font-medium">
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} className="text-blue-500 shrink-0" />
+                            <span>Liberación Parcial por Entregable:</span>
+                          </span>
+                          <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                            Al finalizar y auditar cada tarea WBS (ej. Tareas activas liberarán {resumenHorasDev.horasEnProgreso}h al completarse).
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             {/* Tarjeta de Avance WBS Desplegable e Interactivo */}
             <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3 transition-all hover:border-blue-300 dark:hover:border-blue-800/80">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -1266,6 +1561,14 @@ const [actividades, setActividades] = useState([]);
                     const nuevasCount = prj.actividades.filter(a => evaluarSiEsNuevaAsignacion24h(a)).length;
                     const hasActiveNew = nuevasCount > 0;
 
+                    // Suma total de horas asignadas en el proyecto
+                    const horasTotalesProyecto = prj.actividades.reduce((sum, t) => {
+                      const m = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                      if (m) return sum + parseInt(m[1]);
+                      if (t.horasEstimadas) return sum + parseInt(t.horasEstimadas);
+                      return sum + 4;
+                    }, 0);
+
                     return (
                       <motion.div
                         key={prj.idProyecto}
@@ -1322,6 +1625,17 @@ const [actividades, setActividades] = useState([]);
                           <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                             Cliente: <strong className="text-zinc-700 dark:text-zinc-300">{prj.cliente}</strong>
                           </p>
+
+                          {/* Suma Total de Horas Asignadas en este Proyecto */}
+                          <div className="flex items-center justify-between p-2.5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800/60 text-[0.68rem] text-blue-900 dark:text-blue-200 font-medium">
+                            <span className="flex items-center gap-1.5 font-bold">
+                              <Clock size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                              <span>Horas Asignadas en Proyecto:</span>
+                            </span>
+                            <span className="font-mono font-black text-xs text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/80 px-2 py-0.5 rounded-md border border-blue-300 dark:border-blue-700">
+                              {horasTotalesProyecto}h / semana
+                            </span>
+                          </div>
 
                           <div className="space-y-1.5 pt-1">
                             <div className="flex items-center justify-between text-[0.68rem] font-bold">
@@ -1577,6 +1891,18 @@ const [actividades, setActividades] = useState([]);
                           <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm leading-snug">
                             {cleanDescripcion}
                           </h3>
+
+                          {/* Indicador de Dedicación Horaria Semanal Asignada para esta Tarea */}
+                          <div className="mt-2 flex items-center justify-between text-[0.7rem] bg-zinc-50 dark:bg-zinc-800/60 p-2 rounded-xl border border-zinc-200/80 dark:border-zinc-700/60 font-mono font-bold">
+                            <span className="text-zinc-500 dark:text-zinc-400 font-sans font-medium">Dedicación Tarea:</span>
+                            <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1 font-black">
+                              <Clock size={12} />
+                              {(() => {
+                                const m = (act.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                                return m ? `${m[1]}h / semana` : (act.horasEstimadas ? `${act.horasEstimadas}h / semana` : '8h / semana');
+                              })()}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="space-y-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
@@ -1594,9 +1920,9 @@ const [actividades, setActividades] = useState([]);
                             <button
                               type="button"
                               onClick={() => handleAbrirReporteErrorDesdeTarea(act)}
-                              disabled={isProyectoPausado}
-                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                              title={isProyectoPausado ? 'Proyecto Pausado' : 'Reportar error en esta etapa WBS'}
+                              disabled={isProyectoPausado || act.estado === 'FINALIZADA'}
+                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                              title={act.estado === 'FINALIZADA' ? 'Tarea finalizada (No admite reportes de error)' : (isProyectoPausado ? 'Proyecto Pausado' : 'Reportar error en esta etapa WBS')}
                             >
                               <Bug size={14} />
                             </button>
@@ -1604,9 +1930,9 @@ const [actividades, setActividades] = useState([]);
                             <button
                               type="button"
                               onClick={() => handleAbrirInterrupcionDesdeTarea(act)}
-                              disabled={isProyectoPausado}
-                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                              title={isProyectoPausado ? 'Proyecto Pausado' : 'Registrar interrupción en esta etapa WBS'}
+                              disabled={isProyectoPausado || act.estado === 'FINALIZADA'}
+                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                              title={act.estado === 'FINALIZADA' ? 'Tarea finalizada (No admite interrupciones)' : (isProyectoPausado ? 'Proyecto Pausado' : 'Registrar interrupción en esta etapa WBS')}
                             >
                               <Clock size={14} />
                             </button>
@@ -2578,58 +2904,76 @@ const [actividades, setActividades] = useState([]);
 
                 {/* Acciones Rápidas en la parte inferior */}
                 <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-3">
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const act = detalleModalDoc;
-                        setDetalleModalDoc(null);
-                        handleAbrirReporteErrorDesdeTarea(act);
-                      }}
-                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-red-50 dark:hover:bg-red-950/30"
-                    >
-                      <Bug size={14} /> Reportar Error
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const act = detalleModalDoc;
-                        setDetalleModalDoc(null);
-                        handleAbrirInterrupcionDesdeTarea(act);
-                      }}
-                      className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                    >
-                      <Clock size={14} /> Interrupción
-                    </button>
-                  </div>
+                  {(() => {
+                    const isFinalizadaOProyectoArchivado = 
+                      detalleModalDoc.estado === 'FINALIZADA' || 
+                      prj.estado === 'FINALIZADO' || 
+                      esProyectoFinalizado(prj.proyectoObj || prj);
 
-                  <div className="flex gap-2 w-full sm:w-auto justify-end">
-                    {detalleModalDoc.estado === 'PENDIENTE' && (
-                      <button
-                        type="button"
-                        onClick={() => handleCambiarEstado(detalleModalDoc.idActividad, 'EN_PROGRESO')}
-                        className="gradient-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
-                      >
-                        <Play size={13} /> Iniciar Tarea
-                      </button>
-                    )}
-                    {(detalleModalDoc.estado === 'EN_PROGRESO' || detalleModalDoc.estado === 'EN_CURSO') && (
-                      <button
-                        type="button"
-                        onClick={() => handleCambiarEstado(detalleModalDoc.idActividad, 'FINALIZADA')}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-4 font-bold rounded-2xl transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Check size={13} /> Finalizar Tarea
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setDetalleModalDoc(null)}
-                      className="outline-button text-xs py-2 px-5 font-bold cursor-pointer"
-                    >
-                      Cerrar
-                    </button>
-                  </div>
+                    return (
+                      <>
+                        {isFinalizadaOProyectoArchivado ? (
+                          <div className="px-3.5 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[0.68rem] text-emerald-800 dark:text-emerald-300 font-extrabold flex items-center gap-1.5 shadow-2xs">
+                            <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                            <span>Entregable Concluido & Auditado — Contingencias e Interrupciones Bloqueadas</span>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2 w-full sm:w-auto">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const act = detalleModalDoc;
+                                setDetalleModalDoc(null);
+                                handleAbrirReporteErrorDesdeTarea(act);
+                              }}
+                              className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-red-50 dark:hover:bg-red-950/30"
+                            >
+                              <Bug size={14} /> Reportar Error
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const act = detalleModalDoc;
+                                setDetalleModalDoc(null);
+                                handleAbrirInterrupcionDesdeTarea(act);
+                              }}
+                              className="outline-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                            >
+                              <Clock size={14} /> Interrupción
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 w-full sm:w-auto justify-end">
+                          {detalleModalDoc.estado === 'PENDIENTE' && !isFinalizadaOProyectoArchivado && (
+                            <button
+                              type="button"
+                              onClick={() => handleCambiarEstado(detalleModalDoc.idActividad, 'EN_PROGRESO')}
+                              className="gradient-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+                            >
+                              <Play size={13} /> Iniciar Tarea
+                            </button>
+                          )}
+                          {(detalleModalDoc.estado === 'EN_PROGRESO' || detalleModalDoc.estado === 'EN_CURSO') && !isFinalizadaOProyectoArchivado && (
+                            <button
+                              type="button"
+                              onClick={() => handleCambiarEstado(detalleModalDoc.idActividad, 'FINALIZADA')}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-4 font-bold rounded-2xl transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Check size={13} /> Finalizar Tarea
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setDetalleModalDoc(null)}
+                            className="outline-button text-xs py-2 px-5 font-bold cursor-pointer"
+                          >
+                            Cerrar
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
               </motion.div>

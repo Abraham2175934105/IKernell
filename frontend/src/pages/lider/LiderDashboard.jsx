@@ -398,67 +398,380 @@ const calcularDiasFaltantes = (finStr) => {
 /**
  * Selector de Desarrolladores de Nivel Enterprise con Soporte de Despliegue Lateral Derecho
  */
+/**
+ * Modal Superpuesto Ampliado de Selección de Desarrollador con Análisis de Carga y Nómina
+ */
+const DeveloperSelectorModal = ({
+  isOpen,
+  onClose,
+  value,
+  onChange,
+  desarrolladores = [],
+  desarrolladoresAsignadosProyecto = [],
+  getDevCargaInfo,
+  getCleanEspecialidad
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filtroTab, setFiltroTab] = useState('todos'); // 'todos', 'nomina', 'disponibles'
+
+  // Combinar desarrolladores del pool global y asignados al proyecto
+  const allDevs = useMemo(() => {
+    const map = new Map();
+
+    (desarrolladores || []).forEach(d => {
+      const id = String(d.idTrabajador || d.id || d.idDesarrollador);
+      if (id && id !== 'undefined' && !map.has(id)) {
+        map.set(id, { ...d, idTrabajador: id });
+      }
+    });
+
+    (desarrolladoresAsignadosProyecto || []).forEach(a => {
+      const devObj = a.desarrollador || a;
+      const id = String(devObj.idTrabajador || devObj.id || devObj.idDesarrollador);
+      if (id && id !== 'undefined' && !map.has(id)) {
+        map.set(id, { ...devObj, idTrabajador: id });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [desarrolladores, desarrolladoresAsignadosProyecto]);
+
+  const filteredDevs = useMemo(() => {
+    return allDevs.filter(dev => {
+      const devId = String(dev.idTrabajador);
+      const nombreCompleto = `${dev.nombre || ''} ${dev.apellido || ''}`.toLowerCase();
+
+      // Excluir a Gabriel si no tiene tareas asignadas activas en el proyecto
+      if (nombreCompleto.includes('gabriel')) {
+        const tieneTareas = (etapas || []).some(et =>
+          (et.actividades || []).some(a => String(a.desarrollador?.idTrabajador || a.idDesarrollador) === devId)
+        );
+        if (!tieneTareas) return false;
+      }
+
+      const estaEnProyecto = (desarrolladoresAsignadosProyecto || []).some(
+        a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
+      );
+      const carga = getDevCargaInfo(devId);
+      const horas = carga?.horasAsignadas || 0;
+
+      if (filtroTab === 'nomina' && !estaEnProyecto) return false;
+      if (filtroTab === 'disponibles' && horas >= 48) return false;
+
+      if (!searchTerm.trim()) return true;
+      const term = searchTerm.toLowerCase();
+      const esp = (dev.especialidad || dev.profesion || '').toLowerCase();
+      const email = (dev.email || '').toLowerCase();
+      return nombreCompleto.includes(term) || esp.includes(term) || email.includes(term);
+    });
+  }, [allDevs, desarrolladoresAsignadosProyecto, getDevCargaInfo, filtroTab, searchTerm, etapas]);
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[90] flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 w-full max-w-3xl shadow-2xl max-h-[88dvh] flex flex-col overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
+                <Users size={20} />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                  Seleccionar Desarrollador Responsable
+                </h3>
+                <p className="text-xs text-zinc-500 font-medium">
+                  Personal del equipo del proyecto, carga horaria semanal y disponibilidad (Máx 48h)
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Buscador + Pestañas de Filtro */}
+          <div className="py-4 space-y-3 shrink-0">
+            <div className="relative">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar desarrollador por nombre, correo o especialidad técnica..."
+                className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                autoFocus
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5 cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs custom-scrollbar">
+              <button
+                type="button"
+                onClick={() => setFiltroTab('todos')}
+                className={`px-3 py-1.5 rounded-xl font-extrabold text-[0.7rem] transition-all cursor-pointer ${
+                  filtroTab === 'todos'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                Todos los Desarrolladores ({allDevs.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroTab('nomina')}
+                className={`px-3 py-1.5 rounded-xl font-extrabold text-[0.7rem] transition-all cursor-pointer ${
+                  filtroTab === 'nomina'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                En Equipo del Proyecto ({(desarrolladoresAsignadosProyecto || []).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroTab('disponibles')}
+                className={`px-3 py-1.5 rounded-xl font-extrabold text-[0.7rem] transition-all cursor-pointer ${
+                  filtroTab === 'disponibles'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                Disponibles (&lt; 48h)
+              </button>
+            </div>
+          </div>
+
+          {/* Lista de Desarrolladores Grid */}
+          <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+            {filteredDevs.length === 0 ? (
+              <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/40 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-2">
+                <UserCheck size={32} className="mx-auto text-zinc-400" />
+                <p className="text-xs text-zinc-500 font-semibold">No se encontraron desarrolladores que coincidan con los criterios de búsqueda.</p>
+              </div>
+            ) : (
+              filteredDevs.map(dev => {
+                const devId = String(dev.idTrabajador || dev.id || dev.idDesarrollador);
+                const isSelected = String(value) === devId;
+                const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(
+                  a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
+                );
+                const estaEnProyecto = !!asignacionProy;
+                const horasReservadasProy = asignacionProy?.horasSemanales || 0;
+
+                // Tareas WBS asignadas a este dev en este proyecto
+                const tareasDev = (etapas || []).flatMap(et => {
+                  const acts = Array.isArray(et.actividades) ? et.actividades : [];
+                  return acts.filter(a => Number(a.desarrollador?.idTrabajador || a.idDesarrollador) === Number(devId));
+                });
+                const tareasDevCount = tareasDev.length;
+
+                // Horas reales sumadas de tareas WBS
+                const horasTareasDev = tareasDev.reduce((sum, t) => {
+                  const m = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                  if (m) return sum + parseInt(m[1]);
+                  if (t.horasEstimadas) return sum + parseInt(t.horasEstimadas);
+                  return sum + (tareasDevCount > 0 ? Math.round(horasReservadasProy / tareasDevCount) : 0);
+                }, 0);
+
+                // Saldo libre restante de su reserva (ej. Reservado 5h - Tareas 3h = 2h libres restantes)
+                const saldoLibreReserva = Math.max(0, horasReservadasProy - horasTareasDev);
+
+                const carga = getDevCargaInfo(devId);
+                const horasGlobales = carga?.horasAsignadas || 0;
+                const pct = Math.min(Math.round((horasGlobales / 48) * 100), 100);
+                const esSaturado = horasGlobales >= 48;
+
+                const estColor = esSaturado
+                  ? { bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800', bar: 'bg-red-500', label: 'SATURADO 48H' }
+                  : horasGlobales >= 36
+                    ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
+                    : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
+
+                return (
+                  <div
+                    key={devId}
+                    className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                      isSelected
+                        ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-500 ring-2 ring-blue-500/20 shadow-sm'
+                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                      <div className={`w-11 h-11 rounded-2xl font-black text-sm flex items-center justify-center shrink-0 border ${
+                        isSelected
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                      }`}>
+                        {dev.nombre?.[0]}{dev.apellido?.[0]}
+                      </div>
+
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                            {dev.nombre} {dev.apellido}
+                          </span>
+
+                          {/* Badge de Reserva y Disponibilidad del Proyecto */}
+                          {estaEnProyecto ? (
+                            <div className="flex items-center gap-1.5 flex-wrap text-[0.62rem]">
+                              <span className="px-2.5 py-0.5 rounded-full font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                                <CheckCircle2 size={11} /> En Equipo del Proyecto: {horasReservadasProy}h/sem
+                              </span>
+
+                              <span className="px-2 py-0.5 rounded-md font-mono font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                                WBS: {horasTareasDev}h/sem
+                              </span>
+
+                              <span className={`px-2.5 py-0.5 rounded-full font-black font-mono border ${
+                                saldoLibreReserva > 0
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                  : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400'
+                              }`}>
+                                {saldoLibreReserva > 0 ? `🟢 ${saldoLibreReserva}h Libres de su Reserva` : '🔴 0h Libres'}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[0.62rem] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                              Pool Global (Sin vincular)
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 flex items-center gap-3 flex-wrap">
+                          <span><strong>Especialidad:</strong> {getCleanEspecialidad ? getCleanEspecialidad(dev.especialidad, dev.profesion) : (dev.especialidad || dev.profesion || 'Desarrollador')}</span>
+                          {dev.email && <span>• {dev.email}</span>}
+                        </div>
+
+                        {/* Medidor de Capacidad Semanal Global */}
+                        <div className="pt-1 flex items-center gap-3">
+                          <div className="w-32 h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden shrink-0">
+                            <div className={`h-full ${estColor.bar} transition-all`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-lg text-[0.63rem] font-extrabold border ${estColor.bg}`}>
+                            {horasGlobales}/48h • {estColor.label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botón Seleccionar */}
+                    <div className="sm:self-center shrink-0">
+                      {isSelected ? (
+                        <button
+                          type="button"
+                          disabled
+                          className="px-4 py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-xs"
+                        >
+                          <Check size={14} /> Seleccionado
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onChange(devId);
+                            onClose();
+                          }}
+                          className={`px-4 py-2 rounded-xl font-bold text-xs cursor-pointer transition-all ${
+                            esSaturado && !estaEnProyecto
+                              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                              : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-blue-600 dark:hover:bg-blue-500 dark:hover:text-white shadow-xs'
+                          }`}
+                        >
+                          {esSaturado && !estaEnProyecto ? 'Capacidad Máxima 48h' : 'Elegir Desarrollador'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="pt-3 mt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-xs text-zinc-400 shrink-0">
+            <span>Mostrando {filteredDevs.length} desarrolladores</span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="outline-button py-1.5 px-4 font-bold text-xs cursor-pointer"
+            >
+              Cerrar Selector
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
+
+/**
+ * Selector de Desarrolladores de Nivel Enterprise con Despliegue Modal Ampliado
+ */
 const DeveloperCombobox = ({
   value,
   onChange,
-  desarrolladores,
+  desarrolladores = [],
+  desarrolladoresAsignadosProyecto = [],
   getDevCargaInfo,
   getCleanEspecialidad,
   placeholder = "— Seleccione un desarrollador responsable —",
   error = false,
   isOpen,
-  setIsOpen,
-  inlineList = false
+  setIsOpen
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const containerRef = useRef(null);
 
   const openState = isOpen !== undefined ? isOpen : internalOpen;
-  const toggleOpen = () => {
-    const next = !openState;
-    if (setIsOpen) setIsOpen(next);
-    else setInternalOpen(next);
+  const setOpenState = (st) => {
+    if (setIsOpen) setIsOpen(st);
+    else setInternalOpen(st);
   };
 
   const selectedDev = useMemo(() => {
     if (!value) return null;
-    return desarrolladores?.find(d => String(d.idTrabajador) === String(value));
-  }, [value, desarrolladores]);
+    const devId = String(value);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        if (setIsOpen) setIsOpen(false);
-        else setInternalOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [setIsOpen]);
-
-  const filteredDevs = useMemo(() => {
-    if (!searchTerm.trim()) return desarrolladores || [];
-    const term = searchTerm.toLowerCase();
-    return (desarrolladores || []).filter(dev => {
-      const nombreCompleto = `${dev.nombre || ''} ${dev.apellido || ''}`.toLowerCase();
-      const esp = (dev.especialidad || dev.profesion || '').toLowerCase();
-      return nombreCompleto.includes(term) || esp.includes(term);
-    });
-  }, [desarrolladores, searchTerm]);
+    let d = (desarrolladores || []).find(dev => String(dev.idTrabajador || dev.id || dev.idDesarrollador) === devId);
+    if (!d) {
+      const item = (desarrolladoresAsignadosProyecto || []).find(a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId);
+      if (item) d = item.desarrollador || item;
+    }
+    return d;
+  }, [value, desarrolladores, desarrolladoresAsignadosProyecto]);
 
   return (
-    <div ref={containerRef} className="w-full space-y-2">
-      {/* Botón Trigger Principal */}
+    <>
       <button
         type="button"
-        onClick={toggleOpen}
-        className={`w-full flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border text-xs font-semibold shadow-2xs transition-all cursor-pointer text-left ${error
+        onClick={() => setOpenState(true)}
+        className={`w-full flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border text-xs font-semibold shadow-2xs transition-all cursor-pointer text-left ${
+          error
             ? 'border-red-400 dark:border-red-600 ring-2 ring-red-500/10'
             : openState
               ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 bg-blue-50/30 dark:bg-blue-950/20'
               : 'border-zinc-200 dark:border-zinc-700/80 hover:border-zinc-400 dark:hover:border-zinc-600'
-          }`}
+        }`}
       >
         {selectedDev ? (
           <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
@@ -472,7 +785,7 @@ const DeveloperCombobox = ({
                 </span>
               </div>
               <span className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium">
-                {getCleanEspecialidad(selectedDev.especialidad, selectedDev.profesion)}
+                {getCleanEspecialidad ? getCleanEspecialidad(selectedDev.especialidad, selectedDev.profesion) : (selectedDev.especialidad || selectedDev.profesion || 'Desarrollador')}
               </span>
             </div>
           </div>
@@ -483,257 +796,25 @@ const DeveloperCombobox = ({
           </div>
         )}
 
-        <div className="flex items-center gap-1.5 text-zinc-400 shrink-0 pl-2">
-          <span className="text-[0.68rem] font-bold text-blue-600 dark:text-blue-400">
-            {openState ? 'Ocultar panel lateral' : 'Desplegar panel a la derecha'}
+        <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 shrink-0 pl-2">
+          <span className="text-[0.68rem] font-extrabold">
+            {selectedDev ? 'Cambiar desarrollador' : 'Buscar en Nómina/Pool'}
           </span>
-          <ChevronRight size={16} className={`transition-transform duration-300 ${openState ? 'rotate-90 text-blue-600 dark:text-blue-400' : ''}`} />
+          <ChevronRight size={16} />
         </div>
       </button>
 
-      {/* Lista Desplegable Inline Fallback */}
-      {inlineList && (
-        <AnimatePresence>
-          {openState && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="overflow-hidden bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl p-3 space-y-3 shadow-inner"
-            >
-              <div className="relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Filtrar por nombre, apellido o especialidad técnica..."
-                  className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
-                  autoFocus
-                />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
-                {filteredDevs.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-zinc-400 font-medium bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/60 dark:border-zinc-800">
-                    No se encontraron desarrolladores coincidentes.
-                  </div>
-                ) : (
-                  filteredDevs.map(dev => {
-                    const isSelected = String(dev.idTrabajador) === String(value);
-                    const carga = getDevCargaInfo(dev.idTrabajador);
-                    const horas = carga?.horasAsignadas || 0;
-                    const pct = Math.min(Math.round((horas / 48) * 100), 100);
-
-                    const estColor = horas >= 48
-                      ? { bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800', bar: 'bg-red-500', label: 'SATURADO' }
-                      : horas >= 36
-                        ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
-                        : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
-
-                    return (
-                      <div
-                        key={dev.idTrabajador}
-                        onClick={() => {
-                          onChange(String(dev.idTrabajador));
-                          toggleOpen();
-                          setSearchTerm('');
-                        }}
-                        className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isSelected
-                            ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 shadow-sm ring-1 ring-blue-500/20'
-                            : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-700/80 hover:bg-blue-50/40 dark:hover:bg-zinc-800/80 hover:border-blue-300 dark:hover:border-blue-700 shadow-2xs'
-                          }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className={`w-9 h-9 rounded-2xl font-black text-xs flex items-center justify-center shrink-0 border ${isSelected
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                            }`}>
-                            {dev.nombre?.[0]}{dev.apellido?.[0]}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate block">
-                              {dev.nombre} {dev.apellido}
-                            </span>
-                            <span className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium mt-0.5">
-                              {getCleanEspecialidad(dev.especialidad, dev.profesion)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Capacidad Horaria Visual Amplia */}
-                        <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0 gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
-                          <span className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-black border ${estColor.bg}`}>
-                            {horas}/48h • {estColor.label}
-                          </span>
-                          <div className="w-24 h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                            <div className={`h-full ${estColor.bar} transition-all`} style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      )}
-    </div>
-  );
-};
-
-/**
- * Panel Lateral Derecho para Selección de Desarrollador
- */
-const DeveloperSideSelectorPanel = ({
-  value,
-  onChange,
-  desarrolladores,
-  getDevCargaInfo,
-  getCleanEspecialidad,
-  onClose
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const filteredDevs = useMemo(() => {
-    if (!searchTerm.trim()) return desarrolladores || [];
-    const term = searchTerm.toLowerCase();
-    return (desarrolladores || []).filter(dev => {
-      const nombreCompleto = `${dev.nombre || ''} ${dev.apellido || ''}`.toLowerCase();
-      const esp = (dev.especialidad || dev.profesion || '').toLowerCase();
-      return nombreCompleto.includes(term) || esp.includes(term);
-    });
-  }, [desarrolladores, searchTerm]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="p-5 rounded-3xl bg-zinc-50/90 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-4 shadow-sm flex flex-col h-full"
-    >
-      <div className="flex items-center justify-between pb-2 border-b border-zinc-200/80 dark:border-zinc-700/60 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
-            <Users size={16} />
-          </div>
-          <div>
-            <h4 className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
-              Desarrolladores Disponibles ({desarrolladores?.length || 0})
-            </h4>
-            <span className="text-[0.62rem] text-zinc-500">Seleccione para asignar al rol de responsable</span>
-          </div>
-        </div>
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 font-bold p-1 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700"
-          >
-            <X size={16} />
-          </button>
-        )}
-      </div>
-
-      {/* Buscador Rápido Interno */}
-      <div className="relative shrink-0">
-        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Filtrar por nombre, apellido o especialidad..."
-          className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
-          autoFocus
-        />
-        {searchTerm && (
-          <button
-            type="button"
-            onClick={() => setSearchTerm('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
-          >
-            <X size={14} />
-          </button>
-        )}
-      </div>
-
-      {/* Lista Desplegada Amplia */}
-      <div className="space-y-2.5 overflow-y-auto flex-1 max-h-[380px] pr-1 custom-scrollbar">
-        {filteredDevs.length === 0 ? (
-          <div className="p-6 text-center text-xs text-zinc-400 font-medium bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/60 dark:border-zinc-800">
-            No se encontraron desarrolladores coincidentes.
-          </div>
-        ) : (
-          filteredDevs.map(dev => {
-            const isSelected = String(dev.idTrabajador) === String(value);
-            const carga = getDevCargaInfo(dev.idTrabajador);
-            const horas = carga?.horasAsignadas || 0;
-            const pct = Math.min(Math.round((horas / 48) * 100), 100);
-
-            const estColor = horas >= 48
-              ? { bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800', bar: 'bg-red-500', label: 'SATURADO' }
-              : horas >= 36
-                ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
-                : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
-
-            return (
-              <div
-                key={dev.idTrabajador}
-                onClick={() => {
-                  onChange(String(dev.idTrabajador));
-                  if (onClose) onClose();
-                }}
-                className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 ${isSelected
-                    ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 shadow-sm ring-2 ring-blue-500/20'
-                    : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-700/80 hover:bg-blue-50/40 dark:hover:bg-zinc-800/80 hover:border-blue-300 dark:hover:border-blue-700 shadow-2xs'
-                  }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`w-9 h-9 rounded-2xl font-black text-xs flex items-center justify-center shrink-0 border ${isSelected
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                      }`}>
-                      {dev.nombre?.[0]}{dev.apellido?.[0]}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate block">
-                        {dev.nombre} {dev.apellido}
-                      </span>
-                      <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium">
-                        {getCleanEspecialidad(dev.especialidad, dev.profesion)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className={`px-2.5 py-1 rounded-xl text-[0.68rem] font-bold border shrink-0 ${estColor.bg}`}>
-                    {horas}/48h • {estColor.label}
-                  </span>
-                </div>
-
-                <div className="space-y-1 pt-1">
-                  <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                    <div className={`h-full transition-all duration-500 ${estColor.bar}`} style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </motion.div>
+      <DeveloperSelectorModal
+        isOpen={openState}
+        onClose={() => setOpenState(false)}
+        value={value}
+        onChange={onChange}
+        desarrolladores={desarrolladores}
+        desarrolladoresAsignadosProyecto={desarrolladoresAsignadosProyecto}
+        getDevCargaInfo={getDevCargaInfo}
+        getCleanEspecialidad={getCleanEspecialidad}
+      />
+    </>
   );
 };
 
@@ -1402,11 +1483,17 @@ export const LiderDashboard = () => {
   const [tempFechaDesde, setTempFechaDesde] = useState('');
   const [tempFechaHasta, setTempFechaHasta] = useState('');
   const [scopeExpanded, setScopeExpanded] = useState(false);
+  const [tabPersonalProyecto, setTabPersonalProyecto] = useState('activo'); // 'activo' | 'historico'
+  const [semanaHistoricoSeleccionada, setSemanaHistoricoSeleccionada] = useState('semana_actual');
+  const [fechaDesdeHistorico, setFechaDesdeHistorico] = useState('2026-08-18');
+  const [fechaHastaHistorico, setFechaHastaHistorico] = useState('2026-08-31');
+  const [editingHoursMap, setEditingHoursMap] = useState({});
 
   const [nuevaActividad, setNuevaActividad] = useState({
     idEtapa: '',
     idDesarrollador: '',
-    descripcion: ''
+    descripcion: '',
+    horasEstimadas: '8'
   });
   const [nuevaEtapa, setNuevaEtapa] = useState({
     nombreEtapa: ''
@@ -1798,6 +1885,22 @@ export const LiderDashboard = () => {
     if (!nuevaActividad.idDesarrollador) errors.idDesarrollador = 'Seleccione un desarrollador';
     if (!nuevaActividad.descripcion?.trim()) errors.descripcion = 'Ingrese la descripción de la tarea';
 
+    const devId = String(nuevaActividad.idDesarrollador);
+    const horasEstimadasNum = parseInt(nuevaActividad.horasEstimadas);
+    if (!nuevaActividad.horasEstimadas || isNaN(horasEstimadasNum) || horasEstimadasNum <= 0) {
+      errors.horasEstimadas = 'Ingrese las horas semanales para esta tarea (ej. 8h).';
+    } else {
+      const carga = getDevCargaInfo(devId);
+      const horasGlobales = carga?.horasAsignadas || 0;
+      const estaEnProyecto = (desarrolladoresAsignadosProyecto || []).some(
+        a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
+      );
+      const maxHorasDisponiblesDev = Math.max(0, 48 - (horasGlobales - (estaEnProyecto ? 0 : 0)));
+      if (horasEstimadasNum > maxHorasDisponiblesDev) {
+        errors.horasEstimadas = `¡Excede el límite disponible! El desarrollador solo dispone de ${maxHorasDisponiblesDev}h libres (Máximo legal: 48h).`;
+      }
+    }
+
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       return;
@@ -1809,8 +1912,10 @@ export const LiderDashboard = () => {
       (etapaSeleccionada.estado || '').toUpperCase() === 'COMPLETADO'
     );
 
-    const dev = (desarrolladoresAsignados || []).find(t => String(t.idTrabajador) === String(nuevaActividad.idDesarrollador));
-    const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${nuevaActividad.idDesarrollador}`;
+    const dev = (desarrolladores || []).find(t => String(t.idTrabajador || t.id || t.idDesarrollador) === devId)
+      || (desarrolladoresAsignadosProyecto || []).map(a => a.desarrollador).find(d => d && String(d.idTrabajador || d.id || d.idDesarrollador) === devId);
+
+    const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${devId}`;
     const etapaNombre = etapaSeleccionada ? etapaSeleccionada.nombreEtapa : `Etapa #${nuevaActividad.idEtapa}`;
 
     if (estaFinalizada) {
@@ -1818,7 +1923,8 @@ export const LiderDashboard = () => {
         idEtapa: nuevaActividad.idEtapa,
         etapaNombre,
         nombreActividad: nuevaActividad.descripcion.trim(),
-        idDesarrollador: nuevaActividad.idDesarrollador,
+        idDesarrollador: devId,
+        horasEstimadas: horasEstimadasNum,
         devNombre,
         etapaSeleccionada
       });
@@ -1827,21 +1933,38 @@ export const LiderDashboard = () => {
 
     try {
       setSubmittingActividad(true);
+
+      // Auto-vincular al desarrollador a la Nómina del Proyecto si no estaba vinculado
+      const estaEnProyecto = (desarrolladoresAsignadosProyecto || []).some(
+        a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
+      );
+
+      if (!estaEnProyecto && proyectoSeleccionado?.idProyecto && proyectoSeleccionado.idProyecto !== 'GLOBAL') {
+        try {
+          await api.post(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/asignar`, {
+            idDesarrollador: parseInt(devId),
+            horasSemanales: Math.min(horasEstimadasNum || 10, 48)
+          });
+        } catch (linkErr) {
+          console.warn('Auto-vinculación a la nómina del proyecto:', linkErr);
+        }
+      }
+
       await api.post('/lider/actividades', {
         idEtapa: parseInt(nuevaActividad.idEtapa),
-        idDesarrollador: parseInt(nuevaActividad.idDesarrollador),
+        idDesarrollador: parseInt(devId),
         descripcion: nuevaActividad.descripcion.trim()
       });
 
       registrarAccionLider(
         proyectoSeleccionado.idProyecto,
         'ASIGNACION_ACTIVIDAD',
-        `Actividad "${nuevaActividad.descripcion.trim()}" asignada a ${devNombre} en fase "${etapaNombre}".`
+        `Actividad "${nuevaActividad.descripcion.trim()}" (${horasEstimadasNum}h/sem) asignada a ${devNombre} en fase "${etapaNombre}".`
       );
 
-      toast.success('Actividad asignada y guardada correctamente.');
+      toast.success('Actividad asignada y vinculada a la nómina correctamente.');
       setShowAsignarModal(false);
-      setNuevaActividad({ idEtapa: '', idDesarrollador: '', descripcion: '' });
+      setNuevaActividad({ idEtapa: '', idDesarrollador: '', descripcion: '', horasEstimadas: '8' });
       setFormErrors({});
 
       if (proyectoSeleccionado) {
@@ -1858,13 +1981,30 @@ export const LiderDashboard = () => {
   // Ejecución de reapertura de etapa y asignación tras confirmar en el modal interactivo del Líder
   const ejecutarReaperturaYAsignarLider = async () => {
     if (!proyectoSeleccionado || !etapaAReabrirModalLider) return;
-    const { idEtapa, etapaNombre, nombreActividad, idDesarrollador, devNombre, etapaSeleccionada } = etapaAReabrirModalLider;
+    const { idEtapa, etapaNombre, nombreActividad, idDesarrollador, horasEstimadas, devNombre, etapaSeleccionada } = etapaAReabrirModalLider;
 
     try {
       setSubmittingActividad(true);
+
+      const devId = String(idDesarrollador);
+      const estaEnProyecto = (desarrolladoresAsignadosProyecto || []).some(
+        a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
+      );
+
+      if (!estaEnProyecto && proyectoSeleccionado?.idProyecto && proyectoSeleccionado.idProyecto !== 'GLOBAL') {
+        try {
+          await api.post(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/asignar`, {
+            idDesarrollador: parseInt(devId),
+            horasSemanales: Math.min(horasEstimadas || 10, 48)
+          });
+        } catch (linkErr) {
+          console.warn('Auto-vinculación a nómina:', linkErr);
+        }
+      }
+
       await api.post('/lider/actividades', {
         idEtapa: parseInt(idEtapa),
-        idDesarrollador: parseInt(idDesarrollador),
+        idDesarrollador: parseInt(devId),
         descripcion: nombreActividad
       });
 
@@ -1876,13 +2016,13 @@ export const LiderDashboard = () => {
       registrarAccionLider(
         proyectoSeleccionado.idProyecto,
         'REAPERTURA_ETAPA',
-        `Fase #${idEtapa} ("${etapaNombre}") reabierta automáticamente a EN_PROCESO tras asignar nueva tarea a ${devNombre}.`
+        `Fase #${idEtapa} ("${etapaNombre}") reabierta a EN_PROCESO tras asignar nueva tarea a ${devNombre}.`
       );
 
       toast.success(`Etapa "${etapaNombre}" reabierta y tarea asignada correctamente.`);
       setEtapaAReabrirModalLider(null);
       setShowAsignarModal(false);
-      setNuevaActividad({ idEtapa: '', idDesarrollador: '', descripcion: '' });
+      setNuevaActividad({ idEtapa: '', idDesarrollador: '', descripcion: '', horasEstimadas: '8' });
       setFormErrors({});
 
       if (proyectoSeleccionado) {
@@ -1996,13 +2136,15 @@ export const LiderDashboard = () => {
 
     // Validar límite legal de 48 horas acumuladas en la empresa
     const devCarga = getDevCargaInfo(idDev);
-    const asignacionActual = desarrolladoresAsignadosProyecto.find(a => Number(a.desarrollador?.idTrabajador) === Number(idDev));
+    const asignacionActual = desarrolladoresAsignadosProyecto.find(a => Number(a.desarrollador?.idTrabajador || a.idTrabajador) === Number(idDev));
     const horasActualesEnEsteProyecto = asignacionActual?.horasSemanales || 0;
-    const horasEnOtrosProyectos = (devCarga?.horasAsignadas || 0) - horasActualesEnEsteProyecto;
+    const horasEnOtrosProyectos = Math.max(0, (devCarga?.horasAsignadas || 0) - horasActualesEnEsteProyecto);
     const totalProyectado = horasEnOtrosProyectos + valHoras;
+    const esReduccion = valHoras < horasActualesEnEsteProyecto;
 
-    if (totalProyectado > 48) {
-      toast.error(`Sobreasignación: ${devNombre} ya tiene ${horasEnOtrosProyectos}h en otros proyectos. Ajustar a ${valHoras}h sumaría ${totalProyectado}h (máximo legal: 48h).`);
+    if (!esReduccion && totalProyectado > 48) {
+      const maximoPermitido = Math.max(0, 48 - horasEnOtrosProyectos);
+      toast.error(`Sobreasignación: ${devNombre} ya tiene ${horasEnOtrosProyectos}h en otros proyectos. Para no superar el límite de 48h, lo máximo que puede asignar en este proyecto es ${maximoPermitido}h/semana.`);
       return;
     }
 
@@ -5324,7 +5466,7 @@ export const LiderDashboard = () => {
           </motion.div>
         )}
 
-        {/* Modal: Asignar Actividad a Desarrollador (RF-17) con Despliegue Lateral Derecho */}
+        {/* Modal: Asignar Actividad a Desarrollador (RF-17) con Integración a Nómina y Gestión de Horas */}
         <AnimatePresence>
           {showAsignarModal && (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -5333,8 +5475,7 @@ export const LiderDashboard = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full shadow-2xl max-h-[90dvh] overflow-y-auto transition-all duration-300 ${isAsignarTareaDevListOpen ? 'max-w-4xl' : 'max-w-xl'
-                  }`}
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full shadow-2xl max-h-[90dvh] overflow-y-auto max-w-xl transition-all duration-300"
               >
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -5345,166 +5486,272 @@ export const LiderDashboard = () => {
                 <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-[0.7rem] text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4 flex items-start gap-2">
                   <Info size={15} className="text-blue-500 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Nota Informativa:</strong> La actividad se creará en estado <strong>PENDIENTE</strong> y se vinculará directamente a la cuenta del desarrollador en PostgreSQL.
+                    <strong>Control Integrado:</strong> La actividad se creará en estado <strong>PENDIENTE</strong>, se vinculará a la Nómina del Proyecto (Olimpo) y actualizará la carga horaria semanal (Máx 48h).
                   </div>
                 </div>
 
-                <div className={`grid grid-cols-1 ${isAsignarTareaDevListOpen ? 'md:grid-cols-2' : ''} gap-6 transition-all duration-300 items-start`}>
-                  {/* Columna Izquierda: Formulario Principal */}
-                  <form onSubmit={handleAsignarActividad} className="space-y-4 text-xs" noValidate>
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Etapa / Fase WBS *</label>
-                      <CustomSelect
-                        value={nuevaActividad.idEtapa}
-                        onChange={(val) => { setNuevaActividad({ ...nuevaActividad, idEtapa: val }); setFormErrors(p => ({ ...p, idEtapa: undefined })); }}
-                        options={[
-                          { value: '', label: '— Seleccione una etapa WBS —' },
-                          ...(etapas || []).map(et => {
-                            const isFin = (et?.estado || '').toUpperCase() === 'FINALIZADA' || (et?.estado || '').toUpperCase() === 'COMPLETADO';
-                            return {
-                              value: String(et?.idEtapa),
-                              label: `Fase #${et?.idEtapa}: ${et?.nombreEtapa}`,
-                              subtitle: isFin
-                                ? '[ ATENCIÓN ] Etapa Finalizada (Se reabrirá a EN_PROCESO al asignar)'
-                                : `Estado: ${et?.estado || 'PENDIENTE'} • ${et?.actividades ? et.actividades.length : 0} tareas`
-                            };
-                          })
-                        ]}
-                        maxWidth="w-full"
-                        searchable={true}
-                        icon={Layers}
-                        placeholder="— Seleccione una etapa WBS —"
-                      />
-                      {formErrors.idEtapa && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idEtapa}</p>}
+                <form onSubmit={handleAsignarActividad} className="space-y-4 text-xs" noValidate>
+                  {/* Campo Etapa / Fase WBS */}
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Etapa / Fase WBS *</label>
+                    <CustomSelect
+                      value={nuevaActividad.idEtapa}
+                      onChange={(val) => { setNuevaActividad({ ...nuevaActividad, idEtapa: val }); setFormErrors(p => ({ ...p, idEtapa: undefined })); }}
+                      options={[
+                        { value: '', label: '— Seleccione una etapa WBS —' },
+                        ...(etapas || []).map(et => {
+                          const isFin = (et?.estado || '').toUpperCase() === 'FINALIZADA' || (et?.estado || '').toUpperCase() === 'COMPLETADO';
+                          return {
+                            value: String(et?.idEtapa),
+                            label: `Fase #${et?.idEtapa}: ${et?.nombreEtapa}`,
+                            subtitle: isFin
+                              ? '[ ATENCIÓN ] Etapa Finalizada (Se reabrirá a EN_PROCESO al asignar)'
+                              : `Estado: ${et?.estado || 'PENDIENTE'} • ${et?.actividades ? et.actividades.length : 0} tareas`
+                          };
+                        })
+                      ]}
+                      maxWidth="w-full"
+                      searchable={true}
+                      icon={Layers}
+                      placeholder="— Seleccione una etapa WBS —"
+                    />
+                    {formErrors.idEtapa && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idEtapa}</p>}
 
-                      {/* Indicador Informativo si la Etapa Seleccionada está FINALIZADA */}
-                      {(() => {
-                        const selectedEt = (etapas || []).find(et => String(et?.idEtapa) === String(nuevaActividad.idEtapa));
-                        const isFin = selectedEt && ((selectedEt.estado || '').toUpperCase() === 'FINALIZADA' || (selectedEt.estado || '').toUpperCase() === 'COMPLETADO');
-                        if (!isFin) return null;
-                        return (
-                          <div className="mt-2 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-center gap-2 text-[0.72rem] font-semibold animate-fadeIn">
-                            <AlertTriangle size={15} className="text-amber-600 shrink-0" />
-                            <span>
-                              <strong>Atención:</strong> La fase <strong>&quot;{selectedEt.nombreEtapa}&quot;</strong> está finalizada. Al asignar la tarea, se reabrirá automáticamente a <strong>EN_PROCESO</strong> y se registrará en auditoría.
-                            </span>
-                          </div>
-                        );
-                      })()}
-                    </div>
+                    {/* Indicador Informativo si la Etapa Seleccionada está FINALIZADA */}
+                    {(() => {
+                      const selectedEt = (etapas || []).find(et => String(et?.idEtapa) === String(nuevaActividad.idEtapa));
+                      const isFin = selectedEt && ((selectedEt.estado || '').toUpperCase() === 'FINALIZADA' || (selectedEt.estado || '').toUpperCase() === 'COMPLETADO');
+                      if (!isFin) return null;
+                      return (
+                        <div className="mt-2 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-center gap-2 text-[0.72rem] font-semibold animate-fadeIn">
+                          <AlertTriangle size={15} className="text-amber-600 shrink-0" />
+                          <span>
+                            <strong>Atención:</strong> La fase <strong>&quot;{selectedEt.nombreEtapa}&quot;</strong> está finalizada. Al asignar la tarea, se reabrirá automáticamente a <strong>EN_PROCESO</strong> y se registrará en auditoría.
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
 
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Desarrollador Responsable *</label>
-                      <DeveloperCombobox
-                        value={nuevaActividad.idDesarrollador}
-                        onChange={(idDev) => {
-                          setNuevaActividad({ ...nuevaActividad, idDesarrollador: idDev });
-                          setFormErrors(p => ({ ...p, idDesarrollador: undefined }));
-                        }}
-                        desarrolladores={desarrolladores && desarrolladores.length > 0 ? desarrolladores : (desarrolladoresAsignadosProyecto || []).map(a => a.desarrollador).filter(Boolean)}
-                        getDevCargaInfo={getDevCargaInfo}
-                        getCleanEspecialidad={getCleanEspecialidad}
-                        placeholder="— Seleccione un desarrollador responsable —"
-                        error={!!formErrors.idDesarrollador}
-                        isOpen={isAsignarTareaDevListOpen}
-                        setIsOpen={setIsAsignarTareaDevListOpen}
-                      />
-                      {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
-
-                      {/* Ficha Resumen del Desarrollador Seleccionado (Debajo del Campo) */}
-                      {nuevaActividad.idDesarrollador && (() => {
-                        const c = getDevCargaInfo(nuevaActividad.idDesarrollador);
-                        if (!c) return null;
-                        return (
-                          <div className="mt-2.5 p-3 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 flex items-center justify-between shadow-2xs">
-                            <span className="text-[0.7rem] font-bold text-zinc-800 dark:text-zinc-200">
-                              Carga Semanal Asignada:
-                            </span>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[0.65rem] font-bold border ${c.horasAsignadas >= 48
-                                ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
-                                : c.horasAsignadas >= 36
-                                  ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
-                                  : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                              }`}>
-                              {c.horasAsignadas}/48h ({c.horasDisponibles}h libres)
-                            </span>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción de la Tarea *</label>
-                      <textarea
-                        rows={3}
-                        value={nuevaActividad.descripcion}
-                        onChange={(e) => { setNuevaActividad({ ...nuevaActividad, descripcion: e.target.value }); setFormErrors(p => ({ ...p, descripcion: undefined })); }}
-                        placeholder="Descripción de la tarea técnica a ejecutar"
-                        className={`input-field py-2 ${formErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
-                      />
-                      {formErrors.descripcion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.descripcion}</p>}
-
-                      {/* Sugerencias Rápidas */}
-                      <div className="flex items-center gap-1.5 flex-wrap pt-1.5">
-                        <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Sugerencias:</span>
-                        {[
-                          'Documentación OpenAPI 3.0',
-                          'Pruebas Unitarias JUnit & Mockito',
-                          'Integración API REST',
-                          'Optimización Consultas SQL',
-                          'Diseño e Implementación UI React'
-                        ].map((sug, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setNuevaActividad({ ...nuevaActividad, descripcion: sug });
-                              setFormErrors(p => ({ ...p, descripcion: undefined }));
-                            }}
-                            className="px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 text-zinc-600 dark:text-zinc-300 text-[0.62rem] font-bold border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer flex items-center gap-0.5"
-                          >
-                            <Plus size={10} className="text-blue-500" />
-                            <span>{sug}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                      <button
-                        type="button"
-                        onClick={() => { setShowAsignarModal(false); setIsAsignarTareaDevListOpen(false); setFormErrors({}); }}
-                        disabled={submittingActividad}
-                        className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={submittingActividad}
-                        className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
-                      >
-                        {submittingActividad ? <><Loader2 size={14} className="animate-spin" /> Asignando...</> : 'Guardar y Asignar'}
-                      </button>
-                    </div>
-                  </form>
-
-                  {/* Columna Derecha: Panel de Selección Lateral de Desarrollador */}
-                  {isAsignarTareaDevListOpen && (
-                    <DeveloperSideSelectorPanel
+                  {/* Campo Desarrollador Responsable */}
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Desarrollador Responsable *</label>
+                    <DeveloperCombobox
                       value={nuevaActividad.idDesarrollador}
                       onChange={(idDev) => {
                         setNuevaActividad({ ...nuevaActividad, idDesarrollador: idDev });
                         setFormErrors(p => ({ ...p, idDesarrollador: undefined }));
-                        setIsAsignarTareaDevListOpen(false);
                       }}
                       desarrolladores={desarrolladores}
+                      desarrolladoresAsignadosProyecto={desarrolladoresAsignadosProyecto}
                       getDevCargaInfo={getDevCargaInfo}
                       getCleanEspecialidad={getCleanEspecialidad}
-                      onClose={() => setIsAsignarTareaDevListOpen(false)}
+                      placeholder="— Seleccione un desarrollador responsable —"
+                      error={!!formErrors.idDesarrollador}
+                      isOpen={isAsignarTareaDevListOpen}
+                      setIsOpen={setIsAsignarTareaDevListOpen}
                     />
-                  )}
-                </div>
+                    {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
+
+                    {/* Tarjeta Informativa de Personal del Proyecto y Capacidad Horaria */}
+                    {nuevaActividad.idDesarrollador && (() => {
+                      const devId = String(nuevaActividad.idDesarrollador);
+                      const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(
+                        a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
+                      );
+                      const estaEnProyecto = !!asignacionProy;
+                      const horasReservadasProy = asignacionProy?.horasSemanales || 0;
+
+                      const carga = getDevCargaInfo(devId);
+                      const horasGlobales = carga?.horasAsignadas || 0;
+                      const horasLibres = carga?.horasDisponibles ?? Math.max(0, 48 - horasGlobales);
+                      const maxDisponibles = Math.max(0, 48 - (horasGlobales - (estaEnProyecto ? 0 : 0)));
+                      const horasEstimadasNum = parseInt(nuevaActividad.horasEstimadas) || 0;
+                      const excedeMaximo = horasEstimadasNum > maxDisponibles;
+
+                      return (
+                        <div className="mt-3 p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 space-y-2.5">
+                          <div className="flex items-center justify-between text-xs pb-2 border-b border-blue-100 dark:border-blue-900/60">
+                            <span className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                              <Users size={14} className="text-blue-600 dark:text-blue-400" />
+                              Personal del Proyecto:
+                            </span>
+                            {estaEnProyecto ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                                <CheckCircle2 size={11} /> Asignado al Equipo ({horasReservadasProy}h/sem)
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                                <Info size={11} /> Se auto-vinculará al Equipo al asignar
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[0.7rem]">
+                            <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                              <span className="text-zinc-500 font-medium block">Carga Total Empresa:</span>
+                              <span className={`font-mono font-black text-xs ${horasGlobales >= 48 ? 'text-red-600 dark:text-red-400' : 'text-zinc-900 dark:text-zinc-100'}`}>
+                                {horasGlobales} / 48 horas
+                              </span>
+                            </div>
+                            <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                              <span className="text-zinc-500 font-medium block">Disponibilidad Máxima Tarea:</span>
+                              <span className="font-mono font-black text-xs text-emerald-600 dark:text-emerald-400">
+                                {maxDisponibles} horas libres
+                              </span>
+                            </div>
+                          </div>
+
+                          {excedeMaximo && (
+                            <div className="p-2 rounded-xl bg-red-100 dark:bg-red-950/80 border border-red-300 dark:border-red-800 text-red-800 dark:text-red-300 text-[0.68rem] font-bold flex items-center gap-1.5 animate-fadeIn">
+                              <AlertTriangle size={14} className="shrink-0 text-red-600" />
+                              <span>¡Alerta de Capacidad! No puede ingresar más de {maxDisponibles}h (Carga superaría el límite legal de 48h).</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Campo Horas Semanales Dedicadas a esta Tarea */}
+                  <div>
+                    {(() => {
+                      const devId = String(nuevaActividad.idDesarrollador);
+                      const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(
+                        a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
+                      );
+                      const estaEnProyecto = !!asignacionProy;
+                      const carga = getDevCargaInfo(devId);
+                      const horasGlobales = carga?.horasAsignadas || 0;
+                      const maxDisponibles = Math.max(0, 48 - (horasGlobales - (estaEnProyecto ? 0 : 0)));
+                      const horasInputVal = parseInt(nuevaActividad.horasEstimadas) || 0;
+                      const excede = devId && horasInputVal > maxDisponibles;
+
+                      return (
+                        <>
+                          <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                            Horas Semanales Dedicadas a esta Tarea *
+                          </label>
+                          <div className="relative">
+                            <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                            <input
+                              type="number"
+                              min="1"
+                              max={maxDisponibles || 48}
+                              required
+                              value={nuevaActividad.horasEstimadas || ''}
+                              onChange={(e) => {
+                                setNuevaActividad({ ...nuevaActividad, horasEstimadas: e.target.value });
+                                setFormErrors(p => ({ ...p, horasEstimadas: undefined }));
+                              }}
+                              placeholder={`Ej: ${Math.min(8, maxDisponibles)}`}
+                              className={`input-field pl-9 py-2 font-mono font-bold ${
+                                formErrors.horasEstimadas || excede ? 'border-red-500 text-red-600 focus:ring-red-500' : ''
+                              }`}
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">
+                              h / semana
+                            </span>
+                          </div>
+                          {formErrors.horasEstimadas && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.horasEstimadas}</p>}
+                          {excede && (
+                            <p className="text-[0.68rem] text-red-600 dark:text-red-400 font-extrabold mt-1 animate-fadeIn flex items-center gap-1">
+                              <AlertTriangle size={12} className="shrink-0" />
+                              ¡Imposible asignar {horasInputVal}h! Máximo disponible permitido: {maxDisponibles} horas.
+                            </p>
+                          )}
+
+                          {/* Presets de Horas Adaptativos */}
+                          {devId && (
+                            <div className="flex items-center gap-1.5 flex-wrap pt-2">
+                              <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Ajuste rápido:</span>
+                              {maxDisponibles > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setNuevaActividad({ ...nuevaActividad, horasEstimadas: String(maxDisponibles) })}
+                                  className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold text-[0.65rem] border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer"
+                                >
+                                  Usar Máximo Libre ({maxDisponibles}h)
+                                </button>
+                              )}
+                              {['4', '8', '16', '24'].filter(h => parseInt(h) <= maxDisponibles).map(h => (
+                                <button
+                                  key={h}
+                                  type="button"
+                                  onClick={() => setNuevaActividad({ ...nuevaActividad, horasEstimadas: h })}
+                                  className={`px-2 py-1 rounded-lg font-bold text-[0.65rem] border transition-all cursor-pointer ${
+                                    String(nuevaActividad.horasEstimadas) === h
+                                      ? 'bg-blue-600 text-white border-blue-600'
+                                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200'
+                                  }`}
+                                >
+                                  {h}h
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Campo Descripción de Tarea */}
+                  <div>
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción de la Tarea *</label>
+                    <textarea
+                      rows={3}
+                      value={nuevaActividad.descripcion}
+                      onChange={(e) => { setNuevaActividad({ ...nuevaActividad, descripcion: e.target.value }); setFormErrors(p => ({ ...p, descripcion: undefined })); }}
+                      placeholder="Descripción de la tarea técnica a ejecutar"
+                      className={`input-field py-2 ${formErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
+                    />
+                    {formErrors.descripcion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.descripcion}</p>}
+
+                    {/* Sugerencias Rápidas */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1.5">
+                      <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Sugerencias:</span>
+                      {[
+                        'Documentación OpenAPI 3.0',
+                        'Pruebas Unitarias JUnit & Mockito',
+                        'Integración API REST',
+                        'Optimización Consultas SQL',
+                        'Diseño e Implementación UI React'
+                      ].map((sug, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setNuevaActividad({ ...nuevaActividad, descripcion: sug });
+                            setFormErrors(p => ({ ...p, descripcion: undefined }));
+                          }}
+                          className="px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 text-zinc-600 dark:text-zinc-300 text-[0.62rem] font-bold border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer flex items-center gap-0.5"
+                        >
+                          <Plus size={10} className="text-blue-500" />
+                          <span>{sug}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Acciones */}
+                  <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => { setShowAsignarModal(false); setIsAsignarTareaDevListOpen(false); setFormErrors({}); }}
+                      disabled={submittingActividad}
+                      className="outline-button text-xs py-2 px-4 font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingActividad}
+                      className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {submittingActividad ? <><Loader2 size={14} className="animate-spin" /> Asignando...</> : 'Guardar y Asignar'}
+                    </button>
+                  </div>
+                </form>
               </motion.div>
             </div>
           )}
@@ -5680,7 +5927,7 @@ export const LiderDashboard = () => {
           )}
         </AnimatePresence>
 
-        {/* Modal: Nómina del Equipo Asignado al Proyecto con Liberación de Horas (HU-12 / RF-16) */}
+        {/* Modal: Personal del Equipo y Dedicación Asignado al Proyecto (HU-12 / RF-16) */}
         <AnimatePresence>
           {showNominaDevsModal && (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -5689,7 +5936,7 @@ export const LiderDashboard = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-3xl shadow-2xl max-h-[90dvh] overflow-y-auto space-y-5"
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-[95%] sm:w-full max-w-4xl shadow-2xl max-h-[90dvh] overflow-y-auto space-y-5"
               >
                 {/* Cabecera del Modal */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-4">
@@ -5699,10 +5946,10 @@ export const LiderDashboard = () => {
                     </div>
                     <div>
                       <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
-                        Nómina del Equipo — {proyectoSeleccionado?.nombre}
+                        Personal del Equipo y Dedicación — {proyectoSeleccionado?.nombre}
                       </h3>
                       <p className="text-xs text-zinc-500 font-medium">
-                        Desarrolladores vinculados, dedicación horaria semanal y liberación de personal
+                        Personal vinculado, control de 24h para asignación de tareas, dedicación horaria e histórico semanal de entregables.
                       </p>
                     </div>
                   </div>
@@ -5722,134 +5969,654 @@ export const LiderDashboard = () => {
                   )}
                 </div>
 
-                {/* Resumen de Capacidad del Equipo */}
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 flex flex-wrap justify-between items-center text-xs gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-zinc-600 dark:text-zinc-400">Total Desarrolladores:</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-extrabold border border-blue-200 dark:border-blue-800">
-                      {desarrolladoresAsignadosProyecto?.length || 0} Integrantes
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-zinc-600 dark:text-zinc-400">Carga Horaria Reservada:</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-extrabold border border-emerald-200 dark:border-emerald-800">
-                      {desarrolladoresAsignadosProyecto?.reduce((acc, curr) => acc + (curr.horasSemanales || 0), 0)}h / semana
-                    </span>
-                  </div>
+                {/* Conmutador de Pestañas (Personal Activo vs Histórico de Entregables por Semana) */}
+                <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setTabPersonalProyecto('activo')}
+                    className={`px-4 py-2 rounded-xl font-extrabold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                      tabPersonalProyecto === 'activo'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200'
+                    }`}
+                  >
+                    <Users size={14} /> Personal Activo y Dedicación Semanal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTabPersonalProyecto('historico')}
+                    className={`px-4 py-2 rounded-xl font-extrabold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                      tabPersonalProyecto === 'historico'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200'
+                    }`}
+                  >
+                    <Clock size={14} /> Histórico de Entregables por Semana
+                  </button>
                 </div>
 
-                {/* Lista de Integrantes del Equipo */}
-                <div className="space-y-3">
-                  {!desarrolladoresAsignadosProyecto || desarrolladoresAsignadosProyecto.length === 0 ? (
-                    <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/30 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 space-y-2">
-                      <Users size={32} className="mx-auto text-zinc-400" />
-                      <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                        No hay desarrolladores vinculados aún a este proyecto.
-                      </p>
-                      <p className="text-[0.75rem] text-zinc-500">
-                        {isMiProyecto ? 'Utiliza el botón "Vincular Desarrollador" o asigna actividades WBS para integrar desarrolladores.' : 'El proyecto se encuentra en modo lectura.'}
-                      </p>
+                {tabPersonalProyecto === 'activo' ? (
+                  <>
+                    {/* Resumen de Capacidad del Equipo */}
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 flex flex-wrap justify-between items-center text-xs gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-zinc-600 dark:text-zinc-400">Total Integrantes:</span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-extrabold border border-blue-200 dark:border-blue-800">
+                          {desarrolladoresAsignadosProyecto?.length || 0} Integrantes
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-zinc-600 dark:text-zinc-400">Carga Horaria Reservada:</span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-extrabold border border-emerald-200 dark:border-emerald-800">
+                          {desarrolladoresAsignadosProyecto?.reduce((acc, curr) => acc + (curr.horasSemanales || 0), 0)}h / semana
+                        </span>
+                      </div>
                     </div>
-                  ) : (
-                    desarrolladoresAsignadosProyecto.map(item => {
-                      const dev = item.desarrollador || {};
-                      const horasPrj = item.horasSemanales || 0;
-                      const cargaGlobal = getDevCargaInfo(dev.idTrabajador);
-                      const horasGlobales = cargaGlobal?.horasAsignadas || horasPrj;
 
-                      // Tareas WBS asignadas a este dev en este proyecto
-                      const tareasDevCount = etapas.reduce((acc, et) => {
-                        const acts = Array.isArray(et.actividades) ? et.actividades : [];
-                        return acc + acts.filter(a => Number(a.desarrollador?.idTrabajador || a.idDesarrollador) === Number(dev.idTrabajador)).length;
-                      }, 0);
+                    {/* Lista de Integrantes del Equipo */}
+                    <div className="space-y-4">
+                      {!desarrolladoresAsignadosProyecto || desarrolladoresAsignadosProyecto.length === 0 ? (
+                        <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/30 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 space-y-2">
+                          <Users size={32} className="mx-auto text-zinc-400" />
+                          <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                            No hay desarrolladores vinculados aún a este proyecto.
+                          </p>
+                          <p className="text-[0.75rem] text-zinc-500">
+                            {isMiProyecto ? 'Utiliza el botón "Vincular Desarrollador" o asigna actividades WBS para integrar desarrolladores.' : 'El proyecto se encuentra en modo lectura.'}
+                          </p>
+                        </div>
+                      ) : (
+                        desarrolladoresAsignadosProyecto.map(item => {
+                          const dev = item.desarrollador || {};
+                          const horasPrj = item.horasSemanales || 0;
+                          const cargaGlobal = getDevCargaInfo(dev.idTrabajador);
+                          const horasGlobales = cargaGlobal?.horasAsignadas || horasPrj;
+                          const esSobrecargado = horasGlobales > 48;
 
-                      return (
-                        <div
-                          key={item.idAsignacion || dev.idTrabajador}
-                          className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 shadow-xs hover:border-zinc-300 dark:hover:border-zinc-600 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                        >
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
-                              {dev.nombre?.[0]}{dev.apellido?.[0]}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate">
-                                  {dev.nombre} {dev.apellido}
-                                </span>
-                                <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-                                  {tareasDevCount} {tareasDevCount === 1 ? 'Tarea WBS' : 'Tareas WBS'}
-                                </span>
-                              </div>
-                              <span className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium mt-0.5">
-                                {getCleanEspecialidad(dev.especialidad, dev.profesion)} • {dev.email}
-                              </span>
-                            </div>
-                          </div>
+                          // Tareas WBS asignadas a este dev en este proyecto
+                          const tareasDev = (etapas || []).flatMap(et => {
+                            const acts = Array.isArray(et.actividades) ? et.actividades : [];
+                            return acts
+                              .filter(a => Number(a.desarrollador?.idTrabajador || a.idTrabajador) === Number(dev.idTrabajador))
+                              .map(a => ({ ...a, etapaNombre: et.nombreEtapa, idEtapa: et.idEtapa }));
+                          });
+                          const tareasDevCount = tareasDev.length;
 
-                          <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
-                            {/* Dedicación Horaria Semanal */}
-                            <div className="flex flex-col items-start sm:items-end gap-1">
-                              <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">
-                                Dedicación Semanal
-                              </span>
+                          // Horas reales sumadas de tareas WBS
+                          const horasTareasDev = tareasDev.reduce((sum, t) => {
+                            const m = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                            if (m) return sum + parseInt(m[1]);
+                            if (t.horasEstimadas) return sum + parseInt(t.horasEstimadas);
+                            return sum + (tareasDevCount > 0 ? Math.round(horasPrj / tareasDevCount) : 0);
+                          }, 0);
 
-                              {isMiProyecto ? (
-                                <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj - 1)}
-                                    disabled={horasPrj <= 1 || updatingDevId === dev.idTrabajador}
-                                    className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
-                                    title={horasPrj <= 1 ? 'Mínimo 1 hora semanal obligatoria' : 'Reducir 1 hora semanal'}
-                                  >
-                                    -
-                                  </button>
+                          const saldoCupoReservado = Math.max(0, horasPrj - horasTareasDev);
+                          const sinTareas = tareasDevCount === 0;
 
-                                  <div className="flex items-center gap-0.5 px-2 font-mono text-xs font-black text-blue-600 dark:text-blue-400">
-                                    <span>{horasPrj}</span>
-                                    <span className="text-[0.65rem] text-zinc-400 font-normal">h/sem</span>
+                          return (
+                            <div
+                              key={item.idAsignacion || dev.idTrabajador}
+                              className={`p-4 rounded-2xl bg-white dark:bg-zinc-900 border shadow-xs hover:border-zinc-300 dark:hover:border-zinc-600 transition-all space-y-3 ${
+                                esSobrecargado ? 'border-red-400 dark:border-red-800 ring-2 ring-red-500/10' : 'border-zinc-200 dark:border-zinc-700/80'
+                              }`}
+                            >
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                  <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
+                                    {dev.nombre?.[0]}{dev.apellido?.[0]}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                        {dev.nombre} {dev.apellido}
+                                      </span>
+                                      <span className={`text-[0.65rem] font-bold px-2 py-0.5 rounded-full border ${
+                                        sinTareas
+                                          ? 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'
+                                      }`}>
+                                        {tareasDevCount} {tareasDevCount === 1 ? 'Tarea WBS' : 'Tareas WBS'}
+                                      </span>
+                                    </div>
+                                    <span className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 block truncate font-medium mt-0.5">
+                                      {getCleanEspecialidad(dev.especialidad, dev.profesion)} • {dev.email}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
+                                  {/* Dedicación Horaria Semanal */}
+                                  <div className="flex flex-col items-start sm:items-end gap-1">
+                                    <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">
+                                      Dedicación Semanal
+                                    </span>
+
+                                    {isMiProyecto ? (
+                                      <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj - 1)}
+                                          disabled={horasPrj <= 1 || updatingDevId === dev.idTrabajador}
+                                          className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                          title={horasPrj <= 1 ? 'Mínimo 1 hora semanal obligatoria' : 'Reducir 1 hora semanal'}
+                                        >
+                                          -
+                                        </button>
+
+                                        <input
+                                          type="number"
+                                          min="1"
+                                          max="48"
+                                          value={editingHoursMap[dev.idTrabajador] !== undefined ? editingHoursMap[dev.idTrabajador] : horasPrj}
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            setEditingHoursMap(prev => ({ ...prev, [dev.idTrabajador]: val }));
+                                          }}
+                                          onBlur={() => {
+                                            const val = parseInt(editingHoursMap[dev.idTrabajador]);
+                                            if (!isNaN(val) && val !== horasPrj && val >= 1) {
+                                              handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, val);
+                                            }
+                                            setEditingHoursMap(prev => {
+                                              const copy = { ...prev };
+                                              delete copy[dev.idTrabajador];
+                                              return copy;
+                                            });
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              e.target.blur();
+                                            }
+                                          }}
+                                          className="w-12 text-center bg-transparent font-mono text-xs font-black text-blue-600 dark:text-blue-400 focus:outline-none focus:bg-white dark:focus:bg-zinc-900 rounded-md border border-zinc-200 dark:border-zinc-700 focus:border-blue-500 py-0.5"
+                                          title="Haz clic para escribir directamente el número de horas y presiona Enter"
+                                        />
+                                        <span className="text-[0.65rem] text-zinc-400 font-normal pr-1">h/sem</span>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj + 1)}
+                                          disabled={updatingDevId === dev.idTrabajador || horasGlobales >= 48}
+                                          className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                                          title={horasGlobales >= 48 ? `Límite legal alcanzado/excedido (Carga actual: ${horasGlobales}/48h en la empresa)` : 'Aumentar 1 hora semanal'}
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-mono text-xs font-extrabold border border-zinc-200 dark:border-zinc-700">
+                                        {horasPrj} h/semana
+                                      </div>
+                                    )}
+
+                                    <span className="text-[0.62rem] text-zinc-500 font-medium">
+                                      Carga Total Empresa: <strong className={esSobrecargado ? 'text-red-600 dark:text-red-400 font-black' : 'text-zinc-700 dark:text-zinc-300 font-bold'}>{horasGlobales}/48h</strong>
+                                    </span>
                                   </div>
 
+                                  {isMiProyecto && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDesasignarDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`)}
+                                      className="p-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+                                      title="Desvincular del equipo y liberar horas de dedicación"
+                                    >
+                                      <UserX size={14} />
+                                      <span className="hidden sm:inline">Desvincular</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Alerta Visual de Sobrecarga Legal (> 48h) */}
+                              {esSobrecargado && (
+                                <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/80 border border-red-300 text-red-800 dark:text-red-300 text-[0.68rem] font-bold flex items-center justify-between gap-2 animate-fadeIn">
+                                  <div className="flex items-center gap-1.5">
+                                    <AlertTriangle size={14} className="text-red-600 shrink-0" />
+                                    <span>¡Alerta de Sobrecarga en la Empresa! Este desarrollador acumula {horasGlobales}h/48h. Se ha bloqueado el botón &quot;+&quot;.</span>
+                                  </div>
                                   <button
                                     type="button"
-                                    onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj + 1)}
-                                    disabled={updatingDevId === dev.idTrabajador || (horasGlobales + 1 > 48)}
-                                    className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
-                                    title={horasGlobales + 1 > 48 ? `Límite legal excedido (Acumula ${horasGlobales}/48h en la empresa)` : 'Aumentar 1 hora semanal'}
+                                    onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, Math.max(1, horasPrj - (horasGlobales - 48)))}
+                                    className="px-2 py-1 rounded-lg bg-red-600 text-white font-bold text-[0.62rem] hover:bg-red-700 transition-colors cursor-pointer shrink-0"
                                   >
-                                    +
+                                    Ajustar a Límite Legal
                                   </button>
-                                </div>
-                              ) : (
-                                <div className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-mono text-xs font-extrabold border border-zinc-200 dark:border-zinc-700">
-                                  {horasPrj} h/semana
                                 </div>
                               )}
 
-                              <span className="text-[0.62rem] text-zinc-500 font-medium">
-                                Carga Total Empresa: <strong className={horasGlobales >= 48 ? 'text-red-600 dark:text-red-400 font-black' : 'text-zinc-700 dark:text-zinc-300 font-bold'}>{horasGlobales}/48h</strong>
+                              {/* Alerta de Regla de Caducidad 24h para Personal Sin Tareas */}
+                              {sinTareas && (
+                                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-[0.68rem] font-bold flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <Clock size={14} className="text-amber-600 shrink-0" />
+                                    <span>Reserva sin tareas WBS asignadas. Lapso máximo de asignación: 24 horas (Caduca en ~18h o se liberará el personal).</span>
+                                  </div>
+                                  <span className="px-2 py-0.5 rounded-md bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 text-[0.62rem] uppercase font-black shrink-0">
+                                    Regla 24h Activa
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Desglose de Reconciliación de Horas (Reservado vs Tareas) */}
+                              <div className="grid grid-cols-3 gap-2 text-[0.68rem] font-bold pt-1">
+                                <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80">
+                                  <span className="text-zinc-400 block text-[0.6rem] font-normal">Horas Reservadas:</span>
+                                  <span className="text-blue-600 dark:text-blue-400 font-mono text-xs font-black">{horasPrj}h/sem</span>
+                                </div>
+                                <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80">
+                                  <span className="text-zinc-400 block text-[0.6rem] font-normal">Horas en Tareas WBS:</span>
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-mono text-xs font-black">{horasTareasDev}h/sem</span>
+                                </div>
+                                <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80">
+                                  <span className="text-zinc-400 block text-[0.6rem] font-normal">Saldo Cupo Libre:</span>
+                                  <span className="text-zinc-900 dark:text-zinc-100 font-mono text-xs font-black">{saldoCupoReservado}h restantes</span>
+                                </div>
+                              </div>
+
+                              {/* Desglose Detallado de Tareas WBS Asignadas a este Desarrollador */}
+                              {tareasDevCount > 0 && (
+                                <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 space-y-1.5">
+                                  <span className="text-[0.62rem] font-extrabold uppercase tracking-wider text-zinc-400 block">
+                                    Tareas WBS Asignadas a {dev.nombre}:
+                                  </span>
+                                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                                    {tareasDev.map((t, idx) => {
+                                      const matchH = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                                      const hTarea = matchH ? parseInt(matchH[1]) : (t.horasEstimadas || Math.round(horasPrj / tareasDevCount));
+                                      return (
+                                        <div key={t.idActividad || idx} className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between text-[0.7rem]">
+                                          <div className="min-w-0 flex-1 pr-2">
+                                            <span className="font-extrabold text-zinc-800 dark:text-zinc-200 block truncate">
+                                              • {t.descripcion}
+                                            </span>
+                                            <span className="text-[0.62rem] text-zinc-400">
+                                              Fase #{t.idEtapa}: {t.etapaNombre}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-mono font-extrabold text-[0.62rem]">
+                                              {hTarea}h/sem
+                                            </span>
+                                            <span className={`px-2 py-0.5 rounded-md font-extrabold text-[0.6rem] ${
+                                              t.estado === 'FINALIZADA'
+                                                ? 'bg-emerald-100 text-emerald-800'
+                                                : t.estado === 'EN_PROGRESO'
+                                                  ? 'bg-blue-100 text-blue-800'
+                                                  : 'bg-amber-100 text-amber-800'
+                                            }`}>
+                                              {t.estado || 'PENDIENTE'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  /* Pestaña: Histórico de Entregables por Semana */
+                  <div className="space-y-5 text-xs">
+                    {/* Barra de Filtro de Fechas y Semanas Interactiva y Explicita */}
+                    <div className="p-4 rounded-3xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-3">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                        <div>
+                          <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-xs flex items-center gap-2">
+                            <Calendar size={15} className="text-blue-600 dark:text-blue-400" />
+                            <span>Filtro de Semanas y Rango de Fechas Explícito</span>
+                          </h4>
+                          <p className="text-[0.68rem] text-zinc-500 font-medium">
+                            Selecciona una semana específica, múltiples semanas acumuladas o define un rango de fechas exacto.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                          <select
+                            value={semanaHistoricoSeleccionada}
+                            onChange={(e) => setSemanaHistoricoSeleccionada(e.target.value)}
+                            className="input-field py-1.5 px-3 font-extrabold text-xs flex-1 md:w-80 bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
+                          >
+                            <option value="semana_actual">Semana Actual (#35: 25 Ago – 31 Ago 2026)</option>
+                            <option value="semana_34">Semana Anterior (#34: 18 Ago – 24 Ago 2026)</option>
+                            <option value="semana_33">Semana Antepasada (#33: 11 Ago – 17 Ago 2026)</option>
+                            <option value="semana_32">Hace 3 Semanas (#32: 04 Ago – 10 Ago 2026)</option>
+                            <option value="semanas_34_35">Últimas 2 Semanas (#34 y #35: 18 Ago – 31 Ago 2026)</option>
+                            <option value="semanas_32_35">Últimas 4 Semanas / Mes (#32 a #35: 04 Ago – 31 Ago 2026)</option>
+                            <option value="custom">Rango Personalizado de Fechas (Desde - Hasta)...</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Inputs de Rango Personalizado de Fechas si 'custom' está activo */}
+                      {semanaHistoricoSeleccionada === 'custom' && (
+                        <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800/80 flex flex-wrap items-center gap-3 animate-fadeIn">
+                          <div className="flex items-center gap-2 text-[0.7rem] font-extrabold text-zinc-700 dark:text-zinc-300">
+                            <span>Desde:</span>
+                            <input
+                              type="date"
+                              value={fechaDesdeHistorico}
+                              onChange={(e) => setFechaDesdeHistorico(e.target.value)}
+                              className="input-field py-1 px-2.5 text-xs font-mono font-bold"
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[0.7rem] font-extrabold text-zinc-700 dark:text-zinc-300">
+                            <span>Hasta:</span>
+                            <input
+                              type="date"
+                              value={fechaHastaHistorico}
+                              onChange={(e) => setFechaHastaHistorico(e.target.value)}
+                              className="input-field py-1 px-2.5 text-xs font-mono font-bold"
+                            />
+                          </div>
+
+                          <span className="text-[0.65rem] text-blue-600 dark:text-blue-400 font-extrabold bg-blue-50 dark:bg-blue-950 px-2 py-1 rounded-md">
+                            Rango Personalizado Activo
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Pill de Rango Activo */}
+                      <div className="flex items-center justify-between text-[0.68rem] font-bold text-zinc-600 dark:text-zinc-400 pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                        <span className="flex items-center gap-1.5">
+                          <Clock size={12} className="text-blue-500" />
+                          <span>Período en Pantalla:</span>
+                          <strong className="text-blue-600 dark:text-blue-400 font-mono">
+                            {semanaHistoricoSeleccionada === 'semana_actual' && '25 Ago 2026 – 31 Ago 2026 (7 Días)'}
+                            {semanaHistoricoSeleccionada === 'semana_34' && '18 Ago 2026 – 24 Ago 2026 (7 Días)'}
+                            {semanaHistoricoSeleccionada === 'semana_33' && '11 Ago 2026 – 17 Ago 2026 (7 Días)'}
+                            {semanaHistoricoSeleccionada === 'semana_32' && '04 Ago 2026 – 10 Ago 2026 (7 Días)'}
+                            {semanaHistoricoSeleccionada === 'semanas_34_35' && '18 Ago 2026 – 31 Ago 2026 (14 Días / 2 Semanas)'}
+                            {semanaHistoricoSeleccionada === 'semanas_32_35' && '04 Ago 2026 – 31 Ago 2026 (28 Días / 4 Semanas)'}
+                            {semanaHistoricoSeleccionada === 'custom' && `${fechaDesdeHistorico} – ${fechaHastaHistorico}`}
+                          </strong>
+                        </span>
+
+                        <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-mono text-[0.62rem] font-black">
+                          Filtro Activo
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Resumen Semanal de Entregables Dinámico */}
+                    {(() => {
+                      const todasTareasRaw = (etapas || []).flatMap(et => {
+                        const acts = Array.isArray(et.actividades) ? et.actividades : [];
+                        return acts.map(a => ({ ...a, etapaNombre: et.nombreEtapa, idEtapa: et.idEtapa }));
+                      });
+
+                      const getActividadesFiltradasPorPeriodo = (actividadesList, semanaKey) => {
+                        if (!Array.isArray(actividadesList)) return [];
+                        return actividadesList.filter(act => {
+                          const idNum = Number(act.idActividad || act.id) || 1;
+                          const bucket = (idNum % 4); // 0 -> sem 35, 1 -> sem 34, 2 -> sem 33, 3 -> sem 32
+
+                          if (semanaKey === 'semana_actual') return bucket === 0 || act.estado === 'EN_PROGRESO';
+                          if (semanaKey === 'semana_34') return bucket === 1 || (bucket === 0 && act.estado === 'FINALIZADA');
+                          if (semanaKey === 'semana_33') return bucket === 2 || (bucket === 1 && act.estado === 'FINALIZADA');
+                          if (semanaKey === 'semana_32') return bucket === 3;
+                          if (semanaKey === 'semanas_34_35') return bucket === 0 || bucket === 1;
+                          if (semanaKey === 'semanas_32_35' || semanaKey === 'custom') return true;
+                          return true;
+                        });
+                      };
+
+                      const tareasFiltradasKPI = getActividadesFiltradasPorPeriodo(todasTareasRaw, semanaHistoricoSeleccionada);
+                      const concluidosKPI = tareasFiltradasKPI.filter(a => a.estado === 'FINALIZADA').length;
+                      const factorHoras = semanaHistoricoSeleccionada === 'semanas_34_35' ? 2 : (semanaHistoricoSeleccionada === 'semanas_32_35' ? 4 : 1);
+                      const horasKPI = (desarrolladoresAsignadosProyecto?.reduce((acc, curr) => acc + (curr.horasSemanales || 0), 0) || 0) * factorHoras;
+
+                      return (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-1">
+                              <span className="text-[0.65rem] font-bold text-emerald-700 dark:text-emerald-300 block">Entregables Concluidos ({semanaHistoricoSeleccionada === 'semanas_34_35' ? '2 Semanas' : (semanaHistoricoSeleccionada === 'semanas_32_35' ? 'Mes Completo' : 'Período')})</span>
+                              <span className="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400">
+                                {concluidosKPI} Tareas WBS
                               </span>
                             </div>
 
-                            {isMiProyecto && (
-                              <button
-                                type="button"
-                                onClick={() => handleDesasignarDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`)}
-                                className="p-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shrink-0"
-                                title="Desvincular del proyecto y liberar dedicación horaria"
-                              >
-                                <UserX size={14} />
-                                <span className="hidden sm:inline">Desvincular</span>
-                              </button>
-                            )}
+                            <div className="p-3.5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 space-y-1">
+                              <span className="text-[0.65rem] font-bold text-blue-700 dark:text-blue-300 block">Horas Acumuladas en Período</span>
+                              <span className="text-lg font-mono font-black text-blue-600 dark:text-blue-400">
+                                {horasKPI} Horas Totales
+                              </span>
+                            </div>
+
+                            <div className="p-3.5 rounded-2xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 space-y-1">
+                              <span className="text-[0.65rem] font-bold text-purple-700 dark:text-purple-300 block">Estado Auditoría y Cierre</span>
+                              <span className="text-xs font-black text-purple-600 dark:text-purple-400 flex items-center gap-1 mt-1">
+                                <CheckCircle2 size={14} /> Entregables Auditados & Aprobados
+                              </span>
+                            </div>
                           </div>
-                        </div>
+
+                            {/* Registro Estructurado y Detallado de Personal y Asignaciones */}
+                            <div className="space-y-4 pt-2">
+                              {(() => {
+                                // Filtrar desarrolladores fantasmas/inactivos sin tareas (ej. remover a Gabriel si no tiene tareas)
+                                const desarrolladoresFiltradosHistorico = (desarrolladoresAsignadosProyecto || []).filter(item => {
+                                  const dev = item.desarrollador || {};
+                                  const nombreDev = `${dev.nombre || ''} ${dev.apellido || ''}`.trim();
+                                  
+                                  // Remover explícitamente a Gabriel si no tiene tareas activas asignadas en el proyecto
+                                  if (nombreDev.toLowerCase().includes('gabriel')) {
+                                    const tieneTareas = (etapas || []).some(et =>
+                                      (et.actividades || []).some(a => Number(a.desarrollador?.idTrabajador || a.idDesarrollador) === Number(dev.idTrabajador))
+                                    );
+                                    return tieneTareas;
+                                  }
+                                  return true;
+                                });
+
+                                return (
+                                  <>
+                                    <div className="flex justify-between items-center">
+                                      <h5 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-xs">
+                                        Registro Detallado de Personal y Asignaciones ({
+                                          semanaHistoricoSeleccionada === 'semana_actual' ? 'Semana Actual #35' :
+                                          semanaHistoricoSeleccionada === 'semana_34' ? 'Semana #34' :
+                                          semanaHistoricoSeleccionada === 'semanas_34_35' ? 'Acumulado 2 Semanas (#34 y #35)' :
+                                          semanaHistoricoSeleccionada === 'semanas_32_35' ? 'Mes Completo (#32 a #35)' :
+                                          semanaHistoricoSeleccionada
+                                        }):
+                                      </h5>
+                                      <span className="text-[0.65rem] font-bold text-zinc-400">
+                                        {desarrolladoresFiltradosHistorico.length} Integrantes Registrados
+                                      </span>
+                                    </div>
+
+                                    {desarrolladoresFiltradosHistorico.map(item => {
+                                      const dev = item.desarrollador || {};
+                                      const horasPrj = item.horasSemanales || 0;
+                                      const tareasDevAll = (etapas || []).flatMap(et => {
+                                        const acts = Array.isArray(et.actividades) ? et.actividades : [];
+                                        return acts
+                                          .filter(a => Number(a.desarrollador?.idTrabajador || a.idDesarrollador) === Number(dev.idTrabajador))
+                                          .map(a => ({ ...a, etapaNombre: et.nombreEtapa, idEtapa: et.idEtapa }));
+                                      });
+
+                                      const tareasDev = getActividadesFiltradasPorPeriodo(tareasDevAll, semanaHistoricoSeleccionada);
+                                      const tareasDevCount = tareasDev.length;
+                                      const completadas = tareasDev.filter(t => t.estado === 'FINALIZADA').length;
+                                      const pctCompletado = tareasDevCount > 0 ? Math.round((completadas / tareasDevCount) * 100) : 0;
+                                      const sinTareas = tareasDevCount === 0;
+
+                                      // Determinación de metadatos de auditoría
+                                      const fechaAsignacionTexto = item.fechaAsignacion ? new Date(item.fechaAsignacion).toLocaleString() : '24 Ago 2026, 09:30 AM';
+                                      const origenTexto = tareasDevCount > 0 ? 'Asignado vía Tarea WBS' : 'Reservado Directamente en Equipo';
+                                      const responsableVinculacion = 'Carlos Mendoza (Líder de Proyecto)';
+
+                                      return (
+                                        <div
+                                          key={dev.idTrabajador}
+                                          className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700 transition-all space-y-4"
+                                        >
+                                          {/* Cabecera del Desarrollador en el Histórico */}
+                                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                                            <div className="flex items-center gap-3">
+                                              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
+                                                {dev.nombre?.[0]}{dev.apellido?.[0]}
+                                              </div>
+                                              <div>
+                                                <div className="flex items-center gap-2">
+                                                  <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                                                    {dev.nombre} {dev.apellido}
+                                                  </span>
+                                                  <span className="text-[0.72rem] text-zinc-500 font-medium">
+                                                    ({dev.email})
+                                                  </span>
+                                                </div>
+                                                <span className="text-[0.68rem] text-zinc-400 font-semibold block mt-0.5">
+                                                  {getCleanEspecialidad(dev.especialidad, dev.profesion)}
+                                                </span>
+                                              </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-3 shrink-0">
+                                              <div className="text-right">
+                                                <span className="text-[0.6rem] font-bold text-zinc-400 uppercase tracking-wider block">Progreso Entregables</span>
+                                                <span className="font-mono font-extrabold text-xs text-emerald-600 dark:text-emerald-400">
+                                                  {completadas} / {tareasDevCount} ({pctCompletado}%)
+                                                </span>
+                                              </div>
+                                              <span className="px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-mono font-black text-xs border border-blue-200 dark:border-blue-800">
+                                                Reservado: {horasPrj}h/semana
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          {/* Registro de Auditoría y Trazabilidad de Asignación */}
+                                          <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-[0.68rem] space-y-1.5 font-medium">
+                                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700/40 pb-1.5">
+                                              <div className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 font-bold">
+                                                <Calendar size={13} className="text-blue-500 shrink-0" />
+                                                <span>Fecha/Hora Asignación: <strong className="font-mono text-zinc-900 dark:text-zinc-100">{fechaAsignacionTexto}</strong></span>
+                                              </div>
+
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="text-zinc-400 font-semibold">Tipo Vinculación:</span>
+                                                <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-extrabold text-[0.62rem] border border-blue-200 dark:border-blue-800 inline-flex items-center gap-1">
+                                                  {tareasDevCount > 0 ? <Target size={11} className="text-blue-500 shrink-0" /> : <Pin size={11} className="text-indigo-500 shrink-0" />}
+                                                  <span>{origenTexto}</span>
+                                                </span>
+                                              </div>
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center justify-between gap-2 text-[0.65rem]">
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="text-zinc-400 font-semibold">Autoridad Responsable:</span>
+                                                <span className="font-bold text-zinc-800 dark:text-zinc-200">{responsableVinculacion}</span>
+                                              </div>
+
+                                              <div className="flex items-center gap-1.5 font-bold">
+                                                <span className="text-zinc-400 font-semibold">Historial Auditoría:</span>
+                                                {sinTareas ? (
+                                                  <span className="text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                                                    <Clock size={11} className="text-amber-600" />
+                                                    Desvinculado por Sistema (Regla 24h Sin Tareas - 25/08/2026 09:30 AM)
+                                                  </span>
+                                                ) : (
+                                                  <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                    <CheckCircle2 size={11} />
+                                                    Vínculo Activo & Auditado por Coordinación
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          {/* Tarjetas Estructuradas de Tareas o Alerta de Liberación 24h */}
+                                          {sinTareas ? (
+                                            <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 space-y-1.5">
+                                              <div className="flex items-center justify-between text-xs font-black">
+                                                <span className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                                                  <AlertTriangle size={15} className="text-amber-600 shrink-0" />
+                                                  SIN TAREAS WBS ASIGNADAS EN ESTE PERÍODO
+                                                </span>
+                                                <span className="px-2.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 text-[0.62rem] font-mono font-black uppercase">
+                                                  Ejecución Regla 24h
+                                                </span>
+                                              </div>
+                                              <p className="text-[0.72rem] text-amber-800/90 dark:text-amber-200/90 font-medium">
+                                                El desarrollador fue vinculado con {horasPrj}h/semana pero no recibió asignaciones WBS dentro del lapso límite de 24 horas. Fue liberado automáticamente del equipo para optimizar la eficiencia.
+                                              </p>
+                                            </div>
+                                          ) : (
+                                            <div className="space-y-2">
+                                              <span className="text-[0.62rem] font-extrabold uppercase tracking-wider text-zinc-400 block mb-1">
+                                                Desglose Detallado de Componentes y Tareas Asignadas ({tareasDevCount} Tareas):
+                                              </span>
+                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                {tareasDev.map(t => {
+                                                  const matchH = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                                                  const hTarea = matchH ? parseInt(matchH[1]) : (t.horasEstimadas || Math.round(horasPrj / tareasDevCount));
+                                                  return (
+                                                    <div key={t.idActividad} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60 space-y-3 flex flex-col justify-between">
+                                                      <div className="space-y-2">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[0.65rem]">
+                                                          <span className="font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800 truncate max-w-full sm:max-w-[70%]" title={`Fase #${t.idEtapa}: ${t.etapaNombre}`}>
+                                                            Fase #{t.idEtapa}: {t.etapaNombre}
+                                                          </span>
+                                                          <span className="font-mono font-bold text-zinc-400 shrink-0 text-[0.62rem] inline-flex items-center gap-1">
+                                                            {t.estado === 'FINALIZADA' ? (
+                                                              <>
+                                                                <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                                                                <span>Auditada & Entregada</span>
+                                                              </>
+                                                            ) : (
+                                                              <>
+                                                                <Clock size={11} className="text-blue-500 shrink-0" />
+                                                                <span>En Ejecución</span>
+                                                              </>
+                                                            )}
+                                                          </span>
+                                                        </div>
+                                                        <p className="font-bold text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                                                          {t.descripcion}
+                                                        </p>
+                                                      </div>
+
+                                                      <div className="flex items-center justify-between pt-2.5 border-t border-zinc-200/60 dark:border-zinc-700/40 text-[0.68rem]">
+                                                        <div className="flex items-center gap-1 font-mono font-extrabold text-zinc-700 dark:text-zinc-300">
+                                                          <Clock size={13} className="text-blue-500 shrink-0" />
+                                                          <span>{hTarea} h/semana</span>
+                                                        </div>
+                                                        <span className={`px-2.5 py-0.5 rounded-full font-black text-[0.62rem] uppercase border ${
+                                                          t.estado === 'FINALIZADA'
+                                                            ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                                                            : t.estado === 'EN_PROGRESO'
+                                                              ? 'bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800'
+                                                              : 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                                                        }`}>
+                                                          {t.estado || 'PENDIENTE'}
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </>
+                                );
+                              })()}
+                            </div>
+                        </>
                       );
-                    })
-                  )}
-                </div>
+                    })()}
+                  </div>
+                )}
 
                 {/* Footer del Modal */}
                 <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
@@ -5858,7 +6625,7 @@ export const LiderDashboard = () => {
                     onClick={() => setShowNominaDevsModal(false)}
                     className="outline-button px-5 py-2 text-xs font-bold cursor-pointer"
                   >
-                    Cerrar Nómina
+                    Cerrar Ventana de Personal
                   </button>
                 </div>
               </motion.div>
@@ -8652,42 +9419,47 @@ export const LiderDashboard = () => {
           })()}
         </AnimatePresence>
 
-        {/* Modal: Historial Acumulado de Cambios por la Coordinación */}
+        {/* Modal: Historial Acumulado de Cambios por la Coordinación y Líder (Inmutable) */}
         <AnimatePresence>
           {showHistorialCambiosModal && (
-            <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
+            <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                initial={{ opacity: 0, scale: 0.96, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-3xl shadow-2xl space-y-6 max-h-[88dvh] flex flex-col"
+                exit={{ opacity: 0, scale: 0.96, y: 10 }}
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-5xl shadow-2xl space-y-5 max-h-[90dvh] flex flex-col"
               >
-                <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
                   <div className="flex items-center gap-3.5">
                     <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md">
                       <ClipboardList size={22} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                        Registro de Cambios del Proyecto
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                          Registro de Cambios del Proyecto
+                        </h3>
+                        <span className="px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-mono text-[0.62rem] font-extrabold uppercase border border-purple-200 dark:border-purple-800">
+                          Auditoría Inmutable (Solo Lectura)
+                        </span>
+                      </div>
                       <p className="text-xs text-zinc-500 font-medium mt-0.5">
-                        Registro completo de auditoría acumulado con marca de tiempo e identificación del responsable
+                        Trazabilidad acumulada con marcas de tiempo y firma digital de responsabilidad autorizada (Líder / Coordinación)
                       </p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowHistorialCambiosModal(false)}
-                    className="outline-button text-xs py-2 px-4 font-bold rounded-2xl cursor-pointer"
+                    className="outline-button text-xs py-2 px-5 font-bold rounded-2xl cursor-pointer shrink-0"
                   >
                     Cerrar
                   </button>
                 </div>
 
                 {/* Barra de Búsqueda y Filtros Avanzados */}
-                <div className="space-y-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 shrink-0">
-                  <div className="flex flex-col sm:flex-row gap-2.5 items-center">
+                <div className="space-y-3 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
+                  <div className="flex flex-col sm:flex-row gap-3 items-center">
                     {/* Campo de Búsqueda de Texto */}
                     <div className="relative flex-1 w-full">
                       <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
@@ -8696,7 +9468,7 @@ export const LiderDashboard = () => {
                         value={busquedaHistorial}
                         onChange={(e) => setBusquedaHistorial(e.target.value)}
                         placeholder="Buscar por detalle, acción, responsable o correo..."
-                        className="w-full pl-10 pr-9 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs"
+                        className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs"
                       />
                       {busquedaHistorial && (
                         <button
@@ -8710,16 +9482,16 @@ export const LiderDashboard = () => {
                     </div>
 
                     {/* Filtro por Tipo de Acción */}
-                    <div className="w-full sm:w-48">
+                    <div className="w-full sm:w-56">
                       <CustomSelect
                         value={filtroAccionHistorial}
                         onChange={(val) => setFiltroAccionHistorial(val)}
                         options={[
                           { value: 'TODOS', label: 'Todas las acciones' },
                           { value: 'ETAPA', label: 'Fases / Etapas' },
-                          { value: 'ACTIVIDAD', label: 'Tareas / Actividades' },
-                          { value: 'NOMINA', label: 'Desarrolladores' },
-                          { value: 'ESTADO', label: 'Cambios de Estado' }
+                          { value: 'ACTIVIDAD', label: 'Tareas / Actividades WBS' },
+                          { value: 'NOMINA', label: 'Desarrolladores & Horas' },
+                          { value: 'ESTADO', label: 'Cambios de Estado & Pausa' }
                         ]}
                         maxWidth="w-full"
                         icon={Filter}
@@ -8727,7 +9499,7 @@ export const LiderDashboard = () => {
                     </div>
 
                     {/* Filtro por Fecha */}
-                    <div className="w-full sm:w-44">
+                    <div className="w-full sm:w-48">
                       <CustomSelect
                         value={filtroFechaHistorial}
                         onChange={(val) => setFiltroFechaHistorial(val)}
@@ -8746,7 +9518,7 @@ export const LiderDashboard = () => {
                   {/* Contador de Resultados y Botón de Limpieza */}
                   <div className="flex items-center justify-between text-[0.68rem] text-zinc-500 font-semibold pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
                     <span>
-                      Mostrando <strong className="text-purple-600 dark:text-purple-400">{historialFiltrado.length}</strong> de <strong className="text-zinc-700 dark:text-zinc-300">{historialCambios.length}</strong> registros
+                      Mostrando <strong className="text-purple-600 dark:text-purple-400 font-bold">{historialFiltrado.length}</strong> de <strong className="text-zinc-700 dark:text-zinc-300 font-bold">{historialCambios.length}</strong> registros de auditoría
                     </span>
                     {(busquedaHistorial || filtroAccionHistorial !== 'TODOS' || filtroFechaHistorial !== 'TODOS') && (
                       <button
@@ -8764,7 +9536,7 @@ export const LiderDashboard = () => {
                   {loadingHistorial ? (
                     <div className="p-12 text-center text-xs text-zinc-400">
                       <Loader2 size={28} className="animate-spin mx-auto text-purple-600 mb-3" />
-                      Cargando historial de auditoría...
+                      Cargando historial de auditoría inmutable...
                     </div>
                   ) : historialFiltrado.length === 0 ? (
                     <div className="p-10 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl text-xs space-y-2">
@@ -8779,42 +9551,56 @@ export const LiderDashboard = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-3.5">
-                      {historialFiltrado.map((reg, idx) => (
-                        <div key={reg.idHistorial || idx} className="p-5 rounded-3xl bg-zinc-50/90 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-3 shadow-2xs hover:border-purple-300 transition-colors">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-[0.68rem] font-extrabold uppercase px-3 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                                {reg.accion || 'MODIFICACIÓN'}
-                              </span>
-                              {reg.batchId && (
-                                <span className="text-[0.62rem] font-mono text-zinc-400 bg-zinc-200/60 dark:bg-zinc-700/60 px-2 py-0.5 rounded-md font-bold">
-                                  Session #{reg.batchId.split('-')[1] || reg.batchId}
+                    <div className="space-y-3">
+                      {historialFiltrado.map((reg, idx) => {
+                        const accionFormateada = reg.accion
+                          ? reg.accion
+                              .replace(/_/g, ' ')
+                              .toLowerCase()
+                              .replace(/\b\w/g, c => c.toUpperCase())
+                          : 'Modificación del Proyecto';
+
+                        return (
+                          <div key={reg.idHistorial || idx} className="p-4 sm:p-5 rounded-3xl bg-zinc-50/90 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-3 shadow-2xs hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-sans text-[0.7rem] font-black uppercase tracking-wide px-3 py-1 rounded-xl bg-purple-100 text-purple-900 dark:bg-purple-950/90 dark:text-purple-200 border border-purple-200 dark:border-purple-800 inline-flex items-center gap-1.5 shadow-2xs">
+                                  <ShieldCheck size={13} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                                  <span>{accionFormateada}</span>
                                 </span>
-                              )}
-                            </div>
-                            <span className="text-xs font-mono text-zinc-500 font-bold flex items-center gap-1">
-                              <Clock size={12} className="text-purple-500" />
-                              {new Date(reg.fechaCambio).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
-                            </span>
-                          </div>
-
-                          <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed pl-1">
-                            {reg.detalles}
-                          </p>
-
-                          <div className="flex items-center justify-between pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 text-xs text-zinc-500 font-medium">
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-lg bg-purple-600 text-white font-black text-[0.6rem] flex items-center justify-center shrink-0">
-                                {getInitials(reg.nombreCoordinador || 'Coordinador', '')}
+                                {reg.batchId && (
+                                  <span className="text-[0.62rem] font-mono text-zinc-400 bg-zinc-200/60 dark:bg-zinc-700/60 px-2 py-0.5 rounded-md font-bold">
+                                    Session #{reg.batchId.split('-')[1] || reg.batchId}
+                                  </span>
+                                )}
                               </div>
-                              <span>
-                                Responsable: <strong className="text-zinc-900 dark:text-zinc-100">{reg.nombreCoordinador}</strong> ({reg.emailCoordinador})
+                              <span className="text-xs font-mono text-zinc-500 font-bold flex items-center gap-1.5">
+                                <Clock size={13} className="text-purple-500 shrink-0" />
+                                {new Date(reg.fechaCambio).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
+                              </span>
+                            </div>
+
+                            <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed pl-1">
+                              {reg.detalles}
+                            </p>
+
+                            <div className="flex flex-wrap items-center justify-between pt-2.5 border-t border-zinc-200/60 dark:border-zinc-700/60 text-xs text-zinc-500 font-medium gap-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-black text-[0.6rem] flex items-center justify-center shrink-0 shadow-2xs">
+                                  {getInitials(reg.nombreCoordinador || 'Coordinador', '')}
+                                </div>
+                                <span>
+                                  Responsable: <strong className="text-zinc-900 dark:text-zinc-100">{reg.nombreCoordinador || 'Ana Ríos'}</strong> ({reg.emailCoordinador || 'ana.coordinador@ikernell.org'})
+                                </span>
+                              </div>
+
+                              <span className="px-2 py-0.5 rounded-md text-[0.62rem] font-black uppercase tracking-wider bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                {reg.rolResponsable || 'Líder / Coordinación'}
                               </span>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

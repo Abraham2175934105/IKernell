@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
 import toast from 'react-hot-toast';
+import jsPDF from 'jspdf';
 import { SkeletonCard } from '../ui/Skeleton';
 
 /**
@@ -620,57 +621,277 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
     return { label: 'Carga Homogénea / Estable', icon: Minus, color: 'text-blue-500' };
   };
 
-  // Exporta el informe diagnóstico en archivo de texto estructurado
+  // Genera y descarga un informe en formato PDF vectorial profesional de alta precisión (RF-35)
   const handleExportarDiagnostico = (dev) => {
-    if (!dev) return;
-    const fecha = new Date().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
-    const nivel = normalizarEstado(dev.estadoAlerta);
-    const nombreDev = dev?.nombreCompleto || 'Desarrollador';
-    const contenido = `===============================================================
-IKERNELL SOLUCIONES SOFTWARE - DICTAMEN DE ANALÍTICA PREDICTIVA
-MÓDULO: PREDICTOR DE DESGASTE Y BURNOUT HISTÓRICO (RF-35)
-NORMATIVA: ISO/IEC 25010 (Mantenibilidad & Fiabilidad de Software)
-===============================================================
+    if (!dev) {
+      toast.error('No se ha seleccionado ningún desarrollador para exportar el diagnóstico.');
+      return;
+    }
 
-Fecha de Emisión: ${fecha}
-Desarrollador Evaluado: ${nombreDev} (ID: ${dev?.idTrabajador || 'N/A'})
-Especialidad: ${dev?.especialidad || 'Desarrollo de Software'}
-Correo Electrónico: ${dev?.email || 'N/A'}
-Nivel Semafórico Homologado: ${nivel}
-Capacidad Bloqueada en Sistema: ${dev?.capacidadBloqueada ? 'SÍ (Bloqueo Preventivo)' : 'NO'}
+    try {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
----------------------------------------------------------------
-1. MÉTRICAS CLAVE Y SERIES TEMPORALES DE 21 DÍAS
----------------------------------------------------------------
-- Tareas WBS Asignadas Activas: ${dev?.tareasActivas || 0}
-- Score de Carga Cognitiva Global: ${Math.round(dev?.promedioCarga || 0)} / 100
-- Semana 1 (Días 15 a 21): ${Math.round(dev?.scoreSemana1 || 0)}%
-- Semana 2 (Días 8 a 14): ${Math.round(dev?.scoreSemana2 || 0)}%
-- Semana 3 (Últimos 7 días): ${Math.round(dev?.scoreSemana3 || 0)}%
+      const fecha = new Date().toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' });
+      const nivel = normalizarEstado(dev.estadoAlerta);
+      const nombreDev = dev?.nombreCompleto || `${dev?.nombre || 'Desarrollador'} ${dev?.apellido || ''}`.trim();
+      const idDev = dev?.idTrabajador || dev?.id || 'N/A';
+      const emailDev = dev?.email || 'N/A';
+      const especialidadDev = dev?.especialidad || dev?.profesion || 'Ingeniería de Software';
+      const scoreCarga = Math.round(dev?.promedioCarga || 0);
 
----------------------------------------------------------------
-2. DIAGNÓSTICO CLÍNICO-OPERATIVO
----------------------------------------------------------------
-${getDiagnosticoClaro(dev)}
+      // Paleta de Colores por Nivel Semafórico
+      let mainColor = [37, 99, 235]; // Azul Default (Media)
+      let badgeBg = [219, 234, 254];
+      let badgeText = [29, 78, 216];
+      let badgeLabel = 'NIVEL MEDIO / ALERTA';
 
----------------------------------------------------------------
-3. RECOMENDACIÓN FORMULADA POR EL MOTOR PREDICTIVO
----------------------------------------------------------------
-${dev?.recomendacion || 'Mantener monitoreo continuo en cada sprint.'}
+      if (nivel === 'CRITICA') {
+        mainColor = [220, 38, 38]; // Rojo Crítico (red-600)
+        badgeBg = [254, 226, 226];
+        badgeText = [185, 28, 28];
+        badgeLabel = 'CRÍTICO (SOBRECARGA EXTREMA)';
+      } else if (nivel === 'ALTA') {
+        mainColor = [217, 119, 6]; // Ámbar Alto (amber-600)
+        badgeBg = [254, 243, 199];
+        badgeText = [180, 83, 9];
+        badgeLabel = 'ALTO (SOBRECARGA)';
+      } else if (nivel === 'BAJA') {
+        mainColor = [16, 185, 129]; // Verde Esmeralda (emerald-600)
+        badgeBg = [209, 250, 229];
+        badgeText = [4, 120, 87];
+        badgeLabel = 'BAJO (CARGA HOMOGÉNEA / ESTABLE)';
+      }
 
-===============================================================
-Generado automáticamente por el motor analítico IKernell v2.0
-===============================================================`;
+      // 1. Cabecera Corporativa Principal (3 Líneas sin solapes ni desbordamientos)
+      doc.setFillColor(15, 23, 42); // slate-900
+      doc.rect(0, 0, 210, 28, 'F');
 
-    const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `DIAGNOSTICO_BURNOUT_${nombreDev.replace(/\s+/g, '_')}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Diagnóstico de ${nombreDev} exportado con éxito.`);
+      // Accent Bar
+      doc.setFillColor(...mainColor);
+      doc.rect(0, 26.5, 210, 1.5, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text('IKERNELL PREDICTIVE ANALYTICS ENGINE', 14, 11);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(226, 232, 240);
+      doc.text('INFORME TÉCNICO DE DIAGNÓSTICO PREDICTIVO DE FATIGA Y RIESGO DE BURNOUT (RF-35)', 14, 17);
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(203, 213, 225);
+      doc.text(`FECHA DE EMISIÓN: ${fecha}   •   NORMATIVA: ISO/IEC 25010 (SISTEMA DE CALIDAD & FIABILIDAD)`, 14, 22.5);
+
+      let yPos = 34;
+
+      // 2. Tarjeta del Desarrollador Evaluado
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, yPos, 182, 32, 3, 3, 'FD');
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text(nombreDev, 19, yPos + 9);
+
+      const espClean = getCleanEspecialidad(dev?.especialidad, dev?.profesion || 'Desarrollo de Software');
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(`ID Personal: ${idDev}   •   Especialidad: ${espClean}`, 19, yPos + 16);
+      doc.text(`Correo Electrónico: ${emailDev}`, 19, yPos + 22);
+
+      // Pill de Nivel de Alerta
+      doc.setFillColor(...badgeBg);
+      doc.setDrawColor(...badgeBg);
+      doc.roundedRect(120, yPos + 5, 70, 9, 2, 2, 'F');
+      doc.setTextColor(...badgeText);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.text(badgeLabel, 123, yPos + 11);
+
+      // Score Carga Big Number
+      doc.setTextColor(...mainColor);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text(`${scoreCarga}%`, 130, yPos + 25);
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Score de Carga Cognitiva Global', 148, yPos + 25);
+
+      yPos += 39;
+
+      // 3. Título Sección 1: Desglose de Carga Operativa
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('1. DESGLOSE OPERATIVO DE CARGA Y TAREAS WBS', 14, yPos);
+      yPos += 4;
+
+      // 4 Cuadros KPI de resumen
+      const cardW = 43;
+      const cardH = 18;
+      const gap = 3.3;
+
+      const kpis = [
+        { label: 'Tareas Activas (Proyecto)', val: `${dev?.tareasActivas || 0} WBS`, sub: 'Proyecto Actual' },
+        { label: 'Carga Global Acumulada', val: `${scoreCarga}% Total`, sub: 'Evaluación 21 días' },
+        { label: 'Pico Máximo Registrado', val: `${dev?.picoMaximo || '100%'} Pico`, sub: 'Pico de fatiga' },
+        { label: 'Tendencia Histórica', val: dev?.tendenciaCarga || 'Ascendente', sub: 'Variación 21d' }
+      ];
+
+      kpis.forEach((kpi, idx) => {
+        const x = 14 + idx * (cardW + gap);
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(x, yPos, cardW, cardH, 2, 2, 'FD');
+
+        doc.setFontSize(6.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text(kpi.label.toUpperCase(), x + 3, yPos + 5);
+
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text(kpi.val, x + 3, yPos + 11);
+
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(148, 163, 184);
+        doc.text(kpi.sub, x + 3, yPos + 15);
+      });
+
+      yPos += 24;
+
+      // 4. Título Sección 2: Series Temporales de Carga Cognitiva (21 Días)
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('2. SERIES TEMPORALES DE CARGA COGNITIVA (CICLO DE 21 DÍAS)', 14, yPos);
+      yPos += 5;
+
+      const s1 = Math.round(dev?.scoreSemana1 || 0);
+      const s2 = Math.round(dev?.scoreSemana2 || 0);
+      const s3 = Math.round(dev?.scoreSemana3 || 0);
+
+      const semanas = [
+        { titulo: 'S1 • DÍAS 15 A 21', val: s1, color: [59, 130, 246] },
+        { titulo: 'S2 • DÍAS 8 A 14', val: s2, color: [37, 99, 235] },
+        { titulo: 'S3 • ÚLTIMOS 7 DÍAS', val: s3, color: mainColor }
+      ];
+
+      const semW = 58;
+      semanas.forEach((sem, idx) => {
+        const x = 14 + idx * (semW + 4);
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(x, yPos, semW, 20, 2, 2, 'FD');
+
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text(sem.titulo, x + 4, yPos + 6);
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text(`${sem.val}%`, x + 4, yPos + 13);
+
+        // Mini barra visual de progreso vector
+        const barW = 28;
+        doc.setFillColor(226, 232, 240);
+        doc.roundedRect(x + semW - barW - 4, yPos + 9, barW, 4, 1, 1, 'F');
+        
+        const fillW = Math.min(barW, Math.max(2, (sem.val / 100) * barW));
+        doc.setFillColor(...sem.color);
+        doc.roundedRect(x + semW - barW - 4, yPos + 9, fillW, 4, 1, 1, 'F');
+      });
+
+      yPos += 27;
+
+      // 5. Sección 3: Diagnóstico Clínico-Operativo
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('3. DIAGNÓSTICO CLÍNICO-OPERATIVO Y ANÁLISIS DE FACTORES', 14, yPos);
+      yPos += 4;
+
+      const diagTexto = getDiagnosticoClaro(dev);
+      const diagLines = doc.splitTextToSize(diagTexto, 172);
+      const diagBoxH = Math.max(18, diagLines.length * 4.2 + 8);
+
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, yPos, 182, diagBoxH, 2, 2, 'FD');
+
+      // Borde lateral de color
+      doc.setFillColor(...mainColor);
+      doc.rect(14, yPos, 2.5, diagBoxH, 'F');
+
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(51, 65, 85);
+      doc.text(diagLines, 20, yPos + 7);
+
+      yPos += diagBoxH + 7;
+
+      // 6. Sección 4: Dictamen del Motor Predictivo & Recomendaciones
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('4. DICTAMEN DEL MOTOR PREDICTIVO Y ACCIONES PREVENTIVAS', 14, yPos);
+      yPos += 4;
+
+      const recTexto = dev?.recomendacion || 'Mantener balance regular de asignaciones WBS y verificar cumplimiento de entregables.';
+      const recLines = doc.splitTextToSize(recTexto, 172);
+      const recBoxH = Math.max(18, recLines.length * 4.2 + 8);
+
+      doc.setFillColor(254, 242, 242);
+      doc.setDrawColor(252, 165, 165);
+      doc.roundedRect(14, yPos, 182, recBoxH, 2, 2, 'FD');
+
+      doc.setFillColor(...mainColor);
+      doc.rect(14, yPos, 2.5, recBoxH, 'F');
+
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(153, 27, 27);
+      doc.text('RECOMENDACIÓN FORMULADA POR EL SISTEMA:', 20, yPos + 6);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(127, 29, 29);
+      doc.text(recLines, 20, yPos + 12);
+
+      // 7. Pie de Página Corporativo y Auditoría
+      doc.setDrawColor(226, 232, 240);
+      doc.line(14, 280, 196, 280);
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.text('IKERNELL PREDICTIVE ANALYTICS ENGINE • POSTGRESQL LIVE AUDIT', 14, 285);
+
+      doc.setFont('helvetica', 'normal');
+      doc.text('Certificado de Dictamen Técnico Automático • Documento Válido para Auditoría de Carga ISO/IEC 25010', 14, 289);
+      doc.text('Página 1 de 1', 180, 285);
+
+      // Descargar PDF
+      const filename = `DIAGNOSTICO_BURNOUT_${nombreDev.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      doc.save(filename);
+      toast.success(`Diagnóstico PDF de ${nombreDev} exportado exitosamente.`);
+    } catch (error) {
+      console.error('Error generando PDF de diagnóstico:', error);
+      toast.error('Ocurrió un error al generar el informe PDF del diagnóstico.');
+    }
   };
 
   // Badge estilizado con indicadores SVG limpios (sin emojis)

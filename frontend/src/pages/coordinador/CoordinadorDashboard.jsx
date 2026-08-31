@@ -6350,25 +6350,41 @@ export const CoordinadorDashboard = () => {
                     </p>
                   </div>
                 ) : (
-                  historialFiltradoCoord.map((reg, idx) => (
-                    <div key={reg.idHistorial || idx} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="font-mono text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                          {reg.accion || 'MODIFICACIÓN'}
-                        </span>
-                        <span className="text-[0.62rem] font-mono text-zinc-400 font-bold">
-                          {new Date(reg.fechaCambio).toLocaleString('es-CO')}
-                        </span>
+                  historialFiltradoCoord.map((reg, idx) => {
+                    const accionFormateada = reg.accion
+                      ? reg.accion
+                          .replace(/_/g, ' ')
+                          .toLowerCase()
+                          .replace(/\b\w/g, c => c.toUpperCase())
+                      : 'Modificación del Proyecto';
+
+                    return (
+                      <div key={reg.idHistorial || idx} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2.5 shadow-2xs hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <span className="font-sans text-[0.68rem] font-black uppercase tracking-wide px-3 py-1 rounded-xl bg-purple-100 text-purple-900 dark:bg-purple-950/90 dark:text-purple-200 border border-purple-200 dark:border-purple-800 inline-flex items-center gap-1.5 shadow-2xs">
+                            <ShieldCheck size={13} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                            <span>{accionFormateada}</span>
+                          </span>
+                          <span className="text-[0.65rem] font-mono text-zinc-500 font-bold flex items-center gap-1.5">
+                            <Clock size={12} className="text-purple-500 shrink-0" />
+                            {new Date(reg.fechaCambio).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed pl-1">
+                          {reg.detalles}
+                        </p>
+                        <div className="flex flex-wrap items-center justify-between pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 text-[0.68rem] text-zinc-500 font-medium gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <User size={13} className="text-purple-600 shrink-0" />
+                            <span>Responsable: <strong className="text-zinc-900 dark:text-zinc-100">{reg.nombreCoordinador || 'Ana Ríos'}</strong> ({reg.emailCoordinador || 'ana.coordinador@ikernell.org'})</span>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-md text-[0.6rem] font-black uppercase tracking-wider bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            {reg.rolResponsable || 'Coordinación Directiva'}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-xs text-zinc-800 dark:text-zinc-200 font-semibold leading-relaxed">
-                        {reg.detalles}
-                      </p>
-                      <div className="flex items-center gap-1.5 text-[0.65rem] text-zinc-500 font-medium pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
-                        <User size={12} className="text-blue-500" />
-                        <span>Realizado por: <strong>{reg.nombreCoordinador}</strong> ({reg.emailCoordinador})</span>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </motion.div>

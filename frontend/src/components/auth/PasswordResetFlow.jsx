@@ -31,6 +31,7 @@ export default function PasswordResetFlow({ onBackToLogin, onSuccessNotify }) {
   const otpInputsRef = useRef([]);
   const [maskedEmail, setMaskedEmail] = useState('');
   const [targetEmail, setTargetEmail] = useState('');
+  const [serverOtp, setServerOtp] = useState('');
   const [resendCountdown, setResendCountdown] = useState(0);
   const [animStage, setAnimStage] = useState('idle');
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -97,11 +98,18 @@ export default function PasswordResetFlow({ onBackToLogin, onSuccessNotify }) {
       const res = await axios.post(`${API_BASE}/request`, { query: cleanQuery });
       setMaskedEmail(res.data.emailDestinoEnmascarado || 'su correo registrado');
       setTargetEmail(res.data.emailTarget || cleanQuery);
+      if (res.data.otpCode) {
+        setServerOtp(res.data.otpCode);
+      }
       setOtp(['', '', '', '', '', '']);
       setStep(2);
       setResendCountdown(60);
       setAnimStage('idle');
-      toast.success('Código de verificación de 6 dígitos enviado exitosamente.');
+      if (res.data.otpCode) {
+        toast.success(`Código de verificación generado: ${res.data.otpCode}`, { duration: 8000 });
+      } else {
+        toast.success('Código de verificación de 6 dígitos enviado exitosamente.');
+      }
     } catch (err) {
       console.error('Error al solicitar código:', err);
       const msg = err.response?.data?.message || err?.message || 'No se encontró ninguna cuenta asociada a estos datos.';
@@ -479,6 +487,32 @@ export default function PasswordResetFlow({ onBackToLogin, onSuccessNotify }) {
                 </span>
               </div>
             </div>
+
+            {/* Tarjeta Informativa de Código Generado (Autocompletar Directo) */}
+            {serverOtp && (
+              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <KeyRound size={16} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[0.62rem] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-300 block">
+                      Código generado para este acceso:
+                    </span>
+                    <span className="font-mono text-base font-black text-amber-900 dark:text-amber-100 tracking-widest block">
+                      {serverOtp}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => processDigits(serverOtp)}
+                  className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition-all shadow-md cursor-pointer shrink-0"
+                >
+                  Usar Código
+                </button>
+              </div>
+            )}
 
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
