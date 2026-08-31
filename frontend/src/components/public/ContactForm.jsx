@@ -16,39 +16,39 @@ const ASUNTOS_CONSULTA = [
   {
     id: 'Desarrollo de Software a Medida (Proyecto Nuevo)',
     title: 'Desarrollo de Software a Medida',
-    subtitle: 'Plataformas web, móviles o sistemas enterprise creados a la medida.',
+    subtitle: 'Plataformas web, móviles o sistemas empresariales creados exactamente a la medida.',
     icon: Sparkles,
     badge: 'Proyecto Nuevo',
     badgeColor: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800'
   },
   {
     id: 'Consultoría & Arquitectura de Software',
-    title: 'Consultoría & Arquitectura de Software',
-    subtitle: 'Asesoría técnica en microservicios, escalabilidad y diseño de sistemas.',
+    title: 'Consultoría & Semáforo de Riesgos',
+    subtitle: 'Asesoría técnica para optimizar proyectos, prevenir retrasos y organizar equipos.',
     icon: Layers,
-    badge: 'Arquitectura',
+    badge: 'Prevención & Control',
     badgeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800'
   },
   {
     id: 'Auditoría de Código & Ciberseguridad',
-    title: 'Auditoría de Código & Ciberseguridad',
-    subtitle: 'Revisión de vulnerabilidades, pruebas de penetración y hardening.',
+    title: 'Seguridad & Control de Acceso',
+    subtitle: 'Protección de accesos, roles de usuario, privacidad de datos y blindaje de cuentas.',
     icon: ShieldCheck,
-    badge: 'Ciberseguridad',
+    badge: 'Seguridad',
     badgeColor: 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800'
   },
   {
     id: 'Mantenimiento & Optimización de Aplicaciones',
-    title: 'Mantenimiento & Optimización',
-    subtitle: 'Refactorización, mejora de rendimiento y corrección de errores.',
+    title: 'Bases de Datos & Mantenimiento',
+    subtitle: 'Optimización de rendimiento, bases de datos y soporte continuo para aplicaciones.',
     icon: Wrench,
     badge: 'Optimización',
     badgeColor: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800'
   },
   {
     id: 'Integración de APIs & Servicios Web',
-    title: 'Integración de APIs & Webhooks',
-    subtitle: 'Conexión entre sistemas, pasarelas de pago y servicios REST/GraphQL.',
+    title: 'Integraciones & Reportes Internacionales',
+    subtitle: 'Conexión de sistemas, exportaciones automáticas de datos y reportes para Brasil.',
     icon: Globe,
     badge: 'Integraciones',
     badgeColor: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
@@ -56,7 +56,7 @@ const ASUNTOS_CONSULTA = [
   {
     id: 'Diseño UX/UI & Prototipado Interactivo',
     title: 'Diseño UX/UI & Experiencia Digital',
-    subtitle: 'Interfaces modernas, prototipos interactivos en Figma y design systems.',
+    subtitle: 'Interfaces modernas, fáciles de usar, prototipos interactivos y diseño web.',
     icon: Palette,
     badge: 'Diseño UX',
     badgeColor: 'bg-pink-50 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 border-pink-200 dark:border-pink-800'
@@ -64,15 +64,15 @@ const ASUNTOS_CONSULTA = [
   {
     id: 'Soporte Técnico & Capacitación Empresarial',
     title: 'Soporte Técnico & Capacitación',
-    subtitle: 'Asistencia especializada y entrenamiento de equipos de ingeniería.',
+    subtitle: 'Acompañamiento especializado y entrenamiento práctico para tu equipo de trabajo.',
     icon: Headphones,
-    badge: 'Soporte TI',
+    badge: 'Soporte',
     badgeColor: 'bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 border-teal-200 dark:border-teal-800'
   },
   {
     id: 'Solicitud de Cotización / Propuesta Comercial',
     title: 'Solicitud de Cotización Comercial',
-    subtitle: 'Estimación de costos, plazos WBS e información de contratación.',
+    subtitle: 'Estimación de costos, plazos de entrega por etapas e información para contratación.',
     icon: FileText,
     badge: 'Cotización',
     badgeColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
@@ -80,7 +80,7 @@ const ASUNTOS_CONSULTA = [
   {
     id: 'Otro Asunto / Consulta General',
     title: 'Otro Asunto / Consulta General',
-    subtitle: 'Pregunta o solicitud no especificada en las categorías anteriores.',
+    subtitle: 'Pregunta o consulta general no especificada en las categorías anteriores.',
     icon: HelpCircle,
     badge: 'General',
     badgeColor: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
@@ -139,7 +139,7 @@ const Toast = ({ type, message, onClose }) => (
 );
 
 /* ────────────────────────────────────────────────────────────────────────
-   Field error inline (con key fija para evitar animaciones de salto al escribir)
+   Field error inline
 ──────────────────────────────────────────────────────────────────────── */
 const FieldError = ({ message }) => (
   <AnimatePresence mode="wait">
@@ -149,18 +149,55 @@ const FieldError = ({ message }) => (
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
-        transition={{ duration: 0.15 }}
-        className="flex items-center gap-1 mt-1.5 text-[0.7rem] font-semibold text-red-600 dark:text-red-400 overflow-hidden"
+        transition={{ duration: 0.18 }}
+        className="text-[0.72rem] text-red-600 dark:text-red-400 mt-1.5 font-semibold flex items-center gap-1"
       >
-        <AlertCircle size={11} className="shrink-0 text-red-500" />
-        <span>{message}</span>
+        <AlertCircle size={12} className="shrink-0" />
+        {message}
       </motion.p>
     )}
   </AnimatePresence>
 );
 
 /* ────────────────────────────────────────────────────────────────────────
-   Componente Dropdown Interactivo Profesional para Asunto
+   Field Help Tooltip
+──────────────────────────────────────────────────────────────────────── */
+const FieldTooltip = ({ text }) => {
+  const [open, setOpen] = useState(false);
+  if (!text) return null;
+
+  return (
+    <div className="relative inline-flex items-center">
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className="text-zinc-400 dark:text-zinc-500 hover:text-blue-500 transition-colors p-0.5 rounded cursor-help"
+        aria-label="Ayuda del campo"
+      >
+        <HelpCircle size={13} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 bottom-full mb-1.5 w-52 p-2.5 rounded-xl bg-zinc-900 text-zinc-100 text-[0.68rem] leading-snug shadow-xl z-50 pointer-events-none border border-zinc-700 text-center font-normal"
+          >
+            {text}
+            <div className="absolute top-full right-2 -mt-1 border-4 border-transparent border-t-zinc-900" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ────────────────────────────────────────────────────────────────────────
+   Selector Visual Amplio de Asuntos (Dropdown 100% de Ancho)
 ──────────────────────────────────────────────────────────────────────── */
 const AsuntoDropdown = ({ value, onChange, onBlur, hasError }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -196,59 +233,59 @@ const AsuntoDropdown = ({ value, onChange, onBlur, hasError }) => {
 
   return (
     <div className="relative w-full" ref={containerRef}>
-      {/* Botón Principal (Trigger) */}
+      {/* Botón Principal (Trigger Amplio) */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border text-xs text-left transition-all cursor-pointer shadow-2xs ${
+        className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-xs sm:text-sm text-left transition-all cursor-pointer shadow-sm ${
           isOpen
             ? 'bg-white dark:bg-zinc-900 border-blue-500 ring-2 ring-blue-500/20 text-blue-600 dark:text-blue-400'
             : hasError
             ? 'bg-white dark:bg-zinc-900 border-red-400 dark:border-red-600 text-zinc-900 dark:text-zinc-100'
-            : 'bg-white dark:bg-zinc-900/90 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-900 dark:text-zinc-100'
+            : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-400 dark:hover:border-zinc-700 text-zinc-900 dark:text-zinc-100'
         }`}
       >
-        <span className="flex items-center gap-2.5 truncate min-w-0">
+        <span className="flex items-center gap-3 truncate min-w-0">
           {selectedItem ? (
             <>
-              <selectedItem.icon size={15} className="text-blue-500 shrink-0" />
-              <span className="font-extrabold truncate text-zinc-900 dark:text-zinc-100">{selectedItem.title}</span>
+              <selectedItem.icon size={17} className="text-blue-600 dark:text-blue-400 shrink-0" />
+              <span className="font-bold truncate text-zinc-900 dark:text-zinc-100">{selectedItem.title}</span>
             </>
           ) : (
-            <span className="text-zinc-400 font-medium truncate">-- Seleccione el asunto de su consulta --</span>
+            <span className="text-zinc-400 font-medium truncate">-- Seleccione el asunto o servicio de su interés --</span>
           )}
         </span>
         <ChevronDown
-          size={15}
+          size={16}
           className={`shrink-0 text-zinc-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-500' : ''}`}
         />
       </button>
 
-      {/* Menú Desplegable Flotante Moderno (Ampliado a 460px para aprovechar espacio) */}
+      {/* Menú Desplegable Flotante Amplio al 100% de Ancho */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.97, y: -4 }}
+            initial={{ opacity: 0, scale: 0.98, y: -4 }}
             animate={{ opacity: 1, scale: 1, y: 4 }}
-            exit={{ opacity: 0, scale: 0.97, y: -4 }}
+            exit={{ opacity: 0, scale: 0.98, y: -4 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 top-full z-50 mt-1.5 w-[calc(100vw-2.5rem)] sm:w-[440px] md:w-[470px] max-w-[470px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/90 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden p-2 space-y-1.5 max-h-[350px] overflow-y-auto"
+            className="absolute left-0 right-0 top-full z-50 mt-1.5 w-full bg-white dark:bg-zinc-900 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden p-2 space-y-1.5 max-h-[380px] overflow-y-auto"
           >
             {/* Buscador interno rápido */}
-            <div className="px-2 pt-1 pb-2 sticky top-0 bg-white dark:bg-zinc-900 z-10 border-b border-zinc-100 dark:border-zinc-800/80 mb-1">
+            <div className="px-2 pt-1 pb-2 sticky top-0 bg-white dark:bg-zinc-900 z-10 border-b border-zinc-100 dark:border-zinc-800 mb-1">
               <div className="relative">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar opción por palabra clave..."
-                  className="w-full pl-8 pr-3 py-2 text-xs bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-blue-500 font-medium"
+                  placeholder="Buscar asunto o servicio por palabra clave..."
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-blue-500 font-medium"
                 />
               </div>
             </div>
 
-            {/* Lista de Opciones Ricas */}
+            {/* Lista de Opciones */}
             <div className="space-y-1">
               {filteredItems.length > 0 ? (
                 filteredItems.map((item) => {
@@ -259,43 +296,34 @@ const AsuntoDropdown = ({ value, onChange, onBlur, hasError }) => {
                       key={item.id}
                       type="button"
                       onClick={() => handleSelect(item)}
-                      className={`w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all cursor-pointer group ${
+                      className={`w-full p-3 rounded-xl flex items-start gap-3 transition-colors text-left cursor-pointer ${
                         isSelected
-                          ? 'bg-blue-50/80 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 shadow-xs'
-                          : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60 border border-transparent'
+                          ? 'bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 text-blue-900 dark:text-blue-100'
+                          : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60 text-zinc-800 dark:text-zinc-200'
                       }`}
                     >
                       <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
-                        isSelected
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 group-hover:text-blue-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-950'
+                        isSelected ? 'bg-blue-600 text-white shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
                       }`}>
-                        <ItemIcon size={15} />
+                        <ItemIcon size={16} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={`text-xs font-black leading-snug ${
-                            isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'
-                          }`}>
-                            {item.title}
-                          </span>
-                          <span className={`text-[0.62rem] font-bold font-mono px-2 py-0.5 rounded-md border shrink-0 ${item.badgeColor}`}>
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <span className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate">{item.title}</span>
+                          <span className={`px-2 py-0.5 rounded text-[0.62rem] font-bold shrink-0 border ${item.badgeColor}`}>
                             {item.badge}
                           </span>
                         </div>
-                        <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 leading-normal mt-0.5">
+                        <p className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 leading-snug line-clamp-1">
                           {item.subtitle}
                         </p>
                       </div>
-                      {isSelected && (
-                        <Check size={16} className="text-blue-600 dark:text-blue-400 shrink-0 mt-1" />
-                      )}
                     </button>
                   );
                 })
               ) : (
-                <div className="py-5 text-center text-xs text-zinc-400 font-medium">
-                  No se encontraron coincidencias.
+                <div className="p-4 text-center text-xs text-zinc-500">
+                  No se encontraron asuntos que coincidan con "{searchTerm}".
                 </div>
               )}
             </div>
@@ -307,45 +335,7 @@ const AsuntoDropdown = ({ value, onChange, onBlur, hasError }) => {
 };
 
 /* ────────────────────────────────────────────────────────────────────────
-   Micro-Tooltip helper
-──────────────────────────────────────────────────────────────────────── */
-const FieldTooltip = ({ text }) => {
-  const [open, setOpen] = useState(false);
-  if (!text) return null;
-
-  return (
-    <div className="relative inline-flex items-center">
-      <button
-        type="button"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
-        className="text-zinc-400 hover:text-blue-500 transition-colors p-0.5 rounded-full cursor-help"
-        aria-label="Ayuda contextual"
-      >
-        <HelpCircle size={13} />
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 4, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-48 p-2 rounded-xl bg-zinc-900 text-white text-[0.68rem] leading-snug shadow-xl z-30 pointer-events-none border border-zinc-700 text-center"
-          >
-            {text}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-zinc-900" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-/* ────────────────────────────────────────────────────────────────────────
-   Modal de Confirmación Preventiva (Doble Check)
+   Modal de Confirmación
 ──────────────────────────────────────────────────────────────────────── */
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
   useEffect(() => {
@@ -394,7 +384,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
           </div>
 
           {/* Data Summary Box */}
-          <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-3 mb-6 text-xs">
+          <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 space-y-3 mb-6 text-xs">
             <div className="flex items-start justify-between gap-2 border-b border-zinc-200/60 dark:border-zinc-700/60 pb-2">
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem]">Remitente</span>
               <span className="font-bold text-zinc-900 dark:text-zinc-100 text-right">{safeData.nombre || 'N/A'}</span>
@@ -415,7 +405,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
             </div>
             <div>
               <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[0.65rem] block mb-1">Mensaje</span>
-              <p className="text-zinc-700 dark:text-zinc-300 italic text-[0.72rem] line-clamp-3 bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] line-clamp-3 bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
                 "{safeData.mensaje || ''}"
               </p>
             </div>
@@ -451,7 +441,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, data, loading }) => {
 };
 
 /* ────────────────────────────────────────────────────────────────────────
-   ContactForm Principal con Validación Activa, Try/Catch y UX Guiada
+   ContactForm Principal con Auto-Selección y Espacios Amplios
 ──────────────────────────────────────────────────────────────────────── */
 export const ContactForm = () => {
   const INITIAL = { nombre: '', email: '', telefono: '', asunto: '', mensaje: '' };
@@ -466,6 +456,24 @@ export const ContactForm = () => {
   const [toast, setToast] = useState({ type: null, message: '' });
 
   const firstInputRef = useRef(null);
+
+  /* Listener para Auto-Selección cuando el usuario viene de "Consultar solución" */
+  useEffect(() => {
+    const handleAutoSelect = (e) => {
+      const asuntoId = e?.detail?.asunto;
+      if (asuntoId) {
+        setFormData(prev => ({ ...prev, asunto: asuntoId }));
+        setTouched(prev => ({ ...prev, asunto: true }));
+        setErrors(prev => ({ ...prev, asunto: '' }));
+        setToast({
+          type: 'success',
+          message: `Asunto "${asuntoId}" seleccionado automáticamente. Complete sus datos para continuar.`
+        });
+      }
+    };
+    window.addEventListener('ikernell-select-asunto', handleAutoSelect);
+    return () => window.removeEventListener('ikernell-select-asunto', handleAutoSelect);
+  }, []);
 
   /* Auto-dismiss toast */
   useEffect(() => {
@@ -502,7 +510,6 @@ export const ContactForm = () => {
     setErrors(allErrors);
 
     if (Object.values(allErrors).some(Boolean)) {
-      // Trigger micro-shake animation and warning toast
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
       setToast({
@@ -512,11 +519,10 @@ export const ContactForm = () => {
       return;
     }
 
-    // Opens confirmation dialog (Doble Check)
     setShowConfirm(true);
   };
 
-  /* Final network submit from confirmation modal with Try/Catch protection */
+  /* Final network submit */
   const handleFinalSubmit = async () => {
     setLoading(true);
     try {
@@ -545,7 +551,7 @@ export const ContactForm = () => {
         type: 'error',
         message: `No se pudo entregar la solicitud: ${errorMsg}`,
       });
-    } fontally: {
+    } finally {
       setLoading(false);
     }
   };
@@ -559,7 +565,7 @@ export const ContactForm = () => {
   };
 
   return (
-    <div className="glass-card p-6 sm:p-8 md:p-10 border border-zinc-200 dark:border-zinc-800 shadow-xl shadow-zinc-200/40 dark:shadow-none">
+    <div className="glass-card p-6 sm:p-8 md:p-10 border border-zinc-200 dark:border-zinc-800 shadow-xl shadow-zinc-200/40 dark:shadow-none text-left">
 
       {/* Confirmation Modal */}
       <ConfirmationModal
@@ -619,7 +625,7 @@ export const ContactForm = () => {
           transition={{ duration: 0.4 }}
           className="flex flex-col gap-5"
         >
-          {/* Nombre & Correo */}
+          {/* Nombre & Correo (2 Columnas) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -665,51 +671,50 @@ export const ContactForm = () => {
             </div>
           </div>
 
-          {/* Teléfono & Asunto */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider">
-                  <Phone size={13} className="text-zinc-400" /> Teléfono de Contacto
-                </label>
-                <FieldTooltip text="Opcional. Útil si prefieres comunicación telefónica directa." />
-              </div>
-              <input
-                type="tel"
-                name="telefono"
-                autoComplete="tel"
-                value={formData.telefono}
-                onChange={handleChange}
-                placeholder="+57 (000) 000-0000"
-                className="input-field"
-              />
+          {/* Teléfono de Contacto */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider">
+                <Phone size={13} className="text-zinc-400" /> Teléfono de Contacto
+              </label>
+              <FieldTooltip text="Opcional. Útil si prefieres comunicación telefónica directa." />
             </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider">
-                  <Tag size={13} className="text-zinc-400" /> Asunto de la Consulta *
-                </label>
-                <FieldTooltip text="Selecciona el motivo principal de tu consulta o área de interés." />
-              </div>
-              <AsuntoDropdown
-                value={formData.asunto}
-                onChange={(val) => {
-                  setFormData((prev) => ({ ...prev, asunto: val }));
-                  setTouched((prev) => ({ ...prev, asunto: true }));
-                  setErrors((prev) => ({ ...prev, asunto: validate('asunto', val) }));
-                }}
-                onBlur={() => {
-                  setTouched((prev) => ({ ...prev, asunto: true }));
-                  setErrors((prev) => ({ ...prev, asunto: validate('asunto', formData.asunto) }));
-                }}
-                hasError={Boolean(touched.asunto && errors.asunto)}
-              />
-              <FieldError message={touched.asunto ? errors.asunto : ''} />
-            </div>
+            <input
+              type="tel"
+              name="telefono"
+              autoComplete="tel"
+              value={formData.telefono}
+              onChange={handleChange}
+              placeholder="+57 (000) 000-0000"
+              className="input-field"
+            />
           </div>
 
-          {/* Mensaje */}
+          {/* Asunto de la Consulta (Ancho Completo & Espacioso) */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider">
+                <Tag size={13} className="text-zinc-400" /> Asunto de la Consulta *
+              </label>
+              <FieldTooltip text="Selecciona el motivo principal de tu consulta o área de interés." />
+            </div>
+            <AsuntoDropdown
+              value={formData.asunto}
+              onChange={(val) => {
+                setFormData((prev) => ({ ...prev, asunto: val }));
+                setTouched((prev) => ({ ...prev, asunto: true }));
+                setErrors((prev) => ({ ...prev, asunto: validate('asunto', val) }));
+              }}
+              onBlur={() => {
+                setTouched((prev) => ({ ...prev, asunto: true }));
+                setErrors((prev) => ({ ...prev, asunto: validate('asunto', formData.asunto) }));
+              }}
+              hasError={Boolean(touched.asunto && errors.asunto)}
+            />
+            <FieldError message={touched.asunto ? errors.asunto : ''} />
+          </div>
+
+          {/* Detalle de su Consulta (Ancho Completo & Espacioso con 5 Filas) */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider">
@@ -723,27 +728,27 @@ export const ContactForm = () => {
                 }`}>
                   {(formData.mensaje || '').trim().length}/20 mín.
                 </span>
-                <FieldTooltip text="Detalla el alcance, tecnologías o requerimientos específicos de tu proyecto." />
+                <FieldTooltip text="Describe detalladamente el alcance, requerimientos o dudas específicas de tu proyecto." />
               </div>
             </div>
             <textarea
               name="mensaje"
-              rows={4}
+              rows={5}
               required
               value={formData.mensaje}
               onChange={handleChange}
               onBlur={handleBlur}
-              placeholder="Describa detalladamente el motivo de su consulta o requerimiento de software..."
+              placeholder="Describa detalladamente el motivo de su consulta, requerimiento de software o preguntas sobre nuestros servicios..."
               className={`${inputCls('mensaje')} resize-y`}
             />
             <FieldError message={touched.mensaje ? errors.mensaje : ''} />
           </div>
 
-          {/* Submit button */}
+          {/* Botón de Envío Principal */}
           <button
             type="submit"
             disabled={loading}
-            className="gradient-button w-full text-sm sm:text-base py-3.5 mt-1 font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+            className="gradient-button w-full text-sm sm:text-base py-3.5 mt-2 font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-transform hover:-translate-y-0.5 disabled:opacity-50"
           >
             {loading ? (
               <><Loader2 size={18} className="animate-spin" /> Procesando Solicitud...</>

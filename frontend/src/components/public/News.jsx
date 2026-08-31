@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Calendar, ArrowRight, Newspaper, Award, User, Tag, ShieldCheck } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Calendar, ArrowRight, Newspaper, Award, User, Tag, ShieldCheck, Sparkles, Filter } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NewsModal } from './NewsModal';
 
 const newsContainerVariants = {
@@ -12,17 +12,16 @@ const newsContainerVariants = {
 };
 
 const newsHeaderVariants = {
-  hidden: { opacity: 0, scale: 0.95, y: -20 },
+  hidden: { opacity: 0, y: -20 },
   visible: {
     opacity: 1,
-    scale: 1,
     y: 0,
     transition: { duration: 0.5, ease: 'easeOut' }
   }
 };
 
 const newsCardVariants = {
-  hidden: { opacity: 0, y: 45, scale: 0.96 },
+  hidden: { opacity: 0, y: 35, scale: 0.97 },
   visible: {
     opacity: 1,
     y: 0,
@@ -37,6 +36,7 @@ const newsItems = [
     date: "08 de Agosto, 2026",
     author: "Equipo de Analítica & Arquitectura IKernell",
     tag: "Innovación 1 • capacity.pulse",
+    category: "innovacion",
     title: "Dashboard Predictivo de Riesgos y Semáforo Inteligente en Tiempo Real",
     summary: "IKernell implementa su motor analítico en tiempo real que evalúa patrones de errores e interrupciones en el WBS para prevenir el síndrome de burnout en desarrolladores y evitar retrasos en entregas críticas.",
     subtitle: "Telemetría Continua y Análisis Algorítmico sobre Ventanas de 21 Días",
@@ -62,6 +62,7 @@ const newsItems = [
     date: "28 de Julio, 2026",
     author: "Dirección de Integración Internacional",
     tag: "Innovación 2 • Alianza Brasil",
+    category: "innovacion",
     title: "Automatización ETL de Reportes Internacionales para Brasil",
     summary: "Automatización desatendida en el backend con Java Spring Boot que procesa métricas de proyectos y genera archivos planos delimitados con estandarización ISO 8601 UTC y sellado criptográfico SHA-256.",
     subtitle: "Pipeline Batch de Alta Velocidad y Transferencia Segura",
@@ -87,6 +88,7 @@ const newsItems = [
     date: "15 de Julio, 2026",
     author: "Comité de Seguridad y Ciberseguridad",
     tag: "Actualización de Arquitectura",
+    category: "arquitectura",
     title: "Ecosistema Seguro N-Capas con Spring Boot 3, JWT y PostgreSQL",
     summary: "Despliegue de la arquitectura desacoplada de alto rendimiento con Spring Security 6, sesiones sin estado (Stateless), encriptación BCrypt y optimización de conexiones con HikariCP.",
     subtitle: "Seguridad Perimetral, Búsqueda Semántica pg_trgm y Resiliencia REST",
@@ -109,27 +111,41 @@ const newsItems = [
   }
 ];
 
+const filterCategories = [
+  { id: 'all', label: 'Todas las Noticias' },
+  { id: 'innovacion', label: 'Innovaciones IKernell' },
+  { id: 'arquitectura', label: 'Arquitectura & Seguridad' },
+];
+
 export const News = () => {
   const [selectedNews, setSelectedNews] = useState(null);
-  const safeNews = newsItems || [];
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const filteredNews = activeFilter === 'all'
+    ? newsItems
+    : newsItems.filter(item => item.category === activeFilter);
 
   return (
-    <section id="noticias" className="py-20 md:py-28 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/50 relative">
+    <section id="noticias" className="py-20 md:py-28 bg-zinc-50/60 dark:bg-zinc-950/60 backdrop-blur-xs border-t border-zinc-200/80 dark:border-zinc-800/50 relative overflow-hidden">
+      
+      {/* Ambient background glow */}
+      <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
       <motion.div 
         variants={newsContainerVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.05, margin: "0px 0px -30px 0px" }}
-        className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 max-w-7xl 2xl:max-w-screen-2xl transform-gpu"
+        viewport={{ once: false, amount: 0.1 }}
+        className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 max-w-7xl relative z-10 transform-gpu"
       >
         
         {/* Section Header */}
         <motion.div 
           variants={newsHeaderVariants}
-          className="text-center mb-14 md:mb-20"
+          className="text-center mb-12 md:mb-16"
         >
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-5">
-            <Newspaper size={12} /> Actualidad & Innovación
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-4">
+            <Newspaper size={13} /> Actualidad & Innovación
           </span>
           <h2 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight mb-4">
             Noticias & Actualidad Tecnológica
@@ -137,29 +153,61 @@ export const News = () => {
           <p className="text-zinc-600 dark:text-zinc-400 text-base md:text-lg max-w-2xl mx-auto font-medium">
             Novedades corporativas, lanzamientos de arquitectura y avances en nuestras alianzas de ingeniería de software.
           </p>
+
+          {/* Filter Pills */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+            {filterCategories.map(f => {
+              const isSelected = activeFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setActiveFilter(f.id)}
+                  className={`relative px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                    isSelected
+                      ? 'text-white'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-white/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  {isSelected && (
+                    <motion.div
+                      layoutId="activeNewsFilterPill"
+                      className="absolute inset-0 bg-blue-600 rounded-xl shadow-md shadow-blue-600/30 -z-0"
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    />
+                  )}
+                  <span className="relative z-10">{f.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </motion.div>
 
         {/* News Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {safeNews.map((news) => {
-            if (!news) return null;
-            return (
+        <motion.div 
+          layout
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredNews.map((news) => (
               <motion.article 
                 key={news.id} 
-                variants={newsCardVariants}
+                layout
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 whileHover={{ y: -6 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className={`group relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border flex flex-col h-full transition-all duration-300 ${
                   news.featured
-                    ? 'border-blue-500/50 shadow-xl shadow-blue-500/10 dark:shadow-blue-500/5 ring-1 ring-blue-500/20'
-                    : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/40 shadow-md hover:shadow-xl hover:shadow-blue-500/10'
+                    ? 'border-blue-500/50 shadow-xl shadow-blue-500/10 ring-1 ring-blue-500/20'
+                    : 'border-zinc-200 dark:border-zinc-800 hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/5'
                 }`}
               >
                 {/* Article Image */}
                 <div className="relative h-52 overflow-hidden bg-zinc-950">
                   <img 
                     src={news.image} 
-                    alt={news.title || 'Noticia IKernell'}
+                    alt={news.title}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = 'https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
@@ -170,16 +218,18 @@ export const News = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   
                   {/* Tag Badge */}
-                  <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[0.68rem] font-extrabold uppercase tracking-wider shadow-lg backdrop-blur-md ${
-                    news.featured 
-                      ? 'bg-blue-600 text-white border border-blue-400/30'
-                      : 'bg-zinc-900/85 text-white border border-white/15'
-                  }`}>
-                    {news.tag || 'Actualidad'}
+                  <div className="absolute top-4 left-4">
+                    <span className={`px-3 py-1 rounded-full text-[0.65rem] font-bold uppercase tracking-wider shadow-lg backdrop-blur-md ${
+                      news.featured 
+                        ? 'bg-blue-600 text-white border border-blue-400/30'
+                        : 'bg-zinc-900/85 text-white border border-white/15'
+                    }`}>
+                      {news.tag}
+                    </span>
                   </div>
 
                   {news.featured && (
-                    <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[0.65rem] font-black uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 flex items-center gap-1 shadow-md">
+                    <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[0.62rem] font-black uppercase tracking-wider bg-blue-500 text-white flex items-center gap-1 shadow-md">
                       <Award size={12} strokeWidth={2.5} /> Destacado
                     </div>
                   )}
@@ -190,22 +240,22 @@ export const News = () => {
                   <div className="flex items-center justify-between gap-2 mb-3 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                     <div className="flex items-center gap-1.5">
                       <Calendar size={13} className="text-blue-600 dark:text-blue-400" />
-                      <span>{news.date || 'Reciente'}</span>
+                      <span>{news.date}</span>
                     </div>
-                    <span className="text-[0.7rem] px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold truncate max-w-[140px]">
-                      {news.author || 'IKernell'}
+                    <span className="text-[0.68rem] px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold truncate max-w-[130px]">
+                      {news.author}
                     </span>
                   </div>
                   
-                  <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-100 mb-3 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {news.title || ''}
+                  <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-100 mb-3 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {news.title}
                   </h3>
                   
-                  <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-normal flex-1 mb-6">
-                    {news.summary || ''}
+                  <p className="text-zinc-600 dark:text-zinc-400 text-xs md:text-sm leading-relaxed font-normal flex-1 mb-6">
+                    {news.summary}
                   </p>
 
-                  {/* Interactive 'Más Información' Button */}
+                  {/* Interactive Button */}
                   <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
                     <button 
                       onClick={() => setSelectedNews(news)}
@@ -217,9 +267,9 @@ export const News = () => {
                   </div>
                 </div>
               </motion.article>
-            );
-          })}
-        </div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
 
       </motion.div>
 
