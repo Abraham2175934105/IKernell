@@ -6057,6 +6057,81 @@ export const LiderDashboard = () => {
                     />
                     {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
 
+                    {/* Alerta de Incompatibilidad entre Cualidad Requerida y Perfil del Desarrollador */}
+                    {(() => {
+                      if (!nuevaActividad.idDesarrollador) return null;
+                      const devId = String(nuevaActividad.idDesarrollador);
+                      const selectedDevObj = (desarrolladoresSinLiderActual || []).find(
+                        t => String(t.idTrabajador || t.id || t.idDesarrollador) === devId
+                      ) || (desarrolladoresAsignadosProyecto || []).map(a => a.desarrollador).find(
+                        d => d && String(d.idTrabajador || d.id || d.idDesarrollador) === devId
+                      );
+
+                      const cualidadKey = nuevaActividad.cualidadTecnica || (() => {
+                        const desc = (nuevaActividad.descripcion || '').toLowerCase();
+                        if (desc.includes('figma') || desc.includes('ui') || desc.includes('ux') || desc.includes('mockup') || desc.includes('pantalla') || desc.includes('diseñ')) return 'FIGMA';
+                        if (desc.includes('react') || desc.includes('front') || desc.includes('componente') || desc.includes('web') || desc.includes('tailwind')) return 'FRONTEND';
+                        if (desc.includes('openapi') || desc.includes('api') || desc.includes('rest') || desc.includes('spring') || desc.includes('back') || desc.includes('java') || desc.includes('microservicio')) return 'BACKEND';
+                        if (desc.includes('docker') || desc.includes('cloud') || desc.includes('devops') || desc.includes('aws') || desc.includes('ci/cd') || desc.includes('despliegue')) return 'DEVOPS';
+                        if (desc.includes('sql') || desc.includes('consulta') || desc.includes('database') || desc.includes('postgre') || desc.includes('db') || desc.includes('tuning')) return 'DATABASE';
+                        if (desc.includes('junit') || desc.includes('mockito') || desc.includes('qa') || desc.includes('prueba') || desc.includes('test') || desc.includes('cypress')) return 'QA';
+                        return null;
+                      })();
+
+                      if (!cualidadKey || !selectedDevObj) return null;
+
+                      const text = `${selectedDevObj.especialidad || ''} ${selectedDevObj.profesion || ''} ${selectedDevObj.nombre || ''}`.toLowerCase();
+                      let isCompatible = true;
+                      if (cualidadKey === 'FIGMA') isCompatible = text.includes('figma') || text.includes('ui') || text.includes('ux') || text.includes('diseñ') || text.includes('mockup') || text.includes('pantalla');
+                      else if (cualidadKey === 'FRONTEND') isCompatible = text.includes('front') || text.includes('react') || text.includes('vue') || text.includes('web') || text.includes('mobile') || text.includes('componente');
+                      else if (cualidadKey === 'BACKEND') isCompatible = text.includes('back') || text.includes('java') || text.includes('spring') || text.includes('micro') || text.includes('api') || text.includes('node') || text.includes('rest');
+                      else if (cualidadKey === 'DEVOPS') isCompatible = text.includes('devops') || text.includes('docker') || text.includes('kubernetes') || text.includes('cloud') || text.includes('aws') || text.includes('ci/cd');
+                      else if (cualidadKey === 'DATABASE') isCompatible = text.includes('sql') || text.includes('base') || text.includes('postgre') || text.includes('data') || text.includes('tuning');
+                      else if (cualidadKey === 'QA') isCompatible = text.includes('qa') || text.includes('test') || text.includes('pruebas') || text.includes('calidad') || text.includes('audit');
+
+                      if (isCompatible) return null;
+
+                      const cualidadNombreMap = {
+                        FIGMA: 'Figma & UI/UX',
+                        FRONTEND: 'Frontend (React/Vue)',
+                        BACKEND: 'Backend (Java/Spring)',
+                        DEVOPS: 'DevOps & Cloud',
+                        DATABASE: 'SQL & Bases de Datos',
+                        QA: 'Pruebas & QA'
+                      };
+                      const nombreCualidadReq = nuevaActividad.cualidadNombre || cualidadNombreMap[cualidadKey] || cualidadKey;
+
+                      return (
+                        <div className="mt-3 p-3.5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 animate-fadeIn shadow-2xs">
+                          <div className="flex items-start gap-2 font-semibold">
+                            <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <span className="font-extrabold text-amber-900 dark:text-amber-100 block">
+                                ¡Advertencia de Perfil Técnico Incompatible!
+                              </span>
+                              <p className="text-[0.7rem] text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+                                El desarrollador seleccionado <strong>{selectedDevObj.nombre} {selectedDevObj.apellido}</strong> ({getCleanEspecialidad ? getCleanEspecialidad(selectedDevObj.especialidad, selectedDevObj.profesion) : (selectedDevObj.especialidad || 'Desarrollador')}) no registra la cualidad técnica requerida (<strong>{nombreCualidadReq}</strong>). Se recomienda elegir un desarrollador idóneo.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-end gap-2 pt-1 border-t border-amber-200/80 dark:border-amber-800/60">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSkillFilterForModal(cualidadKey);
+                                setIsAsignarTareaDevListOpen(true);
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[0.68rem] transition-all cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0"
+                            >
+                              <Search size={12} />
+                              <span>Buscar Desarrollador Idóneo ({nombreCualidadReq})</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Tarjeta Informativa de Personal del Proyecto y Capacidad Horaria */}
                     {nuevaActividad.idDesarrollador && (() => {
                       const devId = String(nuevaActividad.idDesarrollador);
@@ -6386,13 +6461,41 @@ export const LiderDashboard = () => {
                     >
                       Cancelar
                     </button>
-                    <button
-                      type="submit"
-                      disabled={submittingActividad}
-                      className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
-                    >
-                      {submittingActividad ? <><Loader2 size={14} className="animate-spin" /> Asignando...</> : 'Guardar y Asignar'}
-                    </button>
+                    {(() => {
+                      const devId = String(nuevaActividad.idDesarrollador || '');
+                      const carga = getDevCargaInfo(devId);
+                      const horasActualesGlobales = carga?.horasAsignadas || 0;
+                      const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(
+                        a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
+                      );
+                      const maxDisponibles = Math.max(0, 48 - (horasActualesGlobales - (asignacionProy ? 0 : 0)));
+                      const horasInputVal = parseInt(nuevaActividad.horasEstimadas) || 0;
+                      const excedeHoras = devId && (horasInputVal > maxDisponibles || (horasActualesGlobales + horasInputVal) > 48);
+
+                      if (excedeHoras) {
+                        return (
+                          <button
+                            type="button"
+                            disabled
+                            className="px-5 py-2 rounded-xl bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 text-xs font-extrabold cursor-not-allowed inline-flex items-center gap-1.5 opacity-90 shadow-none"
+                            title="Operación bloqueada: La suma de horas supera el límite legal de 48h"
+                          >
+                            <AlertTriangle size={14} className="text-red-600 dark:text-red-400 shrink-0" />
+                            <span>Bloqueado (Excede 48h)</span>
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <button
+                          type="submit"
+                          disabled={submittingActividad}
+                          className="gradient-button text-xs py-2 px-5 font-bold cursor-pointer inline-flex items-center gap-2 disabled:opacity-50"
+                        >
+                          {submittingActividad ? <><Loader2 size={14} className="animate-spin" /> Asignando...</> : 'Guardar y Asignar'}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </form>
               </motion.div>
