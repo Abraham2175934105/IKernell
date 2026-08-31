@@ -24,7 +24,7 @@ const getInitials = (nombre, apellido) => {
   return (first + second).toUpperCase();
 };
 
-export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetrics }) => {
+export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetrics, hasUnsavedChanges = false, onCancelUnsavedChanges }) => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -39,6 +39,19 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
   const [currentTool, setCurrentTool] = useState(null); // 'chat' | 'biblioteca' | 'tutoriales' | null
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  // Estado para la Intercepción de Navegación por Seguridad (Cambio de Contraseña en curso)
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavAction, setPendingNavAction] = useState(null);
+
+  const confirmOrNavigate = (action) => {
+    if (hasUnsavedChanges) {
+      setPendingNavAction(() => action);
+      setShowUnsavedModal(true);
+    } else {
+      action();
+    }
+  };
+
   const toggleCollapse = () => {
     setIsCollapsed(prev => {
       const nextState = !prev;
@@ -50,17 +63,19 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
   // La barra se considera expandida si no está colapsada o si el usuario pasa el cursor por encima (hover)
   const isExpanded = !isCollapsed || isHovered;
 
-  const handleLogoutClick = async () => {
+  const handleLogoutClick = () => {
     const skipConfirm = localStorage.getItem('ikernell_skip_logout_confirm') === 'true';
     if (skipConfirm) {
-      await logout();
-      toast.success('Sesión finalizada exitosamente. Token JWT revocado.', {
-        duration: 3500
-      });
-      navigate('/');
+      handleConfirmLogout();
     } else {
       setShowLogoutModal(true);
     }
+  };
+
+  const handleConfirmLogout = () => {
+    logout();
+    toast.success('Sesión cerrada correctamente');
+    navigate('/login');
   };
 
   const getRoleBadge = (rol) => {
@@ -69,22 +84,19 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         return {
           label: 'Coordinador General',
           badgeText: 'COORDINADOR',
-          shortLabel: 'Coord',
-          classes: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 shadow-sm'
+          classes: 'bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border-blue-200 dark:border-blue-800'
         };
       case 'LIDER':
         return {
           label: 'Líder de Proyecto',
-          badgeText: 'LÍDER DE PROYECTO',
-          shortLabel: 'Líder',
-          classes: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 shadow-sm'
+          badgeText: 'LÍDER',
+          classes: 'bg-amber-50 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 border-amber-200 dark:border-amber-800'
         };
       default:
         return {
           label: 'Desarrollador de Software',
           badgeText: 'DESARROLLADOR',
-          shortLabel: 'Dev',
-          classes: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 shadow-sm'
+          classes: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
         };
     }
   };
@@ -129,14 +141,9 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
   return (
     <div className="min-h-screen flex bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
       
-      {/* Barra lateral navegable (Mobile Drawer / Tablet Slim / Desktop Collapsible) */}
       <aside 
-        onMouseEnter={() => {
-          if (isCollapsed) setIsHovered(true);
-        }}
-        onMouseLeave={() => {
-          if (isCollapsed) setIsHovered(false);
-        }}
+        onMouseEnter={() => { if (isCollapsed) setIsHovered(true); }}
+        onMouseLeave={() => { if (isCollapsed) setIsHovered(false); }}
         className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col justify-between transition-all duration-300 ease-in-out shadow-xl md:shadow-none ${
           sidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0'
         } ${
@@ -145,9 +152,12 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
       >
         
         <div className="overflow-x-hidden overflow-y-auto">
-          {/* Cabecera con logo corporativo */}
           <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between min-h-[73px]">
-            <Link to="/" className="flex items-center gap-3 group truncate">
+            <button 
+              type="button"
+              onClick={() => confirmOrNavigate(() => navigate('/'))} 
+              className="flex items-center gap-3 group truncate text-left cursor-pointer"
+            >
               <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/30 transition-transform group-hover:scale-105 flex-shrink-0">
                 <Cpu size={22} />
               </div>
@@ -162,9 +172,8 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                   Portal Corporativo
                 </span>
               </div>
-            </Link>
+            </button>
 
-            {/* Toggle para alternar entre vista completa y barra delgada en Desktop */}
             <button
               type="button"
               onClick={toggleCollapse}
@@ -176,88 +185,66 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
               {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
             </button>
 
-            {/* Cierre del drawer en dispositivos móviles */}
             <button 
               onClick={() => setSidebarOpen(false)}
               className="md:hidden p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
-              aria-label="Cerrar Menú"
             >
               <X size={20} />
             </button>
           </div>
 
-          {/* Tarjeta de perfil con estado en línea & Acceso a Página de Perfil */}
           <div className="mt-5 mb-4 mx-3">
-            {/* Vista Completa de Perfil: Visible en Móvil abierto o Desktop Expandido */}
             <div className={`${sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')}`}>
               <motion.button
                 type="button"
                 onClick={() => {
-                  navigate(ROUTES.PERFIL);
-                  setSidebarOpen(false);
+                  confirmOrNavigate(() => {
+                    navigate(ROUTES.PERFIL);
+                    setSidebarOpen(false);
+                  });
                 }}
                 whileHover={{ y: -1, scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                transition={{ duration: 0.15 }}
-                title="Ver perfil completo y cambiar contraseña"
                 className="w-full p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 hover:border-blue-400 dark:hover:border-blue-500/50 hover:bg-blue-50/40 dark:hover:bg-zinc-800 shadow-sm transition-all duration-200 flex items-center gap-3 text-left cursor-pointer group"
               >
-                {/* Avatar con punto indicador de sesión activa */}
                 <div className="relative flex-shrink-0">
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 tracking-tight group-hover:scale-105 transition-transform">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 tracking-tight">
                     {getInitials(user?.nombre, user?.apellido)}
                   </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white dark:border-zinc-900"></span>
-                  </span>
                 </div>
 
-                {/* Información Jerárquica */}
                 <div className="min-w-0 flex-1">
-                  <div className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {user?.nombre ? `${user.nombre} ${user.apellido || ''}` : (user?.email || 'Usuario')}
-                  </div>
-                  <div className="mt-1 flex items-center justify-between gap-1">
-                    <span className={`inline-block text-[0.58rem] font-black uppercase px-2.5 py-0.5 rounded-md border tracking-wider ${roleInfo.classes}`}>
+                  <div className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate">{user?.nombre || 'Usuario'}</div>
+                  <div className="mt-1">
+                    <span className={`inline-block text-[0.58rem] font-black uppercase px-2.5 py-0.5 rounded-md border ${roleInfo.classes}`}>
                       {roleInfo.badgeText}
-                    </span>
-                    <span className="text-[0.6rem] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                      Perfil →
                     </span>
                   </div>
                 </div>
               </motion.button>
             </div>
 
-            {/* Mini Avatar Colapsado (Visible en Tablet o Desktop Colapsado cuando no es móvil drawer) */}
             <div className={`${sidebarOpen ? 'hidden' : (isExpanded ? 'block lg:hidden' : 'block')}`}>
               <div className="flex justify-center p-1">
                 <button 
                   type="button"
                   onClick={() => {
-                    navigate(ROUTES.PERFIL);
-                    setSidebarOpen(false);
+                    confirmOrNavigate(() => {
+                      navigate(ROUTES.PERFIL);
+                      setSidebarOpen(false);
+                    });
                   }}
-                  title={`${user?.nombre} ${user?.apellido || ''} (${roleInfo.badgeText}) - Ver Mi Perfil & Seguridad`}
                   className="relative group cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30">
                     {getInitials(user?.nombre, user?.apellido)}
                   </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white dark:border-zinc-900"></span>
-                  </span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Secciones de Navegación */}
           <div className="px-3 space-y-5">
-            
-            {/* Sección Principal del Rol */}
             <div>
               <span className={`text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 mb-2 transition-opacity duration-300 ${
                 sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
@@ -268,49 +255,37 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
               <div className="space-y-1">
                 {roleNavItems.map(item => {
                   const Icon = item.icon;
-                  const isActive = currentTool === null && (!activeTab || activeTab === item.id);
+                  const activeTabToMatch = activeTab || (location.pathname === ROUTES.PERFIL ? null : roleNavItems[0]?.id);
+                  const isActive = currentTool === null && activeTabToMatch === item.id;
                   return (
                     <button
                       key={item.id}
                       onClick={() => {
-                        setCurrentTool(null);
-                        if (setActiveTab) setActiveTab(item.id);
-                        const roleHome = user?.rol === 'COORDINADOR' ? ROUTES.COORDINADOR : user?.rol === 'LIDER' ? ROUTES.LIDER : ROUTES.DESARROLLADOR;
-                        if (location.pathname !== roleHome) {
-                          navigate(roleHome);
-                        }
-                        setSidebarOpen(false);
+                        confirmOrNavigate(() => {
+                          setCurrentTool(null);
+                          if (setActiveTab) setActiveTab(item.id);
+                          const roleHome = user?.rol === 'COORDINADOR' ? ROUTES.COORDINADOR : user?.rol === 'LIDER' ? ROUTES.LIDER : ROUTES.DESARROLLADOR;
+                          if (location.pathname !== roleHome) {
+                            navigate(roleHome);
+                          }
+                          setSidebarOpen(false);
+                        });
                       }}
-                      title={item.label}
                       className={`w-full flex items-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        sidebarOpen 
-                          ? 'gap-3 px-3.5 py-2.5 justify-start' 
-                          : (isExpanded ? 'justify-center lg:justify-start lg:gap-3 p-2.5 lg:px-3.5 lg:py-2.5' : 'justify-center p-2.5')
-                      } ${
-                        isActive
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-800/40'
-                      }`}
+                        sidebarOpen ? 'gap-3 px-3.5 py-2.5' : (isExpanded ? 'justify-center lg:px-3.5' : 'justify-center')
+                      } ${isActive ? 'bg-blue-600 text-white shadow-md' : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50'}`}
                     >
-                      <Icon size={18} className="flex-shrink-0" />
-                      
-                      <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden text-left ${
-                        sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block opacity-100 max-w-[170px]' : 'hidden opacity-0 max-w-0')
-                      }`}>
-                        <div className="truncate">{item.label}</div>
-                      </div>
+                      <Icon size={18} />
+                      <div className={`transition-all ${sidebarOpen || (isExpanded && !isCollapsed) ? 'block' : 'hidden'}`}>{item.label}</div>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Sección de Herramientas Corporativas Transversales */}
             <div>
-              <span className={`text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 mb-2 transition-opacity duration-300 ${
-                sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
-              }`}>
-                Herramientas Corporativas
+              <span className={`text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 mb-2 ${sidebarOpen || (isExpanded && !isCollapsed) ? 'block' : 'hidden'}`}>
+                Herramientas
               </span>
               
               <div className="space-y-1">
@@ -321,72 +296,32 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                     <button
                       key={tool.id}
                       onClick={() => {
-                        setCurrentTool(tool.id);
-                        setSidebarOpen(false);
+                        confirmOrNavigate(() => {
+                          setCurrentTool(tool.id);
+                          setSidebarOpen(false);
+                        });
                       }}
-                      title={tool.label}
-                      className={`w-full flex items-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        sidebarOpen 
-                          ? 'justify-between px-3.5 py-2.5' 
-                          : (isExpanded ? 'justify-center lg:justify-between p-2.5 lg:px-3.5 lg:py-2.5' : 'justify-center p-2.5')
-                      } ${
-                        isActive
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400'
-                      }`}
+                      className={`w-full flex items-center rounded-xl text-xs font-bold transition-all cursor-pointer ${isActive ? 'bg-blue-600 text-white' : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50'}`}
                     >
-                      <span className="flex items-center gap-3 truncate">
-                        <Icon size={18} className="flex-shrink-0" />
-                        <span className={`transition-all duration-300 whitespace-nowrap overflow-hidden text-left ${
-                          sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block opacity-100 max-w-[130px]' : 'hidden opacity-0 max-w-0')
-                        }`}>
-                          {tool.label}
-                        </span>
-                      </span>
-
-                      <span className={`text-[0.55rem] font-black px-1.5 py-0.5 rounded-full transition-opacity duration-300 ${
-                        sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
-                      } ${
-                        isActive 
-                          ? 'bg-white/20 text-white' 
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
-                      }`}>
-                        {tool.badge}
-                      </span>
+                      <Icon size={18} />
+                      <span className={`transition-all ${sidebarOpen || (isExpanded && !isCollapsed) ? 'block' : 'hidden'}`}>{tool.label}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
-
           </div>
         </div>
 
-        {/* Footer del Sidebar */}
         <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
           <button
             type="button"
-            onClick={handleLogoutClick}
-            title={!isExpanded ? "Cerrar Sesión Segura" : undefined}
-            className={`w-full flex items-center justify-center rounded-xl text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800/80 transition-all cursor-pointer shadow-sm ${
-              sidebarOpen 
-                ? 'gap-2 py-2.5 px-4' 
-                : (isExpanded ? 'justify-center lg:justify-center p-2.5 lg:gap-2 lg:py-2.5 lg:px-4' : 'p-2.5')
-            }`}
+            onClick={() => confirmOrNavigate(() => handleLogoutClick())}
+            className="w-full flex items-center justify-center rounded-xl text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 p-2.5 cursor-pointer"
           >
-            <LogOut size={16} className="flex-shrink-0" />
-            <span className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
-              sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block opacity-100 max-w-[120px]' : 'hidden opacity-0 max-w-0')
-            }`}>
-              Cerrar Sesión
-            </span>
+            <LogOut size={16} />
+            <span className={`transition-all ml-2 ${sidebarOpen || (isExpanded && !isCollapsed) ? 'block' : 'hidden'}`}>Cerrar Sesión</span>
           </button>
-
-          <div className={`text-center transition-opacity duration-300 ${
-            sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
-          }`}>
-            <span className="text-[0.6rem] text-zinc-400 dark:text-zinc-500 font-medium">IKernell v2.4 • JWT Stateless</span>
-          </div>
         </div>
 
       </aside>
@@ -495,6 +430,63 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
       />
+
+      {/* Modal de Alerta de Seguridad por Cambios No Guardados en Contraseña */}
+      <AnimatePresence>
+        {showUnsavedModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-amber-300 dark:border-amber-800 shadow-2xl space-y-5"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-800 shadow-xs">
+                  <ShieldAlert size={22} />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                    Cambio de Contraseña en Curso
+                  </h3>
+                  <span className="text-[0.68rem] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest block">
+                    Alerta de Seguridad & Navegación
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
+                Estás realizando la opción de cambiar contraseña. Si accedes a otro apartado sin guardar la contraseña o actualizarla, se cancelará la opción y los datos ingresados no se guardarán.
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUnsavedModal(false);
+                    setPendingNavAction(null);
+                  }}
+                  className="w-full sm:w-auto outline-button text-xs py-2.5 px-4 font-bold rounded-xl cursor-pointer"
+                >
+                  Permanecer aquí (Continuar editando)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUnsavedModal(false);
+                    if (onCancelUnsavedChanges) onCancelUnsavedChanges();
+                    if (pendingNavAction) pendingNavAction();
+                    setPendingNavAction(null);
+                  }}
+                  className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs py-2.5 px-4 rounded-xl font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-red-500/20"
+                >
+                  <span>Salir sin guardar (Cancelar cambio)</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
