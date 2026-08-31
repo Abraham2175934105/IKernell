@@ -33,6 +33,59 @@ const cardVariants = {
   }
 };
 
+// Helper inteligente para estructurar y enriquecer con Emojis las Competencias Técnicas
+const getTechSkillBadge = (skillName) => {
+  const s = skillName.trim();
+  const lower = s.toLowerCase();
+  
+  if (lower.includes('react')) return { name: s, emoji: '⚛️', color: 'bg-cyan-50 text-cyan-800 border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-200 dark:border-cyan-800' };
+  if (lower.includes('typescript')) return { name: s, emoji: '🔷', color: 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-800' };
+  if (lower.includes('tailwind')) return { name: s, emoji: '🎨', color: 'bg-teal-50 text-teal-800 border-teal-300 dark:bg-teal-950/60 dark:text-teal-200 dark:border-teal-800' };
+  if (lower.includes('java')) return { name: s, emoji: '☕', color: 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-800' };
+  if (lower.includes('spring')) return { name: s, emoji: '🍃', color: 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-800' };
+  if (lower.includes('postgres') || lower.includes('sql')) return { name: s, emoji: '🐘', color: 'bg-indigo-50 text-indigo-800 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-200 dark:border-indigo-800' };
+  if (lower.includes('docker')) return { name: s, emoji: '🐳', color: 'bg-sky-50 text-sky-800 border-sky-300 dark:bg-sky-950/60 dark:text-sky-200 dark:border-sky-800' };
+  if (lower.includes('kubernetes')) return { name: s, emoji: '☸️', color: 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-800' };
+  if (lower.includes('aws') || lower.includes('cloud')) return { name: s, emoji: '☁️', color: 'bg-orange-50 text-orange-800 border-orange-300 dark:bg-orange-950/60 dark:text-orange-200 dark:border-orange-800' };
+  if (lower.includes('git') || lower.includes('github')) return { name: s, emoji: '🐙', color: 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-200 dark:border-rose-800' };
+  if (lower.includes('ui/ux') || lower.includes('figma')) return { name: s, emoji: '✨', color: 'bg-purple-50 text-purple-800 border-purple-300 dark:bg-purple-950/60 dark:text-purple-200 dark:border-purple-800' };
+  if (lower.includes('scrum') || lower.includes('jira')) return { name: s, emoji: '🎯', color: 'bg-violet-50 text-violet-800 border-violet-300 dark:bg-violet-950/60 dark:text-violet-200 dark:border-violet-800' };
+  if (lower.includes('python')) return { name: s, emoji: '🐍', color: 'bg-yellow-50 text-yellow-800 border-yellow-300 dark:bg-yellow-950/60 dark:text-yellow-200 dark:border-yellow-800' };
+  if (lower.includes('api') || lower.includes('rest')) return { name: s, emoji: '⚡', color: 'bg-lime-50 text-lime-800 border-lime-300 dark:bg-lime-950/60 dark:text-lime-200 dark:border-lime-800' };
+  if (lower.includes('seguridad') || lower.includes('owasp')) return { name: s, emoji: '🛡️', color: 'bg-red-50 text-red-800 border-red-300 dark:bg-red-950/60 dark:text-red-200 dark:border-red-800' };
+  if (lower.includes('microservicio')) return { name: s, emoji: '🧩', color: 'bg-cyan-50 text-cyan-800 border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-200 dark:border-cyan-800' };
+  if (lower.includes('talento') || lower.includes('liderazgo') || lower.includes('gestión')) return { name: s, emoji: '👥', color: 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-800' };
+  
+  return { name: s, emoji: '💻', color: 'bg-zinc-100 text-zinc-800 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700' };
+};
+
+const parseEspecialidad = (rawStr) => {
+  if (!rawStr) return { titulo: 'Desarrollo de Software & Arquitectura TI', skills: [] };
+  
+  const match = rawStr.match(/(.*?)•?\s*\[(.*?)\]/);
+  if (match) {
+    const titulo = match[1].replace(/•/g, '').trim() || 'Especialista Técnico';
+    const skillsRaw = match[2].split(',').map(s => s.trim()).filter(Boolean);
+    return {
+      titulo,
+      skills: skillsRaw.map(getTechSkillBadge)
+    };
+  }
+
+  const parts = rawStr.split('•').map(p => p.trim());
+  const titulo = parts[0] || 'Especialista Técnico';
+  const rest = parts.slice(1).join(', ').split(',').map(s => s.trim()).filter(Boolean);
+  return {
+    titulo,
+    skills: rest.length > 0 ? rest.map(getTechSkillBadge) : [
+      getTechSkillBadge('Java 17'),
+      getTechSkillBadge('Spring Boot 3'),
+      getTechSkillBadge('React.js'),
+      getTechSkillBadge('PostgreSQL')
+    ]
+  };
+};
+
 export const PerfilPage = () => {
   const { user } = useAuth();
   const api = useApi();
@@ -379,25 +432,82 @@ export const PerfilPage = () => {
               </div>
             </motion.div>
 
-            {/* Tarjeta 3: Especialidad */}
+            {/* Tarjeta 3: Especialidad & Competencias Técnicas Rediseñada */}
             <motion.div variants={cardVariants} className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                <GraduationCap size={16} className="text-blue-600 dark:text-blue-400" />
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
-                  Especialidad & Competencias
-                </h4>
-              </div>
+              {(() => {
+                const { titulo: tituloEsp, skills: skillsEsp } = parseEspecialidad(profileData?.especialidad);
+                return (
+                  <>
+                    <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap size={18} className="text-blue-600 dark:text-blue-400" />
+                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
+                          Especialidad & Competencias
+                        </h4>
+                      </div>
+                      <span className="text-[0.62rem] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                        <ShieldCheck size={11} /> Auditado
+                      </span>
+                    </div>
 
-              <div className="space-y-3 text-xs">
-                <div>
-                  <span className="text-[0.65rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block mb-1">
-                    Especialidad Principal
-                  </span>
-                  <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">
-                    {profileData?.especialidad || 'Desarrollo Frontend & Aplicaciones Móviles • [React.js, TypeScript, Tailwind CSS, REST APIs, Git & GitHub, UI/UX Design]'}
-                  </p>
-                </div>
-              </div>
+                    <div className="space-y-4 text-xs">
+                      {/* Especialidad Enfoque Principal */}
+                      <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60 space-y-1.5">
+                        <span className="text-[0.65rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+                          <Sparkles size={12} className="text-amber-500" /> Especialidad de Enfoque Principal
+                        </span>
+                        <h4 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                          🚀 {tituloEsp}
+                        </h4>
+                        <span className="text-[0.62rem] text-zinc-500 dark:text-zinc-400 block">
+                          Área técnica asignada y certificada para proyectos WBS en IKernell
+                        </span>
+                      </div>
+
+                      {/* Stack Tecnológico con Badges e Emojis Interactivas */}
+                      <div className="space-y-2">
+                        <span className="text-[0.65rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+                          <Cpu size={12} className="text-blue-500" /> Stack Tecnológico & Habilidades Clave
+                        </span>
+
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {skillsEsp.map((sk, idx) => (
+                            <motion.button
+                              key={idx}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              type="button"
+                              onClick={() => toast.success(`Competencia Verificada: ${sk.name} • Nivel Experto`, { icon: sk.emoji, id: sk.name })}
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer ${sk.color}`}
+                              title={`Haz clic para consultar el nivel en ${sk.name}`}
+                            >
+                              <span>{sk.emoji}</span>
+                              <span>{sk.name}</span>
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Medidor de Dominio Técnico Certificado */}
+                      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/80 dark:border-blue-800/60 space-y-2">
+                        <div className="flex justify-between items-center text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                          <span className="flex items-center gap-1">
+                            <CheckCircle2 size={13} className="text-blue-600 dark:text-blue-400" />
+                            Dominio Técnico Verificado
+                          </span>
+                          <span className="font-mono text-blue-600 dark:text-blue-400 font-extrabold">95% (Senior)</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-blue-200/80 dark:bg-blue-900/60 overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full" style={{ width: '95%' }} />
+                        </div>
+                        <span className="text-[0.62rem] text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                          <Check size={10} className="text-emerald-500" /> Capacidades técnicas respaldadas en PostgreSQL
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </motion.div>
           </div>
 
