@@ -169,7 +169,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
           <AlertCircle size={20} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="space-y-1 text-xs">
             <span className="font-black uppercase tracking-wide block text-amber-700 dark:text-amber-300">
-              ⚠️ Advertencia de Desfase en Jornada Horaria (RF-20)
+              Advertencia de Desfase en Jornada Horaria (RF-20)
             </span>
             <p className="font-semibold leading-relaxed">
               Tienes <strong>{horasDevReales}h</strong> asignadas en tareas WBS activas de desarrollo (en otros proyectos), pero solo has reservado <strong>{horasDev}h</strong> en tu jornada de 48h. Debes ajustar tu reserva de horas o reasignar actividades.

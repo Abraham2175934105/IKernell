@@ -232,9 +232,16 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                 {/* Desplegable Selector de Rol en Vivo (Solo para usuarios LÍDER) */}
                 {user?.rol === 'LIDER' && (
                   <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/70">
-                    <span className="text-[0.58rem] font-extrabold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">
-                      Modo Operativo en Vivo:
-                    </span>
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="text-[0.58rem] font-extrabold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
+                        Modo Operativo en Vivo:
+                      </span>
+                      {activeRoleMode === 'DESARROLLADOR' ? (
+                        <Code2 size={12} className="text-purple-600 dark:text-purple-400" />
+                      ) : (
+                        <Crown size={12} className="text-amber-600 dark:text-amber-400" />
+                      )}
+                    </div>
                     <div className="relative">
                       <select
                         value={activeRoleMode || 'LIDER'}
@@ -245,8 +252,8 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                         }}
                         className="w-full text-xs font-bold py-1.5 pl-2.5 pr-7 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer appearance-none"
                       >
-                        <option value="LIDER">👑 Líder de Proyecto (Gestión)</option>
-                        <option value="DESARROLLADOR">💻 Desarrollador (Técnico WBS)</option>
+                        <option value="LIDER">Líder de Proyecto (Gestión Directiva)</option>
+                        <option value="DESARROLLADOR">Desarrollador (Técnico WBS)</option>
                       </select>
                       <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-600 dark:text-amber-400 pointer-events-none" />
                     </div>
