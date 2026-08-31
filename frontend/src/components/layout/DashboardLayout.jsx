@@ -36,6 +36,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
     return localStorage.getItem('sidebar_collapsed') === 'true';
   });
   const [isHovered, setIsHovered] = useState(false);
+  const [currentTool, setCurrentTool] = useState(null); // 'chat' | 'biblioteca' | 'tutoriales' | null
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Estado para la Intercepción de Navegación por Seguridad (Cambio de Contraseña o Datos no Guardados)
