@@ -8,13 +8,15 @@ import {
   Loader2, RefreshCw, Inbox, RotateCcw, MessageSquare, History, Edit3, Send, Calendar,
   Code2, Plus, Check, Layers, Briefcase, GraduationCap, BadgeCheck, Cpu, Tag, ChevronDown,
   ChevronLeft, ChevronRight, Lock, Eye, EyeOff, Key, Globe, Flag, FolderGit2, DollarSign, Building2,
-  Crown, ArrowRight, ArrowLeft, ClipboardList, RotateCw, Pause, Play, Zap, CheckCircle, Info, PieChart, FileCheck, Activity, Download
+  Crown, ArrowRight, ArrowLeft, ClipboardList, RotateCw, Pause, Play, Zap, CheckCircle, Info, PieChart, FileCheck, Activity, Download,
+  ArrowUpDown, SlidersHorizontal, UserCog
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
 import { CustomSelect } from '../../components/ui/CustomSelect';
+import { ConfirmActionModal } from '../../components/ui/ConfirmActionModal';
 
 const ROLE_SKILL_PROFILES = {
   DESARROLLADOR: {
@@ -105,7 +107,7 @@ const PAISES_IDENTIFICACION = [
     code: 'CO',
     nombre: 'Colombia',
     docTipo: 'Cédula de Ciudadanía (CC)',
-    flag: '🇨🇴',
+    flag: 'CO',
     placeholder: 'Ej. 1018459203 (6 a 10 dígitos numéricos)',
     validate: (val) => {
       const clean = val.trim();
@@ -119,7 +121,7 @@ const PAISES_IDENTIFICACION = [
     code: 'MX',
     nombre: 'México',
     docTipo: 'CURP / INE',
-    flag: '🇲🇽',
+    flag: 'MX',
     placeholder: 'Ej. VECJ880326HDFRRN09 (18 caracteres)',
     validate: (val) => {
       const clean = val.trim().toUpperCase();
@@ -133,7 +135,7 @@ const PAISES_IDENTIFICACION = [
     code: 'ES',
     nombre: 'España',
     docTipo: 'DNI / NIE',
-    flag: '🇪🇸',
+    flag: 'ES',
     placeholder: 'Ej. 12345678Z (8 números + 1 letra control)',
     validate: (val) => {
       const clean = val.trim().toUpperCase();
@@ -153,7 +155,7 @@ const PAISES_IDENTIFICACION = [
     code: 'CL',
     nombre: 'Chile',
     docTipo: 'RUT / RUN',
-    flag: '🇨🇱',
+    flag: 'CL',
     placeholder: 'Ej. 12345678-K (7-8 dígitos + dígito verificador)',
     validate: (val) => {
       const clean = val.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase();
@@ -181,7 +183,7 @@ const PAISES_IDENTIFICACION = [
     code: 'PE',
     nombre: 'Perú',
     docTipo: 'DNI',
-    flag: '🇵🇪',
+    flag: 'PE',
     placeholder: 'Ej. 72849102 (8 dígitos numéricos)',
     validate: (val) => {
       const clean = val.trim();
@@ -194,7 +196,7 @@ const PAISES_IDENTIFICACION = [
     code: 'AR',
     nombre: 'Argentina',
     docTipo: 'DNI',
-    flag: '🇦🇷',
+    flag: 'AR',
     placeholder: 'Ej. 40182938 (7 u 8 dígitos numéricos)',
     validate: (val) => {
       const clean = val.trim();
@@ -207,7 +209,7 @@ const PAISES_IDENTIFICACION = [
     code: 'US',
     nombre: 'Estados Unidos',
     docTipo: 'SSN / Tax ID',
-    flag: '🇺🇸',
+    flag: 'US',
     placeholder: 'Ej. 123-45-6789 (9 dígitos numéricos)',
     validate: (val) => {
       const clean = val.replace(/-/g, '').trim();
@@ -220,7 +222,7 @@ const PAISES_IDENTIFICACION = [
     code: 'INT',
     nombre: 'Internacional / Pasaporte',
     docTipo: 'Pasaporte / ID Global',
-    flag: '🌐',
+    flag: 'INT',
     placeholder: 'Ej. PA8492019 (6 a 15 caracteres alfanuméricos)',
     validate: (val) => {
       const clean = val.trim();
@@ -342,6 +344,8 @@ export const CoordinadorDashboard = () => {
   const [rolSeleccionado, setRolSeleccionado] = useState('TODOS'); // 'TODOS' | 'DESARROLLADOR' | 'LIDER' | 'COORDINADOR'
   const [techsSeleccionadas, setTechsSeleccionadas] = useState([]); // [] = Todas
   const [estadoSeleccionado, setEstadoSeleccionado] = useState('ACTIVO'); // 'ACTIVO' (Default) | 'INHABILITADO' | 'TODOS'
+  const [activacionSeleccionada, setActivacionSeleccionada] = useState('TODOS'); // 'TODOS' | 'VERIFICADO' | 'PENDIENTE'
+  const [ordenTrabajadores, setOrdenTrabajadores] = useState('NOMBRE_ASC'); // 'NOMBRE_ASC' | 'NOMBRE_DESC' | 'ROL' | 'CEDULA'
   const [expandSkills, setExpandSkills] = useState(false); // Desplegable de habilidades Paso 3
   const [filtroSolicitudes, setFiltroSolicitudes] = useState('TODAS'); // 'TODAS' | 'PENDIENTE' | 'ATENDIDA' | 'REABIERTA' | 'EN_PROCESO'
   const [searchSolicitudQuery, setSearchSolicitudQuery] = useState('');
@@ -352,6 +356,7 @@ export const CoordinadorDashboard = () => {
   const [searchProyectoQuery, setSearchProyectoQuery] = useState('');
   const [filtroProyectoEstado, setFiltroProyectoEstado] = useState('TODOS'); // 'TODOS' | 'EN_PROGRESO' | 'COMPLETADO' | 'PAUSADO' | 'INHABILITADO'
   const [filtroProyectoLider, setFiltroProyectoLider] = useState('TODOS'); // 'TODOS' | idLider
+  const [ordenProyecto, setOrdenProyecto] = useState('DEFAULT'); // 'DEFAULT' | 'PRESUPUESTO_DESC' | 'PRESUPUESTO_ASC' | 'NOMBRE_ASC' | 'FECHA_FIN'
   const [currentProyectoPage, setCurrentProyectoPage] = useState(1);
   const [proyectosPerPage, setProyectosPerPage] = useState(6);
 
@@ -426,6 +431,7 @@ export const CoordinadorDashboard = () => {
 
   const [showReasignarActividadModalCoord, setShowReasignarActividadModalCoord] = useState(false);
   const [etapaAFinalizarModalCoord, setEtapaAFinalizarModalCoord] = useState(null);
+  const [etapaAConfirmarFinalizar, setEtapaAConfirmarFinalizar] = useState(null); // Para ConfirmActionModal
   const [etapaAReabrirModalCoord, setEtapaAReabrirModalCoord] = useState(null);
   const [actividadAReasignarCoord, setActividadAReasignarCoord] = useState(null);
   const [targetDevIdReasignarCoord, setTargetDevIdReasignarCoord] = useState('');
@@ -1071,11 +1077,17 @@ export const CoordinadorDashboard = () => {
     }
   };
 
-  // Finalización formal de etapa WBS con alerta y auditoría
-  const handleFinalizarEtapaFormallyCoord = async (etapa) => {
+  // Paso 1: Abre el modal de confirmación para finalizar una etapa WBS
+  const handleFinalizarEtapaFormallyCoord = (etapa) => {
     if (!selectedProyectoModal || !etapa?.idEtapa) return;
+    setEtapaAConfirmarFinalizar(etapa);
+  };
+
+  // Paso 2: Ejecuta la finalización real (llamado desde ConfirmActionModal)
+  const handleConfirmarFinalizarEtapaCoord = async () => {
+    const etapa = etapaAConfirmarFinalizar;
+    if (!etapa?.idEtapa) return;
     const confirmName = etapa.nombreEtapa || `Fase #${etapa.idEtapa}`;
-    if (!window.confirm(`¿Está seguro de finalizar formalmente la etapa "${confirmName}"? Se registrará la acción en la auditoría.`)) return;
 
     try {
       await api.put(`/lider/etapas/${etapa.idEtapa}`, {
@@ -1104,9 +1116,11 @@ export const CoordinadorDashboard = () => {
       );
 
       toast.success(`Etapa "${confirmName}" finalizada exitosamente.`);
+      setEtapaAConfirmarFinalizar(null);
     } catch (err) {
       console.error('Error al finalizar etapa:', err);
       toast.error(err.message || 'Error al finalizar la etapa.');
+      setEtapaAConfirmarFinalizar(null);
     }
   };
 
@@ -1170,7 +1184,7 @@ export const CoordinadorDashboard = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, rolSeleccionado, techsSeleccionadas, estadoSeleccionado, itemsPerPage]);
+  }, [searchQuery, rolSeleccionado, techsSeleccionadas, estadoSeleccionado, activacionSeleccionada, ordenTrabajadores, itemsPerPage]);
 
   const handleSelectRole = (rolKey) => {
     // Selección Única Estricta de Rol
@@ -1191,6 +1205,8 @@ export const CoordinadorDashboard = () => {
     setRolSeleccionado('TODOS');
     setTechsSeleccionadas([]);
     setEstadoSeleccionado('ACTIVO');
+    setActivacionSeleccionada('TODOS');
+    setOrdenTrabajadores('NOMBRE_ASC');
   };
 
   // Modales
@@ -1868,36 +1884,80 @@ export const CoordinadorDashboard = () => {
     );
   };
 
-  const filteredTrabajadores = trabajadores.filter(t => {
+  const filteredTrabajadores = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const matchesSearch = !query ||
-      (t.nombre || '').toLowerCase().includes(query) ||
-      (t.apellido || '').toLowerCase().includes(query) ||
-      (t.identificacion || '').includes(query) ||
-      (t.email || '').toLowerCase().includes(query) ||
-      (t.profesion || '').toLowerCase().includes(query);
+    let list = (trabajadores || []).filter(t => {
+      const matchesSearch = !query ||
+        (t.nombre || '').toLowerCase().includes(query) ||
+        (t.apellido || '').toLowerCase().includes(query) ||
+        (t.identificacion || '').includes(query) ||
+        (t.email || '').toLowerCase().includes(query) ||
+        (t.profesion || '').toLowerCase().includes(query) ||
+        (t.especialidad || '').toLowerCase().includes(query);
 
-    const matchesRol = rolSeleccionado === 'TODOS' || t.rol === rolSeleccionado;
+      const matchesRol = rolSeleccionado === 'TODOS' || t.rol === rolSeleccionado;
 
-    let matchesTech = true;
-    if (techsSeleccionadas.length > 0) {
-      const spec = (t.especialidad || '').toLowerCase();
-      matchesTech = techsSeleccionadas.some(tech => spec.includes(tech.toLowerCase()));
-    }
+      let matchesTech = true;
+      if (techsSeleccionadas.length > 0) {
+        const spec = (t.especialidad || '').toLowerCase();
+        matchesTech = techsSeleccionadas.some(tech => spec.includes(tech.toLowerCase()));
+      }
 
-    const matchesEstado = estadoSeleccionado === 'TODOS' ||
-      (estadoSeleccionado === 'ACTIVO' && t.estado) ||
-      (estadoSeleccionado === 'INHABILITADO' && !t.estado);
+      const matchesEstado = estadoSeleccionado === 'TODOS' ||
+        (estadoSeleccionado === 'ACTIVO' && t.estado) ||
+        (estadoSeleccionado === 'INHABILITADO' && !t.estado);
 
-    return matchesSearch && matchesRol && matchesTech && matchesEstado;
-  });
+      const matchesActivacion = activacionSeleccionada === 'TODOS' ||
+        (activacionSeleccionada === 'VERIFICADO' && !t.primerLogin) ||
+        (activacionSeleccionada === 'PENDIENTE' && Boolean(t.primerLogin));
 
-  const activeFiltersCount = (searchQuery ? 1 : 0) + (rolSeleccionado !== 'TODOS' ? 1 : 0) + techsSeleccionadas.length + (estadoSeleccionado !== 'ACTIVO' ? 1 : 0);
+      return matchesSearch && matchesRol && matchesTech && matchesEstado && matchesActivacion;
+    });
 
-  // Cálculo Exigente de la Primera y Última Fecha de Solicitud en el Sistema
+    // Ordenamiento dinámico
+    list.sort((a, b) => {
+      if (ordenTrabajadores === 'NOMBRE_ASC') {
+        const nameA = `${a.nombre || ''} ${a.apellido || ''}`.trim().toLowerCase();
+        const nameB = `${b.nombre || ''} ${b.apellido || ''}`.trim().toLowerCase();
+        return nameA.localeCompare(nameB);
+      }
+      if (ordenTrabajadores === 'NOMBRE_DESC') {
+        const nameA = `${a.nombre || ''} ${a.apellido || ''}`.trim().toLowerCase();
+        const nameB = `${b.nombre || ''} ${b.apellido || ''}`.trim().toLowerCase();
+        return nameB.localeCompare(nameA);
+      }
+      if (ordenTrabajadores === 'ROL') {
+        const roleOrder = { COORDINADOR: 1, LIDER: 2, DESARROLLADOR: 3 };
+        return (roleOrder[a.rol] || 4) - (roleOrder[b.rol] || 4);
+      }
+      if (ordenTrabajadores === 'CEDULA') {
+        return (a.identificacion || '').localeCompare(b.identificacion || '');
+      }
+      return 0;
+    });
+
+    return list;
+  }, [trabajadores, searchQuery, rolSeleccionado, techsSeleccionadas, estadoSeleccionado, activacionSeleccionada, ordenTrabajadores]);
+
+  const activeFiltersCount =
+    (searchQuery ? 1 : 0) +
+    (rolSeleccionado !== 'TODOS' ? 1 : 0) +
+    techsSeleccionadas.length +
+    (estadoSeleccionado !== 'ACTIVO' ? 1 : 0) +
+    (activacionSeleccionada !== 'TODOS' ? 1 : 0) +
+    (ordenTrabajadores !== 'NOMBRE_ASC' ? 1 : 0);
+
+  // Cálculo Optimizado de la Primera y Última Fecha de Solicitud en el Sistema
   const rangoFechasSolicitudes = React.useMemo(() => {
     if (!solicitudes || !Array.isArray(solicitudes) || solicitudes.length === 0) {
-      return { primera: '', ultima: '', primeraFormateada: 'Sin registros', ultimaFormateada: 'Sin registros' };
+      return {
+        primera: '',
+        ultima: '',
+        primeraFormateada: 'Sin registros',
+        ultimaFormateada: 'Sin registros',
+        totalDias: 0,
+        rangoTexto: 'Sin solicitudes registradas'
+      };
     }
 
     let minTimestamp = Infinity;
@@ -1914,17 +1974,30 @@ export const CoordinadorDashboard = () => {
     });
 
     if (minTimestamp === Infinity || maxTimestamp === -Infinity) {
-      return { primera: '', ultima: '', primeraFormateada: 'Sin fecha', ultimaFormateada: 'Sin fecha' };
+      return {
+        primera: '',
+        ultima: '',
+        primeraFormateada: 'Sin fecha',
+        ultimaFormateada: 'Sin fecha',
+        totalDias: 0,
+        rangoTexto: 'Sin fechas válidas'
+      };
     }
 
     const minDate = new Date(minTimestamp);
     const maxDate = new Date(maxTimestamp);
+    const diffDays = Math.max(1, Math.round((maxTimestamp - minTimestamp) / (1000 * 60 * 60 * 24)) + 1);
+
+    const primeraISO = minDate.toISOString().split('T')[0];
+    const ultimaISO = maxDate.toISOString().split('T')[0];
 
     return {
-      primera: minDate.toISOString().split('T')[0],
-      ultima: maxDate.toISOString().split('T')[0],
-      primeraFormateada: minDate.toLocaleDateString(),
-      ultimaFormateada: maxDate.toLocaleDateString()
+      primera: primeraISO,
+      ultima: ultimaISO,
+      primeraFormateada: formatearFechaHumana(primeraISO),
+      ultimaFormateada: formatearFechaHumana(ultimaISO),
+      totalDias: diffDays,
+      rangoTexto: `${formatearFechaHumana(primeraISO)} — ${formatearFechaHumana(ultimaISO)}`
     };
   }, [solicitudes]);
 
@@ -1987,6 +2060,8 @@ export const CoordinadorDashboard = () => {
   const devsCount = (trabajadores || []).filter(t => t.rol === 'DESARROLLADOR').length;
   const lideresCount = (trabajadores || []).filter(t => t.rol === 'LIDER').length;
   const coordCount = (trabajadores || []).filter(t => t.rol === 'COORDINADOR').length;
+  const verificadosCount = (trabajadores || []).filter(t => !t.primerLogin).length;
+  const pendientesCount = (trabajadores || []).filter(t => Boolean(t.primerLogin)).length;
   const solicitudesPendientes = (solicitudes || []).filter(s => !s.atendido).length;
 
   const devPct = totalCount > 0 ? Math.round((devsCount / totalCount) * 100) : 0;
@@ -2096,9 +2171,9 @@ export const CoordinadorDashboard = () => {
     });
   }, [proyectos, filtroProyectoLider, searchProyectoQuery]);
 
-  // 2. Filtrado final aplicando Estado Operativo
+  // 2. Filtrado final aplicando Estado Operativo y Ordenamiento Dinámico
   const proyectosFiltradosCoordinador = useMemo(() => {
-    return proyectosBaseCoordinador.filter(prj => {
+    let list = proyectosBaseCoordinador.filter(prj => {
       if (filtroProyectoEstado !== 'TODOS') {
         if (filtroProyectoEstado === 'EN_PROGRESO' && prj.estado !== 'EN_PROGRESO' && prj.estado !== 'ACTIVO') return false;
         if (filtroProyectoEstado === 'COMPLETADO' && prj.estado !== 'COMPLETADO' && prj.estado !== 'FINALIZADO') return false;
@@ -2107,7 +2182,79 @@ export const CoordinadorDashboard = () => {
       }
       return true;
     });
-  }, [proyectosBaseCoordinador, filtroProyectoEstado]);
+
+    list.sort((a, b) => {
+      if (ordenProyecto === 'PRESUPUESTO_DESC') {
+        return (Number(b.presupuesto) || 0) - (Number(a.presupuesto) || 0);
+      }
+      if (ordenProyecto === 'PRESUPUESTO_ASC') {
+        return (Number(a.presupuesto) || 0) - (Number(b.presupuesto) || 0);
+      }
+      if (ordenProyecto === 'NOMBRE_ASC') {
+        return (a.nombre || '').localeCompare(b.nombre || '');
+      }
+      if (ordenProyecto === 'FECHA_FIN') {
+        const dateA = a.fechaFinEstimada ? new Date(a.fechaFinEstimada).getTime() : Infinity;
+        const dateB = b.fechaFinEstimada ? new Date(b.fechaFinEstimada).getTime() : Infinity;
+        return dateA - dateB;
+      }
+      return 0;
+    });
+
+    return list;
+  }, [proyectosBaseCoordinador, filtroProyectoEstado, ordenProyecto]);
+
+  // Helper para cálculo dinámico del tiempo y progreso del cronograma
+  const getProjectTimeProgress = (fechaInicio, fechaFinEstimada, estado) => {
+    if (estado === 'COMPLETADO' || estado === 'FINALIZADO') {
+      return { percent: 100, label: 'Completado', status: 'completed', badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' };
+    }
+    if (estado === 'PAUSADO' || estado === 'EN_PAUSA') {
+      return { percent: 50, label: 'En Pausa', status: 'paused', badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800' };
+    }
+    if (!fechaFinEstimada) {
+      return { percent: 40, label: 'En cronograma', status: 'normal', badge: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800' };
+    }
+
+    const inicio = fechaInicio ? new Date(fechaInicio).getTime() : (new Date(fechaFinEstimada).getTime() - (90 * 24 * 60 * 60 * 1000));
+    const fin = new Date(fechaFinEstimada).getTime();
+    const ahora = new Date().getTime();
+
+    const totalDur = fin - inicio;
+    const elapsed = ahora - inicio;
+    const diffDays = Math.ceil((fin - ahora) / (1000 * 60 * 60 * 24));
+
+    let percent = totalDur > 0 ? Math.min(Math.max(Math.round((elapsed / totalDur) * 100), 5), 100) : 100;
+
+    if (diffDays < 0) {
+      return {
+        percent: 100,
+        label: `Vencido (${Math.abs(diffDays)}d)`,
+        status: 'danger',
+        badge: 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800'
+      };
+    }
+    if (diffDays <= 7) {
+      return {
+        percent,
+        label: `${diffDays}d restantes`,
+        status: 'warning',
+        badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+      };
+    }
+    return {
+      percent,
+      label: `${diffDays}d restantes`,
+      status: 'normal',
+      badge: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+    };
+  };
+
+  const activeProyectoFiltersCount =
+    (searchProyectoQuery ? 1 : 0) +
+    (filtroProyectoEstado !== 'TODOS' ? 1 : 0) +
+    (filtroProyectoLider !== 'TODOS' ? 1 : 0) +
+    (ordenProyecto !== 'DEFAULT' ? 1 : 0);
 
   // Contadores dinámicos para las pestañas de estado según el Líder seleccionado
   const countsEstadoDinamicos = useMemo(() => {
@@ -2285,7 +2432,7 @@ export const CoordinadorDashboard = () => {
         setLoadingEtapasModal(false);
       }
 
-      toast.success(`Entrando al WBS de "${prjTarget.nombre}"`, { icon: '🎯' });
+      toast.success(`Navegando al WBS de "${prjTarget.nombre}"`);
     } else {
       toast.error('No se pudo encontrar el proyecto seleccionado.');
     }
@@ -2309,7 +2456,7 @@ export const CoordinadorDashboard = () => {
     setShowTrabajosSubpanel(true);
     setActiveTab(fromTab);
 
-    toast.info(`Regresando a la inspección de ${workerToRestore.nombre} ${workerToRestore.apellido}`, { icon: '↩️' });
+    toast.info(`Regresando a la inspección de ${workerToRestore.nombre} ${workerToRestore.apellido}`);
   };
 
   const getTopSkillsByRole = (list, selectedRole) => {
@@ -2342,11 +2489,8 @@ export const CoordinadorDashboard = () => {
   const topSkills = getTopSkillsByRole(trabajadores, rolSeleccionado);
 
   const getFilterExplanationText = () => {
-    if (!searchQuery && rolSeleccionado === 'TODOS' && techsSeleccionadas.length === 0 && estadoSeleccionado === 'ACTIVO') {
-      return `Mostrando todo el personal activo habilitado (${filteredTrabajadores.length} trabajadores).`;
-    }
-    if (!searchQuery && rolSeleccionado === 'TODOS' && techsSeleccionadas.length === 0 && estadoSeleccionado === 'TODOS') {
-      return `Mostrando todo el personal registrado (${filteredTrabajadores.length} trabajadores en total).`;
+    if (activeFiltersCount === 0) {
+      return `Mostrando personal habilitado (${filteredTrabajadores.length} de ${totalCount} registros).`;
     }
 
     const parts = [];
@@ -2354,21 +2498,23 @@ export const CoordinadorDashboard = () => {
       const roleName = rolSeleccionado === 'DESARROLLADOR' ? 'Desarrolladores' : rolSeleccionado === 'LIDER' ? 'Líderes de Proyecto' : 'Coordinadores';
       parts.push(roleName);
     } else {
-      parts.push('Personal general');
+      parts.push('Personal');
     }
 
     if (estadoSeleccionado !== 'TODOS') {
       parts.push(estadoSeleccionado === 'ACTIVO' ? '(Habilitados)' : '(Inhabilitados)');
-    } else {
-      parts.push('(Todos los estados)');
+    }
+
+    if (activacionSeleccionada !== 'TODOS') {
+      parts.push(activacionSeleccionada === 'VERIFICADO' ? '• Verificados' : '• Pendientes 1er Acceso');
     }
 
     if (techsSeleccionadas.length > 0) {
-      parts.push(`con especialidad en [${techsSeleccionadas.join(', ')}]`);
+      parts.push(`• Stack: [${techsSeleccionadas.join(', ')}]`);
     }
 
     if (searchQuery) {
-      parts.push(`coincidiendo con "${searchQuery}"`);
+      parts.push(`• Coincidencia: "${searchQuery}"`);
     }
 
     return `Viendo ${filteredTrabajadores.length} ${parts.join(' ')}.`;
@@ -2435,141 +2581,188 @@ export const CoordinadorDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Consola Única de Filtrado Didáctico & Adaptativo (Foolproof Control Console) */}
+          {/* Consola Ejecutiva de Filtrado & Búsqueda (Control Toolbar & Segmented Tabs) */}
           <motion.div
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5"
+            className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4"
           >
-            {/* 1. Encabezado Didáctico & Banner Explicativo en Lenguaje Sencillo */}
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-
+            {/* 1. Header Toolbar: Título, Contador, Selector de Orden y Reset */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800/80">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
-                  <Filter size={20} />
+                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800/80 shrink-0">
+                  <Filter size={18} />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
-                    Panel de Búsqueda y Filtrado Inteligente
-                    <span className="text-xs font-mono font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
-                      {filteredTrabajadores.length} / {totalCount} Encontrados
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                      Filtros & Búsqueda de Personal
+                    </h3>
+                    <span className="text-[0.7rem] font-mono font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                      {filteredTrabajadores.length} de {totalCount}
                     </span>
-                  </h3>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1.5 mt-0.5">
-                    <Sparkles size={13} /> {getFilterExplanationText()}
+                  </div>
+                  <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                    {getFilterExplanationText()}
                   </p>
                 </div>
               </div>
 
-              {/* Botón de Reseteo Rápido */}
-              {activeFiltersCount > 0 && (
-                <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Selector de Orden */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-xs">
+                  <ArrowUpDown size={13} className="text-zinc-400 shrink-0" />
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">Orden:</span>
+                  <select
+                    value={ordenTrabajadores}
+                    onChange={(e) => setOrdenTrabajadores(e.target.value)}
+                    className="bg-transparent font-bold text-zinc-800 dark:text-zinc-200 focus:outline-hidden cursor-pointer text-xs"
+                  >
+                    <option value="NOMBRE_ASC" className="bg-white dark:bg-zinc-800">Nombre (A - Z)</option>
+                    <option value="NOMBRE_DESC" className="bg-white dark:bg-zinc-800">Nombre (Z - A)</option>
+                    <option value="ROL" className="bg-white dark:bg-zinc-800">Por Rol</option>
+                    <option value="CEDULA" className="bg-white dark:bg-zinc-800">Por Cédula</option>
+                  </select>
+                </div>
+
+                {activeFiltersCount > 0 && (
                   <button
                     type="button"
                     onClick={handleClearAllFilters}
-                    className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 border border-red-200 dark:border-red-800 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                    className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 border border-red-200 dark:border-red-800 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                   >
-                    <RotateCcw size={13} /> Ver Todo el Personal ({activeFiltersCount} activo)
-                  </button>
-                </div>
-              )}
-
-            </div>
-
-            {/* 2. Buscador Directo por Nombre / Cédula */}
-            <div className="space-y-1.5">
-              <label className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                <Search size={13} className="text-blue-500" /> Búsqueda Directa por Texto Libre:
-              </label>
-              <div className="relative w-full">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Escribe el nombre, apellido, cédula o correo del trabajador..."
-                  className="input-field pl-11 pr-10 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
-                  >
-                    <X size={14} />
+                    <RotateCcw size={12} /> Restablecer ({activeFiltersCount})
                   </button>
                 )}
               </div>
             </div>
 
-            {/* 3. Paso 1 (Selección Única de Rol) y Paso 2 (Estado Lógico) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+            {/* 2. Barra de Búsqueda Rápida */}
+            <div className="relative w-full">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar por nombre, apellido, cédula, correo, profesión o especialidad..."
+                className="input-field pl-10 pr-9 py-2 text-xs bg-zinc-50/80 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 rounded-xl w-full"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors cursor-pointer"
+                  title="Limpiar búsqueda"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
 
-              {/* A. Selección Única de Rol (Paso 1) - Rediseñado sin enlace azul redundante */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 font-mono">
-                    <Users size={14} className="text-blue-600 dark:text-blue-400 shrink-0" /> Paso 1: Selecciona 1 solo Rol a consultar:
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { key: 'TODOS', label: `Todos los Roles (${totalCount})`, icon: Sparkles, color: 'text-amber-500' },
-                    { key: 'DESARROLLADOR', label: `Desarrolladores (${devsCount})`, icon: Code2, color: 'text-emerald-500' },
-                    { key: 'LIDER', label: `Líderes (${lideresCount})`, icon: Crown, color: 'text-purple-500' },
-                    { key: 'COORDINADOR', label: `Coordinadores (${coordCount})`, icon: ShieldCheck, color: 'text-blue-500' }
-                  ].map(r => {
-                    const isSelected = rolSeleccionado === r.key;
-                    const IconComponent = r.icon;
-                    return (
-                      <button
-                        key={r.key}
-                        type="button"
-                        onClick={() => handleSelectRole(r.key)}
-                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${isSelected
-                            ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
-                            : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                          }`}
-                      >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[0.65rem] font-bold ${isSelected ? 'bg-white text-blue-600' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
-                          }`}>
-                          {isSelected ? <Check size={10} /> : <span className="w-1 h-1 rounded-full bg-current inline-block" />}
-                        </div>
-                        <IconComponent size={14} className={`shrink-0 ${isSelected ? 'text-white' : r.color}`} />
-                        <span>{r.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* 3. Nivel 1: Segmented Control Tabs de Rol Corporativo (Horizontal) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[0.68rem] font-bold uppercase tracking-wider text-zinc-400 font-mono">
+                <span className="flex items-center gap-1.5">
+                  <Users size={12} className="text-blue-500" /> Rol en la Organización
+                </span>
+                <span>Selección rápida</span>
               </div>
 
-              {/* B. Estado Lógico del Acceso (Paso 2) - Habilitados por Defecto */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 font-mono">
-                    <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" /> Paso 2: Estado de Permiso de Acceso:
-                  </span>
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/60">
+                {[
+                  { key: 'TODOS', label: 'Todos los Roles', count: totalCount, icon: Users, color: 'text-zinc-500' },
+                  { key: 'DESARROLLADOR', label: 'Desarrolladores', count: devsCount, icon: Code2, color: 'text-emerald-500' },
+                  { key: 'LIDER', label: 'Líderes', count: lideresCount, icon: Briefcase, color: 'text-amber-500' },
+                  { key: 'COORDINADOR', label: 'Coordinadores', count: coordCount, icon: ShieldCheck, color: 'text-blue-500' }
+                ].map(r => {
+                  const isSelected = rolSeleccionado === r.key;
+                  const IconComponent = r.icon;
+                  return (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => handleSelectRole(r.key)}
+                      className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 font-extrabold shadow-xs border border-zinc-200/90 dark:border-zinc-700'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-700/50'
+                      }`}
+                    >
+                      <IconComponent size={14} className={isSelected ? 'text-blue-600 dark:text-blue-400' : r.color} />
+                      <span className="truncate">{r.label}</span>
+                      <span className={`text-[0.65rem] px-1.5 py-0.2 rounded-md font-mono font-bold ${
+                        isSelected ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300' : 'bg-zinc-200/70 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400'
+                      }`}>
+                        {r.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-                <div className="flex flex-wrap gap-2">
+            {/* 4. Nivel 2: Filtros Complementarios en Bloques de Píldoras Horizontales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              
+              {/* Filtro: Permiso de Acceso */}
+              <div className="space-y-1">
+                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-zinc-400 font-mono flex items-center gap-1">
+                  <ShieldCheck size={11} className="text-emerald-500" /> Permiso de Acceso
+                </span>
+                <div className="flex items-center p-1 rounded-xl bg-zinc-100/90 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/50 gap-1">
                   {[
-                    { key: 'ACTIVO', label: `Solo Habilitados (${activosCount})`, icon: CheckCircle2, iconColor: 'text-emerald-500' },
-                    { key: 'INHABILITADO', label: `Solo Inhabilitados (${inactivosCount})`, icon: UserX, iconColor: 'text-red-500' },
-                    { key: 'TODOS', label: `Todos los Estados (${totalCount})`, icon: BadgeCheck, iconColor: 'text-blue-500' }
+                    { key: 'ACTIVO', label: 'Habilitados', count: activosCount, icon: UserCheck },
+                    { key: 'INHABILITADO', label: 'Inhabilitados', count: inactivosCount, icon: UserX },
+                    { key: 'TODOS', label: 'Todos', count: totalCount, icon: BadgeCheck }
                   ].map(s => {
                     const isSelected = estadoSeleccionado === s.key;
-                    const StatusIcon = s.icon;
+                    const Icon = s.icon;
                     return (
                       <button
                         key={s.key}
                         type="button"
                         onClick={() => setEstadoSeleccionado(s.key)}
-                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${isSelected
-                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-xs ring-2 ring-zinc-500/20 font-bold'
-                            : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                          }`}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-bold shadow-2xs border border-zinc-200 dark:border-zinc-700'
+                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                        }`}
                       >
-                        <StatusIcon size={14} className={`shrink-0 ${isSelected ? 'text-white dark:text-zinc-900' : s.iconColor}`} />
-                        <span>{s.label}</span>
+                        <Icon size={12} className={isSelected ? 'text-blue-500' : 'text-zinc-400'} />
+                        <span className="truncate">{s.label}</span>
+                        <span className="text-[0.6rem] font-mono opacity-70">({s.count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Filtro: Estado de Activación */}
+              <div className="space-y-1">
+                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-zinc-400 font-mono flex items-center gap-1">
+                  <CheckCircle2 size={11} className="text-emerald-500" /> Activación de Cuenta
+                </span>
+                <div className="flex items-center p-1 rounded-xl bg-zinc-100/90 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/50 gap-1">
+                  {[
+                    { key: 'TODOS', label: 'Todas', count: totalCount, icon: CheckCircle2 },
+                    { key: 'VERIFICADO', label: 'Verificadas', count: verificadosCount, icon: ShieldCheck },
+                    { key: 'PENDIENTE', label: '1er Acceso', count: pendientesCount, icon: Clock }
+                  ].map(a => {
+                    const isSelected = activacionSeleccionada === a.key;
+                    const Icon = a.icon;
+                    return (
+                      <button
+                        key={a.key}
+                        type="button"
+                        onClick={() => setActivacionSeleccionada(a.key)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-white dark:bg-zinc-900 text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs border border-zinc-200 dark:border-zinc-700'
+                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                        }`}
+                      >
+                        <Icon size={12} className={isSelected ? 'text-emerald-500' : 'text-zinc-400'} />
+                        <span className="truncate">{a.label}</span>
+                        <span className="text-[0.6rem] font-mono opacity-70">({a.count})</span>
                       </button>
                     );
                   })}
@@ -2578,102 +2771,110 @@ export const CoordinadorDashboard = () => {
 
             </div>
 
-            {/* 4. Paso 3: Habilidades Adaptativas (Desplegable Elegante) */}
+            {/* 5. Nivel 3: Habilidades & Stack WBS (Píldoras Horizontales) */}
             {rolSeleccionado !== 'TODOS' && topSkills.length > 0 && (
-              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setExpandSkills(!expandSkills)}
-                    className="inline-flex items-center gap-2 text-[0.68rem] font-extrabold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer font-mono"
-                  >
-                    <Sparkles size={14} className="text-amber-500 shrink-0" />
-                    <span>
-                      Paso 3: Habilidades Específicas de {
-                        rolSeleccionado === 'DESARROLLADOR' ? 'Desarrollo WBS' :
-                          rolSeleccionado === 'LIDER' ? 'Gestión Ágil & Liderazgo' :
-                            'Administración Operativa'
-                      } ({topSkills.length} Disponibles)
+              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-wider text-zinc-400 font-mono flex items-center gap-1">
+                      <Tag size={11} className="text-blue-500" /> Especialidades & Stack WBS
                     </span>
                     {techsSeleccionadas.length > 0 && (
-                      <span className="text-[0.6rem] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white font-sans shadow-2xs">
-                        {techsSeleccionadas.length} Activa{techsSeleccionadas.length > 1 ? 's' : ''}
+                      <span className="text-[0.62rem] font-bold px-2 py-0.2 rounded-full bg-blue-600 text-white font-mono">
+                        {techsSeleccionadas.length} seleccionada{techsSeleccionadas.length > 1 ? 's' : ''}
                       </span>
                     )}
-                    <ChevronDown size={14} className={`transition-transform duration-200 text-blue-500 ${expandSkills ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  <div className="flex items-center gap-3">
-                    {techsSeleccionadas.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setTechsSeleccionadas([])}
-                        className="text-[0.65rem] font-bold text-red-500 hover:underline cursor-pointer flex items-center gap-1"
-                      >
-                        <X size={11} /> Limpiar ({techsSeleccionadas.length})
-                      </button>
-                    )}
+                  </div>
+                  {techsSeleccionadas.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setExpandSkills(!expandSkills)}
-                      className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
+                      onClick={() => setTechsSeleccionadas([])}
+                      className="text-[0.65rem] font-bold text-red-500 hover:underline cursor-pointer flex items-center gap-1"
                     >
-                      {expandSkills ? 'Ocultar Opciones' : 'Desplegar Lista'}
+                      <X size={11} /> Desmarcar todas
                     </button>
-                  </div>
+                  )}
                 </div>
 
-                {/* Vista resumida compacta de seleccionados si está colapsado */}
-                {!expandSkills && techsSeleccionadas.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {techsSeleccionadas.map(skill => (
-                      <span key={skill} className="px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[0.62rem] font-mono font-bold flex items-center gap-1">
-                        <span>✓ {skill}</span>
-                        <button type="button" onClick={() => handleToggleTechFilter(skill)} className="hover:text-red-500 cursor-pointer font-bold">×</button>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
+                  {topSkills.map(([skillName, count]) => {
+                    const isSelected = techsSeleccionadas.includes(skillName);
+                    return (
+                      <button
+                        key={skillName}
+                        type="button"
+                        onClick={() => handleToggleTechFilter(skillName)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold font-mono transition-all cursor-pointer border ${
+                          isSelected
+                            ? 'bg-blue-600 text-white border-blue-700 shadow-2xs font-bold'
+                            : 'bg-zinc-50 dark:bg-zinc-800/70 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                        }`}
+                      >
+                        {isSelected ? <Check size={11} /> : <span className="opacity-40">+</span>}
+                        <span>{skillName}</span>
+                        <span className={`text-[0.62rem] px-1.2 py-0.2 rounded-md font-bold ${
+                          isSelected ? 'bg-blue-700 text-white' : 'bg-zinc-200/80 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400'
+                        }`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-                {/* Vista Desplegable Expandida con animación suave */}
-                <AnimatePresence>
-                  {expandSkills && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/70 dark:border-zinc-700/60 space-y-2 overflow-hidden"
-                    >
-                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
-                        {topSkills.map(([skillName, count]) => {
-                          const isSelected = techsSeleccionadas.includes(skillName);
-                          return (
-                            <button
-                              key={skillName}
-                              type="button"
-                              onClick={() => handleToggleTechFilter(skillName)}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all cursor-pointer border ${isSelected
-                                  ? 'bg-blue-600 text-white border-blue-700 shadow-xs ring-2 ring-blue-500/30 font-bold'
-                                  : 'bg-white hover:bg-blue-50/80 dark:bg-zinc-800 dark:hover:bg-blue-950/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                                }`}
-                            >
-                              <div className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[0.6rem] font-bold ${isSelected ? 'bg-white/20 text-white' : 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300'
-                                }`}>
-                                {isSelected ? <Check size={10} /> : '+'}
-                              </div>
-                              <span>{skillName}</span>
-                              <span className={`text-[0.65rem] px-1.5 py-0.2 rounded-md font-bold ${isSelected ? 'bg-blue-700 text-white' : 'bg-zinc-200/80 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300'
-                                }`}>
-                                {count}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
+            {/* 6. Barra Dinámica de Filtros Activos (Tags con X) */}
+            {activeFiltersCount > 0 && (
+              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[0.62rem] font-bold uppercase tracking-wider text-zinc-400 font-mono flex items-center gap-1">
+                    <SlidersHorizontal size={11} /> Activos:
+                  </span>
+
+                  {searchQuery && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[0.65rem] font-bold text-blue-700 dark:text-blue-300">
+                      <span>"{searchQuery}"</span>
+                      <button type="button" onClick={() => setSearchQuery('')} className="hover:text-red-500 cursor-pointer">×</button>
+                    </span>
                   )}
-                </AnimatePresence>
+
+                  {rolSeleccionado !== 'TODOS' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[0.65rem] font-bold text-blue-700 dark:text-blue-300">
+                      <span>Rol: {rolSeleccionado}</span>
+                      <button type="button" onClick={() => setRolSeleccionado('TODOS')} className="hover:text-red-500 cursor-pointer">×</button>
+                    </span>
+                  )}
+
+                  {estadoSeleccionado !== 'ACTIVO' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-[0.65rem] font-bold text-zinc-700 dark:text-zinc-300">
+                      <span>Estado: {estadoSeleccionado}</span>
+                      <button type="button" onClick={() => setEstadoSeleccionado('ACTIVO')} className="hover:text-red-500 cursor-pointer">×</button>
+                    </span>
+                  )}
+
+                  {activacionSeleccionada !== 'TODOS' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[0.65rem] font-bold text-emerald-700 dark:text-emerald-300">
+                      <span>Activación: {activacionSeleccionada}</span>
+                      <button type="button" onClick={() => setActivacionSeleccionada('TODOS')} className="hover:text-red-500 cursor-pointer">×</button>
+                    </span>
+                  )}
+
+                  {techsSeleccionadas.map(skill => (
+                    <span key={skill} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[0.65rem] font-bold text-blue-700 dark:text-blue-300">
+                      <span>{skill}</span>
+                      <button type="button" onClick={() => handleToggleTechFilter(skill)} className="hover:text-red-500 cursor-pointer">×</button>
+                    </span>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleClearAllFilters}
+                  className="text-[0.68rem] font-bold text-red-600 hover:text-red-700 dark:text-red-400 hover:underline cursor-pointer"
+                >
+                  Limpiar todos
+                </button>
               </div>
             )}
 
@@ -3044,7 +3245,7 @@ export const CoordinadorDashboard = () => {
                               ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 animate-pulse'
                               : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
                           }`}>
-                          {selectedProyectoModal.estado === 'EN_PAUSA' ? '⏸️ EN PAUSA' : (selectedProyectoModal.estado || 'ACTIVO')}
+                          {selectedProyectoModal.estado === 'EN_PAUSA' ? 'EN PAUSA' : (selectedProyectoModal.estado || 'ACTIVO')}
                         </span>
                       </div>
                       <p className="text-xs text-zinc-500 font-medium mt-0.5">
@@ -3312,7 +3513,7 @@ export const CoordinadorDashboard = () => {
                                 </div>
                                 <div>
                                   <strong className="block text-amber-950 dark:text-amber-100 font-extrabold text-[0.78rem]">
-                                    🎉 ¡Fase completada por los desarrolladores!
+                                  Fase completada por los desarrolladores
                                   </strong>
                                   <span className="text-[0.7rem] opacity-90 font-medium">
                                     Todas las tareas internas ({tareasCompletadas}/{totalTareas}) han sido finalizadas. Ya puede revisar y hacer clic en <strong>Finalizar Etapa</strong> para cerrar formalmente esta etapa.
@@ -3539,110 +3740,222 @@ export const CoordinadorDashboard = () => {
                 </div>
               </motion.div>
 
-              {/* Panel Integrado de Búsqueda y Filtros Avanzados */}
-              <motion.div variants={itemVariants} className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-                <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
-                  {/* Caja de Búsqueda */}
-                  <div className="relative flex-1">
-                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-                    <input
-                      type="text"
-                      value={searchProyectoQuery}
-                      onChange={(e) => {
-                        setSearchProyectoQuery(e.target.value);
-                        setCurrentProyectoPage(1);
-                      }}
-                      placeholder="Buscar por código (PRJ-001), nombre de proyecto, cliente o líder..."
-                      className="w-full pl-10 pr-4 py-2.5 text-xs rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium focus:ring-2 focus:ring-blue-500"
-                    />
-                    {searchProyectoQuery && (
-                      <button onClick={() => setSearchProyectoQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
-                        <X size={14} />
+              {/* Panel Integrado de Búsqueda y Filtros Ejecutivos del Portafolio */}
+              <motion.div
+                variants={itemVariants}
+                className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4"
+              >
+                {/* 1. Header Toolbar de Proyectos */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-200 dark:border-purple-800/80 shrink-0">
+                      <FolderGit2 size={18} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                          Catálogo & Supervisión de Proyectos
+                        </h3>
+                        <span className="text-[0.7rem] font-mono font-bold bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-800">
+                          {totalFilteredProyectos} de {proyectosBaseCoordinador.length}
+                        </span>
+                      </div>
+                      <p className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                        {filtroProyectoLider !== 'TODOS' ? 'Proyectos supervisados por líder seleccionado' : 'Portafolio corporativo centralizado'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    {/* Selector de Orden */}
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-xs">
+                      <ArrowUpDown size={13} className="text-zinc-400 shrink-0" />
+                      <span className="text-zinc-500 dark:text-zinc-400 font-medium">Orden:</span>
+                      <select
+                        value={ordenProyecto}
+                        onChange={(e) => {
+                          setOrdenProyecto(e.target.value);
+                          setCurrentProyectoPage(1);
+                        }}
+                        className="bg-transparent font-bold text-zinc-800 dark:text-zinc-200 focus:outline-hidden cursor-pointer text-xs"
+                      >
+                        <option value="DEFAULT" className="bg-white dark:bg-zinc-800">Por Defecto</option>
+                        <option value="PRESUPUESTO_DESC" className="bg-white dark:bg-zinc-800">Mayor Presupuesto ($)</option>
+                        <option value="PRESUPUESTO_ASC" className="bg-white dark:bg-zinc-800">Menor Presupuesto ($)</option>
+                        <option value="NOMBRE_ASC" className="bg-white dark:bg-zinc-800">Nombre (A - Z)</option>
+                        <option value="FECHA_FIN" className="bg-white dark:bg-zinc-800">Fecha de Fin (Próximos)</option>
+                      </select>
+                    </div>
+
+                    {activeProyectoFiltersCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchProyectoQuery('');
+                          setFiltroProyectoEstado('TODOS');
+                          setFiltroProyectoLider('TODOS');
+                          setOrdenProyecto('DEFAULT');
+                          setCurrentProyectoPage(1);
+                        }}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 border border-red-200 dark:border-red-800 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <RotateCcw size={12} /> Restablecer ({activeProyectoFiltersCount})
                       </button>
                     )}
                   </div>
+                </div>
 
-                  {/* Filtro por Líder de Proyecto Embellecido */}
-                  <div className="flex items-center gap-2.5 bg-zinc-50 dark:bg-zinc-800/80 p-2 px-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-                    <Crown size={16} className="text-purple-600 dark:text-purple-400 shrink-0" />
-                    <span className="text-[0.68rem] font-mono font-extrabold uppercase text-zinc-500 dark:text-zinc-400 shrink-0">
-                      Filtrar por Líder:
+                {/* 2. Barra de Búsqueda Rápida */}
+                <div className="relative w-full">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  <input
+                    type="text"
+                    value={searchProyectoQuery}
+                    onChange={(e) => {
+                      setSearchProyectoQuery(e.target.value);
+                      setCurrentProyectoPage(1);
+                    }}
+                    placeholder="Buscar por código (PRJ-001), nombre de proyecto, cliente o líder..."
+                    className="input-field pl-10 pr-9 py-2 text-xs bg-zinc-50/80 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 rounded-xl w-full"
+                  />
+                  {searchProyectoQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchProyectoQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors cursor-pointer"
+                      title="Limpiar búsqueda"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+
+                {/* 3. Filtros Segmentados Horizontales: Estado Operativo & Filtro por Líder */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 pt-1">
+                  
+                  {/* Selector Segmentado de Estado Operativo */}
+                  <div className="lg:col-span-2 space-y-1">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-wider text-zinc-400 font-mono flex items-center gap-1">
+                      <Layers size={11} className="text-blue-500" /> Estado Operativo del Proyecto
                     </span>
-                    <select
-                      value={filtroProyectoLider}
-                      onChange={(e) => {
-                        setFiltroProyectoLider(e.target.value);
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 rounded-xl bg-zinc-100/90 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/50">
+                      {[
+                        { key: 'TODOS', label: 'Todos', count: countsEstadoDinamicos.todos, icon: Sparkles },
+                        { key: 'EN_PROGRESO', label: 'En Ejecución', count: countsEstadoDinamicos.enProgreso, icon: Clock },
+                        { key: 'COMPLETADO', label: 'Completados', count: countsEstadoDinamicos.completados, icon: CheckCircle2 },
+                        { key: 'PAUSADO', label: 'En Pausa', count: countsEstadoDinamicos.pausados, icon: Pause }
+                      ].map(st => {
+                        const isSelected = filtroProyectoEstado === st.key;
+                        const Icon = st.icon;
+                        return (
+                          <button
+                            key={st.key}
+                            type="button"
+                            onClick={() => {
+                              setFiltroProyectoEstado(st.key);
+                              setCurrentProyectoPage(1);
+                            }}
+                            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 font-bold shadow-2xs border border-zinc-200 dark:border-zinc-700'
+                                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                            }`}
+                          >
+                            <Icon size={12} className={isSelected ? 'text-blue-500' : 'text-zinc-400'} />
+                            <span className="truncate">{st.label}</span>
+                            <span className="text-[0.6rem] font-mono opacity-70">({st.count})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Selector de Líder Responsable */}
+                  <div className="space-y-1">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-wider text-zinc-400 font-mono flex items-center gap-1">
+                      <Crown size={11} className="text-purple-500" /> Líder Responsable
+                    </span>
+                    <div className="flex items-center p-1 rounded-xl bg-zinc-100/90 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/50">
+                      <select
+                        value={filtroProyectoLider}
+                        onChange={(e) => {
+                          setFiltroProyectoLider(e.target.value);
+                          setCurrentProyectoPage(1);
+                        }}
+                        className="w-full bg-transparent text-xs font-bold text-zinc-800 dark:text-zinc-200 focus:outline-hidden cursor-pointer px-2 py-1"
+                      >
+                        <option value="TODOS" className="bg-white dark:bg-zinc-800">Todos los Líderes ({lideresActivos.length})</option>
+                        {lideresActivos.map(lider => (
+                          <option key={lider.idTrabajador} value={lider.idTrabajador} className="bg-white dark:bg-zinc-800">
+                            {lider.nombre} {lider.apellido}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* 4. Barra Dinámica de Filtros Activos de Proyectos */}
+                {activeProyectoFiltersCount > 0 && (
+                  <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[0.62rem] font-bold uppercase tracking-wider text-zinc-400 font-mono flex items-center gap-1">
+                        <SlidersHorizontal size={11} /> Activos:
+                      </span>
+
+                      {searchProyectoQuery && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-[0.65rem] font-bold text-purple-700 dark:text-purple-300">
+                          <span>"{searchProyectoQuery}"</span>
+                          <button type="button" onClick={() => setSearchProyectoQuery('')} className="hover:text-red-500 cursor-pointer">×</button>
+                        </span>
+                      )}
+
+                      {filtroProyectoEstado !== 'TODOS' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[0.65rem] font-bold text-blue-700 dark:text-blue-300">
+                          <span>Estado: {filtroProyectoEstado}</span>
+                          <button type="button" onClick={() => setFiltroProyectoEstado('TODOS')} className="hover:text-red-500 cursor-pointer">×</button>
+                        </span>
+                      )}
+
+                      {filtroProyectoLider !== 'TODOS' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-[0.65rem] font-bold text-purple-700 dark:text-purple-300">
+                          <span>Líder ID: {filtroProyectoLider}</span>
+                          <button type="button" onClick={() => setFiltroProyectoLider('TODOS')} className="hover:text-red-500 cursor-pointer">×</button>
+                        </span>
+                      )}
+
+                      {ordenProyecto !== 'DEFAULT' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-[0.65rem] font-bold text-zinc-700 dark:text-zinc-300">
+                          <span>Orden: {ordenProyecto}</span>
+                          <button type="button" onClick={() => setOrdenProyecto('DEFAULT')} className="hover:text-red-500 cursor-pointer">×</button>
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchProyectoQuery('');
+                        setFiltroProyectoEstado('TODOS');
+                        setFiltroProyectoLider('TODOS');
+                        setOrdenProyecto('DEFAULT');
                         setCurrentProyectoPage(1);
                       }}
-                      className="bg-transparent text-xs font-extrabold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer pr-2"
+                      className="text-[0.68rem] font-bold text-red-600 hover:text-red-700 dark:text-red-400 hover:underline cursor-pointer"
                     >
-                      <option value="TODOS">Todos los Líderes ({lideresActivos.length})</option>
-                      {lideresActivos.map(lider => (
-                        <option key={lider.idTrabajador} value={lider.idTrabajador}>
-                          {lider.nombre} {lider.apellido} &bull; [{lider.email}]
-                        </option>
-                      ))}
-                    </select>
+                      Limpiar filtros
+                    </button>
                   </div>
-                </div>
-
-                {/* Pestañas de Filtro por Estado Operativo (Dinámicas según el Líder seleccionado) */}
-                <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                  <button
-                    type="button"
-                    onClick={() => { setFiltroProyectoEstado('TODOS'); setCurrentProyectoPage(1); }}
-                    className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer ${filtroProyectoEstado === 'TODOS'
-                        ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
-                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
-                      }`}
-                  >
-                    Todos los Estados ({countsEstadoDinamicos.todos})
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setFiltroProyectoEstado('EN_PROGRESO'); setCurrentProyectoPage(1); }}
-                    className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${filtroProyectoEstado === 'EN_PROGRESO'
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60'
-                      }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                    En Ejecución ({countsEstadoDinamicos.enProgreso})
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setFiltroProyectoEstado('COMPLETADO'); setCurrentProyectoPage(1); }}
-                    className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${filtroProyectoEstado === 'COMPLETADO'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60'
-                      }`}
-                  >
-                    <CheckCircle2 size={12} />
-                    Completados ({countsEstadoDinamicos.completados})
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setFiltroProyectoEstado('PAUSADO'); setCurrentProyectoPage(1); }}
-                    className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-1.5 ${filtroProyectoEstado === 'PAUSADO'
-                        ? 'bg-amber-600 text-white shadow-sm'
-                        : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
-                      }`}
-                  >
-                    <Clock size={12} />
-                    En Pausa ({countsEstadoDinamicos.pausados})
-                  </button>
-                </div>
+                )}
               </motion.div>
 
-              {/* Grilla Corporativa de Proyectos Rediseñada (Nivel Superior) */}
+              {/* Grilla de Tarjetas de Proyectos (Físicas Realistas con Framer Motion & Métrica Avanzada) */}
               {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
-                  <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
-                  <div className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+                  <div className="h-56 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+                  <div className="h-56 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
+                  <div className="h-56 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-3xl" />
                 </div>
               ) : proyectosPaginados.length === 0 ? (
                 <div className="bg-white dark:bg-zinc-900 p-12 text-center rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800 space-y-3">
@@ -3657,7 +3970,7 @@ export const CoordinadorDashboard = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {proyectosPaginados.map(prj => {
-                    const presupuestoFmt = Number(prj.presupuesto || 0).toLocaleString('es-CO');
+                    const presupuestoFmt = Number(prj.presupuesto || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
                     const isCompletado = prj.estado === 'COMPLETADO' || prj.estado === 'FINALIZADO';
                     const isPausado = prj.estado === 'PAUSADO';
                     const isHighlighted = Number(prj.idProyecto) === Number(highlightedProyectoId);
@@ -3671,26 +3984,38 @@ export const CoordinadorDashboard = () => {
                     const isReasig = prj.reasignado && !prj.leidoPorLiderAnterior && getHoursSinceReassignment(prj.fechaReasignacion) <= 24;
                     const isNuevo = !prj.reasignado && (prj.fechaInicio || prj.createdAt) && getHoursSinceReassignment(prj.fechaInicio || prj.createdAt) <= 72;
 
+                    const timeInfo = getProjectTimeProgress(prj.fechaInicio, prj.fechaFinEstimada, prj.estado);
+
                     return (
                       <motion.div
                         key={prj.idProyecto}
-                        whileHover={{ y: -4, scale: 1.01 }}
+                        layout
+                        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        whileHover={{
+                          y: -6,
+                          scale: 1.012,
+                          transition: { type: 'spring', stiffness: 400, damping: 22 }
+                        }}
+                        whileTap={{ scale: 0.985 }}
                         onClick={() => {
                           if (isHighlighted) {
                             setHighlightedProyectoId(null);
                           }
                           handleAbrirDetalleProyecto(prj);
                         }}
-                        className={`p-6 rounded-3xl border shadow-sm flex flex-col justify-between gap-5 transition-all duration-300 cursor-pointer ${isHighlighted
+                        className={`group bg-white dark:bg-zinc-900 p-6 rounded-3xl border shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between space-y-4 relative overflow-hidden ${
+                          isHighlighted
                             ? 'ring-4 ring-blue-500 animate-pulse border-blue-600 bg-blue-50/50 dark:bg-blue-950/50 shadow-2xl scale-[1.02]'
                             : isReasig || isPastLiderPending
                               ? 'border-amber-400 dark:border-amber-700/80 bg-gradient-to-b from-amber-50/40 via-amber-50/10 to-white dark:from-amber-950/20 dark:to-zinc-900 shadow-md shadow-amber-500/5 hover:border-amber-500'
                               : isNuevo
                                 ? 'border-emerald-400 dark:border-emerald-700/80 bg-gradient-to-b from-emerald-50/40 via-emerald-50/10 to-white dark:from-emerald-950/20 dark:to-zinc-900 shadow-md shadow-emerald-500/5 hover:border-emerald-500'
-                                : 'bg-white dark:bg-zinc-900 border-zinc-200/90 dark:border-zinc-800 hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md'
-                          }`}
+                                : 'border-zinc-200/90 dark:border-zinc-800 hover:border-blue-500/80 dark:hover:border-blue-500/60'
+                        }`}
                       >
-                        <div className="space-y-4">
+                        <div className="space-y-3.5">
                           {isHighlighted && (
                             <div className="bg-blue-600 text-white text-[0.68rem] font-black px-3 py-1.5 rounded-2xl flex items-center justify-between gap-1 -mx-2 -mt-2 mb-2 shadow-md">
                               <span className="flex items-center gap-1.5">
@@ -3701,102 +4026,136 @@ export const CoordinadorDashboard = () => {
                             </div>
                           )}
 
-                          {/* Cabecera de la Tarjeta */}
+                          {/* 1. Header de la Tarjeta con Código & Status Pill */}
                           <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className="font-mono font-extrabold text-[0.68rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
-                              PRJ-00{prj.idProyecto}
+                            <span className="font-mono font-black text-[0.72rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2.5 py-1 rounded-xl border border-blue-200 dark:border-blue-800">
+                              #PRJ-00{prj.idProyecto}
                             </span>
 
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {isReasig || isPastLiderPending ? (
                                 <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 animate-pulse flex items-center gap-1 shadow-2xs">
                                   <AlertTriangle size={11} className="text-amber-600 shrink-0" />
-                                  PROCESO REASIGNADO (1D)
+                                  REASIGNADO (1D)
                                 </span>
                               ) : isNuevo ? (
                                 <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-700 animate-pulse flex items-center gap-1 shadow-2xs">
-                                  <Sparkles size={11} className="text-emerald-600 animate-bounce shrink-0" />
-                                  NUEVA ASIGNACIÓN (3D)
+                                  <Sparkles size={11} className="text-emerald-600 shrink-0" />
+                                  NUEVO (3D)
                                 </span>
                               ) : null}
 
-                              <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase border ${isCompletado ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' :
-                                  isPausado ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 animate-pulse' :
-                                    'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
-                                }`}>
-                                {prj.estado || 'ACTIVO'}
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase border ${
+                                isCompletado
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                                  : isPausado
+                                    ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 animate-pulse'
+                                    : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${isCompletado ? 'bg-emerald-500' : isPausado ? 'bg-amber-500' : 'bg-blue-500 animate-pulse'}`} />
+                                <span>{prj.estado || 'ACTIVO'}</span>
                               </span>
                             </div>
                           </div>
 
-                          {/* Título y Cliente */}
-                          <div className="space-y-1.5">
-                            <h4 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                          {/* 2. Título del Proyecto & Cliente */}
+                          <div className="space-y-1">
+                            <h4 className="text-base font-black text-zinc-900 dark:text-zinc-100 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                               {prj.nombre}
                             </h4>
                             <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                               <Building2 size={13} className="shrink-0 text-blue-500" />
-                              <span className="truncate">{prj.cliente || 'Cliente Corporativo'}</span>
+                              <span className="truncate font-semibold">{prj.cliente || 'Cliente Corporativo'}</span>
                             </div>
                           </div>
 
-                          {/* Líder Asignado */}
-                          <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                          {/* 3. Líder Responsable (Card Pill) */}
+                          <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs">
                                 {prj.lider ? getInitials(prj.lider.nombre, prj.lider.apellido) : 'SD'}
                               </div>
                               <div className="min-w-0">
-                                <span className="text-[0.6rem] font-extrabold text-zinc-400 block uppercase font-mono tracking-wider">Líder Asignado:</span>
-                                <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate block">
+                                <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono tracking-wider">Líder Asignado:</span>
+                                <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 truncate block">
                                   {prj.lider ? `${prj.lider.nombre} ${prj.lider.apellido}` : 'Sin Líder Asignado'}
                                 </span>
                               </div>
                             </div>
 
-                            {isReasig || isPastLiderPending ? (
-                              <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 text-[0.62rem] font-extrabold shrink-0 shadow-2xs">
-                                Reasignado
-                              </span>
-                            ) : isNuevo ? (
-                              <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 text-[0.62rem] font-extrabold shrink-0 shadow-2xs">
-                                Nuevo
-                              </span>
-                            ) : null}
+                            <span className="text-[0.62rem] font-mono text-zinc-400 shrink-0 font-bold">
+                              {prj.lider?.profesion ? prj.lider.profesion.split(' ')[0] : 'Dirección'}
+                            </span>
                           </div>
 
-                          {/* Fechas e Inversión */}
-                          <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                            <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-0.5">
-                              <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono">Presupuesto:</span>
-                              <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">${presupuestoFmt}</span>
+                          {/* 4. Métricas Rápidas: Presupuesto & Fin Estimado */}
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800/80 space-y-0.5">
+                              <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono flex items-center gap-1">
+                                <DollarSign size={10} className="text-emerald-500" /> Presupuesto USD:
+                              </span>
+                              <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm block">
+                                ${presupuestoFmt}
+                              </span>
                             </div>
-                            <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-0.5">
-                              <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono">Fin Estimado:</span>
-                              <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300 text-xs">{prj.fechaFinEstimada || '2027-12-31'}</span>
+
+                            <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-2xl border border-zinc-100 dark:border-zinc-800/80 space-y-0.5">
+                              <span className="text-[0.6rem] font-bold text-zinc-400 block uppercase font-mono flex items-center gap-1">
+                                <Calendar size={10} className="text-blue-500" /> Fecha Límite:
+                              </span>
+                              <div className="flex items-center justify-between gap-1 flex-wrap">
+                                <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs">
+                                  {prj.fechaFinEstimada || '2027-12-31'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 5. Barra de Progreso Temporal (Cronograma Visual) */}
+                          <div className="space-y-1 pt-0.5">
+                            <div className="flex items-center justify-between text-[0.65rem] font-mono">
+                              <span className="text-zinc-400 font-medium">Plazo Transcurrido:</span>
+                              <span className={`px-1.5 py-0.2 rounded-md font-bold text-[0.62rem] border ${timeInfo.badge}`}>
+                                {timeInfo.label}
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  timeInfo.status === 'completed'
+                                    ? 'bg-emerald-500'
+                                    : timeInfo.status === 'danger'
+                                      ? 'bg-red-500'
+                                      : timeInfo.status === 'warning'
+                                        ? 'bg-amber-500'
+                                        : 'bg-blue-600'
+                                }`}
+                                style={{ width: `${timeInfo.percent}%` }}
+                              />
                             </div>
                           </div>
                         </div>
 
-                        {/* Botones de Acción Claros & Explicitos (Reasignar Líder Rediseñado) */}
+                        {/* 6. Botones de Acción */}
                         <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => handleAbrirDetalleProyecto(prj)}
-                            className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-xs flex-1 justify-center rounded-xl cursor-pointer"
+                            className="gradient-button text-xs py-2 px-3.5 font-bold inline-flex items-center gap-1.5 shadow-xs flex-1 justify-center rounded-xl cursor-pointer group-hover:shadow-md transition-shadow"
                           >
                             <Eye size={14} />
                             <span>Revisar Proyecto</span>
+                            <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
                           </button>
 
                           <button
                             type="button"
                             onClick={() => handleAbrirReasignarLiderPrj(prj)}
                             className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50/50 hover:bg-purple-100 dark:bg-purple-950/40 cursor-pointer rounded-xl shrink-0"
-                            title="Reasignar la dirección de este proyecto a otro Líder con registro de auditoría"
+                            title="Reasignar la dirección de este proyecto a otro Líder con auditoría"
                           >
                             <RotateCcw size={14} />
-                            <span>Reasignar Líder</span>
+                            <span>Reasignar</span>
                           </button>
                         </div>
                       </motion.div>
@@ -3814,7 +4173,7 @@ export const CoordinadorDashboard = () => {
                       type="button"
                       disabled={safeProyectoPage <= 1}
                       onClick={() => setCurrentProyectoPage(prev => Math.max(prev - 1, 1))}
-                      className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                      className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                     >
                       <ChevronLeft size={14} />
                     </button>
@@ -3823,7 +4182,7 @@ export const CoordinadorDashboard = () => {
                       type="button"
                       disabled={safeProyectoPage >= totalProyectoPages}
                       onClick={() => setCurrentProyectoPage(prev => Math.min(prev + 1, totalProyectoPages))}
-                      className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                      className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                     >
                       <ChevronRight size={14} />
                     </button>
@@ -3876,178 +4235,182 @@ export const CoordinadorDashboard = () => {
           {/* Consola Única y Optimizada de Búsqueda, Fechas y Filtros */}
           <motion.div
             variants={itemVariants}
-            className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4"
+            className="bg-white dark:bg-zinc-900/90 backdrop-blur-md p-5 sm:p-6 rounded-3xl border border-zinc-200/90 dark:border-zinc-800 shadow-sm space-y-4"
           >
-            {/* 1. Fila Superior: Búsqueda Global por Texto + Indicadores del Histórico Completo */}
+            {/* 1. Fila Superior: Búsqueda Inteligente + Indicador Visual del Historial en Sistema */}
             <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
               {/* Caja de Búsqueda */}
-              <div className="relative flex-1">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <div className="relative flex-1 group">
+                <Search
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors"
+                />
                 <input
                   type="text"
                   value={searchSolicitudQuery}
                   onChange={(e) => setSearchSolicitudQuery(e.target.value)}
-                  placeholder="Buscar por código (SOL-001), cliente, correo, asunto o contenido..."
-                  className="w-full pl-11 pr-10 py-2.5 text-xs sm:text-sm rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
+                  placeholder="Buscar por código (SOL-001), cliente, remitente, correo, asunto o contenido..."
+                  className="w-full pl-11 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-800 font-medium transition-all shadow-inner placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                 />
                 {searchSolicitudQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchSolicitudQuery('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg transition-colors cursor-pointer"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1.5 rounded-xl hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60 transition-colors cursor-pointer"
+                    title="Limpiar búsqueda"
                   >
                     <X size={15} />
                   </button>
                 )}
               </div>
 
-              {/* Indicadores Píldora del Rango Exigente Base */}
+              {/* Indicador de Rango Registrado en Sistema */}
               {rangoFechasSolicitudes.primera && (
-                <div className="flex items-center gap-2 text-[0.68rem] font-extrabold text-zinc-500 dark:text-zinc-400 shrink-0 flex-wrap">
-                  <span className="px-3 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 flex items-center gap-1.5">
-                    <Calendar size={13} className="text-blue-500" />
-                    <span>Primera:</span>
-                    <strong className="text-zinc-900 dark:text-zinc-100 font-mono">{rangoFechasSolicitudes.primeraFormateada}</strong>
-                  </span>
-                  <span className="px-3 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 flex items-center gap-1.5">
-                    <Calendar size={13} className="text-blue-500" />
-                    <span>Última:</span>
-                    <strong className="text-zinc-900 dark:text-zinc-100 font-mono">{rangoFechasSolicitudes.ultimaFormateada}</strong>
-                  </span>
+                <div className="flex items-center gap-3 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-zinc-50 to-blue-50/50 dark:from-zinc-800/60 dark:to-blue-950/20 border border-zinc-200 dark:border-zinc-700/80 shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs">
+                    <Clock size={15} />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-[0.62rem] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                      Período en Sistema
+                    </span>
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                      <span className="font-semibold">{rangoFechasSolicitudes.primeraFormateada}</span>
+                      <ArrowRight size={11} className="text-zinc-400 shrink-0" />
+                      <span className="font-semibold">{rangoFechasSolicitudes.ultimaFormateada}</span>
+                      {rangoFechasSolicitudes.totalDias > 0 && (
+                        <span className="text-[0.65rem] font-bold px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 ml-0.5">
+                          {rangoFechasSolicitudes.totalDias} {rangoFechasSolicitudes.totalDias === 1 ? 'día' : 'días'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* 2. Fila Inferior: Filtros de Estado a la Izquierda + Selector Estricto de Fechas a la Derecha */}
-            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+            {/* 2. Fila Intermedia: Píldoras de Estado */}
+            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('TODAS')}
+                className={`text-xs py-2 px-3.5 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 ${
+                  filtroSolicitudes === 'TODAS'
+                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-md shadow-zinc-900/15 dark:shadow-white/10 scale-[1.02]'
+                    : 'bg-zinc-100 dark:bg-zinc-800/70 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/80'
+                }`}
+              >
+                <span>Todas</span>
+                <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                  filtroSolicitudes === 'TODAS'
+                    ? 'bg-white/20 dark:bg-black/20 font-black'
+                    : 'bg-zinc-200 dark:bg-zinc-700'
+                }`}>
+                  {solicitudes.length}
+                </span>
+              </button>
 
-              {/* Píldoras de Estado (Izquierda) */}
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('PENDIENTE')}
+                className={`text-xs py-2 px-3.5 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 ${
+                  filtroSolicitudes === 'PENDIENTE'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 scale-[1.02]'
+                    : 'bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/70 dark:border-blue-800/60 hover:bg-blue-100/80'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                <span>Pendientes</span>
+                <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                  filtroSolicitudes === 'PENDIENTE' ? 'bg-white/20 font-black' : 'bg-blue-100 dark:bg-blue-900/60'
+                }`}>
+                  {solicitudes.filter(s => (s.estado === 'PENDIENTE' || (!s.estado && !s.atendido))).length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('EN_PROCESO')}
+                className={`text-xs py-2 px-3.5 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 ${
+                  filtroSolicitudes === 'EN_PROCESO'
+                    ? 'bg-amber-600 text-white shadow-md shadow-amber-600/25 scale-[1.02]'
+                    : 'bg-amber-50/80 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-800/60 hover:bg-amber-100/80'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span>En Proceso</span>
+                <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                  filtroSolicitudes === 'EN_PROCESO' ? 'bg-white/20 font-black' : 'bg-amber-100 dark:bg-amber-900/60'
+                }`}>
+                  {solicitudes.filter(s => s.estado === 'EN_PROCESO').length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('ATENDIDA')}
+                className={`text-xs py-2 px-3.5 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 ${
+                  filtroSolicitudes === 'ATENDIDA'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 scale-[1.02]'
+                    : 'bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/60 hover:bg-emerald-100/80'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>Atendidas</span>
+                <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                  filtroSolicitudes === 'ATENDIDA' ? 'bg-white/20 font-black' : 'bg-emerald-100 dark:bg-emerald-900/60'
+                }`}>
+                  {solicitudes.filter(s => s.estado === 'ATENDIDA' || (s.atendido && !s.estado)).length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroSolicitudes('REABIERTA')}
+                className={`text-xs py-2 px-3.5 rounded-xl font-bold transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 ${
+                  filtroSolicitudes === 'REABIERTA'
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/25 scale-[1.02]'
+                    : 'bg-purple-50/80 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/70 dark:border-purple-800/60 hover:bg-purple-100/80'
+                }`}
+              >
+                <RotateCcw size={13} />
+                <span>Reabiertas</span>
+                <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
+                  filtroSolicitudes === 'REABIERTA' ? 'bg-white/20 font-black' : 'bg-purple-100 dark:bg-purple-900/60'
+                }`}>
+                  {solicitudes.filter(s => s.estado === 'REABIERTA').length}
+                </span>
+              </button>
+            </div>
+
+            {/* 3. Fila de Fechas: Centro de Control Temporal Inteligente */}
+            <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 bg-zinc-50/60 dark:bg-zinc-800/30 p-3.5 sm:p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800/50">
+              
+              {/* Presets Rápidos */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setFiltroSolicitudes('TODAS')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'TODAS'
-                      ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-md scale-[1.02]'
-                      : 'bg-zinc-100 dark:bg-zinc-800/70 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                    }`}
-                >
-                  <span>Todas</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'TODAS' ? 'bg-white/20 dark:bg-black/20 font-extrabold' : 'bg-zinc-200 dark:bg-zinc-700'
-                    }`}>
-                    {solicitudes.length}
-                  </span>
-                </button>
+                <span className="text-[0.68rem] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mr-1 flex items-center gap-1">
+                  <Calendar size={13} className="text-blue-500" />
+                  Rango:
+                </span>
 
-                <button
-                  type="button"
-                  onClick={() => setFiltroSolicitudes('PENDIENTE')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'PENDIENTE'
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20 scale-[1.02]'
-                      : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60 hover:bg-blue-100'
-                    }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                  <span>Pendientes</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'PENDIENTE' ? 'bg-white/20 font-extrabold' : 'bg-blue-100 dark:bg-blue-900/60'
-                    }`}>
-                    {solicitudes.filter(s => (s.estado === 'PENDIENTE' || (!s.estado && !s.atendido))).length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFiltroSolicitudes('EN_PROCESO')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'EN_PROCESO'
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/20 scale-[1.02]'
-                      : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 hover:bg-amber-100'
-                    }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                  <span>En Proceso</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'EN_PROCESO' ? 'bg-white/20 font-extrabold' : 'bg-amber-100 dark:bg-amber-900/60'
-                    }`}>
-                    {solicitudes.filter(s => s.estado === 'EN_PROCESO').length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFiltroSolicitudes('ATENDIDA')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'ATENDIDA'
-                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20 scale-[1.02]'
-                      : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100'
-                    }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span>Atendidas</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'ATENDIDA' ? 'bg-white/20 font-extrabold' : 'bg-emerald-100 dark:bg-emerald-900/60'
-                    }`}>
-                    {solicitudes.filter(s => s.estado === 'ATENDIDA' || (s.atendido && !s.estado)).length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFiltroSolicitudes('REABIERTA')}
-                  className={`text-xs py-2 px-3.5 rounded-xl font-black transition-all cursor-pointer inline-flex items-center gap-2 ${filtroSolicitudes === 'REABIERTA'
-                      ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20 scale-[1.02]'
-                      : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60 hover:bg-purple-100'
-                    }`}
-                >
-                  <RotateCcw size={13} />
-                  <span>Reabiertas</span>
-                  <span className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${filtroSolicitudes === 'REABIERTA' ? 'bg-white/20 font-extrabold' : 'bg-purple-100 dark:bg-purple-900/60'
-                    }`}>
-                    {solicitudes.filter(s => s.estado === 'REABIERTA').length}
-                  </span>
-                </button>
-              </div>
-
-              {/* Control Integrado de Fechas Exigentes & Accesos Rápidos (Derecha) */}
-              <div className="flex items-center gap-2 flex-wrap shrink-0 justify-start xl:justify-end">
-                {/* Selector Fecha Desde */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[0.65rem] font-extrabold uppercase text-zinc-500 dark:text-zinc-400">Desde:</span>
-                  <input
-                    type="date"
-                    value={fechaInicioSolicitud}
-                    min={rangoFechasSolicitudes.primera}
-                    max={rangoFechasSolicitudes.ultima}
-                    onChange={(e) => setFechaInicioSolicitud(e.target.value)}
-                    className="px-2.5 py-1.5 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Selector Fecha Hasta */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[0.65rem] font-extrabold uppercase text-zinc-500 dark:text-zinc-400">Hasta:</span>
-                  <input
-                    type="date"
-                    value={fechaFinSolicitud}
-                    min={rangoFechasSolicitudes.primera}
-                    max={rangoFechasSolicitudes.ultima}
-                    onChange={(e) => setFechaFinSolicitud(e.target.value)}
-                    className="px-2.5 py-1.5 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Botón Acción Todo el Historial */}
+                {/* Historial Completo */}
                 <button
                   type="button"
                   onClick={() => {
                     setFechaInicioSolicitud('');
                     setFechaFinSolicitud('');
                   }}
-                  className={`text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer border ${!fechaInicioSolicitud && !fechaFinSolicitud
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
-                    }`}
-                  title="Mostrar todo el historial disponible"
+                  className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer border ${
+                    !fechaInicioSolicitud && !fechaFinSolicitud
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-600/20'
+                      : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700/60'
+                  }`}
+                  title="Mostrar todas las solicitudes sin límite de fecha"
                 >
-                  Todo
+                  Historial Completo
                 </button>
 
-                {/* Botón Acción Rango Exigente */}
+                {/* Período Registrado */}
                 <button
                   type="button"
                   onClick={() => {
@@ -4056,32 +4419,178 @@ export const CoordinadorDashboard = () => {
                       setFechaFinSolicitud(rangoFechasSolicitudes.ultima);
                     }
                   }}
-                  className="text-xs py-1.5 px-3 rounded-xl font-extrabold transition-all cursor-pointer border bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
-                  title="Filtra desde la fecha de la primera solicitud hasta la última"
+                  className={`text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer border ${
+                    fechaInicioSolicitud === rangoFechasSolicitudes.primera && fechaFinSolicitud === rangoFechasSolicitudes.ultima
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-600/20'
+                      : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700/60'
+                  }`}
+                  title="Filtrar exactamente entre la primera y última fecha registrada"
                 >
-                  Rango Exigente
+                  Período con Registros
                 </button>
 
-                {/* Botón Limpiar Todo cuando hay filtros activos */}
-                {(searchSolicitudQuery || fechaInicioSolicitud || fechaFinSolicitud || filtroSolicitudes !== 'TODAS') && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchSolicitudQuery('');
-                      setFechaInicioSolicitud('');
-                      setFechaFinSolicitud('');
-                      setFiltroSolicitudes('TODAS');
-                    }}
-                    className="py-1.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 text-xs font-black transition-all hover:bg-red-100 cursor-pointer inline-flex items-center gap-1"
-                    title="Reiniciar todos los filtros activados"
-                  >
-                    <X size={13} />
-                    <span>Limpiar</span>
-                  </button>
-                )}
+                {/* Últimos 7 días */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const baseDate = rangoFechasSolicitudes.ultima ? new Date(rangoFechasSolicitudes.ultima + 'T00:00:00') : new Date();
+                    const startDate = new Date(baseDate);
+                    startDate.setDate(startDate.getDate() - 6);
+                    setFechaInicioSolicitud(startDate.toISOString().split('T')[0]);
+                    setFechaFinSolicitud(baseDate.toISOString().split('T')[0]);
+                  }}
+                  className="text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer border bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700/60"
+                  title="Filtrar por los últimos 7 días de actividad"
+                >
+                  Últimos 7 días
+                </button>
+
+                {/* Últimos 30 días */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const baseDate = rangoFechasSolicitudes.ultima ? new Date(rangoFechasSolicitudes.ultima + 'T00:00:00') : new Date();
+                    const startDate = new Date(baseDate);
+                    startDate.setDate(startDate.getDate() - 29);
+                    setFechaInicioSolicitud(startDate.toISOString().split('T')[0]);
+                    setFechaFinSolicitud(baseDate.toISOString().split('T')[0]);
+                  }}
+                  className="text-xs py-1.5 px-3 rounded-xl font-bold transition-all cursor-pointer border bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700/60"
+                  title="Filtrar por los últimos 30 días de actividad"
+                >
+                  Últimos 30 días
+                </button>
+              </div>
+
+              {/* Selector Personalizado Dual (Desde → Hasta) */}
+              <div className="flex items-center gap-2 shrink-0 justify-start xl:justify-end flex-wrap sm:flex-nowrap">
+                <div className="flex items-center gap-2 bg-white dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-1.5 px-3 shadow-xs">
+                  {/* Desde */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[0.62rem] font-black uppercase text-blue-600 dark:text-blue-400 tracking-wider">
+                      Desde
+                    </span>
+                    <input
+                      type="date"
+                      value={fechaInicioSolicitud}
+                      min={rangoFechasSolicitudes.primera}
+                      max={fechaFinSolicitud || rangoFechasSolicitudes.ultima}
+                      onChange={(e) => setFechaInicioSolicitud(e.target.value)}
+                      className="bg-transparent text-xs text-zinc-900 dark:text-zinc-100 font-bold focus:outline-none cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Separador Visual */}
+                  <ArrowRight size={13} className="text-zinc-400 shrink-0 mx-0.5" />
+
+                  {/* Hasta */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[0.62rem] font-black uppercase text-blue-600 dark:text-blue-400 tracking-wider">
+                      Hasta
+                    </span>
+                    <input
+                      type="date"
+                      value={fechaFinSolicitud}
+                      min={fechaInicioSolicitud || rangoFechasSolicitudes.primera}
+                      max={rangoFechasSolicitudes.ultima}
+                      onChange={(e) => setFechaFinSolicitud(e.target.value)}
+                      className="bg-transparent text-xs text-zinc-900 dark:text-zinc-100 font-bold focus:outline-none cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Quitar filtro solo de fechas */}
+                  {(fechaInicioSolicitud || fechaFinSolicitud) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFechaInicioSolicitud('');
+                        setFechaFinSolicitud('');
+                      }}
+                      className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors cursor-pointer ml-1"
+                      title="Quitar filtro de fechas"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
               </div>
 
             </div>
+
+            {/* 4. Barra Informativa de Filtros Activos con Botón de Reinicio Rápido */}
+            {(searchSolicitudQuery || fechaInicioSolicitud || fechaFinSolicitud || filtroSolicitudes !== 'TODAS') && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 px-4 py-2.5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-800/40 text-xs text-blue-900 dark:text-blue-200 font-medium"
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold flex items-center gap-1">
+                    <Filter size={13} className="text-blue-600 dark:text-blue-400" />
+                    Filtros aplicados:
+                  </span>
+                  <span className="font-bold text-blue-700 dark:text-blue-300">
+                    Mostrando {solicitudesFiltradas.length} de {solicitudes.length} solicitudes
+                  </span>
+
+                  {filtroSolicitudes !== 'TODAS' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-200/60 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 text-[0.7rem] font-bold">
+                      Estado: {filtroSolicitudes}
+                      <button
+                        type="button"
+                        onClick={() => setFiltroSolicitudes('TODAS')}
+                        className="hover:text-red-500 cursor-pointer ml-0.5"
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  )}
+
+                  {(fechaInicioSolicitud || fechaFinSolicitud) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-200/60 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 text-[0.7rem] font-bold">
+                      Período: {fechaInicioSolicitud ? formatearFechaHumana(fechaInicioSolicitud) : 'Inicio'} → {fechaFinSolicitud ? formatearFechaHumana(fechaFinSolicitud) : 'Hoy'}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFechaInicioSolicitud('');
+                          setFechaFinSolicitud('');
+                        }}
+                        className="hover:text-red-500 cursor-pointer ml-0.5"
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  )}
+
+                  {searchSolicitudQuery && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-200/60 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 text-[0.7rem] font-bold">
+                      Texto: "{searchSolicitudQuery}"
+                      <button
+                        type="button"
+                        onClick={() => setSearchSolicitudQuery('')}
+                        className="hover:text-red-500 cursor-pointer ml-0.5"
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchSolicitudQuery('');
+                    setFechaInicioSolicitud('');
+                    setFechaFinSolicitud('');
+                    setFiltroSolicitudes('TODAS');
+                  }}
+                  className="text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 inline-flex items-center gap-1 py-1 px-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors cursor-pointer shrink-0"
+                >
+                  <RotateCcw size={12} />
+                  Restablecer todos
+                </button>
+              </motion.div>
+            )}
           </motion.div>
 
           <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -4389,7 +4898,7 @@ export const CoordinadorDashboard = () => {
                           >
                             {PAISES_IDENTIFICACION.map(p => (
                               <option key={p.code} value={p.code}>
-                                {p.flag} {p.docTipo}
+                                [{p.flag}] {p.docTipo}
                               </option>
                             ))}
                           </select>
@@ -4955,7 +5464,7 @@ export const CoordinadorDashboard = () => {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100 border border-amber-300 dark:border-amber-700">
-                              ⚠️ Líder a Inhabilitar
+                              Líder a Inhabilitar
                             </span>
                             <strong className="text-sm font-black text-amber-950 dark:text-amber-100">
                               {liderAInhabilitar.nombre} {liderAInhabilitar.apellido}
@@ -4975,13 +5484,13 @@ export const CoordinadorDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Tarjeta Destacada de Asignación Masiva Rápida (Zap Atajo) */}
+                    {/* Tarjeta Destacada de Asignación Masiva Rápida (Atajo para todo el portafolio) */}
                     <div className="p-5 rounded-3xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/90 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 border border-blue-200/90 dark:border-blue-800/80 space-y-3 shadow-sm">
                       <div className="flex items-center gap-2.5">
                         <Sparkles size={18} className="text-amber-500 shrink-0 animate-pulse" />
                         <div>
                           <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-xs block">
-                            ⚡ Asignación Masiva Rápida (Atajo para todo el portafolio)
+                            Asignación Masiva Rápida (Atajo para todo el portafolio)
                           </span>
                           <span className="text-[0.68rem] text-zinc-500 font-medium block">
                             Asigna un mismo Líder receptor a los {proyectosDelLiderAfectado.length} proyectos con un solo clic. Puedes cambiar individualmente cada uno abajo.
@@ -5012,7 +5521,7 @@ export const CoordinadorDashboard = () => {
                           Matriz de Asignación Granular ({proyectosDelLiderAfectado.length} Proyectos Obligatorios):
                         </span>
                         <span className="text-[0.68rem] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
-                          ⚠️ Ningún proyecto se puede quedar sin asignar
+                          Ningún proyecto se puede quedar sin asignar
                         </span>
                       </div>
 
@@ -5059,7 +5568,7 @@ export const CoordinadorDashboard = () => {
                                     </label>
                                     {!estaAsignado && (
                                       <span className="text-[0.62rem] font-bold text-amber-600 dark:text-amber-400">
-                                        ⚠️ Selecciona un Líder
+                                        Asigna un Líder
                                       </span>
                                     )}
                                   </div>
@@ -5072,7 +5581,7 @@ export const CoordinadorDashboard = () => {
                                         : 'border-amber-400 dark:border-amber-600 bg-amber-50/50 dark:bg-amber-950/30'
                                       }`}
                                   >
-                                    <option value="">— ⚠️ Seleccionar Líder Receptor Obligatorio —</option>
+                                    <option value="">— Seleccionar Líder Receptor Obligatorio —</option>
                                     {otrosLideresList.map(l => (
                                       <option key={l.idTrabajador} value={l.idTrabajador}>
                                         {l.nombre} {l.apellido} — ({l.profesion || 'Líder de Proyecto'}) &bull; [{l.email}]
@@ -5349,7 +5858,7 @@ export const CoordinadorDashboard = () => {
                         ID: #{selectedTrabajadorModal.identificacion || selectedTrabajadorModal.idTrabajador}
                       </span>
                       <span>&bull;</span>
-                      <span>Tipo Contrato: <strong className="text-zinc-800 dark:text-zinc-200">{selectedTrabajadorModal.tipoTrabajador || 'PLANTA'}</strong></span>
+                      <span>Profesión: <strong className="text-zinc-800 dark:text-zinc-200">{selectedTrabajadorModal.profesion || selectedTrabajadorModal.especialidad || 'Especialista de Software'}</strong></span>
                     </div>
                   </div>
                 </div>
@@ -5677,9 +6186,6 @@ export const CoordinadorDashboard = () => {
                   <Layers size={20} className="text-blue-600" />
                   <span>Registrar Nueva Etapa WBS</span>
                 </h3>
-                <button type="button" onClick={() => setShowNuevaEtapaModalCoord(false)} className="text-zinc-400 hover:text-zinc-600 p-1">
-                  <X size={18} />
-                </button>
               </div>
 
               <form onSubmit={handleRegistrarEtapaCoord} className="space-y-4 text-xs">
@@ -5739,13 +6245,6 @@ export const CoordinadorDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowNuevaActividadModalCoord(false)}
-                  className="p-2 rounded-2xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
-                >
-                  <X size={18} />
-                </button>
               </div>
 
               <form onSubmit={handleRegistrarActividadCoord} className="space-y-5 text-xs">
@@ -5802,7 +6301,7 @@ export const CoordinadorDashboard = () => {
                           value: String(et.idEtapa),
                           label: `Fase #${et.idEtapa}: ${et.nombreEtapa}`,
                           subtitle: isFin
-                            ? '⚠️ Etapa Finalizada (Se reabrirá a EN_PROCESO al asignar)'
+                            ? '[ ATENCIÓN ] Etapa Finalizada (Se reabrirá a EN_PROCESO al asignar)'
                             : `Estado: ${et.estado || 'PENDIENTE'} • ${et.actividades ? et.actividades.length : 0} tareas vinculadas`
                         };
                       })
@@ -5903,9 +6402,6 @@ export const CoordinadorDashboard = () => {
                   <Edit3 size={20} className="text-blue-600" />
                   <span>Editar Etapa WBS</span>
                 </h3>
-                <button type="button" onClick={() => setShowEditarEtapaModalCoord(false)} className="text-zinc-400 hover:text-zinc-600 p-1">
-                  <X size={18} />
-                </button>
               </div>
 
               <form onSubmit={handleActualizarEtapaCoord} className="space-y-4 text-xs">
@@ -6091,9 +6587,6 @@ export const CoordinadorDashboard = () => {
                   <RotateCcw size={20} className="text-purple-600" />
                   <span>Reasignar Tarea a Desarrollador</span>
                 </h3>
-                <button type="button" onClick={() => setShowReasignarActividadModalCoord(false)} className="text-zinc-400 hover:text-zinc-600 p-1">
-                  <X size={18} />
-                </button>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs">
@@ -6642,13 +7135,6 @@ export const CoordinadorDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmFinalizarCoord(false)}
-                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer absolute top-6 right-6"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               {/* Cuerpo Organizado en 2 Columnas */}
@@ -6883,6 +7369,18 @@ export const CoordinadorDashboard = () => {
         )}
 
       </AnimatePresence>
+
+      {/* ─── Modal de Doble Confirmación: Finalizar Etapa WBS ─── */}
+      <ConfirmActionModal
+        isOpen={!!etapaAConfirmarFinalizar}
+        onClose={() => setEtapaAConfirmarFinalizar(null)}
+        onConfirm={handleConfirmarFinalizarEtapaCoord}
+        variant="warning"
+        title="Finalizar Etapa WBS"
+        description={`¿Confirma la finalización formal de la etapa "${etapaAConfirmarFinalizar?.nombreEtapa || `Fase #${etapaAConfirmarFinalizar?.idEtapa}`}"? El estado cambiará a FINALIZADA y se registrará en el historial de auditoría.`}
+        confirmLabel="Sí, Finalizar Etapa"
+        cancelLabel="Cancelar"
+      />
 
     </DashboardLayout>
   );
