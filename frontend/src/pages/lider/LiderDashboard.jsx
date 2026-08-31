@@ -485,7 +485,7 @@ const DeveloperCombobox = ({
 
         <div className="flex items-center gap-1.5 text-zinc-400 shrink-0 pl-2">
           <span className="text-[0.68rem] font-bold text-blue-600 dark:text-blue-400">
-            {openState ? 'Ocultar lista' : 'Desplegar lista a la derecha'}
+            {openState ? 'Ocultar panel lateral' : 'Desplegar panel a la derecha'}
           </span>
           <ChevronRight size={16} className={`transition-transform duration-300 ${openState ? 'rotate-90 text-blue-600 dark:text-blue-400' : ''}`} />
         </div>
@@ -5365,7 +5365,6 @@ export const LiderDashboard = () => {
                         error={!!formErrors.idDesarrollador}
                         isOpen={isAsignarTareaDevListOpen}
                         setIsOpen={setIsAsignarTareaDevListOpen}
-                        inlineList={true}
                       />
                       {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
 
@@ -5526,7 +5525,6 @@ export const LiderDashboard = () => {
                         placeholder="— Seleccione un desarrollador para vincular —"
                         isOpen={isAsignarProyectoDevListOpen}
                         setIsOpen={setIsAsignarProyectoDevListOpen}
-                        inlineList={true}
                       />
                     </div>
 
