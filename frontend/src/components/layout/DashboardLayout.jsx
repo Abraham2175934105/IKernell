@@ -247,7 +247,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
           <div className="px-3 space-y-5">
             <div>
               <span className={`text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 mb-2 transition-opacity duration-300 ${
-                sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')
+                !isExpanded && !sidebarOpen ? 'hidden' : 'block'
               }`}>
                 Panel del {user?.rol || 'Usuario'}
               </span>
@@ -271,12 +271,14 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                           setSidebarOpen(false);
                         });
                       }}
-                      className={`w-full flex items-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        sidebarOpen ? 'gap-3 px-3.5 py-2.5' : (isExpanded ? 'justify-center lg:px-3.5' : 'justify-center')
-                      } ${isActive ? 'bg-blue-600 text-white shadow-md' : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50'}`}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        !isExpanded && !sidebarOpen ? 'justify-center px-0' : 'justify-start'
+                      } ${isActive ? 'bg-blue-600 text-white shadow-md' : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50 dark:hover:bg-zinc-800/60'}`}
                     >
-                      <Icon size={18} />
-                      <div className={`transition-all ${sidebarOpen || (isExpanded && !isCollapsed) ? 'block' : 'hidden'}`}>{item.label}</div>
+                      <Icon size={18} className="shrink-0" />
+                      <span className={`truncate transition-all ${!isExpanded && !sidebarOpen ? 'hidden' : 'block'}`}>
+                        {item.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -284,7 +286,9 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             </div>
 
             <div>
-              <span className={`text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 mb-2 ${sidebarOpen || (isExpanded && !isCollapsed) ? 'block' : 'hidden'}`}>
+              <span className={`text-[0.6rem] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 px-3 mb-2 transition-opacity duration-300 ${
+                !isExpanded && !sidebarOpen ? 'hidden' : 'block'
+              }`}>
                 Herramientas
               </span>
               
@@ -301,10 +305,14 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                           setSidebarOpen(false);
                         });
                       }}
-                      className={`w-full flex items-center rounded-xl text-xs font-bold transition-all cursor-pointer ${isActive ? 'bg-blue-600 text-white' : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50'}`}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        !isExpanded && !sidebarOpen ? 'justify-center px-0' : 'justify-start'
+                      } ${isActive ? 'bg-blue-600 text-white shadow-md' : 'text-zinc-600 dark:text-zinc-400 hover:bg-blue-50 dark:hover:bg-zinc-800/60'}`}
                     >
-                      <Icon size={18} />
-                      <span className={`transition-all ${sidebarOpen || (isExpanded && !isCollapsed) ? 'block' : 'hidden'}`}>{tool.label}</span>
+                      <Icon size={18} className="shrink-0" />
+                      <span className={`truncate transition-all ${!isExpanded && !sidebarOpen ? 'hidden' : 'block'}`}>
+                        {tool.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -317,10 +325,14 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
           <button
             type="button"
             onClick={() => confirmOrNavigate(() => handleLogoutClick())}
-            className="w-full flex items-center justify-center rounded-xl text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 p-2.5 cursor-pointer"
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 cursor-pointer transition-all ${
+              !isExpanded && !sidebarOpen ? 'justify-center px-0' : 'justify-start'
+            }`}
           >
-            <LogOut size={16} />
-            <span className={`transition-all ml-2 ${sidebarOpen || (isExpanded && !isCollapsed) ? 'block' : 'hidden'}`}>Cerrar Sesión</span>
+            <LogOut size={18} className="shrink-0" />
+            <span className={`truncate transition-all ${!isExpanded && !sidebarOpen ? 'hidden' : 'block'}`}>
+              Cerrar Sesión
+            </span>
           </button>
         </div>
 
