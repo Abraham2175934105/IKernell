@@ -216,7 +216,7 @@ public class LiderService {
     // Finaliza formalmente un proyecto de software, congela su estructura WBS y
     // libera la carga horaria de los desarrolladores asignados (RF-20)
     @Transactional
-    public Proyecto finalizarProyecto(Long idProyecto) {
+    public Proyecto finalizarProyecto(Long idProyecto, Map<String, Object> payload) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
 
@@ -225,12 +225,29 @@ public class LiderService {
             throw new IllegalStateException("El proyecto ya se encuentra finalizado.");
         }
 
-        // Validar estrictamente la estructura WBS antes de finalizar
         List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
+        
+        // Si el proyecto no tiene etapas WBS (Proyecto Vacío), se exige Registro Obligatorio de Auditoría de Cierre Prematuro
         if (etapas == null || etapas.isEmpty()) {
-            throw new IllegalStateException("No se puede finalizar el proyecto porque no posee ninguna etapa WBS configurada.");
+            String justificacion = payload != null && payload.get("justificacionCancelacion") != null 
+                ? payload.get("justificacionCancelacion").toString().trim() : "";
+            
+            if (justificacion.length() < 10) {
+                throw new IllegalStateException("Para cerrar un proyecto sin estructura WBS es estrictamente obligatorio registrar un motivo y una justificación detallada de al menos 10 caracteres.");
+            }
+
+            proyecto.setEstado("FINALIZADO");
+
+            // Liberar asignaciones de desarrolladores si las hubiera
+            List<ProyectoDesarrollador> asignaciones = proyectoDesarrolladorRepository.findByProyecto(proyecto);
+            if (!asignaciones.isEmpty()) {
+                proyectoDesarrolladorRepository.deleteAll(asignaciones);
+            }
+
+            return proyectoRepository.save(proyecto);
         }
 
+        // Si tiene etapas, se exige verificación estricta del 100% de la WBS
         for (Etapa etapa : etapas) {
             boolean isEtapaFin = "FINALIZADA".equalsIgnoreCase(etapa.getEstado()) || "COMPLETADA".equalsIgnoreCase(etapa.getEstado());
             List<Actividad> actividades = etapa.getActividades();
@@ -257,16 +274,18 @@ public class LiderService {
             etapaRepository.save(etapa);
         }
 
-        // 3. Liberar carga de los desarrolladores asignados eliminando las relaciones
-        // en proyecto_desarrollador
+        // 3. Liberar carga de los desarrolladores asignados
         List<ProyectoDesarrollador> asignaciones = proyectoDesarrolladorRepository.findByProyecto(proyecto);
         if (!asignaciones.isEmpty()) {
             proyectoDesarrolladorRepository.deleteAll(asignaciones);
         }
 
-        // 4. Guardar y retornar proyecto finalizado (datos históricos preservados para
-        // auditoría y ETL Brasil)
         return proyectoRepository.save(proyecto);
+    }
+
+    @Transactional
+    public Proyecto finalizarProyecto(Long idProyecto) {
+        return finalizarProyecto(idProyecto, null);
     }
 
     // Pausa un proyecto activo cambiando su estado a EN_PAUSA

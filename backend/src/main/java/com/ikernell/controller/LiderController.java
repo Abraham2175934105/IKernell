@@ -131,8 +131,8 @@ public class LiderController {
         summary = "Finalizar Proyecto Formalmente", 
         description = "Cierra el ciclo de vida del proyecto, congela sus fases WBS en estado FINALIZADA y libera la asignación horaria de los desarrolladores para regular el Burnout (RF-20)"
     )
-    public ResponseEntity<Proyecto> finalizarProyecto(@PathVariable Long id) {
-        Proyecto finalizado = liderService.finalizarProyecto(id);
+    public ResponseEntity<Proyecto> finalizarProyecto(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> payload) {
+        Proyecto finalizado = liderService.finalizarProyecto(id, payload);
         return ResponseEntity.ok(finalizado);
     }
 
