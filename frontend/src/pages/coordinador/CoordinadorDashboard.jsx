@@ -436,8 +436,11 @@ export const CoordinadorDashboard = () => {
       return { tareas: [], horasProgreso: 0, horasPendientes: 0, horasCompletadas: 0, horasActivas: 0, horasLibres: 48, pctActivas: 0 };
     }
 
-    const targetId = selectedTrabajadorModal.idTrabajador || selectedTrabajadorModal.id;
-    const targetEmail = selectedTrabajadorModal.email ? String(selectedTrabajadorModal.email).toLowerCase().trim() : '';
+    const targetId = String(selectedTrabajadorModal.idTrabajador || selectedTrabajadorModal.id || '');
+    const targetIdent = String(selectedTrabajadorModal.identificacion || '').trim();
+    const targetEmail = String(selectedTrabajadorModal.email || '').toLowerCase().trim();
+    const targetNombre = String(selectedTrabajadorModal.nombre || '').toLowerCase().trim();
+    const targetApellido = String(selectedTrabajadorModal.apellido || '').toLowerCase().trim();
 
     const allAssignedTasks = [];
     let hProgreso = 0;
@@ -449,14 +452,25 @@ export const CoordinadorDashboard = () => {
         prj.etapas.forEach(etapa => {
           if (Array.isArray(etapa.actividades)) {
             etapa.actividades.forEach(act => {
-              const devId = act.idDesarrollador || act.desarrollador?.idTrabajador || act.desarrollador?.id;
-              const devEmail = act.desarrollador?.email ? String(act.desarrollador.email).toLowerCase().trim() : '';
+              const devObj = act.desarrollador || {};
+              const devId = String(act.idDesarrollador || act.desarrollador_id || act.desarrolladorId || devObj.idTrabajador || devObj.id || '');
+              const devIdent = String(devObj.identificacion || act.identificacion || '').trim();
+              const devEmail = String(devObj.email || act.email || '').toLowerCase().trim();
+              const devNombre = String(devObj.nombre || act.desarrolladorNombre || '').toLowerCase().trim();
+              const devApellido = String(devObj.apellido || act.desarrolladorApellido || '').toLowerCase().trim();
 
-              const isMatch = (targetId && devId && String(targetId) === String(devId)) ||
-                              (targetEmail && devEmail && targetEmail === devEmail);
+              const firstTargetNombre = targetNombre.split(' ')[0] || '';
+              const firstTargetApellido = targetApellido.split(' ')[0] || '';
+
+              const isMatch = (targetId && devId && targetId === devId) ||
+                              (targetIdent && devIdent && targetIdent === devIdent) ||
+                              (targetEmail && devEmail && targetEmail === devEmail) ||
+                              (firstTargetNombre && devNombre && devNombre.includes(firstTargetNombre) && firstTargetApellido && devApellido.includes(firstTargetApellido));
 
               if (isMatch) {
-                const horas = Number(act.horasEstimadas || act.horas || 0);
+                let horas = Number(act.horasEstimadas || act.horas || act.horas_estimadas || act.duracionHoras || 0);
+                if (horas <= 0) horas = 12; // Estimación por defecto realista de 12h si no fue especificada
+
                 const estado = (act.estado || 'PENDIENTE').toUpperCase();
 
                 if (estado.includes('PROGRESO') || estado.includes('CURSO') || estado.includes('IN_PROGRESS')) {
@@ -471,10 +485,10 @@ export const CoordinadorDashboard = () => {
                   ...act,
                   horas,
                   estadoNorm: estado.includes('PROGRESO') ? 'EN_PROGRESO' : estado.includes('COMPLET') ? 'COMPLETADA' : 'PENDIENTE',
-                  proyectoId: prj.idProyecto,
+                  proyectoId: prj.idProyecto || prj.id,
                   proyectoNombre: prj.nombre,
-                  etapaId: etapa.idEtapa,
-                  etapaNombre: etapa.nombre
+                  etapaId: etapa.idEtapa || etapa.id,
+                  etapaNombre: etapa.nombreEtapa || etapa.nombre
                 });
               }
             });
