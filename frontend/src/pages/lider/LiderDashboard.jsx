@@ -1225,7 +1225,7 @@ export const LiderDashboard = () => {
 
   const handleAbrirHistorialCambiosLider = async (idProyecto) => {
     if (!idProyecto || idProyecto === 'GLOBAL') {
-      toast.info('Seleccione un proyecto específico para consultar los cambios de coordinación.');
+      toast.info('Seleccione un proyecto específico para consultar el registro de cambios.');
       return;
     }
     try {
@@ -3512,7 +3512,7 @@ export const LiderDashboard = () => {
                       </div>
                     )}
 
-                    {/* Botón: Cambios de Coordinación (Auditoría Directiva con Contador de Novedades & Animaciones Avanzadas) */}
+                    {/* Botón: Registro de Cambios (Auditoría General con Contador de Novedades & Animaciones Avanzadas) */}
                     <motion.button
                       whileHover={{ scale: 1.04, y: -2 }}
                       whileTap={{ scale: 0.96 }}
@@ -3520,10 +3520,10 @@ export const LiderDashboard = () => {
                       type="button"
                       onClick={() => handleAbrirHistorialCambiosLider(proyectoSeleccionado.idProyecto)}
                       className="outline-button group text-xs py-2 px-3.5 font-bold inline-flex items-center gap-2 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 bg-purple-50/40 hover:bg-purple-100/80 dark:bg-purple-950/30 hover:border-purple-400 dark:hover:border-purple-600 cursor-pointer shadow-2xs hover:shadow-lg hover:shadow-purple-500/20 rounded-2xl transition-all"
-                      title="Ver el historial acumulado de modificaciones registradas por la Coordinación General"
+                      title="Ver el historial acumulado de modificaciones y auditoría registradas en el proyecto"
                     >
                       <ClipboardList size={15} className="text-purple-600 dark:text-purple-400 shrink-0 group-hover:scale-115 group-hover:-rotate-12 transition-transform duration-300" />
-                      <span>Cambios de Coordinación</span>
+                      <span>Registro de Cambios</span>
                       {unreadHistorialCount > 0 && (
                         <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white font-extrabold text-[0.62rem] animate-pulse shadow-xs">
                           {unreadHistorialCount} nuevo{unreadHistorialCount > 1 ? 's' : ''}
@@ -8628,10 +8628,10 @@ export const LiderDashboard = () => {
                     </div>
                     <div>
                       <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                        Historial de Cambios Realizados por Coordinación
+                        Registro de Cambios del Proyecto
                       </h3>
                       <p className="text-xs text-zinc-500 font-medium mt-0.5">
-                        Registro de auditoría acumulado con marca de tiempo e identificación directiva
+                        Registro completo de auditoría acumulado con marca de tiempo e identificación del responsable
                       </p>
                     </div>
                   </div>

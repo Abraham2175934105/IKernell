@@ -3352,7 +3352,7 @@ export const CoordinadorDashboard = () => {
                       title="Ver el historial de auditoría de modificaciones registradas"
                     >
                       <ClipboardList size={15} className="text-purple-600" />
-                      <span>Cambios de Coordinación</span>
+                      <span>Registro de Cambios</span>
                     </button>
 
                     <button
@@ -6197,10 +6197,10 @@ export const CoordinadorDashboard = () => {
                   </div>
                   <div>
                     <h3 className="text-base font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                      Historial de Cambios de Coordinación
+                      Registro de Cambios del Proyecto
                     </h3>
                     <p className="text-xs text-zinc-500 font-medium">
-                      Auditoría acumulada de modificaciones directivas registradas
+                      Registro completo de auditoría acumulado con marca de tiempo e identificación del responsable
                     </p>
                   </div>
                 </div>
@@ -6222,8 +6222,8 @@ export const CoordinadorDashboard = () => {
                 ) : historialCambiosModal.length === 0 ? (
                   <div className="p-8 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs space-y-1">
                     <ShieldCheck size={28} className="mx-auto text-zinc-300" />
-                    <p className="font-bold text-zinc-700 dark:text-zinc-300">Sin cambios de Coordinación registrados</p>
-                    <p>No se han registrado modificaciones directivas previas en este proyecto.</p>
+                    <p className="font-bold text-zinc-700 dark:text-zinc-300">Sin registros de cambios en este proyecto</p>
+                    <p>No se han registrado modificaciones o cambios previos en este proyecto.</p>
                   </div>
                 ) : (
                   historialCambiosModal.map((reg, idx) => (
