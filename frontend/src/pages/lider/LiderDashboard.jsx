@@ -13,7 +13,8 @@ import {
   RefreshCw, Loader2, UserCheck, UserPlus, Inbox, Bug, AlertTriangle, User, RotateCcw,
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2, PieChart, FileCheck,
   FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye, EyeOff,
-  ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield, Pause, Play, ClipboardList, FolderCheck, Mail
+  ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield, Pause, Play, ClipboardList, FolderCheck, Mail,
+  Figma, Server, Cloud, Database, TestTube2, Award, SlidersHorizontal, AlertCircle, XCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -592,27 +593,32 @@ const DeveloperSelectorModal = ({
               </span>
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs custom-scrollbar">
                 {[
-                  { key: 'TODOS', label: 'Todas las Cualidades' },
-                  { key: 'FIGMA', label: '🎨 Figma & UI/UX' },
-                  { key: 'FRONTEND', label: '⚡ Frontend (React/Vue)' },
-                  { key: 'BACKEND', label: '⚙️ Backend (Java/Node)' },
-                  { key: 'DEVOPS', label: '☁️ DevOps & Cloud' },
-                  { key: 'DATABASE', label: '🗄️ SQL & Bases de Datos' },
-                  { key: 'QA', label: '🧪 Pruebas & QA' }
-                ].map(item => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setSkillFilter(item.key)}
-                    className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-bold border transition-all cursor-pointer whitespace-nowrap ${
-                      skillFilter === item.key
-                        ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-400 dark:border-blue-700 font-extrabold ring-1 ring-blue-500/20 shadow-2xs'
-                        : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-300'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+                  { key: 'TODOS', label: 'Todas las Cualidades', icon: SlidersHorizontal },
+                  { key: 'FIGMA', label: 'Figma & UI/UX', icon: Figma },
+                  { key: 'FRONTEND', label: 'Frontend (React/Vue)', icon: Code2 },
+                  { key: 'BACKEND', label: 'Backend (Java/Spring)', icon: Server },
+                  { key: 'DEVOPS', label: 'DevOps & Cloud', icon: Cloud },
+                  { key: 'DATABASE', label: 'SQL & Bases de Datos', icon: Database },
+                  { key: 'QA', label: 'Pruebas & QA', icon: TestTube2 }
+                ].map(item => {
+                  const IconComp = item.icon;
+                  const isActive = skillFilter === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setSkillFilter(item.key)}
+                      className={`px-3 py-1.5 rounded-xl text-[0.68rem] font-bold border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-blue-600 text-white border-blue-600 font-extrabold shadow-xs ring-2 ring-blue-500/20'
+                          : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600'
+                      }`}
+                    >
+                      <IconComp size={13} className={isActive ? 'text-white' : 'text-blue-500 dark:text-blue-400'} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -692,8 +698,8 @@ const DeveloperSelectorModal = ({
 
                           {/* Badge de Afinidad por Cualidad Técnica */}
                           {matchesSkillFilter && (
-                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
-                              <Sparkles size={11} className="text-emerald-500" /> Afinidad 98% (Experto en Cualidad)
+                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
+                              <Award size={12} className="text-indigo-500 shrink-0" /> Afinidad 98% (Perfil Idóneo)
                             </span>
                           )}
 
@@ -708,12 +714,22 @@ const DeveloperSelectorModal = ({
                                 WBS: {horasTareasDev}h/sem
                               </span>
 
-                              <span className={`px-2.5 py-0.5 rounded-full font-black font-mono border ${
+                              <span className={`px-2.5 py-0.5 rounded-full font-bold font-mono border flex items-center gap-1 ${
                                 saldoLibreReserva > 0
-                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300'
                                   : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400'
                               }`}>
-                                {saldoLibreReserva > 0 ? `🟢 ${saldoLibreReserva}h Libres de su Reserva` : '🔴 0h Libres'}
+                                {saldoLibreReserva > 0 ? (
+                                  <>
+                                    <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                                    <span>{saldoLibreReserva}h Libres en Reserva</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <AlertCircle size={11} className="text-zinc-400 shrink-0" />
+                                    <span>0h Libres</span>
+                                  </>
+                                )}
                               </span>
                             </div>
                           ) : (
@@ -6028,24 +6044,32 @@ export const LiderDashboard = () => {
                       const desc = (nuevaActividad.descripcion || '').toLowerCase();
                       let detectedKey = '';
                       let detectedLabel = '';
+                      let DetectedIcon = Sparkles;
+
                       if (desc.includes('figma') || desc.includes('ui') || desc.includes('ux') || desc.includes('mockup') || desc.includes('pantalla') || desc.includes('diseñ')) {
                         detectedKey = 'FIGMA';
-                        detectedLabel = '🎨 Figma & UI/UX';
+                        detectedLabel = 'Figma & UI/UX';
+                        DetectedIcon = Figma;
                       } else if (desc.includes('react') || desc.includes('front') || desc.includes('componente') || desc.includes('web') || desc.includes('tailwind')) {
                         detectedKey = 'FRONTEND';
-                        detectedLabel = '⚡ Frontend (React/Vue)';
+                        detectedLabel = 'Frontend (React/Vue)';
+                        DetectedIcon = Code2;
                       } else if (desc.includes('openapi') || desc.includes('api') || desc.includes('rest') || desc.includes('spring') || desc.includes('back') || desc.includes('java') || desc.includes('microservicio')) {
                         detectedKey = 'BACKEND';
-                        detectedLabel = '⚙️ Backend (Java/Node)';
+                        detectedLabel = 'Backend (Java/Spring)';
+                        DetectedIcon = Server;
                       } else if (desc.includes('docker') || desc.includes('cloud') || desc.includes('devops') || desc.includes('aws') || desc.includes('ci/cd') || desc.includes('despliegue')) {
                         detectedKey = 'DEVOPS';
-                        detectedLabel = '☁️ DevOps & Cloud';
+                        detectedLabel = 'DevOps & Cloud';
+                        DetectedIcon = Cloud;
                       } else if (desc.includes('sql') || desc.includes('consulta') || desc.includes('database') || desc.includes('postgre') || desc.includes('db') || desc.includes('tuning')) {
                         detectedKey = 'DATABASE';
-                        detectedLabel = '🗄️ SQL & Bases de Datos';
+                        detectedLabel = 'SQL & Bases de Datos';
+                        DetectedIcon = Database;
                       } else if (desc.includes('junit') || desc.includes('mockito') || desc.includes('qa') || desc.includes('prueba') || desc.includes('test') || desc.includes('cypress')) {
                         detectedKey = 'QA';
-                        detectedLabel = '🧪 Pruebas & QA';
+                        detectedLabel = 'Pruebas & QA';
+                        DetectedIcon = TestTube2;
                       }
 
                       if (!detectedKey) return null;
@@ -6053,8 +6077,8 @@ export const LiderDashboard = () => {
                       return (
                         <div className="p-3 rounded-2xl bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 text-xs flex items-center justify-between gap-2 font-semibold shadow-2xs animate-fadeIn">
                           <span className="flex items-center gap-1.5 min-w-0 flex-1">
-                            <Sparkles size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                            <span className="truncate">Cualidad requerida: <strong>{detectedLabel}</strong></span>
+                            <DetectedIcon size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span className="truncate">Cualidad Requerida: <strong>{detectedLabel}</strong></span>
                           </span>
                           <button
                             type="button"
@@ -6075,27 +6099,30 @@ export const LiderDashboard = () => {
                     <div className="flex items-center gap-1.5 flex-wrap pt-1">
                       <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Sugerencias por Cualidad:</span>
                       {[
-                        { text: 'Diseño Figma & UI Mockups', key: 'FIGMA' },
-                        { text: 'Diseño e Implementación UI React', key: 'FRONTEND' },
-                        { text: 'Integración API REST Spring Boot', key: 'BACKEND' },
-                        { text: 'Optimización Consultas SQL', key: 'DATABASE' },
-                        { text: 'Pruebas Unitarias JUnit & Mockito', key: 'QA' },
-                        { text: 'Despliegue CI/CD & Docker', key: 'DEVOPS' }
-                      ].map((sug, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setNuevaActividad({ ...nuevaActividad, descripcion: sug.text });
-                            setFormErrors(p => ({ ...p, descripcion: undefined }));
-                            setSkillFilterForModal(sug.key);
-                          }}
-                          className="px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 text-zinc-600 dark:text-zinc-300 text-[0.62rem] font-bold border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer flex items-center gap-0.5"
-                        >
-                          <Plus size={10} className="text-blue-500" />
-                          <span>{sug.text}</span>
-                        </button>
-                      ))}
+                        { text: 'Diseño Figma & Wireframes', key: 'FIGMA', icon: Figma },
+                        { text: 'Diseño e Implementación UI React', key: 'FRONTEND', icon: Code2 },
+                        { text: 'Integración API REST Spring Boot', key: 'BACKEND', icon: Server },
+                        { text: 'Optimización Consultas SQL & Tuning', key: 'DATABASE', icon: Database },
+                        { text: 'Pruebas Unitarias JUnit & Mockito', key: 'QA', icon: TestTube2 },
+                        { text: 'Despliegue CI/CD & Docker', key: 'DEVOPS', icon: Cloud }
+                      ].map((sug, idx) => {
+                        const SugIcon = sug.icon;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setNuevaActividad({ ...nuevaActividad, descripcion: sug.text });
+                              setFormErrors(p => ({ ...p, descripcion: undefined }));
+                              setSkillFilterForModal(sug.key);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 text-zinc-600 dark:text-zinc-300 text-[0.62rem] font-bold border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer flex items-center gap-1.5"
+                          >
+                            <SugIcon size={12} className="text-blue-500 shrink-0" />
+                            <span>{sug.text}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
