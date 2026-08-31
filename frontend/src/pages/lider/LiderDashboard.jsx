@@ -410,6 +410,7 @@ const DeveloperSelectorModal = ({
   onChange,
   desarrolladores = [],
   desarrolladoresAsignadosProyecto = [],
+  etapas = [],
   getDevCargaInfo,
   getCleanEspecialidad
 }) => {
@@ -735,6 +736,7 @@ const DeveloperCombobox = ({
   onChange,
   desarrolladores = [],
   desarrolladoresAsignadosProyecto = [],
+  etapas = [],
   getDevCargaInfo,
   getCleanEspecialidad,
   placeholder = "— Seleccione un desarrollador responsable —",
@@ -813,6 +815,7 @@ const DeveloperCombobox = ({
         onChange={onChange}
         desarrolladores={desarrolladores}
         desarrolladoresAsignadosProyecto={desarrolladoresAsignadosProyecto}
+        etapas={etapas}
         getDevCargaInfo={getDevCargaInfo}
         getCleanEspecialidad={getCleanEspecialidad}
       />
@@ -5772,6 +5775,7 @@ export const LiderDashboard = () => {
                       }}
                       desarrolladores={desarrolladoresSinLiderActual}
                       desarrolladoresAsignadosProyecto={desarrolladoresAsignadosProyecto}
+                      etapas={etapas}
                       getDevCargaInfo={getDevCargaInfo}
                       getCleanEspecialidad={getCleanEspecialidad}
                       placeholder="— Seleccione un desarrollador responsable —"
@@ -6038,6 +6042,7 @@ export const LiderDashboard = () => {
                           setAsignarDevError(null);
                         }}
                         desarrolladores={desarrolladoresSinLiderActual}
+                        etapas={etapas}
                         getDevCargaInfo={getDevCargaInfo}
                         getCleanEspecialidad={getCleanEspecialidad}
                         placeholder="— Seleccione un desarrollador para vincular —"
