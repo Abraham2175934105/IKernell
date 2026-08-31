@@ -399,10 +399,7 @@ const calcularDiasFaltantes = (finStr) => {
 };
 
 /**
- * Selector de Desarrolladores de Nivel Enterprise con Soporte de Despliegue Lateral Derecho
- */
-/**
- * Modal Superpuesto Ampliado de Selección de Desarrollador con Análisis de Carga y Nómina
+ * Selector de Desarrollador
  */
 const DeveloperSelectorModal = ({
   isOpen,
@@ -420,6 +417,7 @@ const DeveloperSelectorModal = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTab, setFiltroTab] = useState('todos'); // 'todos', 'nomina', 'disponibles'
   const [skillFilter, setSkillFilter] = useState(initialSkillFilter || 'TODOS');
+  const [filtroCapacidadHoras, setFiltroCapacidadHoras] = useState('TODOS'); // 'TODOS', 'ALTA_DISP', 'MEDIA_DISP', 'POCA_DISP', 'SIN_DISP'
 
   useEffect(() => {
     if (initialSkillFilter) {
@@ -462,14 +460,51 @@ const DeveloperSelectorModal = ({
         if (!tieneTareas) return false;
       }
 
-      const estaEnProyecto = (desarrolladoresAsignadosProyecto || []).some(
+      const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(
         a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
       );
-      const carga = getDevCargaInfo(devId);
-      const horas = carga?.horasAsignadas || 0;
+      const estaEnProyecto = !!asignacionProy;
+      const horasReservadasProy = asignacionProy?.horasSemanales || 0;
 
+      const tareasDev = (etapas || []).flatMap(et => {
+        const acts = Array.isArray(et.actividades) ? et.actividades : [];
+        return acts.filter(a => Number(a.desarrollador?.idTrabajador || a.idDesarrollador) === Number(devId));
+      });
+      const tareasDevCount = tareasDev.length;
+
+      const horasTareasDev = tareasDev.reduce((sum, t) => {
+        const m = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+        if (m) return sum + parseInt(m[1]);
+        if (t.horasEstimadas) return sum + parseInt(t.horasEstimadas);
+        return sum + (tareasDevCount > 0 ? Math.round(horasReservadasProy / tareasDevCount) : 0);
+      }, 0);
+
+      const saldoLibreReserva = Math.max(0, horasReservadasProy - horasTareasDev);
+      const carga = getDevCargaInfo(devId);
+      const horasGlobales = carga?.horasAsignadas || 0;
+      const horasLibresGlobales = Math.max(0, 48 - horasGlobales);
+
+      // Filtro Tab General
       if (filtroTab === 'nomina' && !estaEnProyecto) return false;
-      if (filtroTab === 'disponibles' && horas >= 48) return false;
+      if (filtroTab === 'disponibles' && horasGlobales >= 48) return false;
+
+      // Filtro por Nivel de Disponibilidad Horaria Restante
+      if (filtroCapacidadHoras === 'ALTA_DISP') {
+        const libres = estaEnProyecto ? saldoLibreReserva : horasLibresGlobales;
+        if (libres < 20) return false;
+      }
+      if (filtroCapacidadHoras === 'MEDIA_DISP') {
+        const libres = estaEnProyecto ? saldoLibreReserva : horasLibresGlobales;
+        if (libres < 10 || libres >= 20) return false;
+      }
+      if (filtroCapacidadHoras === 'POCA_DISP') {
+        const libres = estaEnProyecto ? saldoLibreReserva : horasLibresGlobales;
+        if (libres <= 0 || libres >= 10) return false;
+      }
+      if (filtroCapacidadHoras === 'SIN_DISP') {
+        const libres = estaEnProyecto ? saldoLibreReserva : horasLibresGlobales;
+        if (libres > 0) return false;
+      }
 
       // Filtro por Cualidad / Habilidad Técnica
       if (skillFilter !== 'TODOS') {
@@ -488,19 +523,21 @@ const DeveloperSelectorModal = ({
       const email = (dev.email || '').toLowerCase();
       return nombreCompleto.includes(term) || esp.includes(term) || email.includes(term);
     });
-  }, [allDevs, desarrolladoresAsignadosProyecto, getDevCargaInfo, filtroTab, skillFilter, searchTerm, etapas]);
+  }, [allDevs, desarrolladoresAsignadosProyecto, getDevCargaInfo, filtroTab, skillFilter, filtroCapacidadHoras, searchTerm, etapas]);
+
+  const countFiltrosActivos = (filtroTab !== 'todos' ? 1 : 0) + (skillFilter !== 'TODOS' ? 1 : 0) + (filtroCapacidadHoras !== 'TODOS' ? 1 : 0) + (searchTerm ? 1 : 0);
 
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[90] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[90] flex items-center justify-center p-3 sm:p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.22, ease: 'easeOut' }}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 w-full max-w-3xl shadow-2xl max-h-[88dvh] flex flex-col overflow-hidden"
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 w-full max-w-5xl shadow-2xl max-h-[92dvh] flex flex-col overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
@@ -513,7 +550,7 @@ const DeveloperSelectorModal = ({
                   Seleccionar Desarrollador Responsable
                 </h3>
                 <p className="text-xs text-zinc-500 font-medium">
-                  Filtra desarrolladores por disponibilidad (Máx 48h) o por sus cualidad y habilidades técnicas
+                  Matriz de Carga Horaria (Máx 48h), Competencias Técnicas y Perfiles Especializados
                 </p>
               </div>
             </div>
@@ -526,15 +563,16 @@ const DeveloperSelectorModal = ({
             </button>
           </div>
 
-          {/* Buscador + Pestañas de Filtro + Filtros de Cualidad */}
-          <div className="py-4 space-y-3 shrink-0">
+          {/* Consola de Buscador + Filtros Avanzados */}
+          <div className="py-4 space-y-3 shrink-0 border-b border-zinc-100 dark:border-zinc-800/80">
+            {/* Buscador de Texto */}
             <div className="relative">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar desarrollador por nombre, correo o especialidad técnica..."
+                placeholder="Buscar desarrollador por nombre, correo, tecnología o especialidad..."
                 className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
                 autoFocus
               />
@@ -549,203 +587,286 @@ const DeveloperSelectorModal = ({
               )}
             </div>
 
-            {/* Pestañas de Estado/Disponibilidad */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs custom-scrollbar">
-              <button
-                type="button"
-                onClick={() => setFiltroTab('todos')}
-                className={`px-3 py-1.5 rounded-xl font-extrabold text-[0.7rem] transition-all cursor-pointer ${
-                  filtroTab === 'todos'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                Todos los Desarrolladores ({allDevs.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFiltroTab('nomina')}
-                className={`px-3 py-1.5 rounded-xl font-extrabold text-[0.7rem] transition-all cursor-pointer ${
-                  filtroTab === 'nomina'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                En Equipo del Proyecto ({(desarrolladoresAsignadosProyecto || []).length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFiltroTab('disponibles')}
-                className={`px-3 py-1.5 rounded-xl font-extrabold text-[0.7rem] transition-all cursor-pointer ${
-                  filtroTab === 'disponibles'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                Disponibles (&lt; 48h)
-              </button>
+            {/* Fila 1: Pestañas de Estado & Limpiador */}
+            <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+              <div className="flex items-center gap-2 overflow-x-auto pb-0.5 custom-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => setFiltroTab('todos')}
+                  className={`px-3 py-1.5 rounded-xl font-extrabold text-[0.7rem] transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filtroTab === 'todos'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  <Users size={12} />
+                  <span>Todos ({allDevs.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltroTab('nomina')}
+                  className={`px-3 py-1.5 rounded-xl font-extrabold text-[0.7rem] transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filtroTab === 'nomina'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  <Briefcase size={12} />
+                  <span>En Equipo del Proyecto ({(desarrolladoresAsignadosProyecto || []).length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltroTab('disponibles')}
+                  className={`px-3 py-1.5 rounded-xl font-extrabold text-[0.7rem] transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filtroTab === 'disponibles'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  <Clock size={12} />
+                  <span>Disponibles (&lt; 48h)</span>
+                </button>
+              </div>
+
+              {countFiltrosActivos > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiltroTab('todos');
+                    setSkillFilter('TODOS');
+                    setFiltroCapacidadHoras('TODOS');
+                    setSearchTerm('');
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 text-zinc-500 text-[0.65rem] font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                >
+                  <RotateCcw size={11} />
+                  <span>Limpiar Filtros ({countFiltrosActivos})</span>
+                </button>
+              )}
             </div>
 
-            {/* Chips de Selección por Cualidad Técnica Destacada */}
-            <div className="space-y-1.5 pt-1 border-t border-zinc-100 dark:border-zinc-800/80">
-              <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 tracking-wider font-mono block">
-                Filtrar por Cualidad o Perfil Técnico:
+            {/* Fila 2: Filtros por Nivel de Disponibilidad Horaria */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-0.5 custom-scrollbar text-xs">
+              <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 font-mono tracking-wider shrink-0 flex items-center gap-1">
+                <Clock size={12} className="text-zinc-400" /> Disponibilidad:
               </span>
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs custom-scrollbar">
-                {[
-                  { key: 'TODOS', label: 'Todas las Cualidades', icon: SlidersHorizontal },
-                  { key: 'FIGMA', label: 'Figma & UI/UX', icon: Figma },
-                  { key: 'FRONTEND', label: 'Frontend (React/Vue)', icon: Code2 },
-                  { key: 'BACKEND', label: 'Backend (Java/Spring)', icon: Server },
-                  { key: 'DEVOPS', label: 'DevOps & Cloud', icon: Cloud },
-                  { key: 'DATABASE', label: 'SQL & Bases de Datos', icon: Database },
-                  { key: 'QA', label: 'Pruebas & QA', icon: TestTube2 }
-                ].map(item => {
-                  const IconComp = item.icon;
-                  const isActive = skillFilter === item.key;
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => setSkillFilter(item.key)}
-                      className={`px-3 py-1.5 rounded-xl text-[0.68rem] font-bold border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                        isActive
-                          ? 'bg-blue-600 text-white border-blue-600 font-extrabold shadow-xs ring-2 ring-blue-500/20'
-                          : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600'
-                      }`}
-                    >
-                      <IconComp size={13} className={isActive ? 'text-white' : 'text-blue-500 dark:text-blue-400'} />
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              {[
+                { key: 'TODOS', label: 'Todas' },
+                { key: 'ALTA_DISP', label: 'Alta (> 20h Libres)' },
+                { key: 'MEDIA_DISP', label: 'Media (10h - 20h)' },
+                { key: 'POCA_DISP', label: 'Poca (< 10h)' },
+                { key: 'SIN_DISP', label: 'Saturado (0h Libres)' }
+              ].map(cap => (
+                <button
+                  key={cap.key}
+                  type="button"
+                  onClick={() => setFiltroCapacidadHoras(cap.key)}
+                  className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-bold border transition-all cursor-pointer whitespace-nowrap ${
+                    filtroCapacidadHoras === cap.key
+                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 font-extrabold shadow-2xs'
+                      : 'bg-white dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'
+                  }`}
+                >
+                  {cap.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Fila 3: Chips de Cualidad o Perfil Técnico */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs custom-scrollbar">
+              <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 font-mono tracking-wider shrink-0 flex items-center gap-1">
+                <Filter size={12} className="text-blue-500" /> Cualidad Técnica:
+              </span>
+              {[
+                { key: 'TODOS', label: 'Todas las Cualidades', icon: SlidersHorizontal },
+                { key: 'FIGMA', label: 'Figma & UI/UX', icon: Figma },
+                { key: 'FRONTEND', label: 'Frontend (React/Vue)', icon: Code2 },
+                { key: 'BACKEND', label: 'Backend (Java/Spring)', icon: Server },
+                { key: 'DEVOPS', label: 'DevOps & Cloud', icon: Cloud },
+                { key: 'DATABASE', label: 'SQL & Bases de Datos', icon: Database },
+                { key: 'QA', label: 'Pruebas & QA', icon: TestTube2 }
+              ].map(item => {
+                const IconComp = item.icon;
+                const isActive = skillFilter === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setSkillFilter(item.key)}
+                    className={`px-3 py-1.2 rounded-xl text-[0.68rem] font-bold border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-blue-600 text-white border-blue-600 font-extrabold shadow-xs ring-2 ring-blue-500/20'
+                        : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600'
+                    }`}
+                  >
+                    <IconComp size={13} className={isActive ? 'text-white' : 'text-blue-500 dark:text-blue-400'} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Lista de Desarrolladores Grid */}
-          <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+          {/* Grid Expansivo de Tarjetas de Desarrolladores (2 Columnas en Pantallas Grandes) */}
+          <div className="flex-1 overflow-y-auto pr-1 py-4 custom-scrollbar">
             {filteredDevs.length === 0 ? (
-              <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/40 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-2">
-                <UserCheck size={32} className="mx-auto text-zinc-400" />
-                <p className="text-xs text-zinc-500 font-semibold">No se encontraron desarrolladores que coincidan con los criterios de búsqueda o cualidad seleccionada.</p>
+              <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/40 rounded-3xl border border-zinc-200/80 dark:border-zinc-800 space-y-2">
+                <UserCheck size={36} className="mx-auto text-zinc-400" />
+                <h4 className="text-sm font-extrabold text-zinc-700 dark:text-zinc-300">Sin Coincidencias de Selección</h4>
+                <p className="text-xs text-zinc-500 font-semibold max-w-md mx-auto">
+                  No se encontraron desarrolladores que coincidan con la combinación de filtros aplicados (Disponibilidad, Cualidad o Término de búsqueda).
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiltroTab('todos');
+                    setSkillFilter('TODOS');
+                    setFiltroCapacidadHoras('TODOS');
+                    setSearchTerm('');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs mt-2"
+                >
+                  <RotateCcw size={13} />
+                  <span>Restablecer Filtros</span>
+                </button>
               </div>
             ) : (
-              filteredDevs.map(dev => {
-                const devId = String(dev.idTrabajador || dev.id || dev.idDesarrollador);
-                const isSelected = String(value) === devId;
-                const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(
-                  a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
-                );
-                const estaEnProyecto = !!asignacionProy;
-                const horasReservadasProy = asignacionProy?.horasSemanales || 0;
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredDevs.map(dev => {
+                  const devId = String(dev.idTrabajador || dev.id || dev.idDesarrollador);
+                  const isSelected = String(value) === devId;
+                  const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(
+                    a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
+                  );
+                  const estaEnProyecto = !!asignacionProy;
+                  const horasReservadasProy = asignacionProy?.horasSemanales || 0;
 
-                // Tareas WBS asignadas a este dev en este proyecto
-                const tareasDev = (etapas || []).flatMap(et => {
-                  const acts = Array.isArray(et.actividades) ? et.actividades : [];
-                  return acts.filter(a => Number(a.desarrollador?.idTrabajador || a.idDesarrollador) === Number(devId));
-                });
-                const tareasDevCount = tareasDev.length;
+                  // Tareas WBS asignadas a este dev en este proyecto
+                  const tareasDev = (etapas || []).flatMap(et => {
+                    const acts = Array.isArray(et.actividades) ? et.actividades : [];
+                    return acts.filter(a => Number(a.desarrollador?.idTrabajador || a.idDesarrollador) === Number(devId));
+                  });
+                  const tareasDevCount = tareasDev.length;
 
-                // Horas reales sumadas de tareas WBS
-                const horasTareasDev = tareasDev.reduce((sum, t) => {
-                  const m = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
-                  if (m) return sum + parseInt(m[1]);
-                  if (t.horasEstimadas) return sum + parseInt(t.horasEstimadas);
-                  return sum + (tareasDevCount > 0 ? Math.round(horasReservadasProy / tareasDevCount) : 0);
-                }, 0);
+                  // Horas reales sumadas de tareas WBS
+                  const horasTareasDev = tareasDev.reduce((sum, t) => {
+                    const m = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                    if (m) return sum + parseInt(m[1]);
+                    if (t.horasEstimadas) return sum + parseInt(t.horasEstimadas);
+                    return sum + (tareasDevCount > 0 ? Math.round(horasReservadasProy / tareasDevCount) : 0);
+                  }, 0);
 
-                // Saldo libre restante de su reserva
-                const saldoLibreReserva = Math.max(0, horasReservadasProy - horasTareasDev);
+                  // Saldo libre restante de su reserva
+                  const saldoLibreReserva = Math.max(0, horasReservadasProy - horasTareasDev);
 
-                const carga = getDevCargaInfo(devId);
-                const horasGlobales = carga?.horasAsignadas || 0;
-                const pct = Math.min(Math.round((horasGlobales / 48) * 100), 100);
-                const esSaturado = horasGlobales >= 48;
+                  const carga = getDevCargaInfo(devId);
+                  const horasGlobales = carga?.horasAsignadas || 0;
+                  const pct = Math.min(Math.round((horasGlobales / 48) * 100), 100);
+                  const esSaturado = horasGlobales >= 48;
 
-                const estColor = esSaturado
-                  ? { bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800', bar: 'bg-red-500', label: 'SATURADO 48H' }
-                  : horasGlobales >= 36
-                    ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
-                    : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
+                  const estColor = esSaturado
+                    ? { bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800', bar: 'bg-red-500', label: 'SATURADO 48H' }
+                    : horasGlobales >= 36
+                      ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
+                      : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
 
-                const devSkillText = `${dev.especialidad || ''} ${dev.profesion || ''}`.toLowerCase();
-                const matchesSkillFilter = skillFilter !== 'TODOS';
+                  const matchesSkillFilter = skillFilter !== 'TODOS';
 
-                return (
-                  <div
-                    key={devId}
-                    className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                      isSelected
-                        ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-500 ring-2 ring-blue-500/20 shadow-sm'
-                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-xs'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                      <div className={`w-11 h-11 rounded-2xl font-black text-sm flex items-center justify-center shrink-0 border ${
+                  return (
+                    <div
+                      key={devId}
+                      className={`p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between gap-3.5 ${
                         isSelected
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                      }`}>
-                        {dev.nombre?.[0]}{dev.apellido?.[0]}
-                      </div>
+                          ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-500 ring-2 ring-blue-500/20 shadow-md'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-xs'
+                      }`}
+                    >
+                      {/* Cabecera de Tarjeta: Avatar + Nombre + Email + Badges */}
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className={`w-11 h-11 rounded-2xl font-black text-sm flex items-center justify-center shrink-0 border ${
+                              isSelected
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                            }`}>
+                              {dev.nombre?.[0]}{dev.apellido?.[0]}
+                            </div>
 
-                      <div className="min-w-0 flex-1 space-y-1.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
-                            {dev.nombre} {dev.apellido}
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                {dev.nombre} {dev.apellido}
+                              </h4>
+                              <p className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 font-medium truncate">
+                                {getCleanEspecialidad ? getCleanEspecialidad(dev.especialidad, dev.profesion) : (dev.especialidad || dev.profesion || 'Desarrollador')}
+                              </p>
+                              {dev.email && (
+                                <span className="text-[0.65rem] text-zinc-400 dark:text-zinc-500 block truncate font-mono">
+                                  {dev.email}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Indicador de Estado Global */}
+                          <span className={`px-2.5 py-1 rounded-xl text-[0.63rem] font-extrabold border shrink-0 ${estColor.bg}`}>
+                            {estColor.label}
                           </span>
+                        </div>
 
-                          {/* Badge de Afinidad por Cualidad Técnica */}
+                        {/* Badges Destacados (Afinidad & Rol) */}
+                        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                           {matchesSkillFilter && (
                             <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
-                              <Award size={12} className="text-indigo-500 shrink-0" /> Afinidad 98% (Perfil Idóneo)
+                              <Award size={12} className="text-indigo-500 shrink-0" /> Afinidad 98% (Perfil Recomendado)
                             </span>
                           )}
 
-                          {/* Badge de Reserva y Disponibilidad del Proyecto */}
                           {estaEnProyecto ? (
-                            <div className="flex items-center gap-1.5 flex-wrap text-[0.62rem]">
-                              <span className="px-2.5 py-0.5 rounded-full font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
-                                <CheckCircle2 size={11} /> En Equipo del Proyecto: {horasReservadasProy}h/sem
-                              </span>
-
-                              <span className="px-2 py-0.5 rounded-md font-mono font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
-                                WBS: {horasTareasDev}h/sem
-                              </span>
-
-                              <span className={`px-2.5 py-0.5 rounded-full font-bold font-mono border flex items-center gap-1 ${
-                                saldoLibreReserva > 0
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300'
-                                  : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400'
-                              }`}>
-                                {saldoLibreReserva > 0 ? (
-                                  <>
-                                    <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                                    <span>{saldoLibreReserva}h Libres en Reserva</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <AlertCircle size={11} className="text-zinc-400 shrink-0" />
-                                    <span>0h Libres</span>
-                                  </>
-                                )}
-                              </span>
-                            </div>
+                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                              <Briefcase size={11} /> En Equipo de Proyecto
+                            </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-full text-[0.62rem] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-                              Pool Global (Sin vincular)
+                              Pool Global
                             </span>
                           )}
                         </div>
+                      </div>
 
-                        <div className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 flex items-center gap-3 flex-wrap">
-                          <span><strong>Especialidad:</strong> {getCleanEspecialidad ? getCleanEspecialidad(dev.especialidad, dev.profesion) : (dev.especialidad || dev.profesion || 'Desarrollador')}</span>
-                          {dev.email && <span>• {dev.email}</span>}
+                      {/* Bloque de Métricas Claras de Carga en Proyecto */}
+                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Reserva Proy.</span>
+                          <span className="text-xs font-black text-zinc-800 dark:text-zinc-200 font-mono">{horasReservadasProy}h/sem</span>
                         </div>
+                        <div>
+                          <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Tareas WBS</span>
+                          <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-mono">{horasTareasDev}h/sem</span>
+                        </div>
+                        <div>
+                          <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Saldo Libre</span>
+                          <span className={`text-xs font-black font-mono flex items-center justify-center gap-0.5 ${
+                            saldoLibreReserva > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'
+                          }`}>
+                            {saldoLibreReserva > 0 ? (
+                              <>
+                                <CheckCircle2 size={11} className="text-emerald-500" /> {saldoLibreReserva}h
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle size={11} className="text-zinc-400" /> 0h
+                              </>
+                            )}
+                          </span>
+                        </div>
+                      </div>
 
-                        {/* Pills de Cualidades y Competencias Técnicas Destacadas */}
-                        <div className="flex flex-wrap gap-1.5 pt-1">
+                      {/* Skills & Medidor de Capacidad Global */}
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-1">
                           {(dev.especialidad || dev.profesion || '')
                             .replace(/\[|\]/g, '')
                             .split(/[,•]/)
@@ -755,65 +876,75 @@ const DeveloperSelectorModal = ({
                             .map((tech, idx) => (
                               <span
                                 key={idx}
-                                className="px-2 py-0.5 rounded-md text-[0.62rem] font-bold bg-blue-50/80 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60"
+                                className="px-2 py-0.5 rounded-md text-[0.62rem] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
                               >
                                 {tech}
                               </span>
                             ))}
                         </div>
 
-                        {/* Medidor de Capacidad Semanal Global */}
-                        <div className="pt-1 flex items-center gap-3">
-                          <div className="w-32 h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden shrink-0">
+                        {/* Barra de progreso de Capacidad Global */}
+                        <div className="space-y-1 pt-1">
+                          <div className="flex justify-between items-center text-[0.65rem] font-bold">
+                            <span className="text-zinc-500 dark:text-zinc-400">Capacidad Total Ocupada:</span>
+                            <span className="font-mono text-zinc-800 dark:text-zinc-200">{horasGlobales}h / 48h ({pct}%)</span>
+                          </div>
+                          <div className="w-full h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                             <div className={`h-full ${estColor.bar} transition-all`} style={{ width: `${pct}%` }} />
                           </div>
-                          <span className={`px-2 py-0.5 rounded-lg text-[0.63rem] font-extrabold border ${estColor.bg}`}>
-                            {horasGlobales}/48h • {estColor.label}
-                          </span>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Botón Seleccionar */}
-                    <div className="sm:self-center shrink-0">
-                      {isSelected ? (
-                        <button
-                          type="button"
-                          disabled
-                          className="px-4 py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-xs"
-                        >
-                          <Check size={14} /> Seleccionado
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onChange(devId);
-                            onClose();
-                          }}
-                          className={`px-4 py-2 rounded-xl font-bold text-xs cursor-pointer transition-all ${
-                            esSaturado && !estaEnProyecto
-                              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border border-zinc-200 dark:border-zinc-700'
-                              : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-blue-600 dark:hover:bg-blue-500 dark:hover:text-white shadow-xs'
-                          }`}
-                        >
-                          {esSaturado && !estaEnProyecto ? 'Capacidad Máxima 48h' : 'Elegir Desarrollador'}
-                        </button>
-                      )}
+                      {/* Acciones */}
+                      <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex justify-end">
+                        {isSelected ? (
+                          <button
+                            type="button"
+                            disabled
+                            className="w-full py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs"
+                          >
+                            <Check size={14} /> Seleccionado Actual
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onChange(devId);
+                              onClose();
+                            }}
+                            className={`w-full py-2 rounded-xl font-extrabold text-xs cursor-pointer transition-all flex items-center justify-center gap-1.5 ${
+                              esSaturado && !estaEnProyecto
+                                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border border-zinc-200 dark:border-zinc-700 cursor-not-allowed'
+                                : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-blue-600 dark:hover:bg-blue-500 dark:hover:text-white shadow-xs'
+                            }`}
+                          >
+                            {esSaturado && !estaEnProyecto ? (
+                              <span>Sin Capacidad (48h Ocupadas)</span>
+                            ) : (
+                              <>
+                                <span>Asignar a esta Tarea</span>
+                                <ChevronRight size={14} />
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="pt-3 mt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-xs text-zinc-400 shrink-0">
-            <span>Mostrando {filteredDevs.length} desarrolladores</span>
+          <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between shrink-0">
+            <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
+              Mostrando {filteredDevs.length} de {allDevs.length} desarrolladores
+            </span>
             <button
               type="button"
               onClick={onClose}
-              className="outline-button py-1.5 px-4 font-bold text-xs cursor-pointer"
+              className="outline-button py-2 px-5 font-bold text-xs cursor-pointer"
             >
               Cerrar Selector
             </button>
