@@ -14,7 +14,7 @@ import {
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2, PieChart, FileCheck,
   FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye, EyeOff,
   ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield, Pause, Play, ClipboardList, FolderCheck, Mail,
-  Figma, Server, Cloud, Database, TestTube2, Award, SlidersHorizontal, AlertCircle, XCircle
+  Figma, Server, Cloud, Database, TestTube2, Award, SlidersHorizontal, AlertCircle, XCircle, Calculator
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6117,25 +6117,34 @@ export const LiderDashboard = () => {
                     })()}
                   </div>
 
-                  {/* Campo Horas Semanales Dedicadas a esta Tarea */}
+                  {/* Campo Horas Semanales Dedicadas a esta Tarea + Simulador Matemático de Suma en Tiempo Real */}
                   <div>
                     {(() => {
-                      const devId = String(nuevaActividad.idDesarrollador);
+                      const devId = String(nuevaActividad.idDesarrollador || '');
                       const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(
                         a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
                       );
                       const estaEnProyecto = !!asignacionProy;
+                      const horasReservadasProy = asignacionProy?.horasSemanales || 0;
                       const carga = getDevCargaInfo(devId);
-                      const horasGlobales = carga?.horasAsignadas || 0;
-                      const maxDisponibles = Math.max(0, 48 - (horasGlobales - (estaEnProyecto ? 0 : 0)));
+                      const horasActualesGlobales = carga?.horasAsignadas || 0;
+                      const maxDisponibles = Math.max(0, 48 - (horasActualesGlobales - (estaEnProyecto ? 0 : 0)));
                       const horasInputVal = parseInt(nuevaActividad.horasEstimadas) || 0;
                       const excede = devId && horasInputVal > maxDisponibles;
 
+                      // Operación matemática proyectada
+                      const nuevaCargaResultante = horasActualesGlobales + horasInputVal;
+                      const saldoLibreResultante = Math.max(0, 48 - nuevaCargaResultante);
+                      const pctActual = Math.min(Math.round((horasActualesGlobales / 48) * 100), 100);
+                      const pctNuevaTarea = Math.min(Math.round((horasInputVal / 48) * 100), Math.max(0, 100 - pctActual));
+                      const pctResultante = Math.min(pctActual + pctNuevaTarea, 100);
+
                       return (
-                        <>
+                        <div className="space-y-3">
                           <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
                             Horas Semanales Dedicadas a esta Tarea *
                           </label>
+
                           <div className="relative">
                             <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
                             <input
@@ -6148,8 +6157,8 @@ export const LiderDashboard = () => {
                                 setNuevaActividad({ ...nuevaActividad, horasEstimadas: e.target.value });
                                 setFormErrors(p => ({ ...p, horasEstimadas: undefined }));
                               }}
-                              placeholder={`Ej: ${Math.min(8, maxDisponibles)}`}
-                              className={`input-field pl-9 py-2 font-mono font-bold ${
+                              placeholder={`Ej: ${Math.min(8, maxDisponibles || 8)}`}
+                              className={`input-field pl-9 py-2 font-mono font-bold text-sm ${
                                 formErrors.horasEstimadas || excede ? 'border-red-500 text-red-600 focus:ring-red-500' : ''
                               }`}
                             />
@@ -6157,35 +6166,30 @@ export const LiderDashboard = () => {
                               h / semana
                             </span>
                           </div>
+
                           {formErrors.horasEstimadas && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.horasEstimadas}</p>}
-                          {excede && (
-                            <p className="text-[0.68rem] text-red-600 dark:text-red-400 font-extrabold mt-1 animate-fadeIn flex items-center gap-1">
-                              <AlertTriangle size={12} className="shrink-0" />
-                              ¡Imposible asignar {horasInputVal}h! Máximo disponible permitido: {maxDisponibles} horas.
-                            </p>
-                          )}
 
                           {/* Presets de Horas Adaptativos */}
                           {devId && (
-                            <div className="flex items-center gap-1.5 flex-wrap pt-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Ajuste rápido:</span>
                               {maxDisponibles > 0 && (
                                 <button
                                   type="button"
                                   onClick={() => setNuevaActividad({ ...nuevaActividad, horasEstimadas: String(maxDisponibles) })}
-                                  className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold text-[0.65rem] border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer"
+                                  className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold text-[0.65rem] border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer transition-all"
                                 >
                                   Usar Máximo Libre ({maxDisponibles}h)
                                 </button>
                               )}
-                              {['4', '8', '16', '24'].filter(h => parseInt(h) <= maxDisponibles).map(h => (
+                              {['4', '8', '16', '24'].filter(h => parseInt(h) <= (maxDisponibles || 48)).map(h => (
                                 <button
                                   key={h}
                                   type="button"
                                   onClick={() => setNuevaActividad({ ...nuevaActividad, horasEstimadas: h })}
                                   className={`px-2 py-1 rounded-lg font-bold text-[0.65rem] border transition-all cursor-pointer ${
                                     String(nuevaActividad.horasEstimadas) === h
-                                      ? 'bg-blue-600 text-white border-blue-600'
+                                      ? 'bg-blue-600 text-white border-blue-600 font-extrabold shadow-xs'
                                       : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200'
                                   }`}
                                 >
@@ -6194,7 +6198,110 @@ export const LiderDashboard = () => {
                               ))}
                             </div>
                           )}
-                        </>
+
+                          {/* Panel de Desglose Matemático y Proyección de Carga en Tiempo Real */}
+                          {devId && (
+                            <div className="p-3.5 sm:p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/90 dark:border-zinc-700/80 space-y-3 animate-fadeIn">
+                              <div className="flex items-center justify-between text-xs font-extrabold text-zinc-800 dark:text-zinc-200 pb-2 border-b border-zinc-200/80 dark:border-zinc-700/70">
+                                <span className="flex items-center gap-1.5">
+                                  <Calculator size={16} className="text-blue-600 dark:text-blue-400" />
+                                  <span>Desglose de Operación y Suma de Carga:</span>
+                                </span>
+                                <span className="font-mono text-[0.68rem] px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800">
+                                  Límite Legal: 48h/sem
+                                </span>
+                              </div>
+
+                              {/* 4 Cajas de Cómputo Paso a Paso */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                                {/* 1. Carga Previa */}
+                                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-0.5">
+                                  <span className="text-[0.6rem] font-extrabold uppercase text-zinc-400 block">1. Carga Actual</span>
+                                  <span className="font-mono font-black text-xs text-zinc-800 dark:text-zinc-200 block">{horasActualesGlobales}h / 48h</span>
+                                  <span className="text-[0.6rem] text-zinc-400 block font-medium">ya asignadas</span>
+                                </div>
+
+                                {/* 2. Nueva Tarea */}
+                                <div className="p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 space-y-0.5">
+                                  <span className="text-[0.6rem] font-extrabold uppercase text-blue-600 dark:text-blue-400 block">2. Nueva Tarea</span>
+                                  <span className="font-mono font-black text-xs text-blue-600 dark:text-blue-400 block">+ {horasInputVal}h / sem</span>
+                                  <span className="text-[0.6rem] text-blue-500 block font-medium">a sumar</span>
+                                </div>
+
+                                {/* 3. Resultado Proyectado */}
+                                <div className={`p-2.5 rounded-xl border space-y-0.5 ${
+                                  excede
+                                    ? 'bg-red-50 dark:bg-red-950/60 border-red-300 dark:border-red-800 text-red-700 dark:text-red-300'
+                                    : 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-200'
+                                }`}>
+                                  <span className="text-[0.6rem] font-extrabold uppercase block opacity-80">3. Total Proyectado</span>
+                                  <span className="font-mono font-black text-xs block">{nuevaCargaResultante}h / 48h</span>
+                                  <span className="text-[0.6rem] block font-medium opacity-80">
+                                    ({pctResultante}% ocupación)
+                                  </span>
+                                </div>
+
+                                {/* 4. Saldo Libre Restante */}
+                                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 space-y-0.5">
+                                  <span className="text-[0.6rem] font-extrabold uppercase text-emerald-700 dark:text-emerald-400 block">4. Saldo Disponible</span>
+                                  <span className="font-mono font-black text-xs text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-0.5">
+                                    <CheckCircle2 size={11} /> {saldoLibreResultante}h libres
+                                  </span>
+                                  <span className="text-[0.6rem] text-emerald-600/80 dark:text-emerald-400/80 block font-medium">tras esta tarea</span>
+                                </div>
+                              </div>
+
+                              {/* Barra de Ocupación Gráfica Compuesta */}
+                              <div className="space-y-1 pt-1">
+                                <div className="flex justify-between items-center text-[0.65rem] font-bold">
+                                  <span className="text-zinc-500 dark:text-zinc-400">Proyección gráfica de jornada semanal:</span>
+                                  <span className="font-mono text-zinc-700 dark:text-zinc-300">
+                                    {horasActualesGlobales}h + {horasInputVal}h = <strong>{nuevaCargaResultante}h / 48h</strong>
+                                  </span>
+                                </div>
+
+                                <div className="w-full h-3 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden flex relative">
+                                  {/* Carga Base Ocupada */}
+                                  <div
+                                    className="h-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
+                                    style={{ width: `${pctActual}%` }}
+                                  />
+                                  {/* Tramo de la Nueva Tarea a sumar */}
+                                  {horasInputVal > 0 && (
+                                    <div
+                                      className={`h-full transition-all duration-300 ${
+                                        excede ? 'bg-red-500 animate-pulse' : 'bg-indigo-500'
+                                      }`}
+                                      style={{ width: `${pctNuevaTarea}%` }}
+                                    />
+                                  )}
+                                </div>
+
+                                <div className="flex items-center justify-between text-[0.62rem] font-semibold text-zinc-500 dark:text-zinc-400 pt-0.5">
+                                  <div className="flex items-center gap-3">
+                                    <span className="flex items-center gap-1">
+                                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" /> Carga Previa ({horasActualesGlobales}h)
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" /> + Tarea Actual ({horasInputVal}h)
+                                    </span>
+                                  </div>
+                                  <span>Máximo Legal 48h</span>
+                                </div>
+                              </div>
+
+                              {/* Alerta de exceso de horas */}
+                              {excede && (
+                                <div className="p-3 rounded-xl bg-red-100 dark:bg-red-950/80 border border-red-300 dark:border-red-800 text-red-800 dark:text-red-300 text-[0.7rem] font-bold flex items-center gap-2 animate-fadeIn">
+                                  <AlertTriangle size={15} className="text-red-600 shrink-0" />
+                                  <span>
+                                    ¡Imposible asignar esta tarea! La suma de <strong>{horasActualesGlobales}h + {horasInputVal}h = {nuevaCargaResultante}h</strong> supera el límite permitido de 48 horas semanales. Por favor reduzca las horas o elija otro desarrollador.
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       );
                     })()}
                   </div>
