@@ -565,15 +565,6 @@ export const BibliotecaDigital = () => {
                     {generatingPdf ? <Loader2 size={14} className="animate-spin" /> : <ArrowDownToLine size={14} />}
                     <span className="hidden sm:inline">Descargar {previewDoc.formato || 'PDF'}</span>
                   </button>
-
-                  {/* Botón Cerrar (X) */}
-                  <button 
-                    onClick={() => setPreviewDoc(null)} 
-                    className="w-9 h-9 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 flex items-center justify-center transition-colors cursor-pointer ml-1"
-                    title="Cerrar ventana emergente"
-                  >
-                    <X size={20} />
-                  </button>
                 </div>
               </div>
 

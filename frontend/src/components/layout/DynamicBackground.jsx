@@ -1,8 +1,12 @@
 import React from 'react';
+import { BackgroundScene3D } from '../3d/BackgroundScene3D';
 
 export const DynamicBackground = () => {
   return (
     <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden bg-zinc-50 dark:bg-zinc-950 tech-ambient-mesh bg-tech-grid transition-colors duration-300">
+      {/* Motor 3D Interactivo al Scroll (React Three Fiber + Drei) */}
+      <BackgroundScene3D />
+
       {/* Floating Animated Ambient Glow Orbs with subtle presence */}
       <div 
         className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-400/5 dark:bg-blue-600/10 blur-3xl animate-mesh-float"

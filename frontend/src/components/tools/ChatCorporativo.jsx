@@ -156,7 +156,7 @@ const REALISTIC_CHANNEL_MESSAGES = {
       idMensaje: 401,
       remitente: { nombre: 'Sistema', apellido: 'IKernell', rol: 'SISTEMA', email: 'sistema@ikernell.com' },
       canal: 'alertas-wbs',
-      contenido: '⚠️ [ALERTA PREDICTIVA] Se detectó holgura crítica (-45 min) en la Etapa WBS #104 "Integración REST API". Se recomienda reasignar soporte técnico.',
+      contenido: '[ALERTA PREDICTIVA] Se detectó holgura crítica (-45 min) en la Etapa WBS #104 "Integración REST API". Se recomienda reasignar soporte técnico.',
       fechaEnvio: new Date(Date.now() - 3600000 * 7).toISOString()
     },
     {

@@ -4,12 +4,15 @@ import { Cpu, Menu, X, LogIn, Mail, Sun, Moon, LogOut, User } from 'lucide-react
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../config/routes';
+import { LogoutConfirmModal } from '../ui/LogoutConfirmModal';
+import toast from 'react-hot-toast';
 
 export const Navbar = () => {
   // Estados locales
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('inicio');
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,10 +52,18 @@ export const Navbar = () => {
 
   const isLoginPage = location.pathname === '/login';
 
-  // Manejadores de eventos y navegación
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  // Manejadores de eventos y navegación con confirmación
+  const handleLogoutClick = async () => {
+    const skipConfirm = localStorage.getItem('ikernell_skip_logout_confirm') === 'true';
+    if (skipConfirm) {
+      await logout();
+      toast.success('Sesión finalizada exitosamente. Token JWT revocado.', {
+        duration: 3500
+      });
+      navigate('/');
+    } else {
+      setShowLogoutModal(true);
+    }
   };
 
   // Redirige al panel correspondiente según el rol del usuario autenticado
@@ -64,8 +75,8 @@ export const Navbar = () => {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white dark:bg-zinc-950 border-b border-zinc-200/90 dark:border-zinc-800/90 ${
-      scrolled ? 'shadow-md py-3' : 'shadow-sm py-4'
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200/80 dark:border-zinc-800/80 ${
+      scrolled ? 'shadow-md py-3' : 'shadow-xs py-4'
     }`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex items-center justify-between">
         
@@ -179,9 +190,10 @@ export const Navbar = () => {
                 <User size={14} className="text-blue-600 dark:text-blue-400" /> {user?.nombre || user?.nombreCompleto || user?.correo?.split('@')[0] || user?.email?.split('@')[0] || `Panel (${user?.rol || 'Sesión'})`}
               </Link>
               <button 
-                onClick={handleLogout} 
-                className="danger-button text-xs py-2 px-3"
-                title="Cerrar Sesión"
+                type="button"
+                onClick={handleLogoutClick} 
+                className="danger-button text-xs py-2 px-3 cursor-pointer"
+                title="Cerrar Sesión Segura"
               >
                 <LogOut size={14} />
               </button>
@@ -277,8 +289,9 @@ export const Navbar = () => {
                     <User size={16} /> {user?.nombre || user?.nombreCompleto || user?.correo?.split('@')[0] || user?.email?.split('@')[0] || 'Mi Panel de Trabajo'}
                   </Link>
                   <button 
-                    onClick={() => { handleLogout(); setMobileOpen(false); }} 
-                    className="outline-button w-full py-3"
+                    type="button"
+                    onClick={() => { setMobileOpen(false); handleLogoutClick(); }} 
+                    className="outline-button w-full py-3 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/80 hover:bg-red-50 dark:hover:bg-red-950/40"
                   >
                     <LogOut size={16} /> Cerrar Sesión
                   </button>
@@ -308,6 +321,12 @@ export const Navbar = () => {
         )}
 
       </div>
+
+      {/* Modal Avanzado de Confirmación de Cierre de Sesión */}
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+      />
     </header>
   );
 };

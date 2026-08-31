@@ -12,7 +12,9 @@ import { ROUTES } from '../../config/routes';
 import { ChatCorporativo } from '../tools/ChatCorporativo';
 import { BibliotecaDigital } from '../tools/BibliotecaDigital';
 import { TutorialesInduccion } from '../tools/TutorialesInduccion';
+import { LogoutConfirmModal } from '../ui/LogoutConfirmModal';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 // Helper para iniciales de Avatar
 const getInitials = (nombre, apellido) => {
@@ -35,6 +37,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
   });
   const [isHovered, setIsHovered] = useState(false);
   const [currentTool, setCurrentTool] = useState(null); // 'chat' | 'biblioteca' | 'tutoriales' | null
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const toggleCollapse = () => {
     setIsCollapsed(prev => {
@@ -47,9 +50,17 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
   // La barra se considera expandida si no está colapsada o si el usuario pasa el cursor por encima (hover)
   const isExpanded = !isCollapsed || isHovered;
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleLogoutClick = async () => {
+    const skipConfirm = localStorage.getItem('ikernell_skip_logout_confirm') === 'true';
+    if (skipConfirm) {
+      await logout();
+      toast.success('Sesión finalizada exitosamente. Token JWT revocado.', {
+        duration: 3500
+      });
+      navigate('/');
+    } else {
+      setShowLogoutModal(true);
+    }
   };
 
   const getRoleBadge = (rol) => {
@@ -175,18 +186,25 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
             </button>
           </div>
 
-          {/* Tarjeta de perfil con estado en línea */}
+          {/* Tarjeta de perfil con estado en línea & Acceso a Página de Perfil */}
           <div className="mt-5 mb-4 mx-3">
             {/* Vista Completa de Perfil: Visible en Móvil abierto o Desktop Expandido */}
             <div className={`${sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')}`}>
-              <motion.div
-                whileHover={{ y: -1 }}
+              <motion.button
+                type="button"
+                onClick={() => {
+                  navigate(ROUTES.PERFIL);
+                  setSidebarOpen(false);
+                }}
+                whileHover={{ y: -1, scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
                 transition={{ duration: 0.15 }}
-                className="p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 hover:border-blue-400 dark:hover:border-blue-500/50 shadow-sm transition-all duration-200 flex items-center gap-3"
+                title="Ver perfil completo y cambiar contraseña"
+                className="w-full p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 hover:border-blue-400 dark:hover:border-blue-500/50 hover:bg-blue-50/40 dark:hover:bg-zinc-800 shadow-sm transition-all duration-200 flex items-center gap-3 text-left cursor-pointer group"
               >
                 {/* Avatar con punto indicador de sesión activa */}
                 <div className="relative flex-shrink-0">
-                  <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 tracking-tight">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 tracking-tight group-hover:scale-105 transition-transform">
                     {getInitials(user?.nombre, user?.apellido)}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
@@ -196,34 +214,42 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                 </div>
 
                 {/* Información Jerárquica */}
-                <div className="min-w-0 text-left">
-                  <div className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate leading-tight">
+                <div className="min-w-0 flex-1">
+                  <div className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {user?.nombre ? `${user.nombre} ${user.apellido || ''}` : (user?.email || 'Usuario')}
                   </div>
-                  <div className="mt-1 flex items-center gap-1">
+                  <div className="mt-1 flex items-center justify-between gap-1">
                     <span className={`inline-block text-[0.58rem] font-black uppercase px-2.5 py-0.5 rounded-md border tracking-wider ${roleInfo.classes}`}>
                       {roleInfo.badgeText}
                     </span>
+                    <span className="text-[0.6rem] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                      Perfil →
+                    </span>
                   </div>
                 </div>
-              </motion.div>
+              </motion.button>
             </div>
 
             {/* Mini Avatar Colapsado (Visible en Tablet o Desktop Colapsado cuando no es móvil drawer) */}
             <div className={`${sidebarOpen ? 'hidden' : (isExpanded ? 'block lg:hidden' : 'block')}`}>
               <div className="flex justify-center p-1">
-                <div 
-                  title={`${user?.nombre} ${user?.apellido || ''} (${roleInfo.badgeText}) - En línea`}
+                <button 
+                  type="button"
+                  onClick={() => {
+                    navigate(ROUTES.PERFIL);
+                    setSidebarOpen(false);
+                  }}
+                  title={`${user?.nombre} ${user?.apellido || ''} (${roleInfo.badgeText}) - Ver Mi Perfil & Seguridad`}
                   className="relative group cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 group-hover:scale-105 transition-transform">
                     {getInitials(user?.nombre, user?.apellido)}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white dark:border-zinc-900"></span>
                   </span>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -339,8 +365,9 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         {/* Footer del Sidebar */}
         <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
           <button
-            onClick={handleLogout}
-            title={!isExpanded ? "Cerrar Sesión" : undefined}
+            type="button"
+            onClick={handleLogoutClick}
+            title={!isExpanded ? "Cerrar Sesión Segura" : undefined}
             className={`w-full flex items-center justify-center rounded-xl text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800/80 transition-all cursor-pointer shadow-sm ${
               sidebarOpen 
                 ? 'gap-2 py-2.5 px-4' 
@@ -397,17 +424,19 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                 {currentTool === 'tutoriales' && <>Tutoriales e Inducción <GraduationCap size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0" /></>}
                 {!currentTool && (
                   <span className="truncate">
-                    Panel de {roleInfo.label}
+                    {location.pathname.includes('perfil') ? 'Mi Perfil & Seguridad' : `Panel de ${roleInfo.label}`}
                   </span>
                 )}
               </h1>
               <span className="hidden sm:block text-[0.7rem] text-zinc-500 dark:text-zinc-400 font-medium truncate">
-                {user?.especialidad || 'Especialista en Soluciones de Software'} • Sesión Autenticada
+                {location.pathname.includes('perfil')
+                  ? 'Información de cuenta y credenciales criptográficas'
+                  : `${user?.especialidad || 'Especialista en Soluciones de Software'} • Sesión Autenticada`}
               </span>
             </div>
           </div>
 
-          {/* Lado Derecho: Métricas Rápidas, Toggle Tema, Usuario & Logout */}
+          {/* Lado Derecho: Herramientas Globales (Métricas, Notificaciones, Toggle Tema) */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             
             {/* Indicadores / Métricas Rápidas en Azul Corporativo */}
@@ -421,6 +450,18 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                 {customMetrics?.metric2 || 'Conexión Segura (JWT)'}
               </span>
             </div>
+
+            {/* Herramienta Global: Notificaciones Corporativas */}
+            <button
+              type="button"
+              onClick={() => toast.info('Centro de notificaciones: No hay alertas críticas pendientes.', { duration: 3000 })}
+              title="Notificaciones y Alertas del Sistema"
+              className="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center transition-all cursor-pointer shadow-sm relative hover:border-blue-400 dark:hover:border-blue-600"
+              aria-label="Ver Notificaciones"
+            >
+              <Bell size={17} />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600" />
+            </button>
 
             {/* Toggle Tema Claro / Oscuro */}
             <button
@@ -460,6 +501,12 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         </main>
 
       </div>
+
+      {/* Modal Avanzado de Confirmación de Cierre de Sesión */}
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+      />
 
     </div>
   );
