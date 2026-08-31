@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Clock, ShieldCheck, Sparkles, Sliders, CheckCircle2, AlertCircle, RefreshCw, Code2, Crown } from 'lucide-react';
+import { Clock, ShieldCheck, Sparkles, Sliders, CheckCircle2, AlertCircle, RefreshCw, Code2, Crown, Filter, Layers, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +13,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
   const [horasDev, setHorasDev] = useState(24);
   const [modo, setModo] = useState('AUTOMATICO_INTELIGENTE');
   const [semanaCodigo, setSemanaCodigo] = useState('2026-W36');
+  const [filtroEstadoTareas, setFiltroEstadoTareas] = useState('TODAS');
 
   const [horasDevReales, setHorasDevReales] = useState(devAssignedHours);
   const [actividadesDevList, setActividadesDevList] = useState([]);
@@ -22,7 +23,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
     if (!token) return;
     const fetchTareasReales = async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/desarrollador/actividades', {
+        const res = await fetch('http://localhost:8080/api/desarrollador/mis-actividades', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -180,6 +181,19 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
       setSaving(false);
     }
   };
+  // Filtrado de actividades WBS según botón de estado
+  const actividadesFiltradas = useMemo(() => {
+    if (filtroEstadoTareas === 'EN_PROGRESO') {
+      return actividadesDevList.filter(a => (a.estado || '').toUpperCase() === 'EN_PROGRESO');
+    }
+    if (filtroEstadoTareas === 'PENDIENTE') {
+      return actividadesDevList.filter(a => (a.estado || '').toUpperCase() === 'PENDIENTE');
+    }
+    if (filtroEstadoTareas === 'FINALIZADA') {
+      return actividadesDevList.filter(a => (a.estado || '').toUpperCase() === 'FINALIZADA' || (a.estado || '').toUpperCase() === 'COMPLETADA');
+    }
+    return actividadesDevList;
+  }, [actividadesDevList, filtroEstadoTareas]);
 
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6">
@@ -204,14 +218,19 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
           </div>
         </div>
 
-        <button
+        {/* Botón Destacado e Impactante de Auto-Calcular por WBS */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           type="button"
           onClick={aplicarSugerenciaInteligente}
-          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          className="px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-600/30 border border-blue-400/30 transition-all flex items-center gap-2 cursor-pointer relative overflow-hidden group shrink-0"
+          title="Calcular automáticamente las horas según los entregables WBS activos asignados en otros proyectos"
         >
-          <Sparkles size={14} className="text-blue-600 dark:text-blue-400" />
-          <span>Auto-Calcular por WBS</span>
-        </button>
+          <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Sparkles size={16} className="text-amber-300 animate-pulse shrink-0" />
+          <span className="tracking-wide">⚡ Auto-Calcular por WBS (Máx. 30h Dev)</span>
+        </motion.button>
       </div>
 
       {/* Alerta de Desfase de Horas (RF-20 / 48h Dual) */}
@@ -232,7 +251,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             <button
               type="button"
               onClick={() => {
-                const hDevCalc = Math.min(44, Math.max(8, horasDevReales));
+                const hDevCalc = Math.min(30, Math.max(0, horasDevReales));
                 const hLiderCalc = 48 - hDevCalc;
                 setHorasDev(hDevCalc);
                 setHorasLider(hLiderCalc);
@@ -325,7 +344,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         </div>
       </div>
 
-      {/* Sección de Desglose de Tareas WBS del Líder actuando como Desarrollador */}
+      {/* Sección de Desglose de Tareas WBS del Líder actuando como Desarrollador con Botonera de Filtros */}
       <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-3">
         <div className="flex justify-between items-center flex-wrap gap-2">
           <div className="flex items-center gap-2">
@@ -334,25 +353,48 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
               Entregables WBS Asignados como Desarrollador ({actividadesDevList.length} Tareas)
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[0.68rem] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono">
-              {desgloseDividendoDev.activas}h Activas Restantes
-            </span>
-            {desgloseDividendoDev.ejecutadas > 0 && (
-              <span className="text-[0.68rem] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-mono">
-                {desgloseDividendoDev.ejecutadas}h Ya Ejecutadas
-              </span>
-            )}
+
+          {/* Botonera de Filtros Rápida */}
+          <div className="flex items-center gap-1.5 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
+            <Filter size={13} className="text-zinc-400 ml-1.5 mr-0.5" />
+            <button
+              type="button"
+              onClick={() => setFiltroEstadoTareas('TODAS')}
+              className={`px-2.5 py-1 rounded-lg text-[0.65rem] font-extrabold transition-all cursor-pointer ${filtroEstadoTareas === 'TODAS' ? 'bg-indigo-600 text-white shadow-2xs' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+            >
+              Todas ({actividadesDevList.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltroEstadoTareas('EN_PROGRESO')}
+              className={`px-2.5 py-1 rounded-lg text-[0.65rem] font-extrabold transition-all cursor-pointer ${filtroEstadoTareas === 'EN_PROGRESO' ? 'bg-blue-600 text-white shadow-2xs' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+            >
+              En Progreso ({actividadesDevList.filter(a => (a.estado || '').toUpperCase() === 'EN_PROGRESO').length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltroEstadoTareas('PENDIENTE')}
+              className={`px-2.5 py-1 rounded-lg text-[0.65rem] font-extrabold transition-all cursor-pointer ${filtroEstadoTareas === 'PENDIENTE' ? 'bg-amber-600 text-white shadow-2xs' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+            >
+              Pendientes ({actividadesDevList.filter(a => (a.estado || '').toUpperCase() === 'PENDIENTE').length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltroEstadoTareas('FINALIZADA')}
+              className={`px-2.5 py-1 rounded-lg text-[0.65rem] font-extrabold transition-all cursor-pointer ${filtroEstadoTareas === 'FINALIZADA' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+            >
+              Finalizadas ({actividadesDevList.filter(a => (a.estado || '').toUpperCase() === 'FINALIZADA' || (a.estado || '').toUpperCase() === 'COMPLETADA').length})
+            </button>
           </div>
         </div>
 
-        {actividadesDevList.length === 0 ? (
+        {actividadesFiltradas.length === 0 ? (
           <div className="p-4 text-center text-xs text-zinc-500 font-medium bg-white dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
-            No tienes tareas de desarrollo asignadas en otros proyectos actualmente.
+            No hay tareas en el estado seleccionado ({filtroEstadoTareas}).
           </div>
         ) : (
           <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-            {actividadesDevList.map((a, idx) => {
+            {actividadesFiltradas.map((a, idx) => {
               const match = (a.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
               const hTask = match ? parseInt(match[1]) : (parseInt(a.horasEstimadas || a.horas) || 6);
               const estUpper = (a.estado || 'PENDIENTE').toUpperCase();
@@ -360,13 +402,13 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
               const isProc = estUpper === 'EN_PROGRESO' || estUpper === 'EN_EJECUCION';
 
               return (
-                <div key={a.idActividad || idx} className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs gap-3 shadow-2xs">
+                <div key={a.idActividad || idx} className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs gap-3 shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-800 transition-all">
                   <div className="min-w-0 flex-1">
                     <span className="font-extrabold text-zinc-800 dark:text-zinc-200 block truncate">
                       • {a.descripcion}
                     </span>
                     <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 block mt-0.5">
-                      Fase #{a.etapa?.idEtapa || a.idEtapa}: {a.etapa?.nombreEtapa || a.etapaNombre || 'Etapa WBS'}
+                      Fase #{a.etapa?.idEtapa || a.idEtapa}: {a.etapa?.nombreEtapa || a.etapaNombre || 'Etapa WBS'} {a.etapa?.proyecto?.nombre && `— ${a.etapa.proyecto.nombre}`}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -394,7 +436,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         )}
       </div>
 
-      {/* Barra Proporcional Interactivamente Ajustable con Dividendo Color Coded */}
+      {/* Barra Proporcional Interactivamente Ajustable con Dividendo Color Coded Multicapa */}
       <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-4">
         <div className="flex justify-between items-center text-xs font-bold flex-wrap gap-2">
           <span className="text-zinc-700 dark:text-zinc-300">
@@ -406,37 +448,55 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         </div>
 
         {/* Visual Barra Proporcional con Dividendo Visual (Dirección Líder + Dev Activo + Dev Ejecutado) */}
-        <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden flex shadow-inner">
-          {/* Segmento 1: Dirección Líder (Azul Rey) */}
+        <div className="h-5 w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden flex shadow-inner border border-zinc-300 dark:border-zinc-700">
+          {/* Segmento 1: Dirección Líder (Azul Rey: bg-blue-600) */}
           <div
             style={{ width: `${(horasLider / 48) * 100}%` }}
-            className="bg-blue-700 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
-            title={`Líder: ${horasLider}h (Mínimo 18h)`}
+            className="bg-blue-600 h-full transition-all duration-300 flex items-center justify-center text-[0.65rem] font-black text-white px-2 shadow-xs shrink-0"
+            title={`👑 Dirección Líder: ${horasLider}h (Mínimo 18h)`}
           >
-            {horasLider >= 8 && `${horasLider}h Líder`}
+            {horasLider >= 8 && `👑 ${horasLider}h Líder`}
           </div>
 
-          {/* Segmento 2: Dev Activo por Ejecutar (Indigo) */}
+          {/* Segmento 2: Dev Activo por Ejecutar (Índigo: bg-indigo-600) */}
           <div
-            style={{ width: `${(desgloseDividendoDev.activas / 48) * 100}%` }}
-            className="bg-indigo-600 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
-            title={`Dev Restante por Ejecutar: ${desgloseDividendoDev.activas}h`}
+            style={{ width: `${(Math.min(horasDev, desgloseDividendoDev.activas > 0 ? desgloseDividendoDev.activas : horasDev) / 48) * 100}%` }}
+            className="bg-indigo-600 h-full transition-all duration-300 flex items-center justify-center text-[0.65rem] font-black text-white px-2 shadow-xs shrink-0"
+            title={`💻 Dev Restante por Ejecutar: ${desgloseDividendoDev.activas > 0 ? desgloseDividendoDev.activas : horasDev}h`}
           >
-            {desgloseDividendoDev.activas >= 6 && `${desgloseDividendoDev.activas}h Dev Activo`}
+            {(desgloseDividendoDev.activas > 0 ? desgloseDividendoDev.activas : horasDev) >= 6 && `💻 ${desgloseDividendoDev.activas > 0 ? desgloseDividendoDev.activas : horasDev}h Dev Activo`}
           </div>
 
-          {/* Segmento 3: Dev Ya Ejecutado (Esmeralda) */}
+          {/* Segmento 3: Dev Ya Ejecutado (Esmeralda: bg-emerald-500) */}
           {desgloseDividendoDev.ejecutadas > 0 && (
             <div
-              style={{ width: `${(desgloseDividendoDev.ejecutadas / 48) * 100}%` }}
-              className="bg-emerald-500 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
-              title={`Dev Ya Ejecutado: ${desgloseDividendoDev.ejecutadas}h`}
+              style={{ width: `${(Math.min(horasDev, desgloseDividendoDev.ejecutadas) / 48) * 100}%` }}
+              className="bg-emerald-500 h-full transition-all duration-300 flex items-center justify-center text-[0.65rem] font-black text-white px-2 shadow-xs shrink-0"
+              title={`🟢 Dev Ya Ejecutado: ${desgloseDividendoDev.ejecutadas}h (Cumplido)`}
             >
-              {desgloseDividendoDev.ejecutadas >= 4 && `${desgloseDividendoDev.ejecutadas}h Cumplidas`}
+              {desgloseDividendoDev.ejecutadas >= 4 && `🟢 ${desgloseDividendoDev.ejecutadas}h Cumplidas`}
             </div>
           )}
         </div>
 
+        {/* Deslizador de Ajuste Físico con Límite Mínimo de 18h para Líder (Tope Máx 30h Dev) */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-xs text-zinc-500 font-medium">
+            <span>Ajustar horas como Líder: <strong className="text-blue-600 dark:text-blue-400">{horasLider}h</strong> (Mín. 18h)</span>
+            <span>Ajustar horas como Desarrollador: <strong className="text-indigo-600 dark:text-indigo-400">{horasDev}h</strong> (Máx. 30h)</span>
+          </div>
+          <input
+            type="range"
+            min="18"
+            max="48"
+            step="1"
+            value={horasLider}
+            onChange={(e) => handleHorasLiderChange(e.target.value)}
+            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          />
+        </div>
+
+        {/* Botones de Presets Rápidos */}
         {/* Deslizador de Ajuste Físico con Límite Mínimo de 18h para Líder (Tope Máx 30h Dev) */}
         <div className="space-y-2">
           <div className="flex justify-between items-center text-xs text-zinc-500 font-medium">
