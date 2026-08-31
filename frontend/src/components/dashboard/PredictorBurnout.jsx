@@ -4,7 +4,8 @@ import {
   User, RefreshCw, Sparkles, Lock, Layers, Users,
   Briefcase, Check, Info, Search, X, HelpCircle, Download,
   TrendingDown, Minus, Clock, Globe, FolderGit2, ChevronDown, ChevronRight,
-  ShieldCheck, FileText, Filter, DollarSign, Calendar, Loader2, Building2, ArrowLeft, RotateCcw
+  ShieldCheck, FileText, Filter, DollarSign, Calendar, Loader2, Building2, ArrowLeft, RotateCcw,
+  ArrowRight, Zap, Target, Scale, Brain, HeartPulse, Shield, BarChart3, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
@@ -1543,12 +1544,6 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setModalProyectosOpen(false)}
-                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               {/* Buscador en tiempo real y Filtros Rápidos */}
@@ -1783,190 +1778,412 @@ Generado automáticamente por el motor analítico IKernell v2.0
         )}
       </AnimatePresence>
 
-      {/* ─── Modal 2: Guía de 4 Pasos & Niveles de Riesgo de Burnout ─── */}
+      {/* ─── Modal 2: Guía Maestra de 4 Pasos, Niveles de Riesgo & Algoritmo Predictivo ─── */}
       <AnimatePresence>
         {showHelpModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-3xl shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-10 w-full max-w-5xl md:max-w-6xl shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto scrollbar-thin"
             >
-              {/* Encabezado del Modal */}
-              <div className="flex justify-between items-start pb-3.5 border-b border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner shrink-0">
-                    <ShieldCheck size={22} />
+              {/* Encabezado Principal del Modal */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+                    <Brain size={24} />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100">
-                      Guía de 4 Pasos: Niveles de Riesgo & Algoritmo Predictivo
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-[0.65rem] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200/80 dark:border-blue-800/80">
+                        Protocolo capacity.pulse v4.0
+                      </span>
+                      <span className="text-[0.65rem] font-bold text-zinc-600 dark:text-zinc-400">
+                        • CMMI Dev Level 3 & ISO/IEC 25010
+                      </span>
+                    </div>
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                      Guía Maestra: Niveles de Riesgo & Algoritmo Predictivo
                     </h3>
-                    <p className="text-xs text-zinc-500 font-medium mt-0.5">
-                      Protocolo homologado de evaluación de carga cognitiva y mitigación de desgaste en series temporales de 21 días
+                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium mt-0.5">
+                      Marco metodológico para la evaluación continua de carga cognitiva, balanceo de capacidad y prevención de fatiga en ventanas de 21 días.
                     </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowHelpModal(false)}
-                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              {/* Grid de 4 Pasos Homologados */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                {/* Paso 1: Nivel Crítico */}
-                <div className="p-4 rounded-2xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-800/70 space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-black text-[0.68rem] text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/80 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
-                        <ShieldAlert size={12} className="shrink-0" />
-                        <span>PASO 1</span>
-                      </span>
-                      <span className="text-[0.65rem] font-black uppercase text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-red-900/40 border border-red-200 dark:border-red-800">
-                        Score &gt; 80% • CRÍTICA
-                      </span>
-                    </div>
-                    <h4 className="font-extrabold text-red-950 dark:text-red-200 text-sm">
-                      Nivel Crítico (Sobrecarga Extrema)
-                    </h4>
-                    <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] leading-relaxed">
-                      <strong>Diagnóstico:</strong> Carga sostenida extrema en las series S1, S2 y S3, concurrencia de más de 6 tareas críticas o acumulación severa de errores técnicos e interrupciones.
-                    </p>
-                  </div>
-                  <div className="pt-2.5 border-t border-red-200/80 dark:border-red-800/60 text-[0.72rem] text-red-900 dark:text-red-200 font-medium bg-white/80 dark:bg-red-950/50 p-2.5 rounded-xl flex items-start gap-2">
-                    <ShieldAlert size={15} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-extrabold text-red-800 dark:text-red-300 block mb-0.5">Protocolo Mandatorio:</strong>
-                      Bloqueo preventivo en WBS para nuevas asignaciones. Rebalanceo urgente de tareas hacia integrantes estables.
-                    </div>
-                  </div>
-                </div>
-
-                {/* Paso 2: Nivel Alto */}
-                <div className="p-4 rounded-2xl bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/70 space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-black text-[0.68rem] text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/80 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
-                        <AlertTriangle size={12} className="shrink-0" />
-                        <span>PASO 2</span>
-                      </span>
-                      <span className="text-[0.65rem] font-black uppercase text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-orange-900/40 border border-orange-200 dark:border-orange-800">
-                        Score 65% - 79% • ALTA
-                      </span>
-                    </div>
-                    <h4 className="font-extrabold text-orange-950 dark:text-orange-200 text-sm">
-                      Nivel Alto (Sobrecarga en Curso)
-                    </h4>
-                    <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] leading-relaxed">
-                      <strong>Diagnóstico:</strong> Aceleración de tensión operacional en los últimos 7 días (S3 &ge; 75%) o promedio sostenido entre 65% y 79% con tareas complejas simultáneas.
-                    </p>
-                  </div>
-                  <div className="pt-2.5 border-t border-orange-200/80 dark:border-orange-800/60 text-[0.72rem] text-orange-900 dark:text-orange-200 font-medium bg-white/80 dark:bg-orange-950/50 p-2.5 rounded-xl flex items-start gap-2">
-                    <AlertTriangle size={15} className="text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-extrabold text-orange-800 dark:text-orange-300 block mb-0.5">Protocolo Mandatorio:</strong>
-                      Rebalanceo proactivo de subtareas complejas antes del cierre del sprint para prevenir la entrada a estado crítico.
-                    </div>
-                  </div>
-                </div>
-
-                {/* Paso 3: Nivel Medio */}
-                <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/70 space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-black text-[0.68rem] text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/80 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
-                        <Activity size={12} className="shrink-0" />
-                        <span>PASO 3</span>
-                      </span>
-                      <span className="text-[0.65rem] font-black uppercase text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800">
-                        Score 45% - 64% • MEDIA
-                      </span>
-                    </div>
-                    <h4 className="font-extrabold text-amber-950 dark:text-amber-200 text-sm">
-                      Nivel Medio (En Alerta Preventiva)
-                    </h4>
-                    <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] leading-relaxed">
-                      <strong>Diagnóstico:</strong> Desgaste asociado a contingencias imprevistas, bloqueos de ambiente, reuniones urgentes o soporte imprevisto de producción.
-                    </p>
-                  </div>
-                  <div className="pt-2.5 border-t border-amber-200/80 dark:border-amber-800/60 text-[0.72rem] text-amber-900 dark:text-amber-200 font-medium bg-white/80 dark:bg-amber-950/50 p-2.5 rounded-xl flex items-start gap-2">
-                    <Clock size={15} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-extrabold text-amber-800 dark:text-amber-300 block mb-0.5">Protocolo Mandatorio:</strong>
-                      Monitoreo continuo de cadencia en dailies y contención de interrupciones externas no planificadas.
-                    </div>
-                  </div>
-                </div>
-
-                {/* Paso 4: Nivel Bajo / Estable */}
-                <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/70 space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-black text-[0.68rem] text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/80 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
-                        <CheckCircle2 size={12} className="shrink-0" />
-                        <span>PASO 4</span>
-                      </span>
-                      <span className="text-[0.65rem] font-black uppercase text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full bg-white/80 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800">
-                        Score &lt; 45% • BAJA / ESTABLE
-                      </span>
-                    </div>
-                    <h4 className="font-extrabold text-emerald-950 dark:text-emerald-200 text-sm">
-                      Nivel Bajo / Estable (Rendimiento Óptimo)
-                    </h4>
-                    <p className="text-zinc-700 dark:text-zinc-300 text-[0.72rem] leading-relaxed">
-                      <strong>Diagnóstico:</strong> Flujo de trabajo balanceado, cadencia sostenible y alta fiabilidad sin fatiga acumulada en los ciclos de entrega.
-                    </p>
-                  </div>
-                  <div className="pt-2.5 border-t border-emerald-200/80 dark:border-emerald-800/60 text-[0.72rem] text-emerald-900 dark:text-emerald-200 font-medium bg-white/80 dark:bg-emerald-950/50 p-2.5 rounded-xl flex items-start gap-2">
-                    <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-extrabold text-emerald-800 dark:text-emerald-300 block mb-0.5">Protocolo Mandatorio:</strong>
-                      Capacidad disponible para asumir nuevas actividades WBS o liderar iniciativas de arquitectura y mentoría.
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Cuadro Técnico: Fundamentación Matemática y Ventana de 21 Días */}
-              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2 text-xs">
-                <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-zinc-100 text-[0.75rem]">
-                  <Layers size={14} className="text-blue-500" />
-                  <span>Fundamentación del Motor Analítico (Series Temporales de 21 Días)</span>
+              {/* 1. Matriz de los 4 Niveles de Riesgo y Protocolos de Mitigación Inmediata */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5">
+                    <Shield size={14} className="text-blue-500" />
+                    1. Matriz Operativa de 4 Pasos & Niveles de Sobrecarga
+                  </h4>
+                  <span className="text-[0.7rem] text-zinc-600 dark:text-zinc-400 font-bold">
+                    Escala normalizada de 0% a 100%
+                  </span>
                 </div>
-                <p className="text-zinc-600 dark:text-zinc-400 text-[0.72rem] leading-relaxed">
-                  El algoritmo divide el histórico en 3 series ponderadas: <strong>Semana 1</strong> (Días 15 a 21), <strong>Semana 2</strong> (Días 8 a 14) y <strong>Semana 3</strong> (Últimos 7 días). La ponderación multidimensional combina:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[0.7rem] pt-1">
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                    <strong className="text-blue-600 dark:text-blue-400 block font-mono font-extrabold">45% Ponderación</strong>
-                    <span>Tareas activas en WBS y horas estimadas vs consumidas</span>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  {/* Paso 1: Nivel Crítico */}
+                  <div className="p-5 rounded-3xl bg-gradient-to-br from-red-50/90 to-red-100/30 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800/80 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-black text-[0.7rem] text-red-700 dark:text-red-300 bg-red-100/90 dark:bg-red-900/80 px-2.5 py-1 rounded-xl inline-flex items-center gap-1.5 border border-red-200 dark:border-red-700">
+                          <ShieldAlert size={14} className="shrink-0 animate-pulse" />
+                          <span>PASO 1</span>
+                        </span>
+                        <span className="text-[0.7rem] font-black uppercase text-red-800 dark:text-red-200 px-3 py-1 rounded-xl bg-white/90 dark:bg-red-900/60 border border-red-300 dark:border-red-700 shadow-xs">
+                          Score &gt; 80% • CRÍTICA
+                        </span>
+                      </div>
+
+                      <div>
+                        <h5 className="font-black text-red-950 dark:text-red-100 text-base">
+                          Nivel Crítico: Sobrecarga Extrema & Bloqueo
+                        </h5>
+                        <p className="text-xs text-red-700 dark:text-red-300 font-bold mt-0.5">
+                          Estado de fatiga acumulada con riesgo inminente de parálisis en entregables.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed bg-white/70 dark:bg-zinc-900/70 p-3.5 rounded-2xl border border-red-200/70 dark:border-red-900/50">
+                        <p>
+                          <strong className="text-zinc-900 dark:text-zinc-100">Diagnóstico Situacional:</strong> Saturación sostenida en las 3 series de tiempo (S1, S2, S3), concurrencia simultánea de más de 6 tareas críticas o acumulación severa de errores e interrupciones sin resolver.
+                        </p>
+                        <p>
+                          <strong className="text-zinc-900 dark:text-zinc-100">Impacto en Sprint:</strong> Alto riesgo de deserción, estrés cognitivo agudo y retrasos en entregables DIAN/WBS.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-red-200/80 dark:border-red-800/60 text-xs text-red-950 dark:text-red-100 font-medium bg-red-100/60 dark:bg-red-950/60 p-3.5 rounded-2xl flex items-start gap-2.5">
+                      <ShieldAlert size={18} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="font-black text-red-900 dark:text-red-200 block text-xs uppercase tracking-wide mb-0.5">
+                          Protocolo Mandatorio de Mitigación:
+                        </strong>
+                        <span className="text-[0.75rem] leading-relaxed block">
+                          Bloqueo preventivo en WBS para impedir nuevas asignaciones. Rebalanceo urgente de tareas críticas hacia desarrolladores en estado Estable y activación de pausa técnica.
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                    <strong className="text-red-600 dark:text-red-400 block font-mono font-extrabold">35% Ponderación</strong>
-                    <span>Errores técnicos no resueltos y fallos de integración</span>
+
+                  {/* Paso 2: Nivel Alto */}
+                  <div className="p-5 rounded-3xl bg-gradient-to-br from-orange-50/90 to-amber-100/30 dark:from-orange-950/40 dark:to-orange-900/20 border border-orange-200 dark:border-orange-800/80 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-black text-[0.7rem] text-orange-700 dark:text-orange-300 bg-orange-100/90 dark:bg-orange-900/80 px-2.5 py-1 rounded-xl inline-flex items-center gap-1.5 border border-orange-200 dark:border-orange-700">
+                          <AlertTriangle size={14} className="shrink-0" />
+                          <span>PASO 2</span>
+                        </span>
+                        <span className="text-[0.7rem] font-black uppercase text-orange-800 dark:text-orange-200 px-3 py-1 rounded-xl bg-white/90 dark:bg-orange-900/60 border border-orange-300 dark:border-orange-700 shadow-xs">
+                          Score 65% - 79% • ALTA
+                        </span>
+                      </div>
+
+                      <div>
+                        <h5 className="font-black text-orange-950 dark:text-orange-100 text-base">
+                          Nivel Alto: Sobrecarga en Aceleración
+                        </h5>
+                        <p className="text-xs text-orange-700 dark:text-orange-300 font-bold mt-0.5">
+                          Tendencia alcista sostenida con pérdida de holgura operativa.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed bg-white/70 dark:bg-zinc-900/70 p-3.5 rounded-2xl border border-orange-200/70 dark:border-orange-900/50">
+                        <p>
+                          <strong className="text-zinc-900 dark:text-zinc-100">Diagnóstico Situacional:</strong> Aumento significativo de tensión en los últimos 7 días (S3 ≥ 75%) o promedio acumulado entre 65% y 79% con tareas complejas en paralelo.
+                        </p>
+                        <p>
+                          <strong className="text-zinc-900 dark:text-zinc-100">Impacto en Sprint:</strong> Degradación progresiva en la calidad del código y riesgo de desbordamiento al cierre del ciclo.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-orange-200/80 dark:border-orange-800/60 text-xs text-orange-950 dark:text-orange-100 font-medium bg-orange-100/60 dark:bg-orange-950/60 p-3.5 rounded-2xl flex items-start gap-2.5">
+                      <AlertTriangle size={18} className="text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="font-black text-orange-900 dark:text-orange-200 block text-xs uppercase tracking-wide mb-0.5">
+                          Protocolo Mandatorio de Mitigación:
+                        </strong>
+                        <span className="text-[0.75rem] leading-relaxed block">
+                          Rebalanceo preventivo de subtareas complejas antes del cierre del sprint. Asignación de desarrollador de apoyo para Pair Programming y ajuste de estimaciones.
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                    <strong className="text-amber-600 dark:text-amber-400 block font-mono font-extrabold">20% Ponderación</strong>
-                    <span>Minutos acumulados en interrupciones y contingencias</span>
+
+                  {/* Paso 3: Nivel Medio */}
+                  <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-50/90 to-yellow-100/30 dark:from-amber-950/40 dark:to-amber-900/20 border border-amber-200 dark:border-amber-800/80 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-black text-[0.7rem] text-amber-700 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-900/80 px-2.5 py-1 rounded-xl inline-flex items-center gap-1.5 border border-amber-200 dark:border-amber-700">
+                          <Activity size={14} className="shrink-0" />
+                          <span>PASO 3</span>
+                        </span>
+                        <span className="text-[0.7rem] font-black uppercase text-amber-800 dark:text-amber-200 px-3 py-1 rounded-xl bg-white/90 dark:bg-amber-900/60 border border-amber-300 dark:border-amber-700 shadow-xs">
+                          Score 45% - 64% • MEDIA
+                        </span>
+                      </div>
+
+                      <div>
+                        <h5 className="font-black text-amber-950 dark:text-amber-100 text-base">
+                          Nivel Medio: Alerta Preventiva & Fricción
+                        </h5>
+                        <p className="text-xs text-amber-700 dark:text-amber-300 font-bold mt-0.5">
+                          Desgaste vinculado a contingencias de entorno e interrupciones externas.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed bg-white/70 dark:bg-zinc-900/70 p-3.5 rounded-2xl border border-amber-200/70 dark:border-amber-900/50">
+                        <p>
+                          <strong className="text-zinc-900 dark:text-zinc-100">Diagnóstico Situacional:</strong> Desgaste originado por contingencias no planificadas, bloqueos de infraestructura, reuniones sobrevenidas o soporte urgente de producción.
+                        </p>
+                        <p>
+                          <strong className="text-zinc-900 dark:text-zinc-100">Impacto en Sprint:</strong> Dispersión de atención técnica y desvíos leves frente al cronograma base.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-amber-200/80 dark:border-amber-800/60 text-xs text-amber-950 dark:text-amber-100 font-medium bg-amber-100/60 dark:bg-amber-950/60 p-3.5 rounded-2xl flex items-start gap-2.5">
+                      <Clock size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="font-black text-amber-900 dark:text-amber-200 block text-xs uppercase tracking-wide mb-0.5">
+                          Protocolo Mandatorio de Mitigación:
+                        </strong>
+                        <span className="text-[0.75rem] leading-relaxed block">
+                          Monitoreo de cadencia en reuniones diarias (Dailies), contención de interrupciones externas y desbloqueo de dependencias de despliegue.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Paso 4: Nivel Bajo / Estable */}
+                  <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-50/90 to-teal-100/30 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800/80 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-black text-[0.7rem] text-emerald-700 dark:text-emerald-300 bg-emerald-100/90 dark:bg-emerald-900/80 px-2.5 py-1 rounded-xl inline-flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-700">
+                          <CheckCircle2 size={14} className="shrink-0" />
+                          <span>PASO 4</span>
+                        </span>
+                        <span className="text-[0.7rem] font-black uppercase text-emerald-800 dark:text-emerald-200 px-3 py-1 rounded-xl bg-white/90 dark:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700 shadow-xs">
+                          Score &lt; 45% • BAJA / ESTABLE
+                        </span>
+                      </div>
+
+                      <div>
+                        <h5 className="font-black text-emerald-950 dark:text-emerald-100 text-base">
+                          Nivel Bajo: Rendimiento Óptimo & Balance
+                        </h5>
+                        <p className="text-xs text-emerald-700 dark:text-emerald-300 font-bold mt-0.5">
+                          Flujo operativo armónico y capacidad técnica disponible.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed bg-white/70 dark:bg-zinc-900/70 p-3.5 rounded-2xl border border-emerald-200/70 dark:border-emerald-900/50">
+                        <p>
+                          <strong className="text-zinc-900 dark:text-zinc-100">Diagnóstico Situacional:</strong> Cadencia predecible, flujo continuo de entregables y balance equilibrado entre horas estimadas y consumidas sin acumulación de fatiga.
+                        </p>
+                        <p>
+                          <strong className="text-zinc-900 dark:text-zinc-100">Impacto en Sprint:</strong> Alta confiabilidad de entrega, excelencia técnica y retención óptima del talento.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-emerald-200/80 dark:border-emerald-800/60 text-xs text-emerald-950 dark:text-emerald-100 font-medium bg-emerald-100/60 dark:bg-emerald-950/60 p-3.5 rounded-2xl flex items-start gap-2.5">
+                      <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="font-black text-emerald-900 dark:text-emerald-200 block text-xs uppercase tracking-wide mb-0.5">
+                          Protocolo Mandatorio de Mitigación:
+                        </strong>
+                        <span className="text-[0.75rem] leading-relaxed block">
+                          Capacidad habilitada para recibir nuevas actividades en WBS, liderar revisiones arquitectónicas o participar en mentoría de otros desarrolladores.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* 2. Fundamentación del Motor Analítico (Ventana de 21 Días y Ponderaciones Tri-Axiales) */}
+              <div className="p-5 sm:p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/90 dark:border-zinc-700 space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-zinc-200 dark:border-zinc-700/80">
+                  <div className="flex items-center gap-2">
+                    <Layers size={16} className="text-blue-600 dark:text-blue-400" />
+                    <h4 className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
+                      2. Fundamentación del Motor Analítico (Series Temporales de 21 Días)
+                    </h4>
+                  </div>
+                  <span className="text-[0.7rem] font-bold text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-800 px-2.5 py-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                    Ventana Dinámica Deslizante
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  
+                  {/* Desglose de Series Temporales */}
+                  <div className="space-y-2.5">
+                    <span className="text-xs font-black uppercase text-zinc-600 dark:text-zinc-400 tracking-wider block">
+                      A. Desglose Temporal Tri-Semanal (Inercia Dinámica)
+                    </span>
+                    <div className="space-y-2">
+                      <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black text-xs shrink-0 border border-blue-100 dark:border-blue-900">
+                          S1
+                        </div>
+                        <div className="text-xs">
+                          <strong className="text-zinc-900 dark:text-zinc-100 block font-bold">
+                            Semana 1 (Días 15 a 21) • Inercia Histórica (20%)
+                          </strong>
+                          <span className="text-zinc-600 dark:text-zinc-400 text-[0.72rem] leading-relaxed block mt-0.5">
+                            Establece la línea base de capacidad del desarrollador y su ritmo previo de resolución.
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-xs shrink-0 border border-indigo-100 dark:border-indigo-900">
+                          S2
+                        </div>
+                        <div className="text-xs">
+                          <strong className="text-zinc-900 dark:text-zinc-100 block font-bold">
+                            Semana 2 (Días 8 a 14) • Tendencia Operativa (35%)
+                          </strong>
+                          <span className="text-zinc-600 dark:text-zinc-400 text-[0.72rem] leading-relaxed block mt-0.5">
+                            Detecta la aceleración o mitigación de fatiga y la persistencia de errores técnicos.
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center font-black text-xs shrink-0 border border-purple-100 dark:border-purple-900">
+                          S3
+                        </div>
+                        <div className="text-xs">
+                          <strong className="text-zinc-900 dark:text-zinc-100 block font-bold">
+                            Semana 3 (Últimos 7 días) • Tensión Inmediata (45%)
+                          </strong>
+                          <span className="text-zinc-600 dark:text-zinc-400 text-[0.72rem] leading-relaxed block mt-0.5">
+                            Refleja la carga viva actual, tareas simultáneas en curso y contingencias del sprint activo.
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ponderación Multidimensional Tri-Axial */}
+                  <div className="space-y-2.5">
+                    <span className="text-xs font-black uppercase text-zinc-600 dark:text-zinc-400 tracking-wider block">
+                      B. Factores Tri-Axiales del Algoritmo
+                    </span>
+                    <div className="space-y-2">
+                      <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black text-xs shrink-0 border border-blue-100 dark:border-blue-900">
+                          45%
+                        </div>
+                        <div className="text-xs">
+                          <strong className="text-zinc-900 dark:text-zinc-100 block font-bold">
+                            Carga de Asignación WBS
+                          </strong>
+                          <span className="text-zinc-600 dark:text-zinc-400 text-[0.72rem] leading-relaxed block mt-0.5">
+                            Dedicación horaria semanal, concurrencia de entregables y balance entre horas estimadas vs reales.
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center font-black text-xs shrink-0 border border-red-100 dark:border-red-900">
+                          35%
+                        </div>
+                        <div className="text-xs">
+                          <strong className="text-zinc-900 dark:text-zinc-100 block font-bold">
+                            Severidad de Errores Técnicos
+                          </strong>
+                          <span className="text-zinc-600 dark:text-zinc-400 text-[0.72rem] leading-relaxed block mt-0.5">
+                            Incidencias no resueltas clasificadas por severidad (Crítica, Alta, Media, Baja) y retrabajos.
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black text-xs shrink-0 border border-amber-100 dark:border-amber-900">
+                          20%
+                        </div>
+                        <div className="text-xs">
+                          <strong className="text-zinc-900 dark:text-zinc-100 block font-bold">
+                            Tiempos de Contingencia e Interrupción
+                          </strong>
+                          <span className="text-zinc-600 dark:text-zinc-400 text-[0.72rem] leading-relaxed block mt-0.5">
+                            Minutos perdidos por caídas de entorno, esperas de dependencias y reuniones fuera de plan.
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* 3. Guía de Gobernanza Directiva & Mejores Prácticas (Coordinadores y Líderes) */}
+              <div className="p-5 sm:p-6 rounded-3xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-800/60 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Scale size={16} className="text-blue-600 dark:text-blue-400" />
+                  <h4 className="text-sm font-black text-blue-950 dark:text-blue-100 uppercase tracking-wide">
+                    3. Gobernanza Operacional & Protocolos Directivos
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/50 space-y-1">
+                    <strong className="text-zinc-900 dark:text-zinc-100 font-bold block text-[0.78rem]">
+                      Regla de Capacidad (48h)
+                    </strong>
+                    <p className="text-zinc-600 dark:text-zinc-400 text-[0.7rem] leading-relaxed">
+                      El sistema restringe automáticamente asignaciones que sobrepasen las 48 horas semanales por trabajador para evitar fatiga estructural.
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/50 space-y-1">
+                    <strong className="text-zinc-900 dark:text-zinc-100 font-bold block text-[0.78rem]">
+                      Rebalanceo Trazable
+                    </strong>
+                    <p className="text-zinc-600 dark:text-zinc-400 text-[0.7rem] leading-relaxed">
+                      Toda reasignación de actividades queda registrada de forma inmutable con motivo, fecha y autor para auditoría ISO/CMMI.
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/50 space-y-1">
+                    <strong className="text-zinc-900 dark:text-zinc-100 font-bold block text-[0.78rem]">
+                      Gestión Proactiva
+                    </strong>
+                    <p className="text-zinc-600 dark:text-zinc-400 text-[0.7rem] leading-relaxed">
+                      Utilice el semáforo predictivo en las reuniones de planificación para balancear cargas antes de que un proyecto entre en retraso.
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Botón de Cierre */}
-              <div className="flex justify-end pt-2">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium">
+                  <ShieldCheck size={14} className="text-emerald-500" />
+                  <span>Protocolo verificado para el control preventivo y la sostenibilidad del equipo.</span>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowHelpModal(false)}
-                  className="gradient-button text-xs py-2 px-6 font-bold cursor-pointer shadow-md"
+                  className="gradient-button text-xs py-2.5 px-7 font-black cursor-pointer shadow-md shadow-blue-600/20 hover:scale-[1.02] transition-transform w-full sm:w-auto"
                 >
                   Entendido / Cerrar Guía
                 </button>
               </div>
+
             </motion.div>
           </div>
         )}
@@ -2003,13 +2220,6 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     </p>
                   </div>
                 </div>
-
-                <button
-                  onClick={() => setShowTareasDevModal(false)}
-                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               {/* 1. Resumen Rápido por Proyectos Asignados */}
@@ -2228,13 +2438,6 @@ Generado automáticamente por el motor analítico IKernell v2.0
                     </p>
                   </div>
                 </div>
-
-                <button
-                  onClick={() => setShowEvolucionModal(false)}
-                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                >
-                  <X size={20} />
-                </button>
               </div>
 
               <div className="space-y-4 overflow-y-auto pr-1 flex-1 text-xs">

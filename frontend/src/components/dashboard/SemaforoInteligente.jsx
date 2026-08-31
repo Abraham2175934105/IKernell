@@ -519,10 +519,6 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onNavigateIn
             exit={{ opacity: 0, y: 10 }}
             className="p-6 bg-zinc-900 text-white border border-zinc-800 rounded-3xl relative shadow-xl space-y-4"
           >
-            <button onClick={() => setEtlResult(null)} className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors">
-              <X size={18} />
-            </button>
-            
             <div className="flex items-center gap-2 font-bold text-emerald-400 text-sm">
               <Send size={16} /> Lote ETL Generado y Transmitido a Brasil (ISO 8601 UTC)
             </div>
@@ -540,6 +536,16 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onNavigateIn
                 <span className="text-zinc-400 block mb-1">Canales Seguros de Envío:</span>
                 <span className="text-zinc-200 bg-zinc-800 px-3 py-1.5 rounded-lg inline-block mt-1">{etlResult.destinoEnvio}</span>
               </div>
+            </div>
+
+            <div className="pt-2 border-t border-zinc-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setEtlResult(null)}
+                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-200 transition-colors cursor-pointer"
+              >
+                Cerrar Notificación
+              </button>
             </div>
           </motion.div>
         )}
