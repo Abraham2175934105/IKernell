@@ -2326,25 +2326,40 @@ export const LiderDashboard = () => {
   const handleAsignarActividad = async (e) => {
     e.preventDefault();
     const errors = {};
-    if (!nuevaActividad.idEtapa) errors.idEtapa = 'Seleccione una etapa';
-    if (!nuevaActividad.cualidadTecnica) errors.cualidadTecnica = 'Seleccione la cualidad técnica requerida para la tarea';
-    if (!nuevaActividad.idDesarrollador) errors.idDesarrollador = 'Seleccione un desarrollador';
-    if (!nuevaActividad.descripcion?.trim()) errors.descripcion = 'Ingrese la descripción de la tarea';
 
-    const devId = String(nuevaActividad.idDesarrollador);
+    if (!nuevaActividad.idEtapa || nuevaActividad.idEtapa === '') {
+      errors.idEtapa = '⚠️ Por favor seleccione la etapa o fase WBS del proyecto.';
+    }
+    if (!nuevaActividad.cualidadTecnica || nuevaActividad.cualidadTecnica === '') {
+      errors.cualidadTecnica = '⚠️ Debe seleccionar la cualidad técnica requerida para la tarea.';
+    }
+    if (!nuevaActividad.idDesarrollador || nuevaActividad.idDesarrollador === '') {
+      errors.idDesarrollador = '⚠️ Debe seleccionar un desarrollador responsable de la lista pre-filtrada.';
+    }
+
+    const devId = String(nuevaActividad.idDesarrollador || '');
     const horasEstimadasNum = parseInt(nuevaActividad.horasEstimadas);
-    if (!nuevaActividad.horasEstimadas || isNaN(horasEstimadasNum) || horasEstimadasNum <= 0) {
-      errors.horasEstimadas = 'Ingrese las horas semanales para esta tarea (ej. 8h).';
-    } else {
+
+    if (!nuevaActividad.horasEstimadas || isNaN(horasEstimadasNum)) {
+      errors.horasEstimadas = '⚠️ Ingrese el número de horas semanales dedicadas a esta tarea (ej: 8h).';
+    } else if (horasEstimadasNum <= 0) {
+      errors.horasEstimadas = '⚠️ Las horas dedicadas deben ser un número positivo mayor a 0.';
+    } else if (devId) {
       const carga = getDevCargaInfo(devId);
       const horasGlobales = carga?.horasAsignadas || 0;
       const estaEnProyecto = (desarrolladoresAsignadosProyecto || []).some(
         a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
       );
       const maxHorasDisponiblesDev = Math.max(0, 48 - (horasGlobales - (estaEnProyecto ? 0 : 0)));
-      if (horasEstimadasNum > maxHorasDisponiblesDev) {
-        errors.horasEstimadas = `¡Excede el límite disponible! El desarrollador solo dispone de ${maxHorasDisponiblesDev}h libres (Máximo legal: 48h).`;
+      if (horasEstimadasNum > maxHorasDisponiblesDev || (horasGlobales + horasEstimadasNum) > 48) {
+        errors.horasEstimadas = `⚠️ ¡Límite legal excedido! El desarrollador solo dispone de ${maxHorasDisponiblesDev}h libres (Máximo 48h semanales).`;
       }
+    }
+
+    if (!nuevaActividad.descripcion || !nuevaActividad.descripcion.trim()) {
+      errors.descripcion = '⚠️ Ingrese una descripción detallada de la tarea a realizar.';
+    } else if (nuevaActividad.descripcion.trim().length < 5) {
+      errors.descripcion = '⚠️ La descripción debe tener al menos 5 caracteres explicativos del trabajo técnico.';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -6005,6 +6020,21 @@ export const LiderDashboard = () => {
                 </div>
 
                 <form onSubmit={handleAsignarActividad} className="space-y-4 text-xs" noValidate>
+                  {/* Resumen de Errores Generales */}
+                  {Object.keys(formErrors).length > 0 && (
+                    <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 text-red-900 dark:text-red-200 text-xs space-y-1.5 animate-fadeIn shadow-2xs">
+                      <div className="flex items-center gap-2 font-extrabold text-red-700 dark:text-red-300">
+                        <AlertTriangle size={16} className="text-red-600 shrink-0" />
+                        <span>Por favor complete todos los campos obligatorios antes de guardar:</span>
+                      </div>
+                      <ul className="list-disc list-inside text-[0.72rem] text-red-800 dark:text-red-300 pl-1 space-y-0.5 font-medium">
+                        {Object.values(formErrors).filter(Boolean).map((err, idx) => (
+                          <li key={idx}>{err}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   {/* Campo Etapa / Fase WBS */}
                   <div>
                     <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Etapa / Fase WBS *</label>
@@ -6048,7 +6078,11 @@ export const LiderDashboard = () => {
                   </div>
 
                   {/* Paso 2: Clasificación / Cualidad Técnica Requerida para la Tarea * */}
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2.5">
+                  <div className={`p-3.5 rounded-2xl space-y-2.5 transition-all ${
+                    formErrors.cualidadTecnica
+                      ? 'bg-red-50/50 dark:bg-red-950/30 border-2 border-red-400 dark:border-red-600 ring-2 ring-red-500/10'
+                      : 'bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <label className="font-bold text-zinc-800 dark:text-zinc-200 block text-xs">
                         Clasificación / Cualidad Técnica Requerida para la Tarea *
