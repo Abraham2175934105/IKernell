@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Clock, ShieldCheck, Sparkles, Sliders, CheckCircle2, AlertCircle, RefreshCw, Code2, Crown, Filter, Layers, Zap } from 'lucide-react';
+import { Clock, ShieldCheck, Sparkles, Sliders, CheckCircle2, AlertCircle, RefreshCw, Code2, Crown, Filter, Layers, Zap, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
