@@ -1815,9 +1815,9 @@ const [actividades, setActividades] = useState([]);
                   value={filtroEstadoProyectoReportes}
                   onChange={setFiltroEstadoProyectoReportes}
                   options={[
-                    { value: 'ACTIVOS', label: '🟢 Proyectos Activos (Por defecto)', badgeColor: 'bg-emerald-500' },
-                    { value: 'FINALIZADOS', label: '📁 Finalizados / Archivados', badgeColor: 'bg-amber-500' },
-                    { value: 'TODOS', label: '🌐 Todos los Proyectos', badgeColor: 'bg-blue-500' }
+                    { value: 'ACTIVOS', label: 'Proyectos Activos (Por defecto)', badgeColor: 'bg-emerald-500' },
+                    { value: 'FINALIZADOS', label: 'Finalizados / Archivados', badgeColor: 'bg-amber-500' },
+                    { value: 'TODOS', label: 'Todos los Proyectos', badgeColor: 'bg-blue-500' }
                   ]}
                 />
 
@@ -2013,7 +2013,7 @@ const [actividades, setActividades] = useState([]);
                         <span className="truncate max-w-[200px] flex items-center gap-1">
                           {esProyectoFinalizado(item?.etapa?.proyecto || item?.proyectoObj) && (
                             <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold border border-amber-500/20 text-[0.58rem] shrink-0">
-                              📁 Archivado
+                                            Archivado
                             </span>
                           )}
                           <span className="truncate">
@@ -2087,7 +2087,7 @@ const [actividades, setActividades] = useState([]);
                             <div className="flex items-center gap-1.5">
                               {esProyectoFinalizado(item?.etapa?.proyecto || item?.proyectoObj) && (
                                 <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[0.6rem] font-mono font-black border border-amber-500/20 shrink-0">
-                                  📁 Archivado
+                                                Archivado
                                 </span>
                               )}
                               <span>{item?.etapa?.nombreEtapa || item?.etapa?.nombre || 'Etapa WBS'}</span>
@@ -2348,13 +2348,6 @@ const [actividades, setActividades] = useState([]);
                     Registra la anomalía técnica para alimentar la telemetría del Semáforo Predictivo.
                   </p>
                 </div>
-                <button 
-                  type="button"
-                  onClick={() => { setShowErrorModal(false); setErrorFormErrors({}); setEtapaPreseleccionada(null); }} 
-                  className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
               </div>
 
               {/* Banner de Etapa Vinculada */}
@@ -2597,13 +2590,6 @@ const [actividades, setActividades] = useState([]);
                     Notifica indisponibilidad técnica o imprevistos de tiempo para recalibrar estimaciones.
                   </p>
                 </div>
-                <button 
-                  type="button"
-                  onClick={() => { setShowInterrupcionModal(false); setInterrupcionFormErrors({}); setEtapaPreseleccionada(null); }} 
-                  className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
               </div>
 
               {/* Banner de Etapa Vinculada */}
