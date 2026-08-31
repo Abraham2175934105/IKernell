@@ -14,7 +14,7 @@ import {
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2, PieChart, FileCheck,
   FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye, EyeOff,
   ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield, Pause, Play, ClipboardList, FolderCheck, Mail,
-  Figma, Server, Cloud, Database, TestTube2, Award, SlidersHorizontal, AlertCircle, XCircle, Calculator
+  Figma, Server, Cloud, Database, TestTube2, Award, SlidersHorizontal, AlertCircle, XCircle, Calculator, Target, Pin
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
