@@ -674,39 +674,31 @@ const DeveloperSelectorModal = ({
               ))}
             </div>
 
-            {/* Fila 3: Chips de Cualidad o Perfil Técnico */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs custom-scrollbar">
-              <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 font-mono tracking-wider shrink-0 flex items-center gap-1">
-                <Filter size={12} className="text-blue-500" /> Cualidad Técnica:
-              </span>
-              {[
-                { key: 'TODOS', label: 'Todas las Cualidades', icon: SlidersHorizontal },
-                { key: 'FIGMA', label: 'Figma & UI/UX', icon: Figma },
-                { key: 'FRONTEND', label: 'Frontend (React/Vue)', icon: Code2 },
-                { key: 'BACKEND', label: 'Backend (Java/Spring)', icon: Server },
-                { key: 'DEVOPS', label: 'DevOps & Cloud', icon: Cloud },
-                { key: 'DATABASE', label: 'SQL & Bases de Datos', icon: Database },
-                { key: 'QA', label: 'Pruebas & QA', icon: TestTube2 }
-              ].map(item => {
-                const IconComp = item.icon;
-                const isActive = skillFilter === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setSkillFilter(item.key)}
-                    className={`px-3 py-1.2 rounded-xl text-[0.68rem] font-bold border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-blue-600 text-white border-blue-600 font-extrabold shadow-xs ring-2 ring-blue-500/20'
-                        : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600'
-                    }`}
-                  >
-                    <IconComp size={13} className={isActive ? 'text-white' : 'text-blue-500 dark:text-blue-400'} />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {/* Banner de Pre-filtro por Cualidad Técnica Obligatoria */}
+            {(() => {
+              const activeSkill = (initialSkillFilter && initialSkillFilter !== 'TODOS') ? initialSkillFilter : skillFilter;
+              const mapCualidades = {
+                FIGMA: 'Diseño Figma & Wireframes',
+                FRONTEND: 'Diseño e Implementación UI React',
+                BACKEND: 'Integración API REST Spring Boot',
+                DATABASE: 'Optimización Consultas SQL & Tuning',
+                QA: 'Pruebas Unitarias JUnit & Mockito',
+                DEVOPS: 'Despliegue CI/CD & Docker'
+              };
+              const nombreCualidad = mapCualidades[activeSkill] || activeSkill;
+
+              return (
+                <div className="p-3 rounded-2xl bg-blue-50/90 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-900 dark:text-blue-200 text-xs flex items-center justify-between gap-2 shadow-2xs font-semibold animate-fadeIn">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <Sparkles size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span className="truncate">Mostrando candidatos idóneos para: <strong className="font-extrabold text-blue-950 dark:text-blue-100">{nombreCualidad}</strong></span>
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-mono font-black bg-blue-600 text-white shadow-2xs shrink-0">
+                    Pre-filtrado Automático ({filteredDevs.length} disponibles)
+                  </span>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Grid Expansivo de Tarjetas de Desarrolladores (2 Columnas en Pantallas Grandes) */}
@@ -1009,6 +1001,7 @@ const DeveloperCombobox = ({
   getCleanEspecialidad,
   placeholder = "— Seleccione un desarrollador responsable —",
   error = false,
+  disabled = false,
   isOpen,
   setIsOpen,
   initialSkillFilter = 'TODOS'
@@ -1017,6 +1010,7 @@ const DeveloperCombobox = ({
 
   const openState = isOpen !== undefined ? isOpen : internalOpen;
   const setOpenState = (st) => {
+    if (disabled) return;
     if (setIsOpen) setIsOpen(st);
     else setInternalOpen(st);
   };
@@ -1032,6 +1026,23 @@ const DeveloperCombobox = ({
     }
     return d;
   }, [value, desarrolladores, desarrolladoresAsignadosProyecto]);
+
+  if (disabled) {
+    return (
+      <button
+        type="button"
+        disabled
+        className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-zinc-100/90 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/60 text-xs font-semibold shadow-none cursor-not-allowed text-left opacity-85"
+        title="Seleccione una cualidad técnica arriba primero para desbloquear la selección de desarrollador"
+      >
+        <div className="flex items-center gap-2.5 text-zinc-400 font-medium text-xs">
+          <Lock size={18} className="text-amber-500 shrink-0" />
+          <span className="font-bold text-zinc-500 dark:text-zinc-400">🔒 Selección Bloqueada: Elija una Cualidad Técnica en el Paso 2 primero</span>
+        </div>
+        <ChevronRight size={16} className="text-zinc-400 shrink-0" />
+      </button>
+    );
+  }
 
   return (
     <>
@@ -6073,9 +6084,10 @@ export const LiderDashboard = () => {
                               setNuevaActividad(prev => ({
                                 ...prev,
                                 cualidadTecnica: sug.key,
-                                cualidadNombre: sug.text
+                                cualidadNombre: sug.text,
+                                idDesarrollador: prev.cualidadTecnica === sug.key ? prev.idDesarrollador : ''
                               }));
-                              setFormErrors(p => ({ ...p, cualidadTecnica: undefined }));
+                              setFormErrors(p => ({ ...p, cualidadTecnica: undefined, idDesarrollador: undefined }));
                             }}
                             className={`px-3 py-1.5 rounded-xl text-[0.68rem] font-extrabold border transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs ${
                               isCurrentSkill
@@ -6122,6 +6134,7 @@ export const LiderDashboard = () => {
                           : '— Seleccione una cualidad técnica arriba primero —'
                       }
                       error={!!formErrors.idDesarrollador}
+                      disabled={!nuevaActividad.cualidadTecnica}
                       isOpen={isAsignarTareaDevListOpen}
                       setIsOpen={setIsAsignarTareaDevListOpen}
                       initialSkillFilter={nuevaActividad.cualidadTecnica || skillFilterForModal}
