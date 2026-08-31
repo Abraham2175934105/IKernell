@@ -58,7 +58,7 @@ const PAISES_IDENTIFICACION = [
     code: 'CO',
     nombre: 'Colombia',
     docTipo: 'Cédula de Ciudadanía (CC)',
-    flag: '🇨🇴',
+    flag: 'CO',
     placeholder: 'Ej. 1018459203 (6 a 10 dígitos numéricos)',
     validate: (val) => {
       const clean = val.trim();
@@ -72,7 +72,7 @@ const PAISES_IDENTIFICACION = [
     code: 'MX',
     nombre: 'México',
     docTipo: 'CURP / INE',
-    flag: '🇲🇽',
+    flag: 'MX',
     placeholder: 'Ej. VECJ880326HDFRRN09 (18 caracteres)',
     validate: (val) => {
       const clean = val.trim().toUpperCase();
@@ -86,7 +86,7 @@ const PAISES_IDENTIFICACION = [
     code: 'ES',
     nombre: 'España',
     docTipo: 'DNI / NIE',
-    flag: '🇪🇸',
+    flag: 'ES',
     placeholder: 'Ej. 12345678Z (8 números + 1 letra control)',
     validate: (val) => {
       const clean = val.trim().toUpperCase();
@@ -106,7 +106,7 @@ const PAISES_IDENTIFICACION = [
     code: 'CL',
     nombre: 'Chile',
     docTipo: 'RUT / RUN',
-    flag: '🇨🇱',
+    flag: 'CL',
     placeholder: 'Ej. 12345678-K (7-8 dígitos + dígito verificador)',
     validate: (val) => {
       const clean = val.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase();
@@ -134,7 +134,7 @@ const PAISES_IDENTIFICACION = [
     code: 'PE',
     nombre: 'Perú',
     docTipo: 'DNI',
-    flag: '🇵🇪',
+    flag: 'PE',
     placeholder: 'Ej. 72849102 (8 dígitos numéricos)',
     validate: (val) => {
       const clean = val.trim();
@@ -147,7 +147,7 @@ const PAISES_IDENTIFICACION = [
     code: 'AR',
     nombre: 'Argentina',
     docTipo: 'DNI',
-    flag: '🇦🇷',
+    flag: 'AR',
     placeholder: 'Ej. 40182938 (7 u 8 dígitos numéricos)',
     validate: (val) => {
       const clean = val.trim();
@@ -160,7 +160,7 @@ const PAISES_IDENTIFICACION = [
     code: 'US',
     nombre: 'Estados Unidos',
     docTipo: 'SSN / Tax ID',
-    flag: '🇺🇸',
+    flag: 'US',
     placeholder: 'Ej. 123-45-6789 (9 dígitos numéricos)',
     validate: (val) => {
       const clean = val.replace(/-/g, '').trim();
@@ -173,7 +173,7 @@ const PAISES_IDENTIFICACION = [
     code: 'INT',
     nombre: 'Internacional / Pasaporte',
     docTipo: 'Pasaporte / ID Global',
-    flag: '🌐',
+    flag: 'INT',
     placeholder: 'Ej. PA8492019 (6 a 15 caracteres alfanuméricos)',
     validate: (val) => {
       const clean = val.trim();
@@ -4200,7 +4200,7 @@ export const LiderDashboard = () => {
                                   </div>
                                   <div>
                                     <strong className="block text-amber-950 dark:text-amber-100 font-extrabold text-[0.78rem]">
-                                      🎉 ¡Fase completada por los desarrolladores!
+                                      Fase completada por los desarrolladores
                                     </strong>
                                     <span className="text-[0.7rem] opacity-90 font-medium">
                                       Todas las tareas internas ({tareasCompletadas}/{totalTareas}) han sido finalizadas. Ya puede revisar y hacer clic en <strong>Finalizar Etapa</strong> para cerrar formalmente esta etapa.
@@ -5318,7 +5318,7 @@ export const LiderDashboard = () => {
                               value: String(et?.idEtapa),
                               label: `Fase #${et?.idEtapa}: ${et?.nombreEtapa}`,
                               subtitle: isFin
-                                ? '⚠️ Etapa Finalizada (Se reabrirá a EN_PROCESO al asignar)'
+                                ? '[ ATENCIÓN ] Etapa Finalizada (Se reabrirá a EN_PROCESO al asignar)'
                                 : `Estado: ${et?.estado || 'PENDIENTE'} • ${et?.actividades ? et.actividades.length : 0} tareas`
                             };
                           })
@@ -7374,13 +7374,6 @@ export const LiderDashboard = () => {
                     <Edit3 size={18} className="text-blue-600 dark:text-blue-400" />
                     <span>Editar Etapa WBS (#Etapa {editingEtapaObj.idEtapa})</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowEditarEtapaModal(false)}
-                    className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
-                  >
-                    <X size={18} />
-                  </button>
                 </div>
 
                 <form onSubmit={handleGuardarEditarEtapa} className="space-y-4 text-xs">
@@ -7572,13 +7565,6 @@ export const LiderDashboard = () => {
                     <FolderGit2 size={20} className="text-blue-600 dark:text-blue-400" />
                     <span>Editar Información del Proyecto (PRJ-00{proyectoSeleccionado.idProyecto})</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowEditarProyectoModal(false)}
-                    className="p-1 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
-                  >
-                    <X size={18} />
-                  </button>
                 </div>
 
                 <form onSubmit={handleGuardarEditarProyecto} className="space-y-4 text-xs">
@@ -7660,10 +7646,10 @@ export const LiderDashboard = () => {
                       onChange={(e) => setEditingProyectoForm({ ...editingProyectoForm, estado: e.target.value })}
                       className="input-field w-full py-2 text-xs font-bold appearance-none cursor-pointer"
                     >
-                      <option value="ACTIVO">⚡ ACTIVO (En Ejecución Normal)</option>
-                      <option value="PAUSADO">⏸️ PAUSADO (En Pausa Temporaria)</option>
-                      <option value="INHABILITADO">🚫 INHABILITADO (Suspendido u Operación Detenida)</option>
-                      <option value="FINALIZADO">✅ FINALIZADO (Cerrado Formalmente)</option>
+                      <option value="ACTIVO">ACTIVO (En Ejecución Normal)</option>
+                      <option value="PAUSADO">PAUSADO (En Pausa Temporaria)</option>
+                      <option value="INHABILITADO">INHABILITADO (Suspendido u Operación Detenida)</option>
+                      <option value="FINALIZADO">FINALIZADO (Cerrado Formalmente)</option>
                     </select>
                     <p className="text-[0.68rem] text-zinc-500 font-medium pt-1">
                       Nota: Cambiar el estado a <strong>PAUSADO</strong> notificará de inmediato a todos los desarrolladores con actividades activas en este proyecto.
@@ -8193,12 +8179,6 @@ export const LiderDashboard = () => {
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setShowNuevoColaboradorModal(false)}
-                      className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                    >
-                      <X size={20} />
-                    </button>
                   </div>
 
                   <form onSubmit={handleCrearColaboradorPorLider} className="space-y-4 text-xs" noValidate>
@@ -8233,7 +8213,7 @@ export const LiderDashboard = () => {
                             >
                               {PAISES_IDENTIFICACION.map(p => (
                                 <option key={p.code} value={p.code}>
-                                  {p.flag} {p.nombre} ({p.docTipo})
+                                  [{p.flag}] {p.nombre} ({p.docTipo})
                                 </option>
                               ))}
                             </select>
@@ -8243,7 +8223,7 @@ export const LiderDashboard = () => {
                             <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between text-xs mb-1">
                               <span>Número de Identificación / {paisActual.docTipo} *</span>
                               <span className="text-[0.62rem] font-mono text-blue-600 dark:text-blue-400 font-extrabold">
-                                {paisActual.flag} {paisActual.nombre}
+                                [{paisActual.flag}] {paisActual.nombre}
                               </span>
                             </label>
                             <div className="relative">
@@ -8735,14 +8715,6 @@ export const LiderDashboard = () => {
                       </h3>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowReasignacionNotifModal(false)}
-                    className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center justify-center transition-colors cursor-pointer"
-                    title="Cerrar ventana"
-                  >
-                    <X size={16} />
-                  </button>
                 </div>
 
                 {/* Ficha Resumen del Proyecto */}
@@ -8844,13 +8816,6 @@ export const LiderDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTrabajadorModal(null)}
-                    className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  >
-                    <X size={20} />
-                  </button>
                 </div>
 
                 {/* Ficha Personal, Credenciales & Stack Técnico */}
