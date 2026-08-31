@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Mail, Shield, ShieldCheck, Key, Lock, Eye, EyeOff,
   CheckCircle2, AlertTriangle, Loader2, Briefcase,
