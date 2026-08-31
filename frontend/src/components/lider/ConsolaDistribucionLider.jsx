@@ -131,7 +131,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-600 to-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-md shrink-0">
             <Sliders size={22} />
           </div>
           <div>
@@ -139,7 +139,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
               <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Consola de Distribución Horaria Dual (Líder ↔ Desarrollador)
               </h3>
-              <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-black bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+              <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-black bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                 48h Semanales
               </span>
             </div>
@@ -152,9 +152,9 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         <button
           type="button"
           onClick={aplicarSugerenciaInteligente}
-          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700/80 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
         >
-          <Sparkles size={14} className="text-amber-500" />
+          <Sparkles size={14} className="text-blue-600 dark:text-blue-400" />
           <span>Auto-Calcular por WBS</span>
         </button>
       </div>
@@ -195,12 +195,12 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
       {/* Grid de Tarjetas de Métricas de Horas Duales */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
         {/* Tarjeta Rol Líder */}
-        <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-800/60 space-y-2">
-          <div className="flex justify-between items-center text-amber-700 dark:text-amber-300 font-extrabold">
+        <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/90 dark:border-blue-800/60 space-y-2">
+          <div className="flex justify-between items-center text-blue-700 dark:text-blue-300 font-extrabold">
             <span className="flex items-center gap-1.5 text-[0.68rem] uppercase font-mono">
               <Crown size={14} /> Horas Dirección Líder
             </span>
-            <span className="text-xs bg-amber-200/60 dark:bg-amber-900/60 px-2 py-0.5 rounded-md font-mono">{horasLider}h</span>
+            <span className="text-xs bg-blue-200/60 dark:bg-blue-900/60 px-2 py-0.5 rounded-md font-mono">{horasLider}h</span>
           </div>
           <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400">
             Revisión WBS, semáforo predictivo, evaluación de riesgos y coordinación del equipo.
@@ -208,12 +208,12 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         </div>
 
         {/* Tarjeta Rol Desarrollador */}
-        <div className="p-4 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/90 dark:border-purple-800/60 space-y-2">
-          <div className="flex justify-between items-center text-purple-700 dark:text-purple-300 font-extrabold">
+        <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/90 dark:border-indigo-800/60 space-y-2">
+          <div className="flex justify-between items-center text-indigo-700 dark:text-indigo-300 font-extrabold">
             <span className="flex items-center gap-1.5 text-[0.68rem] uppercase font-mono">
               <Code2 size={14} /> Horas Desarrollo Técnico
             </span>
-            <span className="text-xs bg-purple-200/60 dark:bg-purple-900/60 px-2 py-0.5 rounded-md font-mono">{horasDev}h</span>
+            <span className="text-xs bg-indigo-200/60 dark:bg-indigo-900/60 px-2 py-0.5 rounded-md font-mono">{horasDev}h</span>
           </div>
           <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400">
             Ejecución directa de actividades de código, pruebas y solución de errores técnicos en WBS.
@@ -242,7 +242,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             Barra Proporcional de Jornada Laboral (48 Horas Semanales):
           </span>
           <span className="text-zinc-500 font-mono text-[0.7rem]">
-            Modo: <strong className="text-amber-600 dark:text-amber-400">{modo.replace('_', ' ')}</strong>
+            Modo: <strong className="text-blue-600 dark:text-blue-400">{modo.replace('_', ' ')}</strong>
           </span>
         </div>
 
@@ -250,14 +250,14 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden flex shadow-inner">
           <div
             style={{ width: `${(horasLider / 48) * 100}%` }}
-            className="bg-amber-500 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
+            className="bg-blue-600 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
             title={`Líder: ${horasLider}h`}
           >
             {horasLider >= 8 && `${horasLider}h Líder`}
           </div>
           <div
             style={{ width: `${(horasDev / 48) * 100}%` }}
-            className="bg-purple-600 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
+            className="bg-indigo-600 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
             title={`Desarrollador: ${horasDev}h`}
           >
             {horasDev >= 8 && `${horasDev}h Dev`}
@@ -267,8 +267,8 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         {/* Deslizador de Ajuste Físico */}
         <div className="space-y-2">
           <div className="flex justify-between items-center text-xs text-zinc-500 font-medium">
-            <span>Ajustar horas como Líder: <strong className="text-amber-600">{horasLider}h</strong></span>
-            <span>Ajustar horas como Desarrollador: <strong className="text-purple-600">{horasDev}h</strong></span>
+            <span>Ajustar horas como Líder: <strong className="text-blue-600 dark:text-blue-400">{horasLider}h</strong></span>
+            <span>Ajustar horas como Desarrollador: <strong className="text-indigo-600 dark:text-indigo-400">{horasDev}h</strong></span>
           </div>
           <input
             type="range"
@@ -277,7 +277,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             step="1"
             value={horasLider}
             onChange={(e) => handleHorasLiderChange(e.target.value)}
-            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
           />
         </div>
 
@@ -288,21 +288,21 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             <button
               type="button"
               onClick={() => { setHorasLider(24); setHorasDev(24); setModo('MANUAL'); }}
-              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:border-amber-400 transition-all cursor-pointer shadow-2xs"
+              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:border-blue-400 transition-all cursor-pointer shadow-2xs"
             >
               Equilibrado (24h / 24h)
             </button>
             <button
               type="button"
               onClick={() => { setHorasLider(16); setHorasDev(32); setModo('MANUAL'); }}
-              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:border-purple-400 transition-all cursor-pointer shadow-2xs"
+              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:border-indigo-400 transition-all cursor-pointer shadow-2xs"
             >
               Enfoque Técnico (16h Líder / 32h Dev)
             </button>
             <button
               type="button"
               onClick={() => { setHorasLider(32); setHorasDev(16); setModo('MANUAL'); }}
-              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:border-amber-400 transition-all cursor-pointer shadow-2xs"
+              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:border-blue-400 transition-all cursor-pointer shadow-2xs"
             >
               Enfoque Dirección (32h Líder / 16h Dev)
             </button>
@@ -316,7 +316,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
           type="button"
           disabled={saving}
           onClick={() => guardarEnBackend()}
-          className="px-6 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition-all shadow-md shadow-amber-600/20 cursor-pointer flex items-center gap-2"
+          className="px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition-all shadow-md shadow-blue-600/20 cursor-pointer flex items-center gap-2"
         >
           {saving ? <RefreshCw size={14} className="animate-spin" /> : <ShieldCheck size={16} />}
           <span>{saving ? 'Guardando...' : 'Guardar Registro de Distribución Horaria'}</span>

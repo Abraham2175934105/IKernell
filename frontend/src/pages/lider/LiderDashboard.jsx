@@ -6,6 +6,7 @@ import { SemaforoInteligente } from '../../components/dashboard/SemaforoIntelige
 import { EtlBrasil } from '../../components/dashboard/EtlBrasil';
 import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
 import { ConsolaDistribucionLider } from '../../components/lider/ConsolaDistribucionLider';
+import { DesarrolladorDashboard } from '../desarrollador/DesarrolladorDashboard';
 import {
   Briefcase, Layers, Plus, Activity, Sparkles, Download,
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, ChevronDown, X,
@@ -822,6 +823,10 @@ const DeveloperCombobox = ({
 export const LiderDashboard = () => {
   const { user, activeRoleMode } = useAuth();
   const api = useApi();
+
+  if (activeRoleMode === 'DESARROLLADOR') {
+    return <DesarrolladorDashboard />;
+  }
 
   // Estados locales
   const [activeTab, setActiveTab] = useState('wbs');

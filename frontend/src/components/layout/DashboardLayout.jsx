@@ -98,10 +98,10 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
     } else if (user?.rol === 'LIDER') {
       if (activeRoleMode === 'DESARROLLADOR') {
         return [
-          { id: 'actividades', label: 'Mis Tareas WBS (Desarrollo)', icon: CheckSquare, desc: 'Tablero de desarrollo técnico' },
-          { id: 'wbs', label: 'WBS y Proyectos (Vista Líder)', icon: Layers, desc: 'Supervisión de etapas' },
-          { id: 'incidencias', label: 'Bandeja de Incidencias', icon: AlertTriangle, desc: 'Reportar o revisar errores' },
-          { id: 'burnout', label: 'Carga Semanal & Burnout', icon: Activity, desc: 'Análisis de capacidad 48h' }
+          { id: 'actividades', label: 'Mis Actividades WBS', icon: CheckSquare, desc: 'Tablero de trabajo y desarrollo' },
+          { id: 'reportar', label: 'Registrar Incidencia', icon: Bug, desc: 'Reporte de errores e interrupciones' },
+          { id: 'historial', label: 'Historial de Mis Reportes', icon: FileText, desc: 'Trazabilidad y estado' },
+          { id: 'burnout', label: 'Mi Carga Horaria (48h)', icon: Activity, desc: 'Consola de horas de desarrollo' }
         ];
       }
       return [

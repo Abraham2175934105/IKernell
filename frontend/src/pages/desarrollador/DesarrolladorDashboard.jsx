@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SnippetInjectionCard } from '../../components/dashboard/SnippetInjectionCard';
 import { Skeleton, SkeletonCard, SkeletonTable } from '../../components/ui/Skeleton';
 import { CustomSelect } from '../../components/ui/CustomSelect';
+import { ConsolaDistribucionLider } from '../../components/lider/ConsolaDistribucionLider';
 
 // Variantes de animación de alto rendimiento y ultra rápidas (0.25s)
 const containerVariants = {
@@ -2578,6 +2579,21 @@ const [actividades, setActividades] = useState([]);
               </div>
             )}
           </motion.div>
+        </motion.div>
+      )}
+
+      {/* Pestaña: Mi Carga Horaria (48h) & Distribución Horaria Dual */}
+      {activeTab === 'burnout' && (
+        <motion.div 
+          key="burnout"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-6"
+        >
+          <ErrorBoundary title="Error en Consola de Distribución Horaria">
+            <ConsolaDistribucionLider />
+          </ErrorBoundary>
         </motion.div>
       )}
 

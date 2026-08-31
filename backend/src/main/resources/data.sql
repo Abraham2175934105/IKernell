@@ -124,11 +124,11 @@ DELETE FROM proyecto_desarrollador;
 
 INSERT INTO proyecto_desarrollador (proyecto_id, desarrollador_id, horas_semanales)
 VALUES 
-  (1, 6, 12), (1, 9, 12), (1, 11, 12), (1, 3, 12), (1, 15, 12), 
-  (2, 6, 12), (2, 9, 12), (2, 4, 12), (2, 12, 12), (2, 13, 12), 
-  (3, 10, 12), (3, 11, 12), (3, 15, 12), (3, 16, 12),
-  (4, 10, 12), (4, 12, 12), (4, 13, 12), (4, 4, 12), (4, 15, 12), 
-  (5, 9, 8), (5, 17, 8), (5, 18, 8), (5, 19, 8), (5, 20, 8),
+  (1, 6, 12), (1, 9, 12), (1, 11, 12), (1, 3, 12), (1, 15, 12), (1, 5, 24), (1, 8, 20),
+  (2, 6, 12), (2, 9, 12), (2, 4, 12), (2, 12, 12), (2, 13, 12), (2, 2, 24), (2, 8, 20),
+  (3, 10, 12), (3, 11, 12), (3, 15, 12), (3, 16, 12), (3, 2, 20),
+  (4, 10, 12), (4, 12, 12), (4, 13, 12), (4, 4, 12), (4, 15, 12), (4, 5, 20),
+  (5, 9, 8), (5, 17, 8), (5, 18, 8), (5, 19, 8), (5, 20, 8), (5, 8, 24),
   (6, 21, 15), (6, 25, 15), (6, 31, 15), (6, 36, 15),
   (7, 24, 10), (7, 26, 10), (7, 30, 10), (7, 42, 10),
   (8, 22, 15), (8, 32, 15), (8, 44, 15),
@@ -343,6 +343,19 @@ VALUES
   -- Asignaciones para Diego Torres (id: 15) - Frontend & Mobile Lead -> ACTIVO (🔵)
   (1009, 102, 15, 'Construir interfaz reactiva para el visor de facturas y certificados XAdES', 'EN_PROGRESO'),
   (1010, 101, 15, 'Diseño de componentes UI y prototipo de consola web de facturación', 'FINALIZADA'),
+
+  -- Asignaciones Especiales RF-20 (Doble Rol Funcional: Líderes actuando como Desarrolladores en OTROS proyectos)
+  -- Elena Nito (id: 2 - Líder Proy 1 & 5) -> Asignada como Desarrolladora en Proy 2 & 3
+  (8001, 202, 2, 'Desarrollar módulo de encriptación HSM para tarjetas de crédito en Itaú Bank', 'EN_PROGRESO'),
+  (8002, 302, 2, 'Optimizar rendimiento de WebSocket para transferencias en tiempo real en Nubank', 'EN_PROGRESO'),
+
+  -- Carlos Mendoza (id: 5 - Líder Proy 2 & 6) -> Asignado como Desarrollador en Proy 1 & 4
+  (8003, 102, 5, 'Implementar módulo de validación fiscal XML para Santander Brasil', 'EN_PROGRESO'),
+  (8004, 402, 5, 'Configurar servidor STUN/TURN para videoconsultas de baja latencia', 'EN_PROGRESO'),
+
+  -- Ana María Silva (id: 8 - Líder Proy 3 & 4) -> Asignada como Desarrolladora en Proy 5 & 2
+  (8005, 502, 8, 'Construir pipeline de transformación ETL en Python para datos de Embraer', 'EN_PROGRESO'),
+  (8006, 203, 8, 'Diseñar esquemas de almacenamiento para tokens transaccionales PCI-DSS', 'EN_PROGRESO'),
   (3007, 301, 15, 'Maquetación de pantallas principales del dashboard móvil y flujo de transferencias', 'FINALIZADA'),
   (3008, 302, 15, 'Integración de animaciones de confirmación de pago y micro-interacciones hápticas', 'EN_PROGRESO'),
   (3009, 303, 15, 'Desarrollo del componente de previsualización y copiado rápido de código snippet', 'PENDIENTE'),
