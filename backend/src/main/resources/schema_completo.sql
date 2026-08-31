@@ -351,7 +351,28 @@ VALUES
   (11, 'Sistema Interno de Mesas de Ayuda & Control de Assets', 'IKernell Internal Operations', 'Plataforma web interna para seguimiento de tickets de soporte técnico, gestión de activos de hardware e inventario corporativo.', 15000.00, '2026-01-10', '2026-08-30', 'EN_PAUSA', 8),
   (12, 'Plataforma de Auditoría & Ciberseguridad ISO 27001', 'Superintendencia Financiera', 'Módulo de auditoría inmutable, escaneo continuo de vulnerabilidades y verificación de cumplimiento normativo ISO 27001 / CMMI-5.', 90000.00, '2026-04-01', '2026-11-15', 'ACTIVO', 5),
   (13, 'Portal de Facturación Electrónica DIAN v3.0 Enterprise', 'Empresas Públicas de Medellín (EPM)', 'Sistema corporativo de emisión masiva de documentos electrónicos bajo normativa DIAN UBL 2.1 con alta disponibilidad.', 140000.00, '2026-03-15', '2026-12-01', 'ACTIVO', 2),
-  (14, 'Infraestructura Cloud & Clúster Redis Distribuido', 'Grupo Éxito S.A.', 'Implementación de clúster de almacenamiento en memoria de ultra alta velocidad para soporte de sesiones concurrentes en eventos HotSale.', 32000.00, '2025-01-15', '2025-06-15', 'FINALIZADO', 8)
+  (14, 'Infraestructura Cloud & Clúster Redis Distribuido', 'Grupo Éxito S.A.', 'Implementación de clúster de almacenamiento en memoria de ultra alta velocidad para soporte de sesiones concurrentes en eventos HotSale.', 32000.00, '2025-01-15', '2025-06-15', 'FINALIZADO', 8),
+  (15, 'Sistema de Detección de Fraudes con Machine Learning', 'BBVA Colombia S.A.', 'Pipeline de análisis de patrones sospechosos e inyección de alertas antifraude en transacciones con modelos de regresión logística.', 250000.00, '2026-01-10', '2026-12-20', 'ACTIVO', 5),
+  (16, 'Plataforma de Firma Electrónica & Certificados PKI', 'Cámara de Comercio de Bogotá', 'Sistema corporativo para la emisión, validación y almacenamiento de certificados digitales de firma electrónica con validez jurídica.', 68000.00, '2024-05-01', '2025-01-30', 'FINALIZADO', 2),
+  (17, 'Portal de Gestión de Proveedores & Licitaciones', 'Ecopetrol S.A.', 'Módulo empresarial para registro de contratistas, recepción de propuestas de licitación y evaluación automatizada de pliegos.', 175000.00, '2026-02-01', '2026-11-15', 'ACTIVO', 2),
+  (18, 'App Móvil de Delivery & Rastreio de Pedidos', 'Rappi LatAm', 'Plataforma móvil con asignación dinámica de repartidores, cálculo de rutas óptimas y notificaciones push en tiempo real.', 82000.00, '2025-09-01', '2026-07-15', 'EN_PAUSA', 8),
+  (19, 'Plataforma de Streaming & Eventos en Vivo WebRTC', 'Movistar España / Colombia', 'Infraestructura de transmisión masiva de video en ultra alta definición con chat interactivo y moderación de contenido en tiempo real.', 130000.00, '2026-03-01', '2026-10-31', 'ACTIVO', 5),
+  (20, 'Sistema de Control de Inventario & Código de Barras RFID', 'Homecenter Sodimac', 'Módulo de auditoría de existencias en tiempo real con integración de escáneres RFID de alta frecuencia y alertas de reabastecimiento.', 52000.00, '2024-08-01', '2025-04-15', 'FINALIZADO', 8),
+  (21, 'Core de Notificaciones Push & Mensajería SMS/WhatsApp', 'Claro Telecomunicaciones', 'Gateway unificado para el envío de códigos OTP y mensajes de verificación a más de 10 millones de clientes móviles.', 38000.00, '2026-04-01', '2026-09-30', 'ACTIVO', 5),
+  (22, 'Portal Académico & Sistema de Calificaciones Online', 'Universidad Nacional de Colombia', 'Sistema de gestión de matrículas, historial académico y registro de notas con firma digital para docentes y estudiantes.', 45000.00, '2024-02-01', '2024-11-30', 'FINALIZADO', 2),
+  (23, 'Motor de Búsqueda Semántica & Ingesta Elasticsearch', 'El Tiempo Casa Editorial', 'Módulo de indexación masiva de artículos periodísticos con motor de recomendación inteligente y búsqueda por palabras clave.', 42000.00, '2025-10-01', '2026-06-15', 'EN_PAUSA', 8),
+  (24, 'Plataforma de Leasing Operativo & Cotización Vehicular', 'Renting Colombia', 'Portal transaccional para simulación de cánones de arrendamiento de vehículos corporativos y aprobación de créditos.', 98000.00, '2026-02-15', '2026-11-30', 'ACTIVO', 2),
+  (25, 'Sistema de Gestión de Recargas & Tarjeta Inteligente MIO', 'MetroCali S.A.', 'Plataforma de recarga en línea de tarjetas de transporte con integración de validadores sin contacto en estaciones.', 60000.00, '2024-06-01', '2025-03-31', 'FINALIZADO', 5),
+  (26, 'Microservicio de Almacenamiento S3 & Encriptación AES-256', 'Terpel S.A.', 'Servicio cloud para la carga segura de comprobantes de venta con cifrado asimétrico en reposo y rotación de claves.', 22000.00, '2026-05-10', '2026-09-30', 'ACTIVO', 8),
+  (27, 'Portal de Gestión Catastral & Mapeo GIS', 'IGAC - Instituto Geográfico Agustín Codazzi', 'Sistema de información geográfica para consulta de predios urbanos, capas de mapas vectoriales y trámites de avalúo.', 160000.00, '2026-01-20', '2026-12-15', 'ACTIVO', 5),
+  (28, 'App Móvil de Lealtad & Puntos Redimibles', 'Puntos Colombia', 'Billetera de recompensas con acumulación por compras en comercios aliados y catálogo interactivo de redención.', 54000.00, '2024-07-01', '2025-02-28', 'FINALIZADO', 2),
+  (29, 'Plataforma de Reservas Hoteleras & Tarifa Dinámica', 'Decameron All-Inclusive Hotels', 'Motor de reservas de alojamiento con motor de precios dinámicos basado en ocupación y pasarela de pago segura.', 88000.00, '2025-11-01', '2026-08-31', 'EN_PAUSA', 8),
+  (30, 'Motor de Conciliación Bancaria & Archivos NACHA', 'Scotiabank Colpatria', 'Sistema de procesamiento asíncrono para emparejamiento de extractos de cuentas y lotes de transferencias masivas.', 115000.00, '2026-03-01', '2026-12-10', 'ACTIVO', 5),
+  (31, 'Sistema de Telemetría Agrícola & Monitoreo de Suelos', 'Manuelita S.A.', 'Plataforma IoT para lectura de sensores de humedad en cultivos de caña de azúcar con alertas de riego automatizado.', 70000.00, '2024-04-01', '2025-01-15', 'FINALIZADO', 2),
+  (32, 'API Gateway de Integración Open Banking PSD2', 'Banco de Bogotá', 'Pasarela de interoperabilidad para exposición segura de APIs bancarias a terceros bajo la directiva de banca abierta.', 190000.00, '2026-02-01', '2026-11-30', 'ACTIVO', 5),
+  (33, 'Microservicio de Conversión de Monedas & Crypto Feeds', 'Bitso LatAm', 'Servicio REST de altísima frecuencia para consulta de tipos de cambio internacionales y actualización de tasas en tiempo real.', 18000.00, '2024-10-01', '2025-03-15', 'FINALIZADO', 8),
+  (34, 'Portal de Gestión de Pólizas & Siniestros Automotrices', 'Sura Seguros', 'Plataforma de atención de siniestros de vehículos con radicación de fotografías, peritaje digital y liquidación de indemnizaciones.', 105000.00, '2026-03-15', '2026-12-15', 'ACTIVO', 2),
+  (35, 'Sistema de Calibración & Monitoreo de Servidores Bare-Metal', 'Equinix Data Center LatAm', 'Dashboard de supervisión de temperatura, consumo energético y estado de hardware en centros de cómputo de alta densidad.', 30000.00, '2025-12-01', '2026-08-30', 'EN_PAUSA', 8)
 ON CONFLICT (id_proyecto) DO UPDATE SET
   nombre = EXCLUDED.nombre,
   cliente = EXCLUDED.cliente,
@@ -382,7 +403,28 @@ VALUES
   (11, 16, 10), (11, 27, 10), (11, 41, 10),
   (12, 35, 12), (12, 39, 12), (12, 43, 12), (12, 44, 12),
   (13, 34, 15), (13, 36, 15), (13, 37, 15), (13, 45, 15),
-  (14, 18, 12), (14, 20, 12), (14, 26, 12);
+  (14, 18, 12), (14, 20, 12), (14, 26, 12),
+  (15, 23, 15), (15, 28, 15), (15, 33, 15),
+  (16, 21, 10), (16, 25, 10), (16, 31, 10),
+  (17, 34, 15), (17, 36, 15), (17, 45, 15),
+  (18, 16, 12), (18, 27, 12), (18, 41, 12),
+  (19, 38, 15), (19, 40, 15), (19, 43, 15),
+  (20, 18, 10), (20, 20, 10), (20, 26, 10),
+  (21, 22, 12), (21, 32, 12), (21, 44, 12),
+  (22, 15, 10), (22, 37, 10), (22, 42, 10),
+  (23, 24, 10), (23, 30, 10), (23, 39, 10),
+  (24, 6, 15), (24, 9, 15), (24, 11, 15),
+  (25, 10, 12), (25, 12, 12), (25, 13, 12),
+  (26, 3, 10), (26, 4, 10), (26, 17, 10),
+  (27, 19, 15), (27, 28, 15), (27, 33, 15),
+  (28, 21, 12), (28, 25, 12), (28, 31, 12),
+  (29, 22, 10), (29, 32, 10), (29, 44, 10),
+  (30, 35, 15), (30, 38, 15), (30, 40, 15),
+  (31, 15, 10), (31, 18, 10), (31, 20, 10),
+  (32, 34, 20), (32, 36, 20), (32, 45, 20),
+  (33, 26, 10), (33, 27, 10), (33, 41, 10),
+  (34, 6, 15), (34, 11, 15), (34, 37, 15),
+  (35, 24, 10), (35, 30, 10), (35, 42, 10);
 
 -- 5. ETAPAS (WBS)
 DELETE FROM etapa;
@@ -454,13 +496,57 @@ VALUES
 
   -- Proyecto 14 (Redis Distribuido - FINALIZADO)
   (1401, 14, 'Fase 1: Despliegue de Cluster Redis Sentinel & Sharding', 'FINALIZADA'),
-  (1402, 14, 'Fase 2: Pruebas de Estrés en Eventos HotSale & Tuning SQL', 'FINALIZADA')
+  (1402, 14, 'Fase 2: Pruebas de Estrés en Eventos HotSale & Tuning SQL', 'FINALIZADA'),
+
+  -- Proyectos 15 al 35
+  (1501, 15, 'Fase 1: Ingesta de Logs de Transacciones Fraudulentas', 'FINALIZADA'),
+  (1502, 15, 'Fase 2: Inferencia de Modelos ML & Alertas en Tiempo Real', 'EN_PROGRESO'),
+  (1601, 16, 'Fase 1: Infraestructura de Claves Públicas (PKI)', 'FINALIZADA'),
+  (1602, 16, 'Fase 2: Portal de Validación de Certificados PDF', 'FINALIZADA'),
+  (1701, 17, 'Fase 1: Registro de Contratistas & Verificación RUES', 'FINALIZADA'),
+  (1702, 17, 'Fase 2: Módulo de Licitaciones & Recepción de Pliegos', 'EN_PROGRESO'),
+  (1801, 18, 'Fase 1: Geolocalización & Rastreio de Repartidores', 'FINALIZADA'),
+  (1802, 18, 'Fase 2: Motor de Asignación de Pedidos en Tiempo Real', 'EN_PROGRESO'),
+  (1901, 19, 'Fase 1: Clúster de Streaming WebRTC de Baja Latencia', 'FINALIZADA'),
+  (1902, 19, 'Fase 2: Chat Interactivo & Moderación de Comentarios', 'EN_PROGRESO'),
+  (2001, 20, 'Fase 1: Ingesta de Lectores RFID en Almacén Central', 'FINALIZADA'),
+  (2002, 20, 'Fase 2: Conciliación de Existencias & Alertas de Stock', 'FINALIZADA'),
+  (2101, 21, 'Fase 1: Servidor OTP & Integración WhatsApp API', 'FINALIZADA'),
+  (2102, 21, 'Fase 2: Monitor de Entregabilidad de Mensajes SMS', 'EN_PROGRESO'),
+  (2201, 22, 'Fase 1: Módulo de Registro de Calificaciones Digitales', 'FINALIZADA'),
+  (2202, 22, 'Fase 2: Generación de Certificados Académicos QR', 'FINALIZADA'),
+  (2301, 23, 'Fase 1: Indexador de Artículos en Clúster Elasticsearch', 'FINALIZADA'),
+  (2302, 23, 'Fase 2: Motor de Búsqueda Semántica debounced', 'EN_PROGRESO'),
+  (2401, 24, 'Fase 1: Cotizador de Cánones de Arrendamiento Vehicular', 'FINALIZADA'),
+  (2402, 24, 'Fase 2: Evaluación de Riesgo de Crédito Automotriz', 'EN_PROGRESO'),
+  (2501, 25, 'Fase 1: Integración con Pasarela de Recarga MIO', 'FINALIZADA'),
+  (2502, 25, 'Fase 2: Pruebas de Lectura NFC sin Contacto', 'FINALIZADA'),
+  (2601, 26, 'Fase 1: Bucket S3 Cifrado con Claves KMS AWS', 'FINALIZADA'),
+  (2602, 26, 'Fase 2: Pipeline de Carga Masiva de Facturas Terpel', 'EN_PROGRESO'),
+  (2701, 27, 'Fase 1: Digitalización de Capas de Mapas Vectoriales GIS', 'FINALIZADA'),
+  (2702, 27, 'Fase 2: Portal de Trámites de Avalúo Catastral', 'EN_PROGRESO'),
+  (2801, 28, 'Fase 1: Motor de Puntos & Reglas de Acumulación', 'FINALIZADA'),
+  (2802, 28, 'Fase 2: Catálogo Móvil de Redención de Incentivos', 'FINALIZADA'),
+  (2901, 29, 'Fase 1: Motor de Tarifas Dinámicas por Temporada', 'FINALIZADA'),
+  (2902, 29, 'Fase 2: Pasarela de Reserva de Habitaciones Hoteleras', 'EN_PROGRESO'),
+  (3001, 30, 'Fase 1: Parser de Archivos Planos Bancarios NACHA ACH', 'FINALIZADA'),
+  (3002, 30, 'Fase 2: Motor de Conciliación Automática en Lote', 'EN_PROGRESO'),
+  (3101, 31, 'Fase 1: Ingesta de Sensores de Humedad de Suelo IoT', 'FINALIZADA'),
+  (3102, 31, 'Fase 2: Dashboard de Control de Riego Automatizado', 'FINALIZADA'),
+  (3201, 32, 'Fase 1: Portal de Desarrolladores PSD2 & OAuth2 Scopes', 'FINALIZADA'),
+  (3202, 32, 'Fase 2: Endpoints de Consulta de Saldos Open Banking', 'EN_PROGRESO'),
+  (3301, 33, 'Fase 1: Ingesta de Tasa de Cambio Spot en Tiempo Real', 'FINALIZADA'),
+  (3302, 33, 'Fase 2: API REST de Alta Frecuencia Crypto Feeds', 'FINALIZADA'),
+  (3401, 34, 'Fase 1: Radicación Digital de Fotografías de Siniestros', 'FINALIZADA'),
+  (3402, 34, 'Fase 2: Módulo de Peritaje & Liquidación de Indemnización', 'EN_PROGRESO'),
+  (3501, 35, 'Fase 1: Monitor de Sensores de Temperatura Data Center', 'FINALIZADA'),
+  (3502, 35, 'Fase 2: Alertas de Eficiencia Energética PUE en Tiempo Real', 'EN_PROGRESO')
 ON CONFLICT (id_etapa) DO UPDATE SET
   proyecto_id = EXCLUDED.proyecto_id,
   nombre_etapa = EXCLUDED.nombre_etapa,
   estado = EXCLUDED.estado;
 
-SELECT setval('etapa_id_etapa_seq', 2000);
+SELECT setval('etapa_id_etapa_seq', 5000);
 
 -- 6. ACTIVIDADES (WBS Granular)
 DELETE FROM actividad;
