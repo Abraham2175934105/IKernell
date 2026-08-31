@@ -270,6 +270,8 @@ const [actividades, setActividades] = useState([]);
   const [showInterrupcionModal, setShowInterrupcionModal] = useState(false);
   const [detalleModalDoc, setDetalleModalDoc] = useState(null);
   const [etapaPreseleccionada, setEtapaPreseleccionada] = useState(null);
+  const [expandAvanceDetalle, setExpandAvanceDetalle] = useState(false);
+  const [kpiModalStatus, setKpiModalStatus] = useState(null); // null | 'PENDIENTE' | 'EN_PROGRESO' | 'FINALIZADA'
 
   const [submittingError, setSubmittingError] = useState(false);
   const [submittingInterrupcion, setSubmittingInterrupcion] = useState(false);
@@ -592,6 +594,21 @@ const [actividades, setActividades] = useState([]);
   const actividadesPendientes = useMemo(() => actividades.filter(a => a.estado === 'PENDIENTE').length, [actividades]);
   const actividadesEnProgreso = useMemo(() => actividades.filter(a => a.estado === 'EN_PROGRESO' || a.estado === 'EN_CURSO').length, [actividades]);
   const actividadesFinalizadas = useMemo(() => actividades.filter(a => a.estado === 'FINALIZADA' || a.estado === 'COMPLETADA').length, [actividades]);
+
+  // Lista de Actividades para el Modal Interactivo de KPI
+  const actividadesKpiModal = useMemo(() => {
+    if (!kpiModalStatus) return [];
+    if (kpiModalStatus === 'PENDIENTE') {
+      return actividades.filter(a => a.estado === 'PENDIENTE');
+    }
+    if (kpiModalStatus === 'EN_PROGRESO') {
+      return actividades.filter(a => a.estado === 'EN_PROGRESO' || a.estado === 'EN_CURSO');
+    }
+    if (kpiModalStatus === 'FINALIZADA') {
+      return actividades.filter(a => a.estado === 'FINALIZADA' || a.estado === 'COMPLETADA');
+    }
+    return [];
+  }, [actividades, kpiModalStatus]);
 
   // Agrupar actividades por Proyecto para la Vista Nivel 1 (Tarjetas de Proyectos)
   const proyectosAgrupados = useMemo(() => {
@@ -931,79 +948,197 @@ const [actividades, setActividades] = useState([]);
 
           {/* Métricas KPI General */}
           <motion.div variants={itemVariants} className="space-y-4">
-            <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2.5">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                    <Layers size={14} />
+            {/* Tarjeta de Avance WBS Desplegable e Interactivo */}
+            <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3 transition-all hover:border-blue-300 dark:hover:border-blue-800/80">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => setExpandAvanceDetalle(!expandAvanceDetalle)}>
+                  <div className="w-9 h-9 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-2xs">
+                    <Layers size={18} />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 block">
-                      Avance General de Asignaciones WBS
-                    </span>
-                    <span className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium">
-                      {actividadesFinalizadas} de {actividades.length} actividades concluidas
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 block">
+                        Avance General de Asignaciones WBS
+                      </span>
+                      <span className="text-[0.6rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                        {expandAvanceDetalle ? 'Ocultar Desglose' : 'Desplegar Proyectos'}
+                      </span>
+                    </div>
+                    <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                      {actividadesFinalizadas} de {actividades.length} actividades concluidas en plataforma
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">
-                    {actividades.length > 0 ? Math.round((actividadesFinalizadas / actividades.length) * 100) : 0}%
-                  </span>
-                  <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Completado</span>
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                  <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-xl border border-zinc-200/80 dark:border-zinc-700/60">
+                    <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">
+                      {actividades.length > 0 ? Math.round((actividadesFinalizadas / actividades.length) * 100) : 0}%
+                    </span>
+                    <span className="text-[0.62rem] font-black text-zinc-400 uppercase">Completado</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setExpandAvanceDetalle(!expandAvanceDetalle)}
+                    className="p-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-transform cursor-pointer"
+                    title={expandAvanceDetalle ? 'Contraer desglose' : 'Expandir desglose por proyecto'}
+                  >
+                    <ChevronDown size={16} className={`transition-transform duration-300 ${expandAvanceDetalle ? 'rotate-180' : ''}`} />
+                  </button>
                 </div>
               </div>
 
-              <div className="w-full h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex">
+              {/* Barra de Progreso Global */}
+              <div 
+                className="w-full h-2.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex cursor-pointer"
+                onClick={() => setExpandAvanceDetalle(!expandAvanceDetalle)}
+                title="Haz clic para ver el estado individual de cada proyecto"
+              >
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${actividades.length > 0 ? (actividadesFinalizadas / actividades.length) * 100 : 0}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
-                  className="h-full bg-blue-600"
+                  className="h-full bg-emerald-500 shadow-2xs"
                 />
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${actividades.length > 0 ? (actividadesEnProgreso / actividades.length) * 100 : 0}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
-                  className="h-full bg-blue-400 dark:bg-blue-500"
+                  className="h-full bg-blue-500"
                 />
               </div>
+
+              {/* Panel Desplegable Extendido por Proyecto */}
+              <AnimatePresence>
+                {expandAvanceDetalle && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    className="overflow-hidden pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[0.65rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                        Estado y Avance por Proyecto Asignado
+                      </span>
+                      <span className="text-[0.65rem] font-bold text-zinc-500">
+                        {proyectosAgrupados.length} Proyectos Activos
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {proyectosAgrupados.map((prj) => {
+                        const totalAct = prj.actividades.length;
+                        const pct = totalAct > 0 ? Math.round((prj.finalizadas / totalAct) * 100) : 0;
+                        return (
+                          <div 
+                            key={prj.idProyecto}
+                            className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60 hover:border-blue-400 transition-all flex flex-col justify-between space-y-2.5"
+                          >
+                            <div>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-mono text-[0.62rem] font-extrabold">
+                                  PRJ-00{prj.idProyecto}
+                                </span>
+                                <span className="font-mono font-extrabold text-xs text-zinc-900 dark:text-zinc-100">
+                                  {pct}%
+                                </span>
+                              </div>
+                              <h5 className="font-extrabold text-xs text-zinc-800 dark:text-zinc-200 truncate" title={prj.nombre}>
+                                {prj.nombre}
+                              </h5>
+                              <p className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 truncate">
+                                {prj.cliente}
+                              </p>
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="w-full h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden flex">
+                                <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                              </div>
+                              <div className="flex justify-between items-center text-[0.62rem] text-zinc-500 font-mono font-bold">
+                                <span>{prj.finalizadas}/{totalAct} cerradas</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setProyectoSeleccionadoDev(prj.proyectoObj);
+                                    setExpandAvanceDetalle(false);
+                                  }}
+                                  className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-0.5"
+                                >
+                                  Ver Tareas <ArrowRight size={10} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
+            {/* Tarjetas KPI Interactivas y Filtrables */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-              <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Por Iniciar</span>
-                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">{actividadesPendientes}</div>
-                  <span className="text-[0.65rem] text-zinc-500">Asignaciones en espera</span>
+              {/* Botón KPI 1: Por Iniciar */}
+              <button
+                type="button"
+                onClick={() => setKpiModalStatus('PENDIENTE')}
+                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs hover:shadow-md hover:border-zinc-400 dark:hover:border-zinc-600 transition-all cursor-pointer text-left group relative overflow-hidden flex items-center justify-between"
+              >
+                <div className="space-y-1">
+                  <span className="text-[0.65rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Por Iniciar</span>
+                  <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100 font-mono">{actividadesPendientes}</div>
+                  <div className="flex items-center gap-1 text-[0.65rem] font-bold text-zinc-600 dark:text-zinc-300">
+                    <span>Asignaciones en espera</span>
+                    <ArrowRight size={11} className="transition-transform group-hover:translate-x-1" />
+                  </div>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center">
-                  <Clock size={18} />
+                <div className="w-11 h-11 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors shadow-2xs">
+                  <Clock size={20} />
                 </div>
-              </div>
+              </button>
 
-              <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800/60 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 uppercase">En Desarrollo</span>
-                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">{actividadesEnProgreso}</div>
-                  <span className="text-[0.65rem] text-zinc-500">Trabajo activo en curso</span>
+              {/* Botón KPI 2: En Desarrollo */}
+              <button
+                type="button"
+                onClick={() => setKpiModalStatus('EN_PROGRESO')}
+                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800/60 shadow-xs hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-pointer text-left group relative overflow-hidden flex items-center justify-between"
+              >
+                <div className="space-y-1">
+                  <span className="text-[0.65rem] font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider block">En Desarrollo</span>
+                  <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100 font-mono">{actividadesEnProgreso}</div>
+                  <div className="flex items-center gap-1 text-[0.65rem] font-bold text-blue-600 dark:text-blue-400">
+                    <span>Trabajo activo en curso</span>
+                    <ArrowRight size={11} className="transition-transform group-hover:translate-x-1" />
+                  </div>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                  <Activity size={18} />
+                <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/60 transition-colors shadow-2xs">
+                  <Activity size={20} />
                 </div>
-              </div>
+              </button>
 
-              <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800/60 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Completadas</span>
-                  <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">{actividadesFinalizadas}</div>
-                  <span className="text-[0.65rem] text-zinc-500">Verificadas y cerradas</span>
+              {/* Botón KPI 3: Completadas */}
+              <button
+                type="button"
+                onClick={() => setKpiModalStatus('FINALIZADA')}
+                className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800/60 shadow-xs hover:shadow-md hover:border-emerald-400 dark:hover:border-emerald-500 transition-all cursor-pointer text-left group relative overflow-hidden flex items-center justify-between"
+              >
+                <div className="space-y-1">
+                  <span className="text-[0.65rem] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Completadas</span>
+                  <div className="text-2xl font-black text-zinc-900 dark:text-zinc-100 font-mono">{actividadesFinalizadas}</div>
+                  <div className="flex items-center gap-1 text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span>Verificadas y cerradas</span>
+                    <ArrowRight size={11} className="transition-transform group-hover:translate-x-1" />
+                  </div>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <CheckCircle2 size={18} />
+                <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/60 transition-colors shadow-2xs">
+                  <CheckCircle2 size={20} />
                 </div>
-              </div>
+              </button>
             </div>
           </motion.div>
 
@@ -2109,6 +2244,177 @@ const [actividades, setActividades] = useState([]);
           </motion.div>
         </motion.div>
       )}
+
+      {/* Modal: Explorador y Gestor Rápido de Actividades por Estado (KPI Interactivo) */}
+      <AnimatePresence>
+        {kpiModalStatus && (
+          <div className="fixed inset-0 bg-black/65 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-7 w-[95%] sm:w-full max-w-4xl shadow-2xl space-y-5 max-h-[90dvh] flex flex-col"
+            >
+              {/* Header Modal */}
+              <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-4 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xs ${
+                    kpiModalStatus === 'PENDIENTE' 
+                      ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' 
+                      : kpiModalStatus === 'EN_PROGRESO' 
+                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400' 
+                        : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
+                  }`}>
+                    {kpiModalStatus === 'PENDIENTE' && <Clock size={20} />}
+                    {kpiModalStatus === 'EN_PROGRESO' && <Activity size={20} />}
+                    {kpiModalStatus === 'FINALIZADA' && <CheckCircle2 size={20} />}
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">
+                      {kpiModalStatus === 'PENDIENTE' && 'Asignaciones Por Iniciar'}
+                      {kpiModalStatus === 'EN_PROGRESO' && 'Trabajo Activo En Desarrollo'}
+                      {kpiModalStatus === 'FINALIZADA' && 'Actividades Concluidas y Verificadas'}
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                      Listado directo de {actividadesKpiModal.length} tarea(s) en estado{' '}
+                      <strong className="font-bold text-zinc-700 dark:text-zinc-300">
+                        {kpiModalStatus === 'PENDIENTE' ? 'PENDIENTE' : kpiModalStatus === 'EN_PROGRESO' ? 'EN PROGRESO' : 'FINALIZADA'}
+                      </strong>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setKpiModalStatus(null)}
+                  className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Lista de Actividades en Scrollable Container */}
+              <div className="overflow-y-auto flex-1 pr-1 space-y-3.5">
+                {actividadesKpiModal.length === 0 ? (
+                  <div className="py-12 text-center space-y-2">
+                    <CheckCircle size={32} className="mx-auto text-zinc-300 dark:text-zinc-600" />
+                    <p className="text-sm font-bold text-zinc-600 dark:text-zinc-400">
+                      No hay actividades registradas en este estado.
+                    </p>
+                  </div>
+                ) : (
+                  actividadesKpiModal.map((act) => {
+                    const prj = act.etapa?.proyecto || act.proyectoObj || {};
+                    const { isReassigned, motivo, cleanDescripcion } = parseReasignacion(act.descripcion);
+                    return (
+                      <div
+                        key={act.idActividad}
+                        className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60 hover:border-blue-400 dark:hover:border-blue-700 transition-all space-y-3"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+                              #{act.idActividad}
+                            </span>
+                            <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                              {act.nombreActividad || cleanDescripcion || 'Tarea WBS'}
+                            </span>
+                            <EstadoBadge estado={act.estado} />
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[0.68rem] text-zinc-500 font-medium">
+                            <span className="font-extrabold text-zinc-700 dark:text-zinc-300">
+                              PRJ-00{prj.idProyecto || '1'}
+                            </span>
+                            <span>•</span>
+                            <span>{prj.nombre || 'Proyecto General'}</span>
+                          </div>
+                        </div>
+
+                        {cleanDescripcion && (
+                          <p className="text-xs text-zinc-600 dark:text-zinc-300 line-clamp-2 leading-relaxed bg-white dark:bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                            {cleanDescripcion}
+                          </p>
+                        )}
+
+                        {/* Barra de Acciones Directas en la Tarea */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                          <span className="text-[0.65rem] text-zinc-400 font-mono font-bold">
+                            Etapa: {act.etapa?.nombreEtapa || '#Etapa 1'}
+                          </span>
+
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setKpiModalStatus(null);
+                                setDetalleModalDoc(act);
+                              }}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-zinc-200/80 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <FileText size={13} /> Especificación
+                            </button>
+
+                            {act.estado === 'PENDIENTE' && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await handleCambiarEstado(act.idActividad, 'EN_PROGRESO');
+                                  setKpiModalStatus(null);
+                                }}
+                                className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer shadow-2xs inline-flex items-center gap-1"
+                              >
+                                <Activity size={13} /> Iniciar Trabajo
+                              </button>
+                            )}
+
+                            {(act.estado === 'EN_PROGRESO' || act.estado === 'EN_CURSO') && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setKpiModalStatus(null);
+                                    handleAbrirErrorDesdeTarea(act);
+                                  }}
+                                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 transition-colors cursor-pointer inline-flex items-center gap-1"
+                                >
+                                  <Bug size={13} /> Reportar Error
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    await handleCambiarEstado(act.idActividad, 'FINALIZADA');
+                                    setKpiModalStatus(null);
+                                  }}
+                                  className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-2xs inline-flex items-center gap-1"
+                                >
+                                  <CheckCircle2 size={13} /> Finalizar Tarea
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer Modal */}
+              <div className="flex justify-end pt-3 border-t border-zinc-100 dark:border-zinc-800 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setKpiModalStatus(null)}
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Modal: Detalle completo de la tarea y especificación técnica extendida */}
       <AnimatePresence>
