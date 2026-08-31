@@ -1491,7 +1491,7 @@ const [actividades, setActividades] = useState([]);
                     })}
                   </div>
 
-                  <span className="text-zinc-500 font-medium">
+                  <span className="text-zinc-500 font-medium text-xs">
                     Mostrando <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{actividadesFiltradasYOrdenadas.length}</strong> de <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{actividadesDelProyectoSeleccionado.length}</strong>
                   </span>
                 </div>
@@ -1508,6 +1508,7 @@ const [actividades, setActividades] = useState([]);
                   actividadesFiltradasYOrdenadas.map(act => {
                     const { isReassigned, motivo, cleanDescripcion } = parseReasignacion(act.descripcion);
                     const isNuevaAsignacion = evaluarSiEsNuevaAsignacion24h(act);
+                    const isProyectoPausado = act.etapa?.proyecto?.estado === 'EN_PAUSA' || act.etapa?.proyecto?.estado === 'PAUSADO' || act.proyectoObj?.estado === 'EN_PAUSA' || act.proyectoObj?.estado === 'PAUSADO' || act.proyectoEstado === 'EN_PAUSA' || act.proyectoEstado === 'PAUSADO';
 
                     return (
                       <div 
@@ -1548,10 +1549,15 @@ const [actividades, setActividades] = useState([]);
                             <EstadoBadge estado={act.estado} />
                           </div>
 
-                          {(act.etapa?.proyecto?.estado === 'PAUSADO' || act.proyectoObj?.estado === 'PAUSADO') && (
-                            <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/80 mb-3 text-[0.7rem] flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                              <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 shrink-0 animate-pulse" />
-                              <span>Proyecto en Pausa (Asignación Congelada)</span>
+                          {isProyectoPausado && (
+                            <div className="p-3 rounded-2xl bg-amber-50/90 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700/80 mb-3 text-xs space-y-1 font-medium text-amber-900 dark:text-amber-200 shadow-2xs">
+                              <div className="flex items-center gap-1.5 font-extrabold text-amber-800 dark:text-amber-300">
+                                <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400 shrink-0 animate-bounce" />
+                                <span>PROYECTO PAUSADO POR COORDINACIÓN</span>
+                              </div>
+                              <p className="text-[0.68rem] leading-snug text-amber-800/90 dark:text-amber-200/90 font-medium">
+                                Esta tarea no se puede avanzar ni finalizar porque el proyecto principal se encuentra pausado temporalmente.
+                              </p>
                             </div>
                           )}
 
@@ -1588,8 +1594,9 @@ const [actividades, setActividades] = useState([]);
                             <button
                               type="button"
                               onClick={() => handleAbrirReporteErrorDesdeTarea(act)}
-                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                              title="Reportar error en esta etapa WBS"
+                              disabled={isProyectoPausado}
+                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                              title={isProyectoPausado ? 'Proyecto Pausado' : 'Reportar error en esta etapa WBS'}
                             >
                               <Bug size={14} />
                             </button>
@@ -1597,8 +1604,9 @@ const [actividades, setActividades] = useState([]);
                             <button
                               type="button"
                               onClick={() => handleAbrirInterrupcionDesdeTarea(act)}
-                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
-                              title="Registrar interrupción en esta etapa WBS"
+                              disabled={isProyectoPausado}
+                              className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                              title={isProyectoPausado ? 'Proyecto Pausado' : 'Registrar interrupción en esta etapa WBS'}
                             >
                               <Clock size={14} />
                             </button>
@@ -1609,11 +1617,12 @@ const [actividades, setActividades] = useState([]);
                               <button
                                 type="button"
                                 onClick={() => handleCambiarEstado(act.idActividad, 'EN_PROGRESO')}
-                                disabled={changingEstado === act.idActividad || act.etapa?.proyecto?.estado === 'PAUSADO'}
-                                className="gradient-button text-xs py-2 px-3 font-bold w-full justify-center inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                disabled={changingEstado === act.idActividad || isProyectoPausado}
+                                className="gradient-button text-xs py-2 px-3 font-bold w-full justify-center inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={isProyectoPausado ? 'El proyecto se encuentra pausado por Coordinación' : 'Iniciar trabajo'}
                               >
                                 {changingEstado === act.idActividad ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}
-                                <span>Iniciar Trabajo</span>
+                                <span>{isProyectoPausado ? 'Proyecto Pausado' : 'Iniciar Trabajo'}</span>
                               </button>
                             )}
 
@@ -1621,11 +1630,12 @@ const [actividades, setActividades] = useState([]);
                               <button
                                 type="button"
                                 onClick={() => handleCambiarEstado(act.idActividad, 'FINALIZADA')}
-                                disabled={changingEstado === act.idActividad || act.etapa?.proyecto?.estado === 'PAUSADO'}
-                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-3 font-bold rounded-2xl transition-all shadow-md inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                disabled={changingEstado === act.idActividad || isProyectoPausado}
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-3 font-bold rounded-2xl transition-all shadow-md inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={isProyectoPausado ? 'El proyecto se encuentra pausado por Coordinación' : 'Marcar como completada'}
                               >
                                 {changingEstado === act.idActividad ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
-                                <span>Marcar Completada</span>
+                                <span>{isProyectoPausado ? 'Proyecto Pausado' : 'Marcar Completada'}</span>
                               </button>
                             )}
 

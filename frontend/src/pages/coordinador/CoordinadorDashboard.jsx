@@ -440,6 +440,7 @@ export const CoordinadorDashboard = () => {
 
   const [submittingPausaFinalizarCoord, setSubmittingPausaFinalizarCoord] = useState(false);
   const [showConfirmFinalizarCoord, setShowConfirmFinalizarCoord] = useState(false);
+  const [showConfirmPausarCoordModal, setShowConfirmPausarCoordModal] = useState(false);
   const [motivoCancelacionCoord, setMotivoCancelacionCoord] = useState('CANCELACION_CLIENTE');
   const [justificacionCancelacionCoord, setJustificacionCancelacionCoord] = useState('');
   const [cancelacionErrorCoord, setCancelacionErrorCoord] = useState('');
@@ -803,26 +804,98 @@ export const CoordinadorDashboard = () => {
     }
   };
 
-  // Pausar / Reanudar Proyecto con Auditoría Directiva
+  // Evaluación de procesos WBS e impacto activo para el Modal de Pausa del Coordinador
+  const evidenciaWbsPausaCoord = useMemo(() => {
+    if (!proyectoEtapasModal || !Array.isArray(proyectoEtapasModal) || proyectoEtapasModal.length === 0) {
+      return {
+        etapasActivas: [],
+        actividadesActivas: [],
+        tieneAvancesActivos: false
+      };
+    }
+
+    const etapasActivas = proyectoEtapasModal.filter(et => et?.estado !== 'FINALIZADA' && et?.estado !== 'COMPLETADA');
+    const actividadesActivas = [];
+
+    proyectoEtapasModal.forEach(et => {
+      if (et.actividades && Array.isArray(et.actividades)) {
+        et.actividades.forEach(act => {
+          if (act.estado !== 'FINALIZADA' && act.estado !== 'COMPLETADA') {
+            actividadesActivas.push({
+              ...act,
+              etapaNombre: et.nombreEtapa
+            });
+          }
+        });
+      }
+    });
+
+    return {
+      etapasActivas,
+      actividadesActivas,
+      tieneAvancesActivos: etapasActivas.length > 0 || actividadesActivas.length > 0
+    };
+  }, [proyectoEtapasModal]);
+
+  // Cálculo de días y fecha límite restante para el Modal de Pausa
+  const calculoDiasPausaCoord = useMemo(() => {
+    if (!selectedProyectoModal?.fechaFinEstimada) return { diasRestantes: 0, fechaFormateada: 'Sin fecha pactada' };
+    const fin = new Date(selectedProyectoModal.fechaFinEstimada);
+    const hoy = new Date();
+    const diffTime = fin - hoy;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return {
+      diasRestantes: diffDays > 0 ? diffDays : 0,
+      fechaFormateada: fin.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
+    };
+  }, [selectedProyectoModal?.fechaFinEstimada]);
+
+  // Pausar / Reanudar Proyecto con Confirmación de Impacto Directivo
   const handlePausarReanudarProyectoCoord = async () => {
     if (!selectedProyectoModal) return;
     const isPausado = selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO';
-    const endpoint = isPausado ? `/lider/proyectos/${selectedProyectoModal.idProyecto}/reactivar` : `/lider/proyectos/${selectedProyectoModal.idProyecto}/pausar`;
-    const nuevoEstado = isPausado ? 'EN_PROGRESO' : 'EN_PAUSA';
-    const accion = isPausado ? 'REANUDACION_PROYECTO' : 'PAUSA_PROYECTO';
-    const detalles = isPausado ? 'El Coordinador reanudó el proyecto en la plataforma.' : 'El Coordinador pausó temporalmente el proyecto.';
+
+    if (isPausado) {
+      // Reanudar directamente si ya estaba pausado
+      try {
+        setSubmittingPausaFinalizarCoord(true);
+        await api.patch(`/lider/proyectos/${selectedProyectoModal.idProyecto}/reactivar`);
+        setSelectedProyectoModal(prev => ({ ...prev, estado: 'EN_PROGRESO' }));
+        setProyectos(prev => prev.map(p => p.idProyecto === selectedProyectoModal.idProyecto ? { ...p, estado: 'EN_PROGRESO' } : p));
+        await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'REANUDACION_PROYECTO', 'El Coordinador reanudó el proyecto en la plataforma.');
+        toast.success('Proyecto reactivado exitosamente.');
+      } catch (err) {
+        console.error('Error al reactivar el proyecto:', err);
+        toast.error(err.message || 'Error al reactivar el proyecto.');
+      } finally {
+        setSubmittingPausaFinalizarCoord(false);
+      }
+    } else {
+      // Si se va a pausar, ABRIR EL MODAL DE ADVERTENCIA E IMPACTO OPERATIVO
+      setShowConfirmPausarCoordModal(true);
+    }
+  };
+
+  // Ejecutar Pausa de Proyecto tras Confirmar en Modal
+  const handleEjecutarPausaProyectoCoord = async () => {
+    if (!selectedProyectoModal) return;
 
     try {
       setSubmittingPausaFinalizarCoord(true);
-      await api.patch(endpoint);
-      setSelectedProyectoModal(prev => ({ ...prev, estado: nuevoEstado }));
-      setProyectos(prev => prev.map(p => p.idProyecto === selectedProyectoModal.idProyecto ? { ...p, estado: nuevoEstado } : p));
+      await api.patch(`/lider/proyectos/${selectedProyectoModal.idProyecto}/pausar`);
+      setSelectedProyectoModal(prev => ({ ...prev, estado: 'EN_PAUSA' }));
+      setProyectos(prev => prev.map(p => p.idProyecto === selectedProyectoModal.idProyecto ? { ...p, estado: 'EN_PAUSA' } : p));
 
-      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, accion, detalles);
-      toast.success(`Proyecto ${isPausado ? 'reactivado' : 'puesto en pausa'} exitosamente.`);
+      const resumenAfectados = evidenciaWbsPausaCoord.actividadesActivas.length > 0
+        ? `Pausa directiva aplicada. ${evidenciaWbsPausaCoord.actividadesActivas.length} actividades WBS y sus desarrolladores asignados fueron notificados.`
+        : 'El Coordinador pausó temporalmente el proyecto.';
+
+      await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'PAUSA_PROYECTO', resumenAfectados);
+      toast.success('Proyecto puesto en pausa. Se notificó el congelamiento de actividades a los desarrolladores.');
+      setShowConfirmPausarCoordModal(false);
     } catch (err) {
-      console.error('Error alternando estado del proyecto:', err);
-      toast.error(err.message || 'Error al cambiar estado del proyecto.');
+      console.error('Error al pausar el proyecto:', err);
+      toast.error(err.message || 'Error al pausar el proyecto.');
     } finally {
       setSubmittingPausaFinalizarCoord(false);
     }
@@ -7366,6 +7439,148 @@ export const CoordinadorDashboard = () => {
                   ) : (
                     <>
                       <Lock size={15} /> Confirmar Cierre Formal
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Modal: Confirmación Directiva de Impacto Operativo para Pausar Proyecto (Coordinador) */}
+        {showConfirmPausarCoordModal && selectedProyectoModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl space-y-6 max-h-[90dvh] overflow-y-auto my-auto relative text-left"
+            >
+              {/* Cabecera Principal */}
+              <div className="flex items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5 pr-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20 ring-4 ring-amber-500/10">
+                    <Pause size={24} className="fill-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                        Confirmar Pausa Directiva del Proyecto
+                      </h3>
+                      <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.68rem] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        Impacto Operativo
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5 flex items-center gap-1.5">
+                      <Briefcase size={13} className="text-blue-500 shrink-0" />
+                      <span>Proyecto:</span>
+                      <strong className="text-zinc-800 dark:text-zinc-200 font-bold font-mono">[PRJ-00{selectedProyectoModal?.idProyecto}]</strong>
+                      <span className="truncate max-w-md font-bold">{selectedProyectoModal?.nombre}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPausarCoordModal(false)}
+                  className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                  title="Cerrar"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Advertencia Resumen de Cronograma y Tiempo de Entrega */}
+              <div className="p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="text-[0.68rem] font-mono font-extrabold text-amber-900 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock size={15} className="text-amber-600 dark:text-amber-400" />
+                    Impacto en Fecha de Entrega y Cronograma Pactado
+                  </span>
+                  <span className="text-[0.68rem] font-mono font-black px-2.5 py-0.5 rounded-lg bg-amber-200/80 text-amber-900 dark:bg-amber-900/80 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                    {calculoDiasPausaCoord.diasRestantes > 0 ? `Faltan ${calculoDiasPausaCoord.diasRestantes} días pactados` : 'Fecha límite alcanzada'}
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed">
+                  Fecha estimada de entrega pactada: <strong>{calculoDiasPausaCoord.fechaFormateada}</strong>. Al pausar este proyecto, el conteo operativo del cronograma quedará suspendido temporalmente y la métrica de entrega reflejará la interrupción directiva.
+                </p>
+              </div>
+
+              {/* Evaluación de Procesos y Actividades en Desarrollo Afectadas */}
+              {evidenciaWbsPausaCoord.tieneAvancesActivos ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-1">
+                    <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider flex items-center gap-2">
+                      <Layers size={16} className="text-amber-600 shrink-0" />
+                      <span>Procesos WBS que Quedarán Congelados ({evidenciaWbsPausaCoord.actividadesActivas.length} Actividades Activas)</span>
+                    </span>
+                    <span className="text-[0.65rem] font-mono font-bold text-zinc-400">
+                      {evidenciaWbsPausaCoord.etapasActivas.length} Etapa(s) Afectada(s)
+                    </span>
+                  </div>
+
+                  <div className="max-h-52 overflow-y-auto space-y-2 pr-1">
+                    {evidenciaWbsPausaCoord.actividadesActivas.map((act, idx) => (
+                      <div key={act.idActividad || idx} className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 flex items-center justify-between text-xs gap-3">
+                        <div className="min-w-0">
+                          <span className="text-[0.62rem] font-mono text-zinc-400 block uppercase font-bold">{act.etapaNombre}</span>
+                          <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate block mt-0.5">{act.descripcion}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {act.desarrollador && (
+                            <span className="text-[0.65rem] font-bold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center gap-1">
+                              <Users size={11} className="text-blue-500" />
+                              {act.desarrollador.nombreCompleto || act.desarrollador.nombre || 'Desarrollador'}
+                            </span>
+                          )}
+                          <span className="px-2 py-0.5 rounded-md text-[0.62rem] font-extrabold uppercase font-mono bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                            {act.estado}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-red-50/80 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-xs font-semibold text-red-800 dark:text-red-300 flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Efecto en Paneles de Desarrolladores:</strong> A los desarrolladores asignados a estas tareas se les desplegará un aviso informando que la tarea no puede ser trabajada ni finalizada debido a que el proyecto ha sido suspendido por Coordinación.
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  Este proyecto no tiene actividades activas en desarrollo en este momento. La pausa congelará el estado del proyecto sin afectar asignaciones en curso.
+                </div>
+              )}
+
+              {/* Acciones del Modal */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPausarCoordModal(false)}
+                  disabled={submittingPausaFinalizarCoord}
+                  className="px-5 py-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleEjecutarPausaProyectoCoord}
+                  disabled={submittingPausaFinalizarCoord}
+                  className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-extrabold shadow-lg shadow-amber-600/25 inline-flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                >
+                  {submittingPausaFinalizarCoord ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" />
+                      <span>Pausando Proyecto...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Pause size={15} className="fill-white" />
+                      <span>Confirmar Pausa Directiva</span>
                     </>
                   )}
                 </button>
