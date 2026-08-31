@@ -144,9 +144,8 @@ public class EmailService {
         logger.info(logBanner);
         System.out.println(logBanner);
 
-        // Intentar envío real por SMTP si JavaMailSender está presente y se configuró
-        // la contraseña de aplicación
-        if (mailSender != null && mailPassword != null && !mailPassword.isBlank()) {
+        // Intentar envío real por SMTP si JavaMailSender está presente
+        if (mailSender != null) {
             try {
                 MimeMessage mimeMessage = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -255,7 +254,7 @@ public class EmailService {
         logger.info("\n>>> [CODIGO RECUPERACION GENERADO] Email: {} | Codigo: {}", destinatarioPrincipal,
                 codigo6Digitos);
 
-        if (mailSender != null && mailPassword != null && !mailPassword.isBlank()) {
+        if (mailSender != null) {
             try {
                 MimeMessage mimeMessage = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
