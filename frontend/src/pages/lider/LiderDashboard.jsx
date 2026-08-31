@@ -1234,6 +1234,131 @@ export const LiderDashboard = () => {
     });
   }, [desarrolladores, especialidadFiltroPersonal, estadoFiltroPersonal, searchQueryPersonal]);
 
+  // Estados para búsqueda de tareas en modal y navegación de auditoría en Líder
+  const [busquedaTareaDevModal, setBusquedaTareaDevModal] = useState('');
+  const [filtroEstadoTareaDevModal, setFiltroEstadoTareaDevModal] = useState('TODAS');
+  const [navFromWorker, setNavFromWorker] = useState(null);
+  const [highlightedTaskId, setHighlightedTaskId] = useState(null);
+
+  // Cálculo integral de Carga Horaria (48h) y Tareas del Desarrollador seleccionado en Líder
+  const devTaskMetrics = useMemo(() => {
+    if (!selectedTrabajadorModal || !Array.isArray(proyectos)) {
+      return { tareas: [], horasProgreso: 0, horasPendientes: 0, horasCompletadas: 0, horasActivas: 0, horasLibres: 48, pctActivas: 0 };
+    }
+
+    const targetId = selectedTrabajadorModal.idTrabajador || selectedTrabajadorModal.id;
+    const targetEmail = selectedTrabajadorModal.email ? String(selectedTrabajadorModal.email).toLowerCase().trim() : '';
+
+    const allAssignedTasks = [];
+    let hProgreso = 0;
+    let hPendiente = 0;
+    let hCompletada = 0;
+
+    proyectos.forEach(prj => {
+      if (Array.isArray(prj.etapas)) {
+        prj.etapas.forEach(etapa => {
+          if (Array.isArray(etapa.actividades)) {
+            etapa.actividades.forEach(act => {
+              const devId = act.idDesarrollador || act.desarrollador?.idTrabajador || act.desarrollador?.id;
+              const devEmail = act.desarrollador?.email ? String(act.desarrollador.email).toLowerCase().trim() : '';
+
+              const isMatch = (targetId && devId && String(targetId) === String(devId)) ||
+                              (targetEmail && devEmail && targetEmail === devEmail);
+
+              if (isMatch) {
+                const horas = Number(act.horasEstimadas || act.horas || 0);
+                const estado = (act.estado || 'PENDIENTE').toUpperCase();
+
+                if (estado.includes('PROGRESO') || estado.includes('CURSO') || estado.includes('IN_PROGRESS')) {
+                  hProgreso += horas;
+                } else if (estado.includes('COMPLET') || estado.includes('FINALIZ')) {
+                  hCompletada += horas;
+                } else {
+                  hPendiente += horas;
+                }
+
+                allAssignedTasks.push({
+                  ...act,
+                  horas,
+                  estadoNorm: estado.includes('PROGRESO') ? 'EN_PROGRESO' : estado.includes('COMPLET') ? 'COMPLETADA' : 'PENDIENTE',
+                  proyectoId: prj.idProyecto,
+                  proyectoNombre: prj.nombre,
+                  etapaId: etapa.idEtapa,
+                  etapaNombre: etapa.nombre
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+
+    const hActivas = hProgreso + hPendiente;
+    const hLibres = Math.max(0, 48 - hActivas);
+    const pctActivas = Math.min(100, Math.round((hActivas / 48) * 100));
+
+    return {
+      tareas: allAssignedTasks,
+      horasProgreso: hProgreso,
+      horasPendientes: hPendiente,
+      horasCompletadas: hCompletada,
+      horasActivas: hActivas,
+      horasLibres: hLibres,
+      pctActivas: pctActivas
+    };
+  }, [selectedTrabajadorModal, proyectos]);
+
+  // Tareas filtradas en modal de Líder
+  const tareasFiltradasDevModal = useMemo(() => {
+    return devTaskMetrics.tareas.filter(t => {
+      if (busquedaTareaDevModal.trim()) {
+        const term = busquedaTareaDevModal.toLowerCase();
+        const matchNombre = (t.nombre || '').toLowerCase().includes(term);
+        const matchPrj = (t.proyectoNombre || '').toLowerCase().includes(term);
+        const matchEtapa = (t.etapaNombre || '').toLowerCase().includes(term);
+        if (!matchNombre && !matchPrj && !matchEtapa) return false;
+      }
+
+      if (filtroEstadoTareaDevModal !== 'TODAS') {
+        if (t.estadoNorm !== filtroEstadoTareaDevModal) return false;
+      }
+
+      return true;
+    });
+  }, [devTaskMetrics.tareas, busquedaTareaDevModal, filtroEstadoTareaDevModal]);
+
+  const handleIrATareaProyectoDesdeTrabajador = (idProyecto, idEtapa, idActividad, nombreTarea, trabajador) => {
+    setNavFromWorker({
+      idTrabajador: trabajador.idTrabajador || trabajador.id,
+      nombre: `${trabajador.nombre || ''} ${trabajador.apellido || ''}`.trim(),
+      tareaId: idActividad,
+      tareaNombre: nombreTarea,
+      prjId: idProyecto
+    });
+
+    setSelectedTrabajadorModal(null);
+
+    if (idProyecto) {
+      const prjEncontrado = proyectos.find(p => String(p.idProyecto) === String(idProyecto));
+      if (prjEncontrado) {
+        setProyectoSeleccionado(prjEncontrado);
+      }
+    }
+
+    if (idActividad) {
+      setHighlightedTaskId(idActividad);
+    } else if (idProyecto) {
+      setHighlightedTaskId(`prj-${idProyecto}`);
+    }
+
+    setTimeout(() => {
+      const targetEl = document.getElementById(`actividad-${idActividad}`) || document.getElementById(`proyecto-${idProyecto}`);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 250);
+  };
+
   // Filtro de Propiedad de Proyectos (Mis Proyectos vs Otros Líderes vs Todos) y Estado
   const [filtroPropiedadLider, setFiltroPropiedadLider] = useState('MIS_PROYECTOS');
   const [filtroEstadoCatalogo, setFiltroEstadoCatalogo] = useState('TODOS');
@@ -3379,6 +3504,45 @@ export const LiderDashboard = () => {
         metric2: proyectoSeleccionado ? `Activo: ${proyectoSeleccionado?.nombre || ''}` : 'Sin proyecto'
       }}
     >
+      {/* Floating return navigation banner when navigating from worker details */}
+      <AnimatePresence>
+        {navFromWorker && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-20 right-6 sm:right-10 z-50 bg-gradient-to-r from-purple-950 via-zinc-900 to-indigo-950 text-white p-3.5 px-5 rounded-2xl shadow-2xl border border-purple-500/50 backdrop-blur-md flex items-center gap-4 select-none ring-4 ring-purple-500/20"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-400 text-purple-950 flex items-center justify-center font-black shrink-0 shadow-sm animate-pulse">
+                <Eye size={17} />
+              </div>
+              <div className="text-xs">
+                <span className="font-extrabold text-amber-300 block uppercase tracking-wider text-[0.62rem]">
+                  Navegación Directa de Auditoría de Carga
+                </span>
+                <span className="font-bold text-zinc-100 text-xs">
+                  Subrayando tarea de <strong>{navFromWorker.nombre}</strong>
+                  {navFromWorker.tareaNombre ? `: "${navFromWorker.tareaNombre}"` : ''}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const targetWorker = (desarrolladores || []).find(d => String(d.idTrabajador || d.id) === String(navFromWorker.idTrabajador));
+                if (targetWorker) setSelectedTrabajadorModal(targetWorker);
+                setNavFromWorker(null);
+              }}
+              className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-purple-950 font-extrabold text-xs transition-all shadow-md cursor-pointer flex items-center gap-1.5 shrink-0"
+            >
+              <ArrowLeft size={15} /> Volver a Ficha del Desarrollador
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <ErrorBoundary title="Error General del Dashboard del Líder">
 
         {/* Selector de Proyecto en Cabecera (Enterprise Jira/Linear Style) */}
@@ -9703,7 +9867,7 @@ export const LiderDashboard = () => {
           )}
         </AnimatePresence>
 
-        {/* Modal: Ficha Organizada & Stack Técnico del Desarrollador */}
+        {/* Modal: Ficha Organizada, Stack Técnico & Carga Horaria de 48h */}
         <AnimatePresence>
           {selectedTrabajadorModal && (
             <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
@@ -9711,7 +9875,7 @@ export const LiderDashboard = () => {
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-9 w-full max-w-2xl shadow-2xl max-h-[92dvh] overflow-y-auto space-y-6"
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 md:p-9 w-full max-w-6xl shadow-2xl max-h-[92dvh] overflow-y-auto space-y-6"
               >
                 {/* Encabezado del Modal */}
                 <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-5">
@@ -9726,103 +9890,312 @@ export const LiderDashboard = () => {
                         </h3>
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs">
                           <Code2 size={12} className="text-blue-600 dark:text-blue-400" />
-                          Desarrollador (WBS)
+                          {selectedTrabajadorModal.rol || 'Desarrollador (WBS)'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2.5 mt-1.5 text-xs text-zinc-500 font-medium flex-wrap">
                         <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-md font-bold text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
                           ID: #{selectedTrabajadorModal.identificacion || selectedTrabajadorModal.idTrabajador}
                         </span>
+                        <span>&bull;</span>
+                        <span>Profesión: <strong className="text-zinc-800 dark:text-zinc-200">{selectedTrabajadorModal.profesion || selectedTrabajadorModal.especialidad || 'Especialista de Software'}</strong></span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Ficha Personal, Credenciales & Stack Técnico */}
-                <div className="space-y-4 text-xs">
-                  <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                    <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
-                      Ficha Técnica & Credenciales del Desarrollador
-                    </h4>
-                  </div>
+                {/* Grid Dual Responsive: 5 cols (Ficha) + 7 cols (Carga Horaria & Tareas) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Panel Izquierdo: Ficha Personal, Credenciales & Stack */}
+                  <div className="space-y-4 text-xs lg:col-span-5">
+                    <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                      <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                      <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                        Ficha Técnica & Credenciales del Desarrollador
+                      </h4>
+                    </div>
 
-                  <div className="grid grid-cols-1 gap-3.5">
-                    {/* Correos de Contacto (Corporativo y Personal) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {/* Correo Corporativo Principal */}
-                      <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo Principal:</span>
-                        <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
-                          <Mail size={15} className="text-blue-600 shrink-0" />
-                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.email}>
-                            {selectedTrabajadorModal.email}
-                          </span>
-                          <Lock size={13} className="text-zinc-400 ml-auto shrink-0" title="Correo Corporativo Protegido" />
+                    <div className="grid grid-cols-1 gap-3.5">
+                      {/* Correos de Contacto (Corporativo y Personal) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+                          <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo Principal:</span>
+                          <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
+                            <Mail size={15} className="text-blue-600 shrink-0" />
+                            <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.email}>
+                              {selectedTrabajadorModal.email}
+                            </span>
+                            <Lock size={13} className="text-zinc-400 ml-auto shrink-0" title="Correo Corporativo Protegido" />
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+                          <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Personal Alternativo:</span>
+                          <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
+                            <Mail size={15} className="text-zinc-500 shrink-0" />
+                            <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal || (selectedTrabajadorModal.email?.includes('@') ? `${selectedTrabajadorModal.email.split('@')[0]}.personal@gmail.com` : 'personal@gmail.com')}>
+                              {selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal || (selectedTrabajadorModal.email?.includes('@') ? `${selectedTrabajadorModal.email.split('@')[0]}.personal@gmail.com` : `${(selectedTrabajadorModal.nombre || 'usuario').toLowerCase()}.${(selectedTrabajadorModal.apellido || 'dev').toLowerCase()}.personal@gmail.com`)}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Correo Personal Alternativo */}
-                      <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Personal Alternativo:</span>
-                        <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
-                          <Mail size={15} className="text-zinc-500 shrink-0" />
-                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal || (selectedTrabajadorModal.email?.includes('@') ? `${selectedTrabajadorModal.email.split('@')[0]}.personal@gmail.com` : 'personal@gmail.com')}>
-                            {selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal || (selectedTrabajadorModal.email?.includes('@') ? `${selectedTrabajadorModal.email.split('@')[0]}.personal@gmail.com` : `${(selectedTrabajadorModal.nombre || 'usuario').toLowerCase()}.${(selectedTrabajadorModal.apellido || 'dev').toLowerCase()}.personal@gmail.com`)}
+                      {/* Profesión & Especialidad Desglosada en Tech Pills */}
+                      <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2.5">
+                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Profesión & Competencias Técnicas:</span>
+                        <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm block">
+                          {selectedTrabajadorModal.profesion || 'Ingeniero de Software'}
+                        </span>
+
+                        <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/50">
+                          <span className="text-[0.65rem] font-bold text-zinc-500 block mb-2 flex items-center gap-1.5">
+                            <Sparkles size={13} className="text-amber-500 shrink-0" /> Tecnologías & Stack Técnico Destacado:
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {(selectedTrabajadorModal.especialidad || 'Desarrollo de Software')
+                              .replace(/\[|\]/g, '')
+                              .split(/[,•]/)
+                              .map(item => item.trim())
+                              .filter(item => item.length > 0)
+                              .map((tech, idx) => (
+                                <motion.span
+                                  key={idx}
+                                  whileHover={{ scale: 1.06, y: -1 }}
+                                  className="px-3 py-1.5 rounded-xl text-[0.68rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs select-none"
+                                >
+                                  {tech}
+                                </motion.span>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Estado Lógico & Primer Login */}
+                      <div className="grid grid-cols-2 gap-3.5">
+                        <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                          <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Estado en Plataforma:</span>
+                          <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${(selectedTrabajadorModal.estado === true || selectedTrabajadorModal.estado === 'ACTIVO') ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                            <span className={`w-2.5 h-2.5 rounded-full ${(selectedTrabajadorModal.estado === true || selectedTrabajadorModal.estado === 'ACTIVO') ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                            {(selectedTrabajadorModal.estado === true || selectedTrabajadorModal.estado === 'ACTIVO') ? 'HABILITADO' : 'INHABILITADO'}
+                          </span>
+                        </div>
+                        <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                          <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Primer Login:</span>
+                          <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                            <span className={`w-2.5 h-2.5 rounded-full ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+                            {(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'Sí (Validado)' : 'Pendiente primera sesión'}
                           </span>
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Profesión & Especialidad Desglosada en Tech Pills */}
-                    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2.5">
-                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Profesión & Competencias Técnicas:</span>
-                      <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm block">
-                        {selectedTrabajadorModal.profesion || 'Ingeniero de Software'}
+                  {/* Panel Derecho: Subpanel Lateral de Carga Horaria, Tareas & Proyectos (7 de 12 columnas) */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="space-y-5 border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 lg:pl-8 pt-6 lg:pt-0 lg:col-span-7"
+                  >
+                    {/* Encabezado del Subpanel */}
+                    <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800 flex-wrap gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <Clock size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                        <div>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                            Carga Horaria Semanal & Distribución por Tareas
+                          </h4>
+                          <p className="text-[0.68rem] text-zinc-500 font-medium">Control de jornada de 48h semanales y tareas asignadas</p>
+                        </div>
+                      </div>
+                      <span className="text-[0.68rem] font-black px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        {devTaskMetrics.horasLibres} / 48h &bull; DISPONIBLE
                       </span>
+                    </div>
 
-                      {/* Tech Pills Parser */}
-                      <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/50">
-                        <span className="text-[0.65rem] font-bold text-zinc-500 block mb-2 flex items-center gap-1.5">
-                          <Sparkles size={13} className="text-amber-500 shrink-0" /> Tecnologías & Stack Técnico Destacado:
+                    {/* Tarjetas de Métricas de Carga Horaria (Semana 48h) */}
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80">
+                        <span className="text-[0.6rem] font-extrabold uppercase text-zinc-400 block font-mono">Horas Activas</span>
+                        <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 mt-1 block">
+                          {devTaskMetrics.horasActivas}h <span className="text-[0.65rem] text-zinc-400 font-medium">/ 48h</span>
                         </span>
-                        <div className="flex flex-wrap gap-2">
-                          {(selectedTrabajadorModal.especialidad || 'Desarrollo de Software')
-                            .replace(/\[|\]/g, '')
-                            .split(/[,•]/)
-                            .map(item => item.trim())
-                            .filter(item => item.length > 0)
-                            .map((tech, idx) => (
-                              <motion.span
-                                key={idx}
-                                whileHover={{ scale: 1.06, y: -1 }}
-                                className="px-3 py-1.5 rounded-xl text-[0.68rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs select-none"
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60">
+                        <span className="text-[0.6rem] font-extrabold uppercase text-blue-600 dark:text-blue-400 block font-mono">En Progreso</span>
+                        <span className="font-extrabold text-sm text-blue-700 dark:text-blue-300 mt-1 block">
+                          {devTaskMetrics.horasProgreso}h
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60">
+                        <span className="text-[0.6rem] font-extrabold uppercase text-amber-600 dark:text-amber-400 block font-mono">Pendientes</span>
+                        <span className="font-extrabold text-sm text-amber-700 dark:text-amber-300 mt-1 block">
+                          {devTaskMetrics.horasPendientes}h
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60">
+                        <span className="text-[0.6rem] font-extrabold uppercase text-purple-600 dark:text-purple-400 block font-mono">Reserva Libre</span>
+                        <span className="font-extrabold text-sm text-purple-700 dark:text-purple-300 mt-1 block">
+                          {devTaskMetrics.horasLibres}h
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 col-span-2 sm:col-span-1">
+                        <span className="text-[0.6rem] font-extrabold uppercase text-emerald-600 dark:text-emerald-400 block font-mono">Completadas</span>
+                        <span className="font-extrabold text-sm text-emerald-700 dark:text-emerald-300 mt-1 block">
+                          {devTaskMetrics.horasCompletadas}h
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Barra Proporcional de Jornada Horaria (48h Totales) */}
+                    <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2 text-xs">
+                      <div className="flex justify-between items-center text-[0.68rem] font-bold text-zinc-500 flex-wrap gap-1">
+                        <span>Desglose Proporcional en Barra de Jornada (48h Totales):</span>
+                        <span className="font-mono">{devTaskMetrics.horasActivas}h Ocupadas / {devTaskMetrics.horasLibres}h Disponibles Libres</span>
+                      </div>
+
+                      <div className="h-3 w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden flex shadow-inner">
+                        {devTaskMetrics.horasProgreso > 0 && (
+                          <div
+                            style={{ width: `${(devTaskMetrics.horasProgreso / 48) * 100}%` }}
+                            className="bg-blue-500 h-full"
+                            title={`En Progreso: ${devTaskMetrics.horasProgreso}h`}
+                          />
+                        )}
+                        {devTaskMetrics.horasPendientes > 0 && (
+                          <div
+                            style={{ width: `${(devTaskMetrics.horasPendientes / 48) * 100}%` }}
+                            className="bg-amber-400 h-full"
+                            title={`Pendientes: ${devTaskMetrics.horasPendientes}h`}
+                          />
+                        )}
+                        {devTaskMetrics.horasCompletadas > 0 && (
+                          <div
+                            style={{ width: `${(devTaskMetrics.horasCompletadas / 48) * 100}%` }}
+                            className="bg-emerald-500 h-full"
+                            title={`Completadas: ${devTaskMetrics.horasCompletadas}h`}
+                          />
+                        )}
+                        {devTaskMetrics.horasLibres > 0 && (
+                          <div
+                            style={{ width: `${(devTaskMetrics.horasLibres / 48) * 100}%` }}
+                            className="bg-purple-400/60 h-full"
+                            title={`Reserva Libre: ${devTaskMetrics.horasLibres}h`}
+                          />
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-3 text-[0.64rem] font-bold pt-1">
+                        <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                          <span className="w-2 h-2 rounded-full bg-blue-500" /> En Progreso: {devTaskMetrics.horasProgreso}h
+                        </span>
+                        <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                          <span className="w-2 h-2 rounded-full bg-amber-400" /> Pendientes: {devTaskMetrics.horasPendientes}h
+                        </span>
+                        <span className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
+                          <span className="w-2 h-2 rounded-full bg-purple-400" /> Reserva Libre: {devTaskMetrics.horasLibres}h
+                        </span>
+                        <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" /> Completadas: {devTaskMetrics.horasCompletadas}h
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Filtros Internos de Tareas & Buscador */}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="relative flex-1 min-w-[200px]">
+                        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                        <input
+                          type="text"
+                          placeholder="Buscar por tarea, etapa o proyecto..."
+                          value={busquedaTareaDevModal}
+                          onChange={(e) => setBusquedaTareaDevModal(e.target.value)}
+                          className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs">
+                        {['TODAS', 'EN_PROGRESO', 'PENDIENTE', 'COMPLETADA'].map(st => (
+                          <button
+                            key={st}
+                            type="button"
+                            onClick={() => setFiltroEstadoTareaDevModal(st)}
+                            className={`px-2.5 py-1 rounded-lg text-[0.64rem] font-extrabold transition-all cursor-pointer ${
+                              filtroEstadoTareaDevModal === st
+                                ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs'
+                                : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+                            }`}
+                          >
+                            {st === 'TODAS' ? 'Todas' : st === 'EN_PROGRESO' ? 'En Progreso' : st === 'PENDIENTE' ? 'Pendientes' : 'Completadas'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Lista Desplazable de Tareas & Proyectos Asignados */}
+                    {tareasFiltradasDevModal.length === 0 ? (
+                      <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/40 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-700 space-y-2 text-xs text-zinc-500">
+                        <FolderGit2 size={32} className="mx-auto text-zinc-400" />
+                        <p className="font-extrabold text-sm text-zinc-700 dark:text-zinc-300">Sin tareas asociadas bajo estos filtros.</p>
+                        <p className="text-xs">No se encontraron actividades WBS vinculadas a este desarrollador.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3 max-h-[46dvh] overflow-y-auto pr-2 py-1">
+                        {tareasFiltradasDevModal.map((t, idx) => (
+                          <motion.div
+                            key={t.idActividad || idx}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/80 border border-zinc-200/90 dark:border-zinc-700/90 shadow-2xs space-y-2.5 hover:border-blue-400 dark:hover:border-blue-500 transition-all"
+                          >
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="font-mono font-bold text-[0.68rem] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+                                {t.proyectoNombre}
+                              </span>
+                              <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-black uppercase ${
+                                t.estadoNorm === 'EN_PROGRESO'
+                                  ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                                  : t.estadoNorm === 'COMPLETADA'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300'
+                              }`}>
+                                {t.estadoNorm.replace('_', ' ')}
+                              </span>
+                            </div>
+
+                            <div>
+                              <h5 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm">
+                                {t.nombre}
+                              </h5>
+                              {t.etapaNombre && (
+                                <p className="text-[0.68rem] text-zinc-500 font-medium">Fase WBS: {t.etapaNombre}</p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 text-xs">
+                              <span className="font-mono font-bold text-zinc-600 dark:text-zinc-400">
+                                Horas Asignadas: <strong>{t.horas}h</strong>
+                              </span>
+
+                              <motion.button
+                                whileHover={{ scale: 1.03, x: 2 }}
+                                whileTap={{ scale: 0.96 }}
+                                type="button"
+                                onClick={() => handleIrATareaProyectoDesdeTrabajador(t.proyectoId, t.etapaId, t.idActividad, t.nombre, selectedTrabajadorModal)}
+                                className="gradient-button text-xs py-1.5 px-3 font-bold inline-flex items-center gap-1.5 text-white cursor-pointer shadow-2xs rounded-xl"
                               >
-                                {tech}
-                              </motion.span>
-                            ))}
-                        </div>
+                                <span>Ir al Proyecto & Subrayar</span>
+                                <ArrowRight size={14} />
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        ))}
                       </div>
-                    </div>
-
-                    {/* Estado Lógico & Primer Login */}
-                    <div className="grid grid-cols-2 gap-3.5">
-                      <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
-                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Estado en Plataforma:</span>
-                        <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${(selectedTrabajadorModal.estado === true || selectedTrabajadorModal.estado === 'ACTIVO') ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
-                          <span className={`w-2.5 h-2.5 rounded-full ${(selectedTrabajadorModal.estado === true || selectedTrabajadorModal.estado === 'ACTIVO') ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-                          {(selectedTrabajadorModal.estado === true || selectedTrabajadorModal.estado === 'ACTIVO') ? 'HABILITADO' : 'INHABILITADO'}
-                        </span>
-                      </div>
-                      <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
-                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Primer Login:</span>
-                        <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                          <span className={`w-2.5 h-2.5 rounded-full ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
-                          {(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'Sí (Validado)' : 'Pendiente primera sesión'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    )}
+                  </motion.div>
                 </div>
 
                 {/* Footer del Modal */}
