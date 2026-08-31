@@ -5,6 +5,7 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { SemaforoInteligente } from '../../components/dashboard/SemaforoInteligente';
 import { EtlBrasil } from '../../components/dashboard/EtlBrasil';
 import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
+import { ConsolaDistribucionLider } from '../../components/lider/ConsolaDistribucionLider';
 import {
   Briefcase, Layers, Plus, Activity, Sparkles, Download,
   Send, ShieldCheck, CheckCircle2, Clock, Calendar, ChevronRight, ChevronDown, X,
@@ -5613,6 +5614,9 @@ export const LiderDashboard = () => {
             className="space-y-6"
           >
             <ErrorBoundary title="Error en Módulo Predictor de Burnout">
+              {/* Consola de Distribución Horaria Semanal Dual de 48h */}
+              <ConsolaDistribucionLider />
+
               <PredictorBurnout
                 proyecto={proyectoSeleccionado}
                 etapas={etapas}

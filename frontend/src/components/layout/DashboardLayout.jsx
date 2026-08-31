@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Cpu, Users, Briefcase, Activity, CheckSquare, Bug, AlertTriangle, 
   MessageSquare, BookOpen, GraduationCap, Sun, Moon, LogOut, 
   Menu, X, Shield, ShieldCheck, ShieldAlert, ChevronRight, ChevronLeft, Layers, 
-  FileText, Sparkles, User, PanelLeftClose, PanelLeftOpen
+  FileText, Sparkles, User, PanelLeftClose, PanelLeftOpen, ChevronDown, Crown, Code2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -25,7 +25,7 @@ const getInitials = (nombre, apellido) => {
 };
 
 export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetrics, hasUnsavedChanges = false, onCancelUnsavedChanges }) => {
-  const { user, logout } = useAuth();
+  const { user, activeRoleMode, switchRoleMode, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,43 +39,13 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
   const [currentTool, setCurrentTool] = useState(null); // 'chat' | 'biblioteca' | 'tutoriales' | null
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Estado para la Intercepción de Navegación por Seguridad (Cambio de Contraseña en curso)
-  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
-  const [pendingNavAction, setPendingNavAction] = useState(null);
-
-  const confirmOrNavigate = (action) => {
-    if (hasUnsavedChanges) {
-      setPendingNavAction(() => action);
-      setShowUnsavedModal(true);
-    } else {
-      action();
-    }
-  };
-
-  const toggleCollapse = () => {
-    setIsCollapsed(prev => {
-      const nextState = !prev;
-      localStorage.setItem('sidebar_collapsed', String(nextState));
-      return nextState;
-    });
-  };
-
-  // La barra se considera expandida si no está colapsada o si el usuario pasa el cursor por encima (hover)
   const isExpanded = !isCollapsed || isHovered;
 
-  const handleLogoutClick = () => {
-    const skipConfirm = localStorage.getItem('ikernell_skip_logout_confirm') === 'true';
-    if (skipConfirm) {
-      handleConfirmLogout();
-    } else {
-      setShowLogoutModal(true);
-    }
-  };
-
-  const handleConfirmLogout = () => {
-    logout();
-    toast.success('Sesión cerrada correctamente');
-    navigate('/login');
+  const toggleCollapse = () => {
+    const next = !isCollapsed;
+    setIsCollapsed(next);
+    setIsHovered(false);
+    localStorage.setItem('sidebar_collapsed', String(next));
   };
 
   const getRoleBadge = (rol) => {
@@ -88,9 +58,9 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         };
       case 'LIDER':
         return {
-          label: 'Líder de Proyecto',
-          badgeText: 'LÍDER',
-          classes: 'bg-amber-50 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+          label: activeRoleMode === 'DESARROLLADOR' ? 'Líder (Modo Desarrollador)' : 'Líder de Proyecto',
+          badgeText: activeRoleMode === 'DESARROLLADOR' ? 'LÍDER • DEV HÍBRIDO' : 'LÍDER DE PROYECTO',
+          classes: activeRoleMode === 'DESARROLLADOR' ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border-purple-200 dark:border-purple-800' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 border-amber-200 dark:border-amber-800'
         };
       default:
         return {
@@ -103,7 +73,7 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
 
   const roleInfo = getRoleBadge(user?.rol);
 
-  // Configuración de elementos del Sidebar según el Rol
+  // Configuración de elementos del Sidebar según el Rol y Modo Activo
   const getRoleNavItems = () => {
     if (user?.rol === 'COORDINADOR') {
       return [
@@ -113,6 +83,14 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
         { id: 'burnout', label: 'Predictor de Burnout', icon: Activity, desc: 'Capacidad y desgaste 21d' }
       ];
     } else if (user?.rol === 'LIDER') {
+      if (activeRoleMode === 'DESARROLLADOR') {
+        return [
+          { id: 'actividades', label: 'Mis Tareas WBS (Desarrollo)', icon: CheckSquare, desc: 'Tablero de desarrollo técnico' },
+          { id: 'wbs', label: 'WBS y Proyectos (Vista Líder)', icon: Layers, desc: 'Supervisión de etapas' },
+          { id: 'incidencias', label: 'Bandeja de Incidencias', icon: AlertTriangle, desc: 'Reportar o revisar errores' },
+          { id: 'burnout', label: 'Carga Semanal & Burnout', icon: Activity, desc: 'Análisis de capacidad 48h' }
+        ];
+      }
       return [
         { id: 'wbs', label: 'WBS y Proyectos', icon: Layers, desc: 'Desglose por etapas' },
         { id: 'personal', label: 'Gestión de Personal', icon: Users, desc: 'Líderes y Desarrolladores' },
@@ -137,6 +115,32 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
     { id: 'biblioteca', label: 'Biblioteca Digital', icon: BookOpen, badge: '8 Docs' },
     { id: 'tutoriales', label: 'Tutoriales e Inducción', icon: GraduationCap, badge: '3 Guías' }
   ];
+
+  const confirmOrNavigate = (navigationCallback) => {
+    if (hasUnsavedChanges) {
+      if (window.confirm('Tienes cambios no guardados en el formulario de la etapa. ¿Deseas descartarlos y continuar?')) {
+        if (onCancelUnsavedChanges) onCancelUnsavedChanges();
+        navigationCallback();
+      }
+    } else {
+      navigationCallback();
+    }
+  };
+
+  const handleLogoutClick = () => {
+    const skipConfirm = localStorage.getItem('ikernell_skip_logout_confirm') === 'true';
+    if (skipConfirm) {
+      handleConfirmLogout();
+    } else {
+      setShowLogoutModal(true);
+    }
+  };
+
+  const handleConfirmLogout = () => {
+    logout();
+    toast.success('Sesión cerrada correctamente');
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen flex bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
@@ -195,33 +199,57 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
 
           <div className="mt-5 mb-4 mx-3">
             <div className={`${sidebarOpen ? 'block' : (isExpanded ? 'hidden lg:block' : 'hidden')}`}>
-              <motion.button
-                type="button"
-                onClick={() => {
-                  confirmOrNavigate(() => {
-                    navigate(ROUTES.PERFIL);
-                    setSidebarOpen(false);
-                  });
-                }}
-                whileHover={{ y: -1, scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className="w-full p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 hover:border-blue-400 dark:hover:border-blue-500/50 hover:bg-blue-50/40 dark:hover:bg-zinc-800 shadow-sm transition-all duration-200 flex items-center gap-3 text-left cursor-pointer group"
-              >
-                <div className="relative flex-shrink-0">
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 tracking-tight">
-                    {getInitials(user?.nombre, user?.apellido)}
+              <div className="p-3.5 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700/80 shadow-sm space-y-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    confirmOrNavigate(() => {
+                      navigate(ROUTES.PERFIL);
+                      setSidebarOpen(false);
+                    });
+                  }}
+                  className="w-full flex items-center gap-3 text-left cursor-pointer group"
+                >
+                  <div className="relative flex-shrink-0">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-600/30 tracking-tight">
+                      {getInitials(user?.nombre, user?.apellido)}
+                    </div>
                   </div>
-                </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate">{user?.nombre || 'Usuario'}</div>
-                  <div className="mt-1">
-                    <span className={`inline-block text-[0.58rem] font-black uppercase px-2.5 py-0.5 rounded-md border ${roleInfo.classes}`}>
-                      {roleInfo.badgeText}
-                    </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate">{user?.nombre || 'Usuario'}</div>
+                    <div className="mt-1">
+                      <span className={`inline-block text-[0.58rem] font-black uppercase px-2.5 py-0.5 rounded-md border ${roleInfo.classes}`}>
+                        {roleInfo.badgeText}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </motion.button>
+                </button>
+
+                {/* Desplegable Selector de Rol en Vivo (Solo para usuarios LÍDER) */}
+                {user?.rol === 'LIDER' && (
+                  <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/70">
+                    <span className="text-[0.58rem] font-extrabold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">
+                      Modo Operativo en Vivo:
+                    </span>
+                    <div className="relative">
+                      <select
+                        value={activeRoleMode || 'LIDER'}
+                        onChange={(e) => {
+                          const newMode = e.target.value;
+                          switchRoleMode(newMode);
+                          toast.success(`Modo operativo cambiado a: ${newMode === 'DESARROLLADOR' ? 'Desarrollador Técnico' : 'Líder de Proyecto'}`);
+                        }}
+                        className="w-full text-xs font-bold py-1.5 pl-2.5 pr-7 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer appearance-none"
+                      >
+                        <option value="LIDER">👑 Líder de Proyecto (Gestión)</option>
+                        <option value="DESARROLLADOR">💻 Desarrollador (Técnico WBS)</option>
+                      </select>
+                      <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-600 dark:text-amber-400 pointer-events-none" />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className={`${sidebarOpen ? 'hidden' : (isExpanded ? 'block lg:hidden' : 'block')}`}>

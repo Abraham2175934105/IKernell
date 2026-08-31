@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import toast from 'react-hot-toast';
+import { ConsolaDistribucionLider } from '../../components/lider/ConsolaDistribucionLider';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Mail, Shield, ShieldCheck, Key, Lock, Eye, EyeOff,
@@ -305,6 +305,11 @@ export const PerfilPage = () => {
             <span>Sincronizar Datos</span>
           </button>
         </div>
+
+        {/* Consola de Distribución Horaria Semanal Dual (Líder ↔ Desarrollador) */}
+        {user?.rol === 'LIDER' && (
+          <ConsolaDistribucionLider />
+        )}
 
         {passwordSuccessAlert && (
           <motion.div

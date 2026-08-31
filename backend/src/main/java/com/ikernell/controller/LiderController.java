@@ -33,11 +33,13 @@ public class LiderController {
     private final LiderService liderService;
     private final EtlAutomationService etlAutomationService;
     private final HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository;
+    private final com.ikernell.service.DistribucionHorariaService distribucionHorariaService;
 
-    public LiderController(LiderService liderService, EtlAutomationService etlAutomationService, HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository) {
+    public LiderController(LiderService liderService, EtlAutomationService etlAutomationService, HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository, com.ikernell.service.DistribucionHorariaService distribucionHorariaService) {
         this.liderService = liderService;
         this.etlAutomationService = etlAutomationService;
         this.historialCambiosCoordinadorRepository = historialCambiosCoordinadorRepository;
+        this.distribucionHorariaService = distribucionHorariaService;
     }
 
     @GetMapping("/proyectos/{idProyecto}/historial-cambios")
@@ -375,5 +377,26 @@ public class LiderController {
         String estadoAtencion = payload.get("estadoAtencion");
         String resolucionNota = payload.get("resolucionNota");
         return ResponseEntity.ok(liderService.atenderInterrupcion(idInterrupcion, estadoAtencion, resolucionNota));
+    }
+
+    @GetMapping("/distribucion-horaria/{idTrabajador}")
+    @Operation(summary = "Obtener distribución horaria semanal del Líder Híbrido", description = "Devuelve el desglose de 48h entre horas de Líder y horas de Desarrollador")
+    public ResponseEntity<com.ikernell.model.DistribucionHorariaLider> obtenerDistribucionHoraria(
+            @PathVariable Long idTrabajador,
+            @RequestParam(required = false, defaultValue = "2026-W36") String semanaCodigo) {
+        return ResponseEntity.ok(distribucionHorariaService.obtenerODistribuirHoras(idTrabajador, semanaCodigo));
+    }
+
+    @PostMapping("/distribucion-horaria/{idTrabajador}")
+    @Operation(summary = "Guardar o ajustar distribución horaria de Líder", description = "Actualiza la proporción semanal de horas (Líder / Desarrollador) sumando 48h")
+    public ResponseEntity<com.ikernell.model.DistribucionHorariaLider> guardarDistribucionHoraria(
+            @PathVariable Long idTrabajador,
+            @RequestBody Map<String, Object> payload) {
+        String semanaCodigo = (String) payload.getOrDefault("semanaCodigo", "2026-W36");
+        Integer horasLider = payload.get("horasLider") != null ? Integer.parseInt(payload.get("horasLider").toString()) : 24;
+        Integer horasDev = payload.get("horasDev") != null ? Integer.parseInt(payload.get("horasDev").toString()) : 24;
+        String modo = (String) payload.getOrDefault("modoDistribucion", "MANUAL");
+
+        return ResponseEntity.ok(distribucionHorariaService.guardarDistribucion(idTrabajador, semanaCodigo, horasLider, horasDev, modo));
     }
 }

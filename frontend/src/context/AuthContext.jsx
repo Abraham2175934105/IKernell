@@ -81,10 +81,24 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  // Modo de Rol Activo para usuarios Líderes (LÍDER vs DESARROLLADOR HÍBRIDO)
+  const [activeRoleMode, setActiveRoleMode] = useState(() => {
+    return localStorage.getItem('active_role_mode') || 'LIDER';
+  });
+
+  const switchRoleMode = useCallback((mode) => {
+    setActiveRoleMode(mode);
+    try {
+      localStorage.setItem('active_role_mode', mode);
+    } catch (e) {
+      console.error('[IKernell Auth] Error al guardar active_role_mode:', e);
+    }
+  }, []);
+
   const isAuthenticated = Boolean(token && user);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, activeRoleMode, switchRoleMode, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
