@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SnippetInjectionCard } from '../../components/dashboard/SnippetInjectionCard';
 import { Skeleton, SkeletonCard, SkeletonTable } from '../../components/ui/Skeleton';
 import { CustomSelect } from '../../components/ui/CustomSelect';
+import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
 import { ConsolaDistribucionLider } from '../../components/lider/ConsolaDistribucionLider';
 
 // Variantes de animación de alto rendimiento y ultra rápidas (0.25s)
