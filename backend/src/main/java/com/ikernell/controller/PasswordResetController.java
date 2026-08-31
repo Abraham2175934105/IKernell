@@ -131,7 +131,6 @@ public class PasswordResetController {
             return ResponseEntity.ok(Map.of(
                     "emailDestinoEnmascarado", maskedEmail,
                     "emailTarget", primaryEmail,
-                    "otpCode", otpCode,
                     "message", "Código de verificación de 6 dígitos enviado exitosamente a " + maskedEmail
             ));
         } catch (Exception ex) {
