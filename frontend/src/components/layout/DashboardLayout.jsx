@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Cpu, Users, Briefcase, Activity, CheckSquare, Bug, AlertTriangle, 
   MessageSquare, BookOpen, GraduationCap, Sun, Moon, LogOut, 
-  Menu, X, Shield, ChevronRight, ChevronLeft, Layers, 
+  Menu, X, Shield, ShieldCheck, ShieldAlert, ChevronRight, ChevronLeft, Layers, 
   FileText, Sparkles, User, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
