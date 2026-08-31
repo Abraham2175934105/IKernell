@@ -6912,69 +6912,19 @@ export const LiderDashboard = () => {
                                 </div>
 
                                 <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
-                                  {/* Dedicación Horaria Semanal */}
+                                  {/* Dedicación Horaria Semanal (Protegida por Estado de Tareas) */}
                                   <div className="flex flex-col items-start sm:items-end gap-1">
                                     <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">
                                       Dedicación Semanal
                                     </span>
 
-                                    {isMiProyecto ? (
-                                      <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj - 1)}
-                                          disabled={horasPrj <= pisoMinimoReserva || updatingDevId === dev.idTrabajador}
-                                          className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
-                                          title={horasPrj <= pisoMinimoReserva ? `Piso Mínimo Alcanzado: Se requieren ${pisoMinimoReserva}h para cubrir las tareas activas en proceso` : 'Reducir 1 hora semanal'}
-                                        >
-                                          -
-                                        </button>
-
-                                        <input
-                                          type="number"
-                                          min={pisoMinimoReserva}
-                                          max="48"
-                                          value={editingHoursMap[dev.idTrabajador] !== undefined ? editingHoursMap[dev.idTrabajador] : horasPrj}
-                                          onChange={(e) => {
-                                            const val = e.target.value;
-                                            setEditingHoursMap(prev => ({ ...prev, [dev.idTrabajador]: val }));
-                                          }}
-                                          onBlur={() => {
-                                            const val = parseInt(editingHoursMap[dev.idTrabajador]);
-                                            if (!isNaN(val) && val !== horasPrj && val >= pisoMinimoReserva) {
-                                              handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, val);
-                                            }
-                                            setEditingHoursMap(prev => {
-                                              const copy = { ...prev };
-                                              delete copy[dev.idTrabajador];
-                                              return copy;
-                                            });
-                                          }}
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                              e.target.blur();
-                                            }
-                                          }}
-                                          className="w-12 text-center bg-transparent font-mono text-xs font-black text-blue-600 dark:text-blue-400 focus:outline-none focus:bg-white dark:focus:bg-zinc-900 rounded-md border border-zinc-200 dark:border-zinc-700 focus:border-blue-500 py-0.5"
-                                          title={`Dedicación reservada. Mínimo permitido por tareas activas en proceso: ${pisoMinimoReserva}h/sem`}
-                                        />
-                                        <span className="text-[0.65rem] text-zinc-400 font-normal pr-1">h/sem</span>
-
-                                        <button
-                                          type="button"
-                                          onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj + 1)}
-                                          disabled={updatingDevId === dev.idTrabajador || horasGlobales >= 48}
-                                          className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
-                                          title={horasGlobales >= 48 ? `Límite legal alcanzado/excedido (Carga actual: ${horasGlobales}/48h en la empresa)` : 'Aumentar 1 hora semanal'}
-                                        >
-                                          +
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-mono text-xs font-extrabold border border-zinc-200 dark:border-zinc-700">
-                                        {horasPrj} h/semana
-                                      </div>
-                                    )}
+                                    <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/90 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700/80 shadow-2xs">
+                                      <Lock size={12} className="text-blue-500 shrink-0" />
+                                      <span className="font-mono text-xs font-black text-blue-600 dark:text-blue-400">{horasPrj} h/semana</span>
+                                      <span className="text-[0.6rem] font-bold text-zinc-500 dark:text-zinc-400 pl-1.5 border-l border-zinc-200 dark:border-zinc-700">
+                                        Total Calculado
+                                      </span>
+                                    </div>
 
                                     <span className="text-[0.62rem] text-zinc-500 font-medium">
                                       Carga Total Empresa: <strong className={esSobrecargado ? 'text-red-600 dark:text-red-400 font-black' : 'text-zinc-700 dark:text-zinc-300 font-bold'}>{horasGlobales}/48h</strong>
@@ -7000,15 +6950,8 @@ export const LiderDashboard = () => {
                                 <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/80 border border-red-300 text-red-800 dark:text-red-300 text-[0.68rem] font-bold flex items-center justify-between gap-2 animate-fadeIn">
                                   <div className="flex items-center gap-1.5">
                                     <AlertTriangle size={14} className="text-red-600 shrink-0" />
-                                    <span>¡Alerta de Sobrecarga en la Empresa! Este desarrollador acumula {horasGlobales}h/48h. Se ha bloqueado el botón &quot;+&quot;.</span>
+                                    <span>¡Alerta de Sobrecarga en la Empresa! Este desarrollador acumula {horasGlobales}h/48h.</span>
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, Math.max(1, horasPrj - (horasGlobales - 48)))}
-                                    className="px-2 py-1 rounded-lg bg-red-600 text-white font-bold text-[0.62rem] hover:bg-red-700 transition-colors cursor-pointer shrink-0"
-                                  >
-                                    Ajustar a Límite Legal
-                                  </button>
                                 </div>
                               )}
 
@@ -7081,41 +7024,87 @@ export const LiderDashboard = () => {
                               {/* Desglose Detallado de Tareas WBS Asignadas a este Desarrollador */}
                               {tareasDevCount > 0 && (
                                 <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 space-y-1.5">
-                                  <span className="text-[0.62rem] font-extrabold uppercase tracking-wider text-zinc-400 block">
-                                    Tareas WBS Asignadas a {dev.nombre}:
-                                  </span>
-                                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[0.62rem] font-extrabold uppercase tracking-wider text-zinc-400 block">
+                                      Tareas WBS Asignadas a {dev.nombre}:
+                                    </span>
+                                    <span className="text-[0.62rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                                      {tareasCompletadas.length} Finalizadas • {tareasPendientes.length} En Ejecución/Pendientes
+                                    </span>
+                                  </div>
+                                  <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                                     {tareasDev.map((t, idx) => {
                                       const matchH = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
                                       const hTarea = matchH ? parseInt(matchH[1]) : (t.horasEstimadas || Math.round(horasPrj / tareasDevCount));
+                                      const isFin = (t.estado || '').toUpperCase() === 'FINALIZADA' || (t.estado || '').toUpperCase() === 'COMPLETADO';
+                                      const isProc = (t.estado || '').toUpperCase() === 'EN_PROGRESO' || (t.estado || '').toUpperCase() === 'EN_PROGRESO';
+
                                       return (
-                                        <div key={t.idActividad || idx} className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between text-[0.7rem]">
+                                        <div key={t.idActividad || idx} className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between text-[0.7rem] gap-2">
                                           <div className="min-w-0 flex-1 pr-2">
                                             <span className="font-extrabold text-zinc-800 dark:text-zinc-200 block truncate">
                                               • {t.descripcion}
                                             </span>
-                                            <span className="text-[0.62rem] text-zinc-400">
+                                            <span className="text-[0.62rem] text-zinc-400 block">
                                               Fase #{t.idEtapa}: {t.etapaNombre}
                                             </span>
                                           </div>
                                           <div className="flex items-center gap-2 shrink-0">
-                                            <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-mono font-extrabold text-[0.62rem]">
+                                            <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-mono font-extrabold text-[0.62rem] border border-blue-200 dark:border-blue-800">
                                               {hTarea}h/sem
                                             </span>
-                                            <span className={`px-2 py-0.5 rounded-md font-extrabold text-[0.6rem] ${
-                                              t.estado === 'FINALIZADA'
-                                                ? 'bg-emerald-100 text-emerald-800'
-                                                : t.estado === 'EN_PROGRESO'
-                                                  ? 'bg-blue-100 text-blue-800'
-                                                  : 'bg-amber-100 text-amber-800'
-                                            }`}>
-                                              {t.estado || 'PENDIENTE'}
-                                            </span>
+                                            {isFin ? (
+                                              <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.6rem] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1" title="Tarea ejecutada y entregada. Horas inamovibles.">
+                                                <CheckCircle2 size={11} /> FINALIZADA (🔒 Cumplida)
+                                              </span>
+                                            ) : isProc ? (
+                                              <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.6rem] bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 flex items-center gap-1" title="Tarea en ejecución activa por el desarrollador. Horas congeladas durante la ejecución.">
+                                                <Activity size={11} /> EN PROGRESO (🔒 En Ejecución)
+                                              </span>
+                                            ) : (
+                                              <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.6rem] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1" title="Tarea pendiente por iniciar.">
+                                                <Clock size={11} /> PENDIENTE
+                                              </span>
+                                            )}
                                           </div>
                                         </div>
                                       );
                                     })}
                                   </div>
+                                </div>
+                              )}
+
+                              {/* Acciones de Reserva & Asignación */}
+                              {isMiProyecto && (
+                                <div className="pt-2 flex flex-wrap items-center justify-between gap-2 text-[0.68rem] border-t border-zinc-100 dark:border-zinc-800/80">
+                                  {saldoCupoReservado > 0 ? (
+                                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold">
+                                      <Sparkles size={13} />
+                                      <span>Dispone de {saldoCupoReservado}h libres sin asignar en este proyecto.</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                                      <CheckCircle2 size={13} />
+                                      <span>Toda la reserva ({horasPrj}h/sem) está vinculada a entregables WBS.</span>
+                                    </div>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setShowNominaDevsModal(false);
+                                      setNuevaActividad(prev => ({
+                                        ...prev,
+                                        idDesarrollador: String(dev.idTrabajador),
+                                        cualidadTecnica: prev.cualidadTecnica || '',
+                                        cualidadNombre: prev.cualidadNombre || ''
+                                      }));
+                                      setShowAsignarModal(true);
+                                    }}
+                                    className="px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-extrabold text-[0.68rem] transition-all cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <Plus size={13} /> Asignar Tarea WBS a {dev.nombre}
+                                  </button>
                                 </div>
                               )}
                             </div>
