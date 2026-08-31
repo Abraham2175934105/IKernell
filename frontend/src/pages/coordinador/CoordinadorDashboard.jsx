@@ -422,6 +422,14 @@ export const CoordinadorDashboard = () => {
   const [navFromWorker, setNavFromWorker] = useState(null);
   const [highlightedTaskId, setHighlightedTaskId] = useState(null);
 
+  // Estados para Detalle de Trabajador & Navegación Cruzada a Proyectos
+  const [selectedTrabajadorModal, setSelectedTrabajadorModal] = useState(null);
+  const [showTrabajosSubpanel, setShowTrabajosSubpanel] = useState(false);
+  const [highlightedProyectoId, setHighlightedProyectoId] = useState(null);
+  const [navHistory, setNavHistory] = useState(null);
+  const [highlightedActividadId, setHighlightedActividadId] = useState(null);
+  const [highlightedEtapaId, setHighlightedEtapaId] = useState(null);
+
   // Cálculo integral de Carga Horaria (48h) y Tareas del Trabajador seleccionado
   const devTaskMetrics = useMemo(() => {
     if (!selectedTrabajadorModal || !Array.isArray(proyectos)) {
@@ -1410,13 +1418,6 @@ export const CoordinadorDashboard = () => {
     }
   };
 
-  // Estados para Detalle de Trabajador & Navegación Cruzada a Proyectos
-  const [selectedTrabajadorModal, setSelectedTrabajadorModal] = useState(null);
-  const [showTrabajosSubpanel, setShowTrabajosSubpanel] = useState(false);
-  const [highlightedProyectoId, setHighlightedProyectoId] = useState(null);
-  const [navHistory, setNavHistory] = useState(null);
-  const [highlightedActividadId, setHighlightedActividadId] = useState(null);
-  const [highlightedEtapaId, setHighlightedEtapaId] = useState(null);
 
   // Estados de Paginación Inteligente (Por cantidad y por hojas)
   const [currentPage, setCurrentPage] = useState(1);
