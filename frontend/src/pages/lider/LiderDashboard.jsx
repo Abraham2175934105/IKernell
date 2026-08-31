@@ -735,18 +735,39 @@ const DeveloperSelectorModal = ({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredDevs.map(dev => {
-                  const devId = String(dev.idTrabajador || dev.id || dev.idDesarrollador);
+                  const devId = String(dev.idTrabajador || dev.id || dev.idDesarrollador || '');
+                  const devIdent = String(dev.identificacion || '').trim();
+                  const devEmail = String(dev.email || '').toLowerCase().trim();
                   const isSelected = String(value) === devId;
-                  const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(
-                    a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
-                  );
+
+                  // Búsqueda flexible de Asignación en Proyecto por ID, Cédula o Email
+                  const asignacionProy = (desarrolladoresAsignadosProyecto || []).find(a => {
+                    const devObj = a.desarrollador || a;
+                    const aId = String(devObj.idTrabajador || devObj.id || devObj.idDesarrollador || a.idTrabajador || a.idDesarrollador || a.id || '');
+                    const aIdent = String(devObj.identificacion || a.identificacion || '').trim();
+                    const aEmail = String(devObj.email || a.email || '').toLowerCase().trim();
+
+                    return (devId && aId && devId === aId) ||
+                           (devIdent && aIdent && devIdent === aIdent) ||
+                           (devEmail && aEmail && devEmail === aEmail);
+                  });
+
                   const estaEnProyecto = !!asignacionProy;
                   const horasReservadasProy = asignacionProy?.horasSemanales || 0;
 
-                  // Tareas WBS asignadas a este dev en este proyecto
+                  // Tareas WBS asignadas a este dev en este proyecto (búsqueda flexible)
                   const tareasDev = (etapas || []).flatMap(et => {
                     const acts = Array.isArray(et.actividades) ? et.actividades : [];
-                    return acts.filter(a => Number(a.desarrollador?.idTrabajador || a.idDesarrollador) === Number(devId));
+                    return acts.filter(a => {
+                      const devObj = a.desarrollador || {};
+                      const aId = String(a.idDesarrollador || a.desarrollador_id || a.desarrolladorId || devObj.idTrabajador || devObj.id || '');
+                      const aIdent = String(devObj.identificacion || a.identificacion || '').trim();
+                      const aEmail = String(devObj.email || a.email || '').toLowerCase().trim();
+
+                      return (devId && aId && devId === aId) ||
+                             (devIdent && aIdent && devIdent === aIdent) ||
+                             (devEmail && aEmail && devEmail === aEmail);
+                    });
                   });
                   const tareasDevCount = tareasDev.length;
 
@@ -758,11 +779,12 @@ const DeveloperSelectorModal = ({
                     return sum + (tareasDevCount > 0 ? Math.round(horasReservadasProy / tareasDevCount) : 0);
                   }, 0);
 
-                  // Saldo libre restante de su reserva
+                  // Saldo libre restante de su reserva en este proyecto
                   const saldoLibreReserva = Math.max(0, horasReservadasProy - horasTareasDev);
 
                   const carga = getDevCargaInfo(devId);
                   const horasGlobales = carga?.horasAsignadas || 0;
+                  const horasLibresGlobales = Math.max(0, 48 - horasGlobales);
                   const pct = Math.min(Math.round((horasGlobales / 48) * 100), 100);
                   const esSaturado = horasGlobales >= 48;
 
@@ -826,43 +848,62 @@ const DeveloperSelectorModal = ({
 
                           {estaEnProyecto ? (
                             <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
-                              <Briefcase size={11} /> En Equipo de Proyecto
+                              <Briefcase size={11} /> En Equipo de Proyecto ({horasReservadasProy}h/sem)
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[0.62rem] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-                              Pool Global
+                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-bold bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+                              <Clock size={11} /> Pool Global ({horasLibresGlobales}h Libres)
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Bloque de Métricas Claras de Carga en Proyecto */}
-                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Reserva Proy.</span>
-                          <span className="text-xs font-black text-zinc-800 dark:text-zinc-200 font-mono">{horasReservadasProy}h/sem</span>
+                      {/* Bloque de Métricas Claras de Carga Diferenciado para Proyecto vs Pool Global */}
+                      {estaEnProyecto ? (
+                        <div className="p-3 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <span className="text-[0.6rem] font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider block">Reserva Proy.</span>
+                            <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 font-mono">{horasReservadasProy}h/sem</span>
+                          </div>
+                          <div>
+                            <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Tareas WBS</span>
+                            <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-mono">{horasTareasDev}h/sem</span>
+                          </div>
+                          <div>
+                            <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Saldo Libre</span>
+                            <span className={`text-xs font-black font-mono flex items-center justify-center gap-0.5 ${
+                              saldoLibreReserva > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                            }`}>
+                              {saldoLibreReserva > 0 ? (
+                                <>
+                                  <CheckCircle2 size={11} className="text-emerald-500 shrink-0" /> {saldoLibreReserva}h
+                                </>
+                              ) : (
+                                <>
+                                  <AlertCircle size={11} className="text-amber-500 shrink-0" /> 0h
+                                </>
+                              )}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Tareas WBS</span>
-                          <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-mono">{horasTareasDev}h/sem</span>
+                      ) : (
+                        <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Carga Global</span>
+                            <span className="text-xs font-black text-zinc-800 dark:text-zinc-200 font-mono">{horasGlobales}h/sem</span>
+                          </div>
+                          <div>
+                            <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Disp. Global</span>
+                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono">{horasLibresGlobales}h libres</span>
+                          </div>
+                          <div>
+                            <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Estado Pool</span>
+                            <span className="text-xs font-black text-purple-600 dark:text-purple-400 flex items-center justify-center gap-0.5 font-mono">
+                              <CheckCircle2 size={11} className="text-purple-500 shrink-0" /> Vincular
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-[0.6rem] font-extrabold text-zinc-400 uppercase tracking-wider block">Saldo Libre</span>
-                          <span className={`text-xs font-black font-mono flex items-center justify-center gap-0.5 ${
-                            saldoLibreReserva > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'
-                          }`}>
-                            {saldoLibreReserva > 0 ? (
-                              <>
-                                <CheckCircle2 size={11} className="text-emerald-500" /> {saldoLibreReserva}h
-                              </>
-                            ) : (
-                              <>
-                                <AlertCircle size={11} className="text-zinc-400" /> 0h
-                              </>
-                            )}
-                          </span>
-                        </div>
-                      </div>
+                      )}
 
                       {/* Skills & Medidor de Capacidad Global */}
                       <div className="space-y-2">
