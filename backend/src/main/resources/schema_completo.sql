@@ -342,7 +342,16 @@ VALUES
   (2, 'Core Bancario & Microservicios Cloud', 'Itaú Unibanco Holding', 'Modernización de la arquitectura financiera con servicios transaccionales idempotentes, seguridad stateless JWT y alta concurrencia.', 120000.00, '2026-02-01', '2026-12-15', 'ACTIVO', 5),
   (3, 'App Móvil Fintech & Billetera Digital', 'Nubank Brasil S.A.', 'Billetera digital multiplataforma con pagos QR dinámicos, autenticación biométrica y transferencias interbancarias inmediatas.', 65000.00, '2026-03-01', '2026-10-30', 'ACTIVO', 8),
   (4, 'Plataforma Telemedicina & Triaje Inteligente', 'Hospital Israelita Albert Einstein', 'Sistema de atención médica virtual con streaming WebRTC de baja latencia, recetas digitales encriptadas y triaje automatizado.', 48000.00, '2026-04-10', '2026-09-30', 'ACTIVO', 8),
-  (5, 'Migración ERP Empresarial & Data Warehouse', 'Embraer Enterprise Solutions', 'Migración masiva de base de datos legada hacia cluster PostgreSQL con pipelines de analítica predictiva en tiempo real.', 95000.00, '2025-06-01', '2026-01-30', 'ACTIVO', 2)
+  (5, 'Migración ERP Empresarial & Data Warehouse', 'Embraer Enterprise Solutions', 'Migración masiva de base de datos legada hacia cluster PostgreSQL con pipelines de analítica predictiva en tiempo real.', 95000.00, '2025-06-01', '2026-01-30', 'ACTIVO', 2),
+  (6, 'Portal E-Commerce Internacional & Pasarela Multi-Moneda', 'Mercado Libre LatAm', 'Plataforma global de comercio electrónico con procesamiento transaccional en tiempo real, catálogo distribuido y pasarela multi-divisa.', 185000.00, '2024-03-01', '2025-02-28', 'FINALIZADO', 5),
+  (7, 'Sistema de Logística Fleet-Tracker & Telemetría IoT', 'DHL Express Logistics', 'Plataforma de monitoreo y rastreo satelital de flota de transporte pesado con alertas de telemetría IoT y geocercas inteligentes.', 110000.00, '2025-08-01', '2026-06-30', 'EN_PAUSA', 2),
+  (8, 'Microservicio OAuth2 & SSO Corporativo', 'Seguros Bolívar S.A.', 'Servidor centralizado de autenticación y autorización unificada bajo estándares OAuth2 / OpenID Connect con soporte MFA.', 28000.00, '2026-05-01', '2026-09-15', 'ACTIVO', 8),
+  (9, 'App Móvil de Gestión Hospitalaria & Recetas QR', 'Organización Sanitas Internacional', 'Aplicación móvil asistencial para gestión de citas médicas, historial clínico digital y dispensación de recetas con validación QR.', 75000.00, '2024-09-01', '2025-05-30', 'FINALIZADO', 2),
+  (10, 'Motor de IA & Scoring Crediticio en Tiempo Real', 'Bancolombia S.A.', 'Sistema de analítica predictiva y scoring crediticio asistido por modelos de Machine Learning para aprobación de créditos en tiempo real.', 210000.00, '2026-02-15', '2026-12-31', 'ACTIVO', 5),
+  (11, 'Sistema Interno de Mesas de Ayuda & Control de Assets', 'IKernell Internal Operations', 'Plataforma web interna para seguimiento de tickets de soporte técnico, gestión de activos de hardware e inventario corporativo.', 15000.00, '2026-01-10', '2026-08-30', 'EN_PAUSA', 8),
+  (12, 'Plataforma de Auditoría & Ciberseguridad ISO 27001', 'Superintendencia Financiera', 'Módulo de auditoría inmutable, escaneo continuo de vulnerabilidades y verificación de cumplimiento normativo ISO 27001 / CMMI-5.', 90000.00, '2026-04-01', '2026-11-15', 'ACTIVO', 5),
+  (13, 'Portal de Facturación Electrónica DIAN v3.0 Enterprise', 'Empresas Públicas de Medellín (EPM)', 'Sistema corporativo de emisión masiva de documentos electrónicos bajo normativa DIAN UBL 2.1 con alta disponibilidad.', 140000.00, '2026-03-15', '2026-12-01', 'ACTIVO', 2),
+  (14, 'Infraestructura Cloud & Clúster Redis Distribuido', 'Grupo Éxito S.A.', 'Implementación de clúster de almacenamiento en memoria de ultra alta velocidad para soporte de sesiones concurrentes en eventos HotSale.', 32000.00, '2025-01-15', '2025-06-15', 'FINALIZADO', 8)
 ON CONFLICT (id_proyecto) DO UPDATE SET
   nombre = EXCLUDED.nombre,
   cliente = EXCLUDED.cliente,
@@ -364,7 +373,16 @@ VALUES
   (2, 6, 12), (2, 9, 12), (2, 4, 12), (2, 12, 12), (2, 13, 12), 
   (3, 10, 12), (3, 11, 12), (3, 15, 12), (3, 16, 12),
   (4, 10, 12), (4, 12, 12), (4, 13, 12), (4, 4, 12), (4, 15, 12), 
-  (5, 9, 8), (5, 17, 8), (5, 18, 8), (5, 19, 8), (5, 20, 8);
+  (5, 9, 8), (5, 17, 8), (5, 18, 8), (5, 19, 8), (5, 20, 8),
+  (6, 21, 15), (6, 25, 15), (6, 31, 15), (6, 36, 15),
+  (7, 24, 10), (7, 26, 10), (7, 30, 10), (7, 42, 10),
+  (8, 22, 15), (8, 32, 15), (8, 44, 15),
+  (9, 15, 12), (9, 21, 12), (9, 37, 12),
+  (10, 28, 20), (10, 33, 20), (10, 38, 20), (10, 40, 20),
+  (11, 16, 10), (11, 27, 10), (11, 41, 10),
+  (12, 35, 12), (12, 39, 12), (12, 43, 12), (12, 44, 12),
+  (13, 34, 15), (13, 36, 15), (13, 37, 15), (13, 45, 15),
+  (14, 18, 12), (14, 20, 12), (14, 26, 12);
 
 -- 5. ETAPAS (WBS)
 DELETE FROM etapa;
@@ -395,13 +413,54 @@ VALUES
 
   -- Proyecto 5 (Migración ERP)
   (501, 5, 'Fase 1: Extracción de Schemas Legados y Sanitización', 'FINALIZADA'),
-  (502, 5, 'Fase 2: Carga en Data Warehouse PostgreSQL y Validación', 'FINALIZADA')
+  (502, 5, 'Fase 2: Carga en Data Warehouse PostgreSQL y Validación', 'FINALIZADA'),
+
+  -- Proyecto 6 (E-Commerce - FINALIZADO)
+  (601, 6, 'Fase 1: Arquitectura de Catálogo & Microservicios React/Spring', 'FINALIZADA'),
+  (602, 6, 'Fase 2: Pasarela Multi-Moneda & Cifrado PCI-DSS', 'FINALIZADA'),
+  (603, 6, 'Fase 3: Pruebas Globales de Carga & Liberación', 'FINALIZADA'),
+
+  -- Proyecto 7 (Logística IoT - EN_PAUSA)
+  (701, 7, 'Fase 1: Ingesta de Telemetría GPS en Tiempo Real', 'FINALIZADA'),
+  (702, 7, 'Fase 2: Motor de Geocercas & Alertas de Ruta', 'EN_PROGRESO'),
+  (703, 7, 'Fase 3: Dashboard de Control de Flotas & Analítica', 'PENDIENTE'),
+
+  -- Proyecto 8 (OAuth2 SSO - ACTIVO)
+  (801, 8, 'Fase 1: Servidor de Autorización Spring Security OAuth2/OIDC', 'EN_PROGRESO'),
+  (802, 8, 'Fase 2: Integración MFA & Tokens JWT Encriptados', 'PENDIENTE'),
+
+  -- Proyecto 9 (App Hospitalaria - FINALIZADO)
+  (901, 9, 'Fase 1: Portal de Citas Médicas & Prescripción Digital', 'FINALIZADA'),
+  (902, 9, 'Fase 2: App Móvil Flutter & Generación de QR Medico', 'FINALIZADA'),
+
+  -- Proyecto 10 (IA Credit Scoring - ACTIVO)
+  (1001, 10, 'Fase 1: Pipeline de Ingesta Masiva Spark & Feature Store', 'FINALIZADA'),
+  (1002, 10, 'Fase 2: Inferencia de Modelos ML via gRPC en C++', 'EN_PROGRESO'),
+  (1003, 10, 'Fase 3: API Gateway & Integración en Canal Transaccional', 'PENDIENTE'),
+
+  -- Proyecto 11 (CRM Interno - EN_PAUSA)
+  (1101, 11, 'Fase 1: Tablero Kanban & Módulo de Tickets Web', 'FINALIZADA'),
+  (1102, 11, 'Fase 2: Automatización de Notificaciones por Email & Slack', 'EN_PROGRESO'),
+
+  -- Proyecto 12 (Auditoría ISO 27001 - ACTIVO)
+  (1201, 12, 'Fase 1: Registro Criptográfico de Auditoría Inmutable', 'FINALIZADA'),
+  (1202, 12, 'Fase 2: Escaneo Continuo de Vulnerabilidades OWASP', 'EN_PROGRESO'),
+  (1203, 12, 'Fase 3: Generador de Reportes Ejecutivos CMMI-5', 'PENDIENTE'),
+
+  -- Proyecto 13 (DIAN v3.0 Enterprise - ACTIVO)
+  (1301, 13, 'Fase 1: Motor XML UBL 2.1 & Cifrado Asimétrico RSA', 'FINALIZADA'),
+  (1302, 13, 'Fase 2: Transmisión Masiva en Lote & Webhooks DIAN', 'EN_PROGRESO'),
+  (1303, 13, 'Fase 3: Portal de Recepción Proveedores & Validación', 'PENDIENTE'),
+
+  -- Proyecto 14 (Redis Distribuido - FINALIZADO)
+  (1401, 14, 'Fase 1: Despliegue de Cluster Redis Sentinel & Sharding', 'FINALIZADA'),
+  (1402, 14, 'Fase 2: Pruebas de Estrés en Eventos HotSale & Tuning SQL', 'FINALIZADA')
 ON CONFLICT (id_etapa) DO UPDATE SET
   proyecto_id = EXCLUDED.proyecto_id,
   nombre_etapa = EXCLUDED.nombre_etapa,
   estado = EXCLUDED.estado;
 
-SELECT setval('etapa_id_etapa_seq', 600);
+SELECT setval('etapa_id_etapa_seq', 2000);
 
 -- 6. ACTIVIDADES (WBS Granular)
 DELETE FROM actividad;
@@ -467,9 +526,59 @@ VALUES
   (3007, 301, 15, 'Maquetación de pantallas principales del dashboard móvil y flujo de transferencias', 'FINALIZADA'),
   (3008, 302, 15, 'Integración de animaciones de confirmación de pago y micro-interacciones hápticas', 'EN_PROGRESO'),
   (3009, 303, 15, 'Desarrollo del componente de previsualización y copiado rápido de código snippet', 'PENDIENTE'),
-  (4006, 402, 15, 'Implementar controles de audio/video y chat interactivo en sala de telemedicina', 'EN_PROGRESO');
+  (4006, 402, 15, 'Implementar controles de audio/video y chat interactivo en sala de telemedicina', 'EN_PROGRESO'),
 
-SELECT setval('actividad_id_actividad_seq', 8000);
+  -- Asignaciones para Proyecto 6 (E-Commerce - FINALIZADO)
+  (6011, 601, 21, 'Diseñar componentes de carrito de compras responsivo en React.js', 'FINALIZADA'),
+  (6012, 601, 25, 'Construir servicio REST de catálogo distribuido con cache Redis', 'FINALIZADA'),
+  (6013, 602, 31, 'Integrar SDK de tokenización de tarjetas con certificación PCI-DSS', 'FINALIZADA'),
+  (6014, 603, 36, 'Ejecutar pruebas de estrés con 5,000 usuarios simulados en checkout', 'FINALIZADA'),
+
+  -- Asignaciones para Proyecto 7 (Logística IoT - EN_PAUSA)
+  (7011, 701, 24, 'Construir adaptador MQTT / WebSocket para recibir coordenadas GPS de vehículos', 'FINALIZADA'),
+  (7012, 702, 26, 'Desarrollar algoritmo de cálculo de geocercas polinomiales para alertas de ruta', 'EN_PROGRESO'),
+  (7013, 702, 30, 'Configurar alertas automáticas en mapa con mapas vectoriales Mapbox', 'EN_PROGRESO'),
+  (7014, 703, 42, 'Crear consultas optimizadas en PostgreSQL para histórico de rutas semanales', 'PENDIENTE'),
+
+  -- Asignaciones para Proyecto 8 (OAuth2 SSO - ACTIVO)
+  (8011, 801, 22, 'Implementar servidor de autorización Spring Authorization Server con OAuth2 OIDC', 'EN_PROGRESO'),
+  (8012, 801, 32, 'Configurar proveedor de identidad JWT con firma asimétrica RS256', 'EN_PROGRESO'),
+  (8013, 802, 44, 'Integrar módulo MFA con códigos de autenticación TOTP (Google Authenticator)', 'PENDIENTE'),
+
+  -- Asignaciones para Proyecto 9 (App Hospitalaria - FINALIZADO)
+  (9011, 901, 15, 'Maquetar interfaz de agenda de citas médicas con selección de especialistas', 'FINALIZADA'),
+  (9012, 901, 21, 'Construir generador de recetas encriptadas con código de validación QR', 'FINALIZADA'),
+  (9013, 902, 37, 'Integrar módulo de escaneo de QR médico en aplicación móvil Flutter', 'FINALIZADA'),
+
+  -- Asignaciones para Proyecto 10 (IA Credit Scoring - ACTIVO)
+  (10011, 1001, 28, 'Desarrollar pipeline en Apache Spark para consolidación de historial de crédito', 'FINALIZADA'),
+  (10012, 1002, 33, 'Construir cliente gRPC en Java 17 para comunicación de baja latencia con modelo ML', 'EN_PROGRESO'),
+  (10013, 1002, 38, 'Optimizar motor de inferencia C++ para responder solicitudes en menos de 50ms', 'EN_PROGRESO'),
+  (10014, 1003, 40, 'Configurar API Gateway en Nginx con reglas de rate-limiting por cliente bancario', 'PENDIENTE'),
+
+  -- Asignaciones para Proyecto 11 (CRM Interno - EN_PAUSA)
+  (11011, 1101, 16, 'Crear tablero Kanban interactivo drag-and-drop con HTML5 Drag and Drop API', 'FINALIZADA'),
+  (11012, 1102, 27, 'Diseñar plantillas de correo corporativas responsivas para notificaciones de ticket', 'EN_PROGRESO'),
+  (11013, 1102, 41, 'Integrar webhooks de Slack para alertas de incidencias de soporte urgente', 'EN_PROGRESO'),
+
+  -- Asignaciones para Proyecto 12 (Auditoría ISO 27001 - ACTIVO)
+  (12011, 1201, 35, 'Implementar log de auditoría con tablas hash encadenadas (Blockchain-like SQL)', 'FINALIZADA'),
+  (12012, 1202, 39, 'Automatizar pruebas de seguridad dinámicas DAST con OWASP ZAP CLI en CI/CD', 'EN_PROGRESO'),
+  (12013, 1202, 43, 'Construir servicio REST de alerta de anomalías en accesos administrativos', 'EN_PROGRESO'),
+  (12014, 1203, 44, 'Diseñar generador de reportes de cumplimiento normativo ISO 27001 en PDF', 'PENDIENTE'),
+
+  -- Asignaciones para Proyecto 13 (DIAN v3.0 Enterprise - ACTIVO)
+  (13011, 1301, 34, 'Implementar serializador XML UBL 2.1 con validación de esquemas XSD oficiales', 'FINALIZADA'),
+  (13021, 1302, 36, 'Construir cliente SOAP/REST para transmisión masiva de lotes a servidores DIAN', 'EN_PROGRESO'),
+  (13022, 1302, 37, 'Desarrollar componentes UI para monitor de estado de documentos electrónicos', 'EN_PROGRESO'),
+  (13031, 1303, 45, 'Diseñar portal de recepción y recepción de facturas de proveedores externos', 'PENDIENTE'),
+
+  -- Asignaciones para Proyecto 14 (Redis Distribuido - FINALIZADO)
+  (14011, 1401, 18, 'Configurar clúster Redis Sentinel con failover automático y 3 nodos de réplica', 'FINALIZADA'),
+  (14012, 1401, 20, 'Automatizar scripts de Terraform para aprovisionamiento de infraestructura cloud', 'FINALIZADA'),
+  (14013, 1402, 26, 'Ejecutar pruebas de resistencia con k6 simulando 10,000 sesiones concurrentes', 'FINALIZADA');
+
+SELECT setval('actividad_id_actividad_seq', 20000);
 
 -- 7. MÉTRICAS CRÍTICAS PARA EL PREDICTOR DE BURNOUT (capacity.pulse)
 -- Ventana de 21 días (S1: días 15-21, S2: días 8-14, S3: días 1-7)

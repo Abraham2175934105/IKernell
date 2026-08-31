@@ -347,9 +347,12 @@ export const PredictorBurnout = ({ proyecto, etapas, onNavigateToWbs, onSelectPr
 
       const projsToSearch = proyectosList && proyectosList.length > 0 
         ? proyectosList 
-        : [{ idProyecto: 1, nombre: 'Sistema Facturación Cloud & ETL Brasil', cliente: 'Banco Santander Brasil S.A.' },
-           { idProyecto: 2, nombre: 'Core Bancario & Microservicios Cloud', cliente: 'Itaú Unibanco Holding' },
-           { idProyecto: 3, nombre: 'App Móvil Fintech & Billetera Digital', cliente: 'Nubank Brasil S.A.' }];
+        : [{ idProyecto: 1, nombre: 'Sistema Facturación Cloud & ETL Brasil', cliente: 'Banco Santander Brasil S.A.', estado: 'ACTIVO' },
+           { idProyecto: 2, nombre: 'Core Bancario & Microservicios Cloud', cliente: 'Itaú Unibanco Holding', estado: 'ACTIVO' },
+           { idProyecto: 3, nombre: 'App Móvil Fintech & Billetera Digital', cliente: 'Nubank Brasil S.A.', estado: 'ACTIVO' },
+           { idProyecto: 6, nombre: 'Portal E-Commerce Internacional & Pasarela Multi-Moneda', cliente: 'Mercado Libre LatAm', estado: 'FINALIZADO' },
+           { idProyecto: 7, nombre: 'Sistema de Logística Fleet-Tracker & Telemetría IoT', cliente: 'DHL Express Logistics', estado: 'EN_PAUSA' },
+           { idProyecto: 10, nombre: 'Motor de IA & Scoring Crediticio en Tiempo Real', cliente: 'Bancolombia S.A.', estado: 'ACTIVO' }];
 
       const promises = projsToSearch.map(async (p) => {
         try {
