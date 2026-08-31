@@ -203,6 +203,75 @@ public class AuthController {
         return ResponseEntity.ok(res);
     }
 
+    // Consulta el perfil completo y actualizado del usuario autenticado
+    @GetMapping("/perfil")
+    @Operation(summary = "Obtener perfil del usuario autenticado", description = "Devuelve los datos completos del trabajador autenticado a partir de su token JWT")
+    public ResponseEntity<Trabajador> getPerfilUsuario() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equalsIgnoreCase(auth.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String email = auth.getName();
+        Trabajador trabajador = trabajadorRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Trabajador autenticado no encontrado: " + email));
+
+        return ResponseEntity.ok(trabajador);
+    }
+
+    // Permite al usuario autenticado cambiar su contraseña validando la contraseña actual
+    @PostMapping("/cambiar-password")
+    @Operation(summary = "Cambiar contraseña de usuario autenticado", description = "Valida contraseña actual y actualiza por nueva contraseña con validaciones de seguridad")
+    public ResponseEntity<java.util.Map<String, String>> cambiarPassword(
+            @Valid @RequestBody com.ikernell.dto.CambiarPasswordRequest request) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equalsIgnoreCase(auth.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Map.of("error", "Sesión no válida o expirada."));
+        }
+
+        String email = auth.getName();
+        Trabajador trabajador = trabajadorRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Trabajador autenticado no encontrado: " + email));
+
+        // 1. Validar que la contraseña actual coincida
+        if (!passwordEncoder.matches(request.getCurrentPassword().trim(), trabajador.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(java.util.Map.of("error", "La contraseña actual ingresada es incorrecta."));
+        }
+
+        // 2. Validar que la nueva contraseña coincida con la confirmación
+        if (!request.getNewPassword().trim().equals(request.getConfirmPassword().trim())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(java.util.Map.of("error", "La nueva contraseña y su confirmación no coinciden."));
+        }
+
+        // 3. Validar complejidad de la nueva contraseña
+        String newPass = request.getNewPassword().trim();
+        if (newPass.length() < 8 || newPass.length() > 20 ||
+                !newPass.matches(".*[A-Z].*") ||
+                !newPass.matches(".*[a-z].*") ||
+                !newPass.matches(".*[0-9].*")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(java.util.Map.of("error", "La nueva contraseña debe tener entre 8 y 20 caracteres, e incluir al menos una mayúscula, una minúscula y un número."));
+        }
+
+        // 4. Validar que la nueva contraseña sea distinta a la actual
+        if (passwordEncoder.matches(newPass, trabajador.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(java.util.Map.of("error", "La nueva contraseña no puede ser igual a la contraseña actual."));
+        }
+
+        // 5. Encriptar y persistir la nueva contraseña
+        trabajador.setPasswordHash(passwordEncoder.encode(newPass));
+        trabajadorRepository.save(trabajador);
+
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "Contraseña actualizada exitosamente.");
+        return ResponseEntity.ok(response);
+    }
+
     // Guarda mensajes del formulario de contacto público en la bandeja de entrada del Coordinador
     @PostMapping("/contacto")
     @Operation(summary = "Enviar solicitud pública de contacto", description = "Permite a los visitantes del portal enviar consultas que impactan la bandeja de entrada del Coordinador")

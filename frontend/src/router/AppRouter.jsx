@@ -17,6 +17,7 @@ const LoginPage = lazy(() => import('../pages/auth/LoginPage').then(m => ({ defa
 const CoordinadorDashboard = lazy(() => import('../pages/coordinador/CoordinadorDashboard').then(m => ({ default: m.CoordinadorDashboard })));
 const LiderDashboard = lazy(() => import('../pages/lider/LiderDashboard').then(m => ({ default: m.LiderDashboard })));
 const DesarrolladorDashboard = lazy(() => import('../pages/desarrollador/DesarrolladorDashboard').then(m => ({ default: m.DesarrolladorDashboard })));
+const PerfilPage = lazy(() => import('../pages/perfil/PerfilPage').then(m => ({ default: m.PerfilPage })));
 
 /**
  * Loader elegante para transiciones de Suspense con Shimmer Bar
@@ -75,6 +76,16 @@ export const AppRouter = () => {
                       <DesarrolladorDashboard />
                     </ErrorBoundary>
                   } />
+                </Route>
+
+                {/* Ruta Común de Perfil de Usuario & Seguridad (Accesible para todos los roles autenticados) */}
+                <Route element={<ProtectedRoute allowedRoles={['COORDINADOR', 'LIDER', 'DESARROLLADOR']} />}>
+                  <Route path={ROUTES.PERFIL} element={
+                    <ErrorBoundary title="Error en Página de Perfil">
+                      <PerfilPage />
+                    </ErrorBoundary>
+                  } />
+                  <Route path={ROUTES.PERFIL_SHORT} element={<Navigate to={ROUTES.PERFIL} replace />} />
                 </Route>
 
                 {/* Fallback */}

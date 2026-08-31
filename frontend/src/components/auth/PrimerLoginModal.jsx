@@ -206,13 +206,13 @@ export const PrimerLoginModal = () => {
     }
 
     setEditPersonal(false);
-    toast.success('Información Personal confirmada y lista.', { icon: '✅' });
+    toast.success('Información Personal confirmada y lista.');
   };
 
   // Guardar y confirmar Cuadro 2
   const handleGuardarCuadroProfesional = () => {
     setEditProfesional(false);
-    toast.success('Perfil Profesional & Especialidad confirmados.', { icon: '✅' });
+    toast.success('Perfil Profesional & Especialidad confirmados.');
   };
 
   // Agregar habilidad al perfil profesional
@@ -253,7 +253,7 @@ export const PrimerLoginModal = () => {
     setShowCloudAlert(true);
     setTimeout(() => setShowCloudAlert(false), 5500);
 
-    toast.success('Contraseña aleatoria 100% segura generada automáticamente.', { icon: '☁️' });
+    toast.success('Contraseña aleatoria 100% segura generada automáticamente.');
   };
 
   const handleAvanzarPaso2 = (e) => {
@@ -261,8 +261,7 @@ export const PrimerLoginModal = () => {
 
     if (editPersonal || editProfesional) {
       toast.error('Por favor guarde y confirme los cambios en las secciones editadas antes de avanzar.', {
-        duration: 4000,
-        icon: '⚠️'
+        duration: 4000
       });
       return;
     }
@@ -352,16 +351,6 @@ export const PrimerLoginModal = () => {
             </div>
           </div>
 
-          {/* Botón de Cancelar Operación / Cerrar Sesión */}
-          <button
-            type="button"
-            onClick={handleCancelarOperacion}
-            title="Cancelar operación y salir"
-            className="p-2.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 flex items-center gap-1.5 transition-all cursor-pointer border border-zinc-200 dark:border-zinc-700 text-xs font-extrabold shrink-0 shadow-sm"
-          >
-            <LogOut size={15} />
-            <span className="hidden sm:inline">Cancelar y Salir</span>
-          </button>
         </div>
 
         {/* Indicador Visual de Pasos (Wizard Stepper Bar Interactivo Avanzado) */}
@@ -751,7 +740,7 @@ export const PrimerLoginModal = () => {
                 onClick={handleCancelarOperacion}
                 className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 font-bold hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400 text-xs flex items-center gap-1.5 cursor-pointer transition-all hover:scale-95 shrink-0"
               >
-                <LogOut size={14} /> Cancelar y Salir
+                <LogOut size={14} /> Cancelar
               </button>
 
               <div className="flex items-center gap-3">
@@ -952,7 +941,7 @@ export const PrimerLoginModal = () => {
                   onClick={handleCancelarOperacion}
                   className="px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 font-bold hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400 text-xs flex items-center gap-1.5 cursor-pointer transition-all hover:scale-95"
                 >
-                  <LogOut size={14} /> Cancelar y Salir
+                  <LogOut size={14} /> Cancelar
                 </button>
               </div>
 

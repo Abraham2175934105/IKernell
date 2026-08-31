@@ -12,6 +12,8 @@ export const ROUTES = {
   COORDINADOR: '/panel/sec-coordinador-c8f2a9',
   LIDER: '/lider',
   DESARROLLADOR: '/desarrollador',
+  PERFIL: '/dashboard/perfil',
+  PERFIL_SHORT: '/perfil',
 
   // Alias legibles de compatibilidad previa con redirección automática
   LEGACY_COORDINADOR: '/coordinador',

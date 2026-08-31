@@ -34,17 +34,40 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Limpia la sesión activa y remueve todos los datos almacenados en el navegador (Hardening Anti-Bypass)
-  const logout = useCallback(() => {
+  // Limpia la sesión activa y remueve credenciales (Hardening Anti-Bypass y Revocación JWT)
+  const logout = useCallback(async () => {
+    const currentToken = token || localStorage.getItem('token');
+    if (currentToken) {
+      try {
+        await fetch('http://localhost:8080/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentToken}`,
+            'Content-Type': 'application/json'
+          }
+        }).catch(() => {});
+      } catch (e) {
+        console.warn('[IKernell Auth] Advertencia al contactar endpoint de logout:', e);
+      }
+    }
+
+    // Preservar preferencias del usuario (tema, confirmación de logout, estado barra)
+    const theme = localStorage.getItem('theme');
+    const skipLogoutConfirm = localStorage.getItem('ikernell_skip_logout_confirm');
+    const sidebarCollapsed = localStorage.getItem('sidebar_collapsed');
+
     setUser(null);
     setToken(null);
     try {
       localStorage.clear();
       sessionStorage.clear();
+      if (theme) localStorage.setItem('theme', theme);
+      if (skipLogoutConfirm) localStorage.setItem('ikernell_skip_logout_confirm', skipLogoutConfirm);
+      if (sidebarCollapsed) localStorage.setItem('sidebar_collapsed', sidebarCollapsed);
     } catch (e) {
       console.error('[IKernell Auth] Error al limpiar almacenamiento:', e);
     }
-  }, []);
+  }, [token]);
 
   // Listener reactivo para invalidación cross-tab y destrucción instantánea de sesión
   useEffect(() => {
