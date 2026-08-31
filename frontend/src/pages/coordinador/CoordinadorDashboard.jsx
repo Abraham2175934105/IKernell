@@ -372,6 +372,49 @@ export const CoordinadorDashboard = () => {
   const [historialCambiosModal, setHistorialCambiosModal] = useState([]);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
   const [sessionBatchId, setSessionBatchId] = useState('');
+  const [busquedaHistorialCoord, setBusquedaHistorialCoord] = useState('');
+  const [filtroAccionHistorialCoord, setFiltroAccionHistorialCoord] = useState('TODOS');
+  const [filtroFechaHistorialCoord, setFiltroFechaHistorialCoord] = useState('TODOS');
+
+  // Filtro dinámico para el historial de cambios en Coordinador
+  const historialFiltradoCoord = useMemo(() => {
+    if (!Array.isArray(historialCambiosModal)) return [];
+    return historialCambiosModal.filter(reg => {
+      if (busquedaHistorialCoord.trim()) {
+        const term = busquedaHistorialCoord.toLowerCase();
+        const matchDetalle = (reg.detalles || '').toLowerCase().includes(term);
+        const matchAccion = (reg.accion || '').toLowerCase().includes(term);
+        const matchNombre = (reg.nombreCoordinador || '').toLowerCase().includes(term);
+        const matchEmail = (reg.emailCoordinador || '').toLowerCase().includes(term);
+        if (!matchDetalle && !matchAccion && !matchNombre && !matchEmail) return false;
+      }
+
+      if (filtroAccionHistorialCoord !== 'TODOS') {
+        const acc = (reg.accion || '').toUpperCase();
+        const det = (reg.detalles || '').toUpperCase();
+        if (filtroAccionHistorialCoord === 'ETAPA' && !acc.includes('ETAPA') && !det.includes('FASE') && !det.includes('ETAPA')) return false;
+        if (filtroAccionHistorialCoord === 'ACTIVIDAD' && !acc.includes('ACTIVIDAD') && !det.includes('TAREA') && !det.includes('ACTIVIDAD')) return false;
+        if (filtroAccionHistorialCoord === 'NOMINA' && !acc.includes('NOMINA') && !acc.includes('DESARROLLADOR') && !acc.includes('ASIGNACION') && !det.includes('VINCUL') && !det.includes('DESARROLLADOR')) return false;
+        if (filtroAccionHistorialCoord === 'ESTADO' && !acc.includes('ESTADO') && !det.includes('ESTADO') && !det.includes('PAUSA') && !det.includes('FINALIZ')) return false;
+      }
+
+      if (filtroFechaHistorialCoord !== 'TODOS' && reg.fechaCambio) {
+        const date = new Date(reg.fechaCambio);
+        const now = new Date();
+        if (filtroFechaHistorialCoord === 'HOY') {
+          if (date.toDateString() !== now.toDateString()) return false;
+        } else if (filtroFechaHistorialCoord === '7DIAS') {
+          const diffDays = (now - date) / (1000 * 60 * 60 * 24);
+          if (diffDays > 7) return false;
+        } else if (filtroFechaHistorialCoord === '30DIAS') {
+          const diffDays = (now - date) / (1000 * 60 * 60 * 24);
+          if (diffDays > 30) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [historialCambiosModal, busquedaHistorialCoord, filtroAccionHistorialCoord, filtroFechaHistorialCoord]);
 
   const registrarAccionCoordinador = async (idProyecto, accion, detalles) => {
     try {
@@ -6213,20 +6256,101 @@ export const CoordinadorDashboard = () => {
                 </button>
               </div>
 
-              <div className="overflow-y-auto flex-1 space-y-3.5 pr-1">
+              {/* Barra de Búsqueda y Filtros Avanzados */}
+              <div className="space-y-3 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 shrink-0">
+                <div className="flex flex-col sm:flex-row gap-2.5 items-center">
+                  {/* Campo de Búsqueda de Texto */}
+                  <div className="relative flex-1 w-full">
+                    <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={busquedaHistorialCoord}
+                      onChange={(e) => setBusquedaHistorialCoord(e.target.value)}
+                      placeholder="Buscar por detalle, acción, responsable o correo..."
+                      className="w-full pl-10 pr-9 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs"
+                    />
+                    {busquedaHistorialCoord && (
+                      <button
+                        type="button"
+                        onClick={() => setBusquedaHistorialCoord('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filtro por Tipo de Acción */}
+                  <div className="w-full sm:w-48">
+                    <CustomSelect
+                      value={filtroAccionHistorialCoord}
+                      onChange={(val) => setFiltroAccionHistorialCoord(val)}
+                      options={[
+                        { value: 'TODOS', label: 'Todas las acciones' },
+                        { value: 'ETAPA', label: 'Fases / Etapas' },
+                        { value: 'ACTIVIDAD', label: 'Tareas / Actividades' },
+                        { value: 'NOMINA', label: 'Desarrolladores' },
+                        { value: 'ESTADO', label: 'Cambios de Estado' }
+                      ]}
+                      maxWidth="w-full"
+                      icon={Filter}
+                    />
+                  </div>
+
+                  {/* Filtro por Fecha */}
+                  <div className="w-full sm:w-44">
+                    <CustomSelect
+                      value={filtroFechaHistorialCoord}
+                      onChange={(val) => setFiltroFechaHistorialCoord(val)}
+                      options={[
+                        { value: 'TODOS', label: 'Cualquier fecha' },
+                        { value: 'HOY', label: 'Hoy' },
+                        { value: '7DIAS', label: 'Últimos 7 días' },
+                        { value: '30DIAS', label: 'Último mes' }
+                      ]}
+                      maxWidth="w-full"
+                      icon={Calendar}
+                    />
+                  </div>
+                </div>
+
+                {/* Contador de Resultados y Botón de Limpieza */}
+                <div className="flex items-center justify-between text-[0.68rem] text-zinc-500 font-semibold pt-1 border-t border-zinc-200/60 dark:border-zinc-700/60">
+                  <span>
+                    Mostrando <strong className="text-purple-600 dark:text-purple-400">{historialFiltradoCoord.length}</strong> de <strong className="text-zinc-700 dark:text-zinc-300">{historialCambiosModal.length}</strong> registros
+                  </span>
+                  {(busquedaHistorialCoord || filtroAccionHistorialCoord !== 'TODOS' || filtroFechaHistorialCoord !== 'TODOS') && (
+                    <button
+                      type="button"
+                      onClick={() => { setBusquedaHistorialCoord(''); setFiltroAccionHistorialCoord('TODOS'); setFiltroFechaHistorialCoord('TODOS'); }}
+                      className="text-purple-600 dark:text-purple-400 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw size={11} /> Limpiar filtros
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="overflow-y-auto flex-1 space-y-3.5 pr-1 custom-scrollbar">
                 {loadingHistorial ? (
                   <div className="p-8 text-center text-xs text-zinc-400">
                     <Loader2 size={24} className="animate-spin mx-auto text-blue-600 mb-2" />
                     Cargando historial de auditoría...
                   </div>
-                ) : historialCambiosModal.length === 0 ? (
+                ) : historialFiltradoCoord.length === 0 ? (
                   <div className="p-8 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs space-y-1">
                     <ShieldCheck size={28} className="mx-auto text-zinc-300" />
-                    <p className="font-bold text-zinc-700 dark:text-zinc-300">Sin registros de cambios en este proyecto</p>
-                    <p>No se han registrado modificaciones o cambios previos en este proyecto.</p>
+                    <p className="font-bold text-zinc-700 dark:text-zinc-300">
+                      {historialCambiosModal.length === 0 ? 'Sin registros de cambios en este proyecto' : 'No hay coincidencias con los filtros'}
+                    </p>
+                    <p>
+                      {historialCambiosModal.length === 0
+                        ? 'No se han registrado modificaciones o cambios previos en este proyecto.'
+                        : 'Ajuste el término de búsqueda o seleccione otro rango de fechas o tipo de acción.'}
+                    </p>
                   </div>
                 ) : (
-                  historialCambiosModal.map((reg, idx) => (
+                  historialFiltradoCoord.map((reg, idx) => (
                     <div key={reg.idHistorial || idx} className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <span className="font-mono text-[0.65rem] font-black uppercase px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
