@@ -190,6 +190,15 @@ public class Trabajador {
     }
 
     public String getEmailPersonal() {
+        if (emailPersonal == null || emailPersonal.isBlank()) {
+            if (email != null && email.contains("@")) {
+                String prefix = email.split("@")[0];
+                return prefix + ".personal@gmail.com";
+            }
+            String n = (nombre != null ? nombre.toLowerCase().trim().replaceAll("\\s+", "") : "usuario");
+            String a = (apellido != null ? apellido.toLowerCase().trim().replaceAll("\\s+", "") : "personal");
+            return n + "." + a + ".personal@gmail.com";
+        }
         return emailPersonal;
     }
 

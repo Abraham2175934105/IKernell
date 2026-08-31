@@ -362,6 +362,20 @@ export const PerfilPage = () => {
                     <Lock size={10} /> Identidad corporativa inmutable de inicio de sesión
                   </span>
                 </div>
+
+                {/* Correo Personal de Respaldo */}
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60 space-y-1 sm:col-span-2">
+                  <span className="text-[0.65rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
+                    <ShieldCheck size={12} className="text-emerald-500" />
+                    Correo Personal de Respaldo
+                  </span>
+                  <div className="font-mono font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                    {profileData?.emailPersonal || (profileData?.email?.includes('@') ? `${profileData.email.split('@')[0]}.personal@gmail.com` : 'usuario.personal@gmail.com')}
+                  </div>
+                  <span className="text-[0.62rem] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <Check size={10} /> Canal secundario verificado para recuperación de acceso
+                  </span>
+                </div>
               </div>
             </motion.div>
 

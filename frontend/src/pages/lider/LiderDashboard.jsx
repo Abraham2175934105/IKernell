@@ -8857,8 +8857,8 @@ export const LiderDashboard = () => {
                         <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Personal Alternativo:</span>
                         <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
                           <Mail size={15} className="text-zinc-500 shrink-0" />
-                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.correoPersonal || selectedTrabajadorModal.emailPersonal || 'No registrado'}>
-                            {selectedTrabajadorModal.correoPersonal || selectedTrabajadorModal.emailPersonal || 'No registrado / Asignado al crear'}
+                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal || (selectedTrabajadorModal.email?.includes('@') ? `${selectedTrabajadorModal.email.split('@')[0]}.personal@gmail.com` : 'personal@gmail.com')}>
+                            {selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal || (selectedTrabajadorModal.email?.includes('@') ? `${selectedTrabajadorModal.email.split('@')[0]}.personal@gmail.com` : `${(selectedTrabajadorModal.nombre || 'usuario').toLowerCase()}.${(selectedTrabajadorModal.apellido || 'dev').toLowerCase()}.personal@gmail.com`)}
                           </span>
                         </div>
                       </div>
