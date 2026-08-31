@@ -6,7 +6,7 @@ import {
   CheckSquare, Bug, AlertTriangle, AlertCircle, X, CheckCircle2, 
   ChevronRight, ChevronDown, Clock, Plus, Activity, Layers, Sparkles,
   Loader2, Inbox, RefreshCw, Eye, RotateCcw, Info, ArrowRight,
-  FileText, Calendar, User, ShieldAlert, Play, Check,
+  FileText, Calendar, User, ShieldAlert, Play, Check, Crown,
   Filter, SlidersHorizontal, Search, FolderGit2, ArrowUpDown, Briefcase, Zap, ArrowLeft,
   LayoutGrid, List, Lock, Server, WifiOff, Database, Wrench, Users, Code2, ShieldCheck, AlertOctagon, Cpu, Terminal
 } from 'lucide-react';
