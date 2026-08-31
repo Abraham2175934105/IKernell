@@ -598,7 +598,7 @@ const [actividades, setActividades] = useState([]);
   const actividadesEnProgreso = useMemo(() => actividades.filter(a => a.estado === 'EN_PROGRESO' || a.estado === 'EN_CURSO').length, [actividades]);
   const actividadesFinalizadas = useMemo(() => actividades.filter(a => a.estado === 'FINALIZADA' || a.estado === 'COMPLETADA').length, [actividades]);
 
-  // Consolidación de Carga Horaria Semanal del Desarrollador (RF-16, HU-12, HU-16)
+  // Consolidación de Carga Horaria Semanal del Desarrollador (RF-16, HU-12, HU-16) con soporte Doble Rol (Líder ↔ Dev)
   const resumenHorasDev = useMemo(() => {
     let horasPendientes = 0;
     let horasEnProgreso = 0;
@@ -606,7 +606,7 @@ const [actividades, setActividades] = useState([]);
 
     (actividades || []).forEach(act => {
       const match = (act.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
-      const h = match ? parseInt(match[1]) : (act.horasEstimadas ? parseInt(act.horasEstimadas) : 2);
+      const h = match ? parseInt(match[1]) : (act.horasEstimadas ? parseInt(act.horasEstimadas) : 6);
 
       const st = (act.estado || '').toUpperCase();
       if (st === 'FINALIZADA' || st === 'COMPLETADA') {
@@ -618,33 +618,44 @@ const [actividades, setActividades] = useState([]);
       }
     });
 
-    const horasActivas = horasPendientes + horasEnProgreso;
-    const horasTotales = horasActivas + horasFinalizadas;
-    const horasDisponibles = Math.max(0, 48 - horasActivas);
-    const porcentajeCarga = Math.min(Math.round((horasActivas / 48) * 100), 100);
+    const isLider = user?.rol === 'LIDER' || user?.tipoTrabajador === 'LIDER';
+    const horasLider = isLider ? 24 : 0;
+    const maxDevBudget = isLider ? 24 : 48;
 
-    // Horas reservadas en equipo pero aún no asignadas a tareas WBS (ej. Mateo tiene 34h reservadas y 32h en tareas -> 2h sobrantes)
-    const horasReservadasTotales = Math.min(48, Math.max(horasActivas, (actividades.length > 0 ? horasActivas + 2 : 0)));
-    const horasReservadasSinAsignar = Math.max(0, horasReservadasTotales - horasActivas);
+    const horasActivasDev = horasPendientes + horasEnProgreso;
+    const horasActivasTotales = horasLider + horasActivasDev;
+    const horasTotales = horasActivasTotales + horasFinalizadas;
+    const horasDisponibles = Math.max(0, 48 - horasActivasTotales);
+    const porcentajeCarga = Math.min(Math.round((horasActivasTotales / 48) * 100), 100);
+
+    const horasReservadasDev = Math.min(maxDevBudget, Math.max(horasActivasDev, (actividades.length > 0 ? horasActivasDev : 0)));
+    const horasReservadasSinAsignar = Math.max(0, horasReservadasDev - horasActivasDev);
 
     let nivelCarga = 'DISPONIBLE';
     let colorCarga = 'emerald';
-    if (horasActivas >= 48) {
+    if (isLider) {
+      nivelCarga = `DUAL DEDICADO (24h Líder / ${horasActivasDev}h Dev)`;
+      colorCarga = 'blue';
+    } else if (horasActivasTotales >= 48) {
       nivelCarga = 'LÍMITE 48H (SATURADO)';
       colorCarga = 'red';
-    } else if (horasActivas >= 36) {
+    } else if (horasActivasTotales >= 36) {
       nivelCarga = 'ALTA CARGA';
       colorCarga = 'amber';
-    } else if (horasActivas >= 20) {
+    } else if (horasActivasTotales >= 20) {
       nivelCarga = 'MODERADA';
       colorCarga = 'blue';
     }
 
     return {
+      isLider,
+      horasLider,
+      maxDevBudget,
       horasPendientes,
       horasEnProgreso,
       horasFinalizadas,
-      horasActivas,
+      horasActivasDev,
+      horasActivas: horasActivasTotales,
       horasTotales,
       horasDisponibles,
       horasReservadasSinAsignar,
@@ -652,7 +663,7 @@ const [actividades, setActividades] = useState([]);
       nivelCarga,
       colorCarga
     };
-  }, [actividades]);
+  }, [actividades, user]);
 
   // Lista de Actividades para el Modal Interactivo de KPI
   const actividadesKpiModal = useMemo(() => {
@@ -1048,12 +1059,23 @@ const [actividades, setActividades] = useState([]);
                 </div>
               </div>
 
-              {/* Tarjetas Cuadro de Distribución de Horas (5 Cuadros con Horas Sobrantes de Reserva) */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {/* Tarjetas Cuadro de Distribución de Horas con soporte Doble Rol (Líder ↔ Dev) */}
+              <div className={`grid grid-cols-2 ${resumenHorasDev.isLider ? 'sm:grid-cols-6' : 'sm:grid-cols-5'} gap-3`}>
+                {resumenHorasDev.isLider && (
+                  <div className="p-3 rounded-2xl bg-blue-100/80 dark:bg-blue-950/70 border border-blue-300 dark:border-blue-800 space-y-1">
+                    <span className="text-[0.65rem] font-extrabold text-blue-900 dark:text-blue-200 block flex items-center gap-1">
+                      <Crown size={11} className="text-blue-600 dark:text-blue-400 shrink-0" /> Dirección Líder
+                    </span>
+                    <span className="text-base font-mono font-black text-blue-700 dark:text-blue-300">
+                      {resumenHorasDev.horasLider}h
+                    </span>
+                  </div>
+                )}
+
                 <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/60 space-y-1">
-                  <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400 block">Horas Activas Semanales</span>
+                  <span className="text-[0.65rem] font-bold text-zinc-500 dark:text-zinc-400 block">Horas Activas Dev</span>
                   <span className="text-base font-mono font-black text-zinc-900 dark:text-zinc-100">
-                    {resumenHorasDev.horasActivas}h <span className="text-[0.65rem] text-zinc-400 font-normal">/ 48h</span>
+                    {resumenHorasDev.horasActivasDev}h <span className="text-[0.65rem] text-zinc-400 font-normal">/ {resumenHorasDev.maxDevBudget}h</span>
                   </span>
                 </div>
 
@@ -1153,10 +1175,19 @@ const [actividades, setActividades] = useState([]);
 
                       {/* Multicapa Stacked Progress Bar (48h) */}
                       <div className="w-full h-3.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex p-0.5 border border-zinc-200/80 dark:border-zinc-700/60 shadow-inner">
-                        {/* Segmento 1: Horas En Progreso (Azul) */}
+                        {/* Segmento 0: Horas Dirección Líder (Azul Rey) */}
+                        {resumenHorasDev.isLider && (
+                          <div
+                            className="h-full bg-blue-700 rounded-l-full transition-all duration-500 relative cursor-pointer"
+                            style={{ width: `${(resumenHorasDev.horasLider / 48) * 100}%` }}
+                            title={`Dirección Líder: ${resumenHorasDev.horasLider}h`}
+                          />
+                        )}
+
+                        {/* Segmento 1: Horas En Progreso (Azul Indigo) */}
                         {resumenHorasDev.horasEnProgreso > 0 && (
                           <div
-                            className="h-full bg-blue-600 rounded-l-full transition-all duration-500 relative cursor-pointer"
+                            className={`h-full bg-indigo-600 ${!resumenHorasDev.isLider ? 'rounded-l-full' : ''} transition-all duration-500 relative cursor-pointer`}
                             style={{ width: `${(resumenHorasDev.horasEnProgreso / 48) * 100}%` }}
                             title={`En Progreso: ${resumenHorasDev.horasEnProgreso}h`}
                           />
@@ -1190,10 +1221,17 @@ const [actividades, setActividades] = useState([]);
                         )}
                       </div>
 
-                      {/* Leyenda Multicapa Interactiva y Explicativa de 5 Colores */}
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 text-[0.65rem] font-bold">
-                        <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-300 bg-blue-50/70 dark:bg-blue-950/40 p-1.5 rounded-xl border border-blue-200/60 dark:border-blue-800/60">
-                          <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
+                      {/* Leyenda Multicapa Interactiva y Explicativa */}
+                      <div className={`grid grid-cols-2 ${resumenHorasDev.isLider ? 'sm:grid-cols-6' : 'sm:grid-cols-5'} gap-2 pt-1 text-[0.65rem] font-bold`}>
+                        {resumenHorasDev.isLider && (
+                          <div className="flex items-center gap-1.5 text-blue-900 dark:text-blue-200 bg-blue-100/70 dark:bg-blue-950/60 p-1.5 rounded-xl border border-blue-300/80 dark:border-blue-800">
+                            <span className="w-2.5 h-2.5 rounded-full bg-blue-700 shrink-0" />
+                            <span>Dirección Líder: <strong className="font-mono text-xs">{resumenHorasDev.horasLider}h</strong></span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300 bg-indigo-50/70 dark:bg-indigo-950/40 p-1.5 rounded-xl border border-indigo-200/60 dark:border-indigo-800/60">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shrink-0" />
                           <span>En Progreso: <strong className="font-mono text-xs">{resumenHorasDev.horasEnProgreso}h</strong></span>
                         </div>
 
