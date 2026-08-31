@@ -5358,13 +5358,14 @@ export const LiderDashboard = () => {
                           setNuevaActividad({ ...nuevaActividad, idDesarrollador: idDev });
                           setFormErrors(p => ({ ...p, idDesarrollador: undefined }));
                         }}
-                        desarrolladores={desarrolladores}
+                        desarrolladores={desarrolladores && desarrolladores.length > 0 ? desarrolladores : (desarrolladoresAsignadosProyecto || []).map(a => a.desarrollador).filter(Boolean)}
                         getDevCargaInfo={getDevCargaInfo}
                         getCleanEspecialidad={getCleanEspecialidad}
                         placeholder="— Seleccione un desarrollador responsable —"
                         error={!!formErrors.idDesarrollador}
                         isOpen={isAsignarTareaDevListOpen}
                         setIsOpen={setIsAsignarTareaDevListOpen}
+                        inlineList={true}
                       />
                       {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
 
@@ -5525,6 +5526,7 @@ export const LiderDashboard = () => {
                         placeholder="— Seleccione un desarrollador para vincular —"
                         isOpen={isAsignarProyectoDevListOpen}
                         setIsOpen={setIsAsignarProyectoDevListOpen}
+                        inlineList={true}
                       />
                     </div>
 
