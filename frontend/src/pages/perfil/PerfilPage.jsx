@@ -8,7 +8,8 @@ import {
   User, Mail, Shield, ShieldCheck, Key, Lock, Eye, EyeOff,
   CheckCircle2, AlertTriangle, Loader2, Briefcase,
   GraduationCap, Building2, Calendar, MapPin, Check,
-  RefreshCw, Sparkles, CheckCircle, Info, ArrowRight, ShieldAlert, Cpu
+  RefreshCw, Sparkles, CheckCircle, Info, ArrowRight, ShieldAlert, Cpu,
+  Code2, FileCode, Palette, Database, Server, GitBranch, Zap, Terminal, Award, Boxes, Container, Globe
 } from 'lucide-react';
 
 const containerVariants = {
@@ -33,30 +34,30 @@ const cardVariants = {
   }
 };
 
-// Helper inteligente para estructurar y enriquecer con Emojis las Competencias Técnicas
+// Helper inteligente para estructurar y enriquecer con Iconos Profesionales Lucide las Competencias Técnicas
 const getTechSkillBadge = (skillName) => {
   const s = skillName.trim();
   const lower = s.toLowerCase();
   
-  if (lower.includes('react')) return { name: s, emoji: '⚛️', color: 'bg-cyan-50 text-cyan-800 border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-200 dark:border-cyan-800' };
-  if (lower.includes('typescript')) return { name: s, emoji: '🔷', color: 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-800' };
-  if (lower.includes('tailwind')) return { name: s, emoji: '🎨', color: 'bg-teal-50 text-teal-800 border-teal-300 dark:bg-teal-950/60 dark:text-teal-200 dark:border-teal-800' };
-  if (lower.includes('java')) return { name: s, emoji: '☕', color: 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-800' };
-  if (lower.includes('spring')) return { name: s, emoji: '🍃', color: 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-800' };
-  if (lower.includes('postgres') || lower.includes('sql')) return { name: s, emoji: '🐘', color: 'bg-indigo-50 text-indigo-800 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-200 dark:border-indigo-800' };
-  if (lower.includes('docker')) return { name: s, emoji: '🐳', color: 'bg-sky-50 text-sky-800 border-sky-300 dark:bg-sky-950/60 dark:text-sky-200 dark:border-sky-800' };
-  if (lower.includes('kubernetes')) return { name: s, emoji: '☸️', color: 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-800' };
-  if (lower.includes('aws') || lower.includes('cloud')) return { name: s, emoji: '☁️', color: 'bg-orange-50 text-orange-800 border-orange-300 dark:bg-orange-950/60 dark:text-orange-200 dark:border-orange-800' };
-  if (lower.includes('git') || lower.includes('github')) return { name: s, emoji: '🐙', color: 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-200 dark:border-rose-800' };
-  if (lower.includes('ui/ux') || lower.includes('figma')) return { name: s, emoji: '✨', color: 'bg-purple-50 text-purple-800 border-purple-300 dark:bg-purple-950/60 dark:text-purple-200 dark:border-purple-800' };
-  if (lower.includes('scrum') || lower.includes('jira')) return { name: s, emoji: '🎯', color: 'bg-violet-50 text-violet-800 border-violet-300 dark:bg-violet-950/60 dark:text-violet-200 dark:border-violet-800' };
-  if (lower.includes('python')) return { name: s, emoji: '🐍', color: 'bg-yellow-50 text-yellow-800 border-yellow-300 dark:bg-yellow-950/60 dark:text-yellow-200 dark:border-yellow-800' };
-  if (lower.includes('api') || lower.includes('rest')) return { name: s, emoji: '⚡', color: 'bg-lime-50 text-lime-800 border-lime-300 dark:bg-lime-950/60 dark:text-lime-200 dark:border-lime-800' };
-  if (lower.includes('seguridad') || lower.includes('owasp')) return { name: s, emoji: '🛡️', color: 'bg-red-50 text-red-800 border-red-300 dark:bg-red-950/60 dark:text-red-200 dark:border-red-800' };
-  if (lower.includes('microservicio')) return { name: s, emoji: '🧩', color: 'bg-cyan-50 text-cyan-800 border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-200 dark:border-cyan-800' };
-  if (lower.includes('talento') || lower.includes('liderazgo') || lower.includes('gestión')) return { name: s, emoji: '👥', color: 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-800' };
+  if (lower.includes('react')) return { name: s, icon: Code2, category: 'Frontend', color: 'bg-cyan-50 text-cyan-900 border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-200 dark:border-cyan-800', iconColor: 'text-cyan-600 dark:text-cyan-400' };
+  if (lower.includes('typescript')) return { name: s, icon: FileCode, category: 'Lenguaje', color: 'bg-blue-50 text-blue-900 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-800', iconColor: 'text-blue-600 dark:text-blue-400' };
+  if (lower.includes('tailwind')) return { name: s, icon: Palette, category: 'Estilos UI', color: 'bg-teal-50 text-teal-900 border-teal-300 dark:bg-teal-950/60 dark:text-teal-200 dark:border-teal-800', iconColor: 'text-teal-600 dark:text-teal-400' };
+  if (lower.includes('java')) return { name: s, icon: Cpu, category: 'Backend', color: 'bg-amber-50 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-800', iconColor: 'text-amber-600 dark:text-amber-400' };
+  if (lower.includes('spring')) return { name: s, icon: Layers, category: 'Framework', color: 'bg-emerald-50 text-emerald-900 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-800', iconColor: 'text-emerald-600 dark:text-emerald-400' };
+  if (lower.includes('postgres') || lower.includes('sql')) return { name: s, icon: Database, category: 'Base de Datos', color: 'bg-indigo-50 text-indigo-900 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-200 dark:border-indigo-800', iconColor: 'text-indigo-600 dark:text-indigo-400' };
+  if (lower.includes('docker')) return { name: s, icon: Container, category: 'DevOps', color: 'bg-sky-50 text-sky-900 border-sky-300 dark:bg-sky-950/60 dark:text-sky-200 dark:border-sky-800', iconColor: 'text-sky-600 dark:text-sky-400' };
+  if (lower.includes('kubernetes')) return { name: s, icon: Boxes, category: 'Infraestructura', color: 'bg-blue-50 text-blue-900 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-800', iconColor: 'text-blue-600 dark:text-blue-400' };
+  if (lower.includes('aws') || lower.includes('cloud')) return { name: s, icon: Server, category: 'Cloud', color: 'bg-orange-50 text-orange-900 border-orange-300 dark:bg-orange-950/60 dark:text-orange-200 dark:border-orange-800', iconColor: 'text-orange-600 dark:text-orange-400' };
+  if (lower.includes('git') || lower.includes('github')) return { name: s, icon: GitBranch, category: 'Control Versiones', color: 'bg-rose-50 text-rose-900 border-rose-300 dark:bg-rose-950/60 dark:text-rose-200 dark:border-rose-800', iconColor: 'text-rose-600 dark:text-rose-400' };
+  if (lower.includes('ui/ux') || lower.includes('figma')) return { name: s, icon: Palette, category: 'Diseño UX', color: 'bg-purple-50 text-purple-900 border-purple-300 dark:bg-purple-950/60 dark:text-purple-200 dark:border-purple-800', iconColor: 'text-purple-600 dark:text-purple-400' };
+  if (lower.includes('scrum') || lower.includes('jira')) return { name: s, icon: Award, category: 'Gestión Ágil', color: 'bg-violet-50 text-violet-900 border-violet-300 dark:bg-violet-950/60 dark:text-violet-200 dark:border-violet-800', iconColor: 'text-violet-600 dark:text-violet-400' };
+  if (lower.includes('python')) return { name: s, icon: Terminal, category: 'Lenguaje', color: 'bg-yellow-50 text-yellow-900 border-yellow-300 dark:bg-yellow-950/60 dark:text-yellow-200 dark:border-yellow-800', iconColor: 'text-yellow-600 dark:text-yellow-400' };
+  if (lower.includes('api') || lower.includes('rest')) return { name: s, icon: Zap, category: 'Integraciones', color: 'bg-lime-50 text-lime-900 border-lime-300 dark:bg-lime-950/60 dark:text-lime-200 dark:border-lime-800', iconColor: 'text-lime-600 dark:text-lime-400' };
+  if (lower.includes('seguridad') || lower.includes('owasp')) return { name: s, icon: ShieldCheck, category: 'Seguridad', color: 'bg-red-50 text-red-900 border-red-300 dark:bg-red-950/60 dark:text-red-200 dark:border-red-800', iconColor: 'text-red-600 dark:text-red-400' };
+  if (lower.includes('microservicio')) return { name: s, icon: Boxes, category: 'Arquitectura', color: 'bg-cyan-50 text-cyan-900 border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-200 dark:border-cyan-800', iconColor: 'text-cyan-600 dark:text-cyan-400' };
+  if (lower.includes('talento') || lower.includes('liderazgo') || lower.includes('gestión')) return { name: s, icon: Briefcase, category: 'Dirección', color: 'bg-blue-50 text-blue-900 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-800', iconColor: 'text-blue-600 dark:text-blue-400' };
   
-  return { name: s, emoji: '💻', color: 'bg-zinc-100 text-zinc-800 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700' };
+  return { name: s, icon: Code2, category: 'Ingeniería', color: 'bg-zinc-100 text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700', iconColor: 'text-zinc-600 dark:text-zinc-400' };
 };
 
 const parseEspecialidad = (rawStr) => {
@@ -432,77 +433,113 @@ export const PerfilPage = () => {
               </div>
             </motion.div>
 
-            {/* Tarjeta 3: Especialidad & Competencias Técnicas Rediseñada */}
-            <motion.div variants={cardVariants} className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+            {/* Tarjeta 3: Especialidad & Competencias Técnicas Rediseñada Profesional */}
+            <motion.div variants={cardVariants} className="p-5 sm:p-7 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5">
               {(() => {
                 const { titulo: tituloEsp, skills: skillsEsp } = parseEspecialidad(profileData?.especialidad);
                 return (
                   <>
-                    <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap size={18} className="text-blue-600 dark:text-blue-400" />
-                        <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
-                          Especialidad & Competencias
-                        </h4>
+                    {/* Encabezado Superior */}
+                    <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs shrink-0">
+                          <GraduationCap size={20} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                            Especialidad & Competencias
+                          </h4>
+                          <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                            Matriz de capacidad técnica y habilidades certificadas
+                          </p>
+                        </div>
                       </div>
-                      <span className="text-[0.62rem] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                        <ShieldCheck size={11} /> Auditado
+                      <span className="text-[0.62rem] font-extrabold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 shadow-2xs">
+                        <ShieldCheck size={13} className="text-emerald-500" /> Auditado
                       </span>
                     </div>
 
                     <div className="space-y-4 text-xs">
                       {/* Especialidad Enfoque Principal */}
-                      <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60 space-y-1.5">
-                        <span className="text-[0.65rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
-                          <Sparkles size={12} className="text-amber-500" /> Especialidad de Enfoque Principal
-                        </span>
-                        <h4 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                          🚀 {tituloEsp}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-zinc-50 to-blue-50/30 dark:from-zinc-800/50 dark:to-blue-950/20 border border-zinc-200/80 dark:border-zinc-700/60 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[0.65rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+                            <Sparkles size={13} className="text-blue-500" /> Área de Enfoque Técnico Principal
+                          </span>
+                          <span className="text-[0.6rem] font-mono font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+                            Rol Asignado
+                          </span>
+                        </div>
+                        
+                        <h4 className="text-sm sm:text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2.5">
+                          <Briefcase size={18} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                          <span>{tituloEsp}</span>
                         </h4>
-                        <span className="text-[0.62rem] text-zinc-500 dark:text-zinc-400 block">
-                          Área técnica asignada y certificada para proyectos WBS en IKernell
-                        </span>
+                        
+                        <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
+                          Especialización técnica acreditada en la plataforma IKernell para el desarrollo y liderazgo de entregables WBS.
+                        </p>
                       </div>
 
-                      {/* Stack Tecnológico con Badges e Emojis Interactivas */}
-                      <div className="space-y-2">
-                        <span className="text-[0.65rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
-                          <Cpu size={12} className="text-blue-500" /> Stack Tecnológico & Habilidades Clave
-                        </span>
+                      {/* Stack Tecnológico con Badges e Iconos Profesionales (SIN EMOJIS) */}
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[0.65rem] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+                            <Cpu size={13} className="text-blue-500" /> Stack Tecnológico & Frameworks Certificados
+                          </span>
+                          <span className="text-[0.65rem] font-bold text-zinc-400">
+                            {skillsEsp.length} Tecnologías Verificadas
+                          </span>
+                        </div>
 
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {skillsEsp.map((sk, idx) => (
-                            <motion.button
-                              key={idx}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              type="button"
-                              onClick={() => toast.success(`Competencia Verificada: ${sk.name} • Nivel Experto`, { icon: sk.emoji, id: sk.name })}
-                              className={`px-3 py-1.5 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer ${sk.color}`}
-                              title={`Haz clic para consultar el nivel en ${sk.name}`}
-                            >
-                              <span>{sk.emoji}</span>
-                              <span>{sk.name}</span>
-                            </motion.button>
-                          ))}
+                        <div className="flex flex-wrap gap-2.5 pt-1">
+                          {skillsEsp.map((sk, idx) => {
+                            const SkIcon = sk.icon || Code2;
+                            return (
+                              <motion.button
+                                key={idx}
+                                whileHover={{ scale: 1.04, y: -1 }}
+                                whileTap={{ scale: 0.96 }}
+                                type="button"
+                                onClick={() => toast.success(`Competencia Certificada: ${sk.name} [${sk.category}] • Nivel Experto`, { id: sk.name })}
+                                className={`px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-2 shadow-2xs transition-all cursor-pointer ${sk.color}`}
+                                title={`Ver estatus de ${sk.name}`}
+                              >
+                                <SkIcon size={15} className={`shrink-0 ${sk.iconColor}`} />
+                                <span>{sk.name}</span>
+                                <span className="text-[0.6rem] font-mono opacity-80 font-bold px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 ml-0.5">
+                                  {sk.category}
+                                </span>
+                              </motion.button>
+                            );
+                          })}
                         </div>
                       </div>
 
-                      {/* Medidor de Dominio Técnico Certificado */}
-                      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/80 dark:border-blue-800/60 space-y-2">
-                        <div className="flex justify-between items-center text-xs font-bold text-zinc-800 dark:text-zinc-200">
-                          <span className="flex items-center gap-1">
-                            <CheckCircle2 size={13} className="text-blue-600 dark:text-blue-400" />
+                      {/* Medidor del Dominio Técnico Certificado */}
+                      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-blue-50/90 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 space-y-2.5">
+                        <div className="flex justify-between items-center text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 size={15} className="text-blue-600 dark:text-blue-400" />
                             Dominio Técnico Verificado
                           </span>
-                          <span className="font-mono text-blue-600 dark:text-blue-400 font-extrabold">95% (Senior)</span>
+                          <span className="font-mono text-blue-600 dark:text-blue-400 font-extrabold bg-blue-100 dark:bg-blue-900/60 px-2.5 py-0.5 rounded-md border border-blue-300 dark:border-blue-700 text-xs">
+                            95% (Senior Lead)
+                          </span>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-blue-200/80 dark:bg-blue-900/60 overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full" style={{ width: '95%' }} />
+
+                        <div className="w-full h-2.5 rounded-full bg-blue-200/80 dark:bg-blue-900/60 overflow-hidden shadow-inner">
+                          <div className="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 rounded-full shadow-2xs" style={{ width: '95%' }} />
                         </div>
-                        <span className="text-[0.62rem] text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                          <Check size={10} className="text-emerald-500" /> Capacidades técnicas respaldadas en PostgreSQL
-                        </span>
+
+                        <div className="flex items-center justify-between text-[0.65rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                          <span className="flex items-center gap-1">
+                            <Check size={11} className="text-emerald-500" /> Registro inmutable respaldado en PostgreSQL
+                          </span>
+                          <span className="font-mono font-bold text-zinc-400">
+                            IK-VERIFIED-2026
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </>
