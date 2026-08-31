@@ -2249,7 +2249,7 @@ export const CoordinadorDashboard = () => {
       if (filtroProyectoEstado !== 'TODOS') {
         if (filtroProyectoEstado === 'EN_PROGRESO' && prj.estado !== 'EN_PROGRESO' && prj.estado !== 'ACTIVO') return false;
         if (filtroProyectoEstado === 'COMPLETADO' && prj.estado !== 'COMPLETADO' && prj.estado !== 'FINALIZADO') return false;
-        if (filtroProyectoEstado === 'PAUSADO' && prj.estado !== 'PAUSADO') return false;
+        if (filtroProyectoEstado === 'PAUSADO' && prj.estado !== 'PAUSADO' && prj.estado !== 'EN_PAUSA') return false;
         if (filtroProyectoEstado === 'INHABILITADO' && prj.estado !== 'INHABILITADO') return false;
       }
       return true;
@@ -2331,9 +2331,9 @@ export const CoordinadorDashboard = () => {
   // Contadores dinámicos para las pestañas de estado según el Líder seleccionado
   const countsEstadoDinamicos = useMemo(() => {
     const todos = proyectosBaseCoordinador.length;
-    const enProgreso = proyectosBaseCoordinador.filter(p => p.estado === 'EN_PROGRESO' || p.estado === 'ACTIVO' || !p.estado).length;
     const completados = proyectosBaseCoordinador.filter(p => p.estado === 'COMPLETADO' || p.estado === 'FINALIZADO').length;
-    const pausados = proyectosBaseCoordinador.filter(p => p.estado === 'PAUSADO').length;
+    const pausados = proyectosBaseCoordinador.filter(p => p.estado === 'PAUSADO' || p.estado === 'EN_PAUSA').length;
+    const enProgreso = proyectosBaseCoordinador.filter(p => p.estado === 'EN_PROGRESO' || p.estado === 'ACTIVO' || (!p.estado && p.estado !== 'COMPLETADO' && p.estado !== 'FINALIZADO' && p.estado !== 'PAUSADO' && p.estado !== 'EN_PAUSA')).length;
     return { todos, enProgreso, completados, pausados };
   }, [proyectosBaseCoordinador]);
 
@@ -4044,7 +4044,7 @@ export const CoordinadorDashboard = () => {
                   {proyectosPaginados.map(prj => {
                     const presupuestoFmt = Number(prj.presupuesto || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
                     const isCompletado = prj.estado === 'COMPLETADO' || prj.estado === 'FINALIZADO';
-                    const isPausado = prj.estado === 'PAUSADO';
+                    const isPausado = prj.estado === 'PAUSADO' || prj.estado === 'EN_PAUSA';
                     const isHighlighted = Number(prj.idProyecto) === Number(highlightedProyectoId);
 
                     const isPastLiderPending = filtroProyectoLider !== 'TODOS'

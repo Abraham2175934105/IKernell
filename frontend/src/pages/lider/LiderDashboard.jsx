@@ -1669,7 +1669,7 @@ export const LiderDashboard = () => {
       } else {
         if (estUpper === 'ACTIVO') counts.ACTIVO++;
         else if (estUpper.includes('PLANIFICACION')) counts.EN_PLANIFICACION++;
-        else if (estUpper === 'PAUSADO' || estUpper === 'SUSPENDIDO' || estUpper === 'INHABILITADO') counts.PAUSADO++;
+        else if (estUpper === 'PAUSADO' || estUpper === 'EN_PAUSA' || estUpper === 'SUSPENDIDO' || estUpper === 'INHABILITADO') counts.PAUSADO++;
         else if (estUpper === 'FINALIZADO' || estUpper === 'COMPLETADO') counts.FINALIZADO++;
 
         const isNuevoPrj = (p.fechaInicio || p.createdAt) && getHoursSinceReassignment(p.fechaInicio || p.createdAt) <= 72;
@@ -1719,7 +1719,7 @@ export const LiderDashboard = () => {
         } else if (filtroEstadoCatalogo === 'EN_PLANIFICACION') {
           if (isReassignedProject || !estUpper.includes('PLANIFICACION')) return false;
         } else if (filtroEstadoCatalogo === 'PAUSADO') {
-          if (isReassignedProject || (estUpper !== 'PAUSADO' && estUpper !== 'SUSPENDIDO' && estUpper !== 'INHABILITADO')) return false;
+          if (isReassignedProject || (estUpper !== 'PAUSADO' && estUpper !== 'EN_PAUSA' && estUpper !== 'SUSPENDIDO' && estUpper !== 'INHABILITADO')) return false;
         } else if (filtroEstadoCatalogo === 'FINALIZADO') {
           if (isReassignedProject || (estUpper !== 'FINALIZADO' && estUpper !== 'COMPLETADO')) return false;
         } else if (filtroEstadoCatalogo === 'NUEVO') {
