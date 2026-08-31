@@ -1108,10 +1108,6 @@ export const LiderDashboard = () => {
   const { user, activeRoleMode } = useAuth();
   const api = useApi();
 
-  if (activeRoleMode === 'DESARROLLADOR') {
-    return <DesarrolladorDashboard />;
-  }
-
   // Estados locales
   const [activeTab, setActiveTab] = useState('wbs');
   const [proyectos, setProyectos] = useState([]);
@@ -2319,8 +2315,10 @@ export const LiderDashboard = () => {
 
   // Efectos (Hooks)
   useEffect(() => {
-    cargarProyectos();
-  }, []);
+    if (activeRoleMode !== 'DESARROLLADOR') {
+      cargarProyectos();
+    }
+  }, [activeRoleMode, cargarProyectos]);
 
   // Manejadores de eventos (Handlers)
   const handleAsignarActividad = async (e) => {
@@ -3859,6 +3857,10 @@ export const LiderDashboard = () => {
   };
 
   const isProyectoFinalizado = proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO';
+
+  if (activeRoleMode === 'DESARROLLADOR') {
+    return <DesarrolladorDashboard />;
+  }
 
   return (
     <DashboardLayout
