@@ -2247,10 +2247,11 @@ export const CoordinadorDashboard = () => {
   const proyectosFiltradosCoordinador = useMemo(() => {
     let list = proyectosBaseCoordinador.filter(prj => {
       if (filtroProyectoEstado !== 'TODOS') {
-        if (filtroProyectoEstado === 'EN_PROGRESO' && prj.estado !== 'EN_PROGRESO' && prj.estado !== 'ACTIVO') return false;
-        if (filtroProyectoEstado === 'COMPLETADO' && prj.estado !== 'COMPLETADO' && prj.estado !== 'FINALIZADO') return false;
-        if (filtroProyectoEstado === 'PAUSADO' && prj.estado !== 'PAUSADO' && prj.estado !== 'EN_PAUSA') return false;
-        if (filtroProyectoEstado === 'INHABILITADO' && prj.estado !== 'INHABILITADO') return false;
+        const st = (prj.estado || '').toUpperCase();
+        if (filtroProyectoEstado === 'EN_PROGRESO' && (st === 'COMPLETADO' || st === 'FINALIZADO' || st === 'PAUSADO' || st === 'EN_PAUSA' || st === 'INHABILITADO')) return false;
+        if (filtroProyectoEstado === 'COMPLETADO' && st !== 'COMPLETADO' && st !== 'FINALIZADO') return false;
+        if (filtroProyectoEstado === 'PAUSADO' && st !== 'PAUSADO' && st !== 'EN_PAUSA') return false;
+        if (filtroProyectoEstado === 'INHABILITADO' && st !== 'INHABILITADO') return false;
       }
       return true;
     });
@@ -2331,9 +2332,18 @@ export const CoordinadorDashboard = () => {
   // Contadores dinámicos para las pestañas de estado según el Líder seleccionado
   const countsEstadoDinamicos = useMemo(() => {
     const todos = proyectosBaseCoordinador.length;
-    const completados = proyectosBaseCoordinador.filter(p => p.estado === 'COMPLETADO' || p.estado === 'FINALIZADO').length;
-    const pausados = proyectosBaseCoordinador.filter(p => p.estado === 'PAUSADO' || p.estado === 'EN_PAUSA').length;
-    const enProgreso = proyectosBaseCoordinador.filter(p => p.estado === 'EN_PROGRESO' || p.estado === 'ACTIVO' || (!p.estado && p.estado !== 'COMPLETADO' && p.estado !== 'FINALIZADO' && p.estado !== 'PAUSADO' && p.estado !== 'EN_PAUSA')).length;
+    const completados = proyectosBaseCoordinador.filter(p => {
+      const st = (p.estado || '').toUpperCase();
+      return st === 'COMPLETADO' || st === 'FINALIZADO';
+    }).length;
+    const pausados = proyectosBaseCoordinador.filter(p => {
+      const st = (p.estado || '').toUpperCase();
+      return st === 'PAUSADO' || st === 'EN_PAUSA';
+    }).length;
+    const enProgreso = proyectosBaseCoordinador.filter(p => {
+      const st = (p.estado || '').toUpperCase();
+      return st !== 'COMPLETADO' && st !== 'FINALIZADO' && st !== 'PAUSADO' && st !== 'EN_PAUSA' && st !== 'INHABILITADO';
+    }).length;
     return { todos, enProgreso, completados, pausados };
   }, [proyectosBaseCoordinador]);
 

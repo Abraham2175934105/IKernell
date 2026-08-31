@@ -3,8 +3,6 @@
 -- Stack: PostgreSQL 14+ con extensión pg_trgm
 -- ==============================================================================
 
-BEGIN;
-
 -- 1. EXTENSIÓN PG_TRGM (Para Búsqueda Difusa Fuzzy en MicroSnippets)
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
@@ -504,7 +502,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         }))
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+            .requestMatchers("/api/auth/all", "/api/public/all").permitAll()
             .anyRequest().authenticated()
         );
     return http.build();
@@ -884,11 +882,11 @@ La arquitectura de **IKernell** está fundamentada en el principio de separació
   - Deshabilitación explícita de CSRF debido al modelo Stateless de la API.
   - Configuración CORS granular para permitir solicitudes cruzadas seguras desde dominios autorizados.
   - Protección de rutas con coincidencia de patrones:
-    - `/api/auth/**`, `/api/public/**`: Públicos.
-    - `/api/coordinador/**`: Requiere `ROLE_COORDINADOR`.
-    - `/api/lider/**`: Requiere `ROLE_LIDER`.
-    - `/api/desarrollador/**`: Requiere `ROLE_DESARROLLADOR`.
-    - `/api/analitica/**`, `/api/biblioteca/**`: Requiere usuario autenticado.
+    - `/api/auth/rutas`, `/api/public/rutas`: Públicos.
+    - `/api/coordinador/rutas`: Requiere `ROLE_COORDINADOR`.
+    - `/api/lider/rutas`: Requiere `ROLE_LIDER`.
+    - `/api/desarrollador/rutas`: Requiere `ROLE_DESARROLLADOR`.
+    - `/api/analitica/rutas`, `/api/biblioteca/rutas`: Requiere usuario autenticado.
 
 ### 2.3. Capa de Controladores REST (Controllers)
 - Diseñados siguiendo los principios de inyección por constructor.
@@ -1171,7 +1169,7 @@ UPDATE documento_biblioteca SET contenido_texto = $DOC_TAG_4$# PLAYBOOK DE RESOL
       configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
       configuration.setAllowCredentials(true);
       UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-      source.registerCorsConfiguration("/**", configuration);
+      source.registerCorsConfiguration("/rutas", configuration);
       return source;
   }
   ```
@@ -1567,4 +1565,4 @@ VALUES
 
 SELECT setval('mensaje_chat_id_mensaje_seq', (SELECT MAX(id_mensaje) FROM mensaje_chat));
 
-COMMIT;
+-- FIN DE SCRIPT DE SIEMBRA DE DATOS DE PRUEBA IKerneLL (35 PROYECTOS)

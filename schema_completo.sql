@@ -3,10 +3,6 @@
 -- Stack: PostgreSQL 14+ con extensión pg_trgm y GIN Indexes
 -- Versión: 3.0 Enterprise High Performance
 -- ==============================================================================
-
-BEGIN;
-
--- ==============================================================================
 -- 1. EXTENSIONES DE ALTO RENDIMIENTO
 -- ==============================================================================
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
