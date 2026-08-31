@@ -225,23 +225,35 @@ public class LiderService {
             throw new IllegalStateException("El proyecto ya se encuentra finalizado.");
         }
 
+        // Validar estrictamente la estructura WBS antes de finalizar
+        List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
+        if (etapas == null || etapas.isEmpty()) {
+            throw new IllegalStateException("No se puede finalizar el proyecto porque no posee ninguna etapa WBS configurada.");
+        }
+
+        for (Etapa etapa : etapas) {
+            boolean isEtapaFin = "FINALIZADA".equalsIgnoreCase(etapa.getEstado()) || "COMPLETADA".equalsIgnoreCase(etapa.getEstado());
+            List<Actividad> actividades = etapa.getActividades();
+            if (actividades == null || actividades.isEmpty()) {
+                throw new IllegalStateException("No se puede finalizar el proyecto. La etapa '" + etapa.getNombreEtapa() + "' no contiene tareas registradas.");
+            }
+            for (Actividad act : actividades) {
+                boolean isActFin = "FINALIZADA".equalsIgnoreCase(act.getEstado()) || "COMPLETADA".equalsIgnoreCase(act.getEstado());
+                if (!isActFin) {
+                    throw new IllegalStateException("No se puede finalizar el proyecto. La tarea '" + act.getDescripcion() + "' en la etapa '" + etapa.getNombreEtapa() + "' no ha sido finalizada.");
+                }
+            }
+            if (!isEtapaFin) {
+                throw new IllegalStateException("No se puede finalizar el proyecto. La etapa '" + etapa.getNombreEtapa() + "' aún no ha sido marcada como FINALIZADA.");
+            }
+        }
+
         // 1. Marcar estado del proyecto como FINALIZADO
         proyecto.setEstado("FINALIZADO");
 
-        // 2. Marcar todas las fases WBS y sus actividades como FINALIZADA
-        // (Congelamiento WBS)
-        List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
+        // 2. Congelamiento WBS (guardar estado final)
         for (Etapa etapa : etapas) {
             etapa.setEstado("FINALIZADA");
-            if (etapa.getActividades() != null) {
-                for (Actividad act : etapa.getActividades()) {
-                    if (!"FINALIZADA".equalsIgnoreCase(act.getEstado())
-                            && !"COMPLETADA".equalsIgnoreCase(act.getEstado())) {
-                        act.setEstado("FINALIZADA");
-                        actividadRepository.save(act);
-                    }
-                }
-            }
             etapaRepository.save(etapa);
         }
 

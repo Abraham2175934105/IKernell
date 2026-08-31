@@ -887,35 +887,23 @@ export const CoordinadorDashboard = () => {
   const handleEjecutarFinalizacionProyectoCoord = async () => {
     if (!selectedProyectoModal) return;
 
-    // Validación si es un proyecto vacío
     if (evidenciaWbsFinalizacionCoord.esProyectoVacio) {
-      if (!justificacionCancelacionCoord.trim() || justificacionCancelacionCoord.trim().length < 10) {
-        setCancelacionErrorCoord('La justificación de cierre prematuro debe tener al menos 10 caracteres.');
-        return;
-      }
+      toast.error('No se puede finalizar el proyecto porque no contiene etapas ni actividades registradas en la WBS.');
+      return;
     }
 
-    // Regla estricta: NO se permite finalizar si el proyecto tiene fases o tareas incompletas
-    if (!evidenciaWbsFinalizacionCoord.esProyectoVacio && !evidenciaWbsFinalizacionCoord.todasCompletadas) {
+    if (!evidenciaWbsFinalizacionCoord.todasCompletadas) {
       toast.error('No se puede finalizar el proyecto. Aún existen etapas o tareas pendientes en la WBS.');
       return;
     }
 
     try {
       setSubmittingPausaFinalizarCoord(true);
-      const payload = evidenciaWbsFinalizacionCoord.esProyectoVacio ? {
-        motivoCancelacion: motivoCancelacionCoord,
-        justificacionCancelacion: justificacionCancelacionCoord.trim()
-      } : {};
-
-      await api.patch(`/lider/proyectos/${selectedProyectoModal.idProyecto}/finalizar`, payload);
+      await api.patch(`/lider/proyectos/${selectedProyectoModal.idProyecto}/finalizar`);
       setSelectedProyectoModal(prev => ({ ...prev, estado: 'FINALIZADO' }));
       setProyectos(prev => prev.map(p => p.idProyecto === selectedProyectoModal.idProyecto ? { ...p, estado: 'FINALIZADO' } : p));
 
-      const detallesAuditoria = evidenciaWbsFinalizacionCoord.esProyectoVacio
-        ? `Cierre prematuro de proyecto vacío. Motivo: ${motivoCancelacionCoord}. Justificación: ${justificacionCancelacionCoord.trim()}`
-        : 'Finalización formal de proyecto con 100% de cumplimiento WBS verificado por el Coordinador.';
-
+      const detallesAuditoria = 'Finalización formal de proyecto con 100% de cumplimiento WBS verificado por el Coordinador.';
       await registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'FINALIZACION_PROYECTO', detallesAuditoria);
       toast.success('El proyecto ha sido marcado oficialmente como FINALIZADO.');
       setShowConfirmFinalizarCoord(false);
@@ -7139,73 +7127,49 @@ export const CoordinadorDashboard = () => {
 
               {/* Cuerpo Organizado en 2 Columnas */}
               {evidenciaWbsFinalizacionCoord.esProyectoVacio ? (
-                /* CASO A: PROYECTO VACÍO (0 ETAPAS / 0 TAREAS WBS) */
+                /* CASO A: PROYECTO VACÍO (0 ETAPAS / 0 TAREAS WBS) - BLOQUEADO TOTALMENTE */
                 <div className="space-y-5">
-                  <div className="p-5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 space-y-3 shadow-xs">
+                  <div className="p-5 rounded-2xl bg-red-50/90 dark:bg-red-950/40 border border-red-200 dark:border-red-800/80 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 font-extrabold text-amber-900 dark:text-amber-300 text-xs uppercase tracking-wider">
-                        <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                        <span>Cierre Prematuro: Proyecto Sin Estructura Ni Avances WBS</span>
+                      <div className="flex items-center gap-2 font-extrabold text-red-900 dark:text-red-300 text-xs uppercase tracking-wider">
+                        <ShieldAlert size={18} className="text-red-600 dark:text-red-400 shrink-0" />
+                        <span>Acción Bloqueada: Proyecto Sin Estructura WBS</span>
                       </div>
-                      <span className="px-2.5 py-1 rounded-lg bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-[0.68rem] font-bold font-mono">
+                      <span className="px-2.5 py-1 rounded-lg bg-red-200/80 dark:bg-red-900/60 text-red-900 dark:text-red-200 text-[0.68rem] font-bold font-mono">
                         0 Etapas | 0 Actividades
                       </span>
                     </div>
 
-                    <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed font-medium">
-                      Este proyecto no contiene fases ni tareas WBS registradas. No se puede catalogar como <strong>"Culminación Exitosa"</strong> dado que no tuvo ejecución técnica real. Para proceder con su clausura o cancelación, es obligatorio justificar la causa del cierre en la trazabilidad de auditoría directiva.
+                    <p className="text-xs text-red-900/90 dark:text-red-200/90 leading-relaxed font-medium">
+                      No es posible finalizar este proyecto porque <strong>no contiene ninguna etapa ni tarea registrada en la estructura WBS</strong>. Para culminar formalmente un proyecto de software en la plataforma, es obligatorio primero registrar sus etapas y asegurar que el 100% de sus tareas asignadas hayan sido completadas.
                     </p>
                   </div>
 
-                  {/* Formulario de Justificación de Cierre Prematuro */}
+                  {/* Guía de Gobernanza y Acciones Directas */}
                   <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-4">
                     <div className="flex items-center gap-2 text-xs font-extrabold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
-                      <FileText size={15} className="text-blue-500 shrink-0" />
-                      <span>Registro Obligatorio de Auditoría de Cierre Prematuro</span>
+                      <Info size={16} className="text-blue-500 shrink-0" />
+                      <span>Requisitos Obligatorios para Liberación & Cierre Formal</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                          Motivo Principal de Cierre:
-                        </label>
-                        <CustomSelect
-                          value={motivoCancelacionCoord}
-                          onChange={(val) => setMotivoCancelacionCoord(val)}
-                          options={[
-                            { value: 'CANCELACION_CLIENTE', label: '1. Cancelación o desestimación por el cliente' },
-                            { value: 'REESTRUCTURACION_PROYECTO', label: '2. Reestructurado o migrado a otro código de proyecto' },
-                            { value: 'RECHAZO_PRESUPUESTO', label: '3. Insuficiencia presupuestaria o de recursos' },
-                            { value: 'INVIABILIDAD_TECNICA', label: '4. Inviabilidad técnica o cambio de alcance' },
-                            { value: 'OTRO_MOTIVO', label: '5. Otro motivo (especificar en la justificación)' }
-                          ]}
-                          maxWidth="w-full"
-                        />
-                      </div>
+                    <ul className="text-xs text-zinc-600 dark:text-zinc-300 space-y-2 list-disc pl-5 font-medium leading-relaxed">
+                      <li>Registrar al menos una etapa WBS e incluir las actividades operativas del proyecto.</li>
+                      <li>Asignar desarrolladores a las tareas y reportar sus correspondientes horas y entregables.</li>
+                      <li>Garantizar que todas las etapas cambien su estado operativo a <strong>FINALIZADA</strong> o <strong>COMPLETADA</strong> (100% WBS).</li>
+                    </ul>
 
-                      <div className="space-y-1.5 md:col-span-2">
-                        <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
-                          <span>Justificación Detallada (Mínimo 10 caracteres): *</span>
-                          <span className="text-[0.68rem] text-zinc-400 font-mono">
-                            {justificacionCancelacionCoord.length} caracteres
-                          </span>
-                        </label>
-                        <textarea
-                          rows={3}
-                          value={justificacionCancelacionCoord}
-                          onChange={(e) => {
-                            setJustificacionCancelacionCoord(e.target.value);
-                            if (cancelacionErrorCoord) setCancelacionErrorCoord('');
-                          }}
-                          placeholder="Ej: El proyecto se cierra prematuramente por decisión estratégica de la dirección comercial..."
-                          className="w-full p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed font-medium"
-                        />
-                        {cancelacionErrorCoord && (
-                          <span className="text-[0.72rem] text-red-600 dark:text-red-400 font-bold block mt-1 flex items-center gap-1">
-                            <AlertTriangle size={14} className="shrink-0" /> {cancelacionErrorCoord}
-                          </span>
-                        )}
-                      </div>
+                    <div className="pt-2 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowConfirmFinalizarCoord(false);
+                          setSelectedProyectoModal(null);
+                        }}
+                        className="outline-button text-xs py-2.5 px-4 font-bold inline-flex items-center gap-2 cursor-pointer rounded-xl"
+                      >
+                        <Briefcase size={14} />
+                        <span>Ver Catálogo de Proyectos</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -7271,7 +7235,6 @@ export const CoordinadorDashboard = () => {
                         </div>
                       </div>
                     ) : (
-                      /* VERIFICACIÓN CUMPLIDA 100% (Réplica Foto 1) */
                       <div className="p-5 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-xs text-emerald-900 dark:text-emerald-300 space-y-3 shadow-xs">
                         <div className="flex items-center gap-2 font-extrabold uppercase tracking-wider text-xs text-emerald-700 dark:text-emerald-400">
                           <CheckCircle2 size={18} className="shrink-0" />
@@ -7284,7 +7247,7 @@ export const CoordinadorDashboard = () => {
                     )}
                   </div>
 
-                  {/* Columna Derecha (5 cols): Consecuencias & Reglas de Gobernanza (Réplica Foto 1) */}
+                  {/* Columna Derecha (5 cols): Consecuencias & Reglas de Gobernanza */}
                   <div className="lg:col-span-5 space-y-4">
                     <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-4 shadow-2xs">
                       <div className="flex items-center gap-2 font-extrabold text-zinc-900 dark:text-zinc-100 text-xs uppercase tracking-wider">
@@ -7344,12 +7307,15 @@ export const CoordinadorDashboard = () => {
                   onClick={handleEjecutarFinalizacionProyectoCoord}
                   disabled={
                     submittingPausaFinalizarCoord ||
-                    (!evidenciaWbsFinalizacionCoord.esProyectoVacio && !evidenciaWbsFinalizacionCoord.todasCompletadas)
+                    evidenciaWbsFinalizacionCoord.esProyectoVacio ||
+                    !evidenciaWbsFinalizacionCoord.todasCompletadas
                   }
                   title={
-                    !evidenciaWbsFinalizacionCoord.esProyectoVacio && !evidenciaWbsFinalizacionCoord.todasCompletadas
-                      ? 'Debe completar el 100% de la WBS para finalizar el proyecto'
-                      : 'Confirmar Cierre Formal'
+                    evidenciaWbsFinalizacionCoord.esProyectoVacio
+                      ? 'Acción Bloqueada: El proyecto no contiene ninguna etapa WBS registradas'
+                      : !evidenciaWbsFinalizacionCoord.todasCompletadas
+                        ? 'Acción Bloqueada: Debe tener el 100% de la WBS completada'
+                        : 'Confirmar Cierre Formal'
                   }
                   className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs py-2.5 px-6 rounded-xl font-extrabold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all transform active:scale-95"
                 >
