@@ -2595,13 +2595,42 @@ export const LiderDashboard = () => {
       return;
     }
 
-    // Validar límite legal de 48 horas acumuladas en la empresa
-    const devCarga = getDevCargaInfo(idDev);
+    // Validar piso mínimo según tareas activas en proceso (EN_PROCESO / PENDIENTE)
+    const tareasDevProyecto = (etapas || []).flatMap(et => {
+      const acts = Array.isArray(et.actividades) ? et.actividades : [];
+      return acts
+        .filter(a => Number(a.desarrollador?.idTrabajador || a.idTrabajador) === Number(idDev))
+        .map(a => ({ ...a, etapaNombre: et.nombreEtapa, idEtapa: et.idEtapa }));
+    });
+
+    const tareasPendientesDev = tareasDevProyecto.filter(t => {
+      const st = (t.estado || 'PENDIENTE').toUpperCase();
+      return st !== 'FINALIZADA' && st !== 'COMPLETADO';
+    });
+
     const asignacionActual = desarrolladoresAsignadosProyecto.find(a => Number(a.desarrollador?.idTrabajador || a.idTrabajador) === Number(idDev));
     const horasActualesEnEsteProyecto = asignacionActual?.horasSemanales || 0;
+
+    const horasTareasPendientes = tareasPendientesDev.reduce((sum, t) => {
+      const matchH = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+      if (matchH) return sum + parseInt(matchH[1]);
+      if (t.horasEstimadas) return sum + parseInt(t.horasEstimadas);
+      return sum + (tareasDevProyecto.length > 0 ? Math.round(horasActualesEnEsteProyecto / tareasDevProyecto.length) : 0);
+    }, 0);
+
+    const esReduccion = valHoras < horasActualesEnEsteProyecto;
+
+    if (esReduccion && valHoras < horasTareasPendientes) {
+      toast.error(
+        `No se puede reducir la reserva a ${valHoras}h/sem. ${devNombre} tiene ${horasTareasPendientes}h en tareas activas en proceso que requieren cobertura horaria.`
+      );
+      return;
+    }
+
+    // Validar límite legal de 48 horas acumuladas en la empresa
+    const devCarga = getDevCargaInfo(idDev);
     const horasEnOtrosProyectos = Math.max(0, (devCarga?.horasAsignadas || 0) - horasActualesEnEsteProyecto);
     const totalProyectado = horasEnOtrosProyectos + valHoras;
-    const esReduccion = valHoras < horasActualesEnEsteProyecto;
 
     if (!esReduccion && totalProyectado > 48) {
       const maximoPermitido = Math.max(0, 48 - horasEnOtrosProyectos);
@@ -6819,15 +6848,36 @@ export const LiderDashboard = () => {
                           });
                           const tareasDevCount = tareasDev.length;
 
-                          // Horas reales sumadas de tareas WBS
-                          const horasTareasDev = tareasDev.reduce((sum, t) => {
+                          // Tareas Activas en Proceso vs Finalizadas
+                          const tareasPendientes = tareasDev.filter(t => {
+                            const st = (t.estado || 'PENDIENTE').toUpperCase();
+                            return st !== 'FINALIZADA' && st !== 'COMPLETADO';
+                          });
+                          const tareasCompletadas = tareasDev.filter(t => {
+                            const st = (t.estado || '').toUpperCase();
+                            return st === 'FINALIZADA' || st === 'COMPLETADO';
+                          });
+
+                          // Horas reales sumadas de tareas WBS Activas (En Proceso)
+                          const horasTareasPendientes = tareasPendientes.reduce((sum, t) => {
                             const m = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
                             if (m) return sum + parseInt(m[1]);
                             if (t.horasEstimadas) return sum + parseInt(t.horasEstimadas);
                             return sum + (tareasDevCount > 0 ? Math.round(horasPrj / tareasDevCount) : 0);
                           }, 0);
 
-                          const saldoCupoReservado = Math.max(0, horasPrj - horasTareasDev);
+                          // Horas reales sumadas de tareas WBS Completadas (Finalizadas)
+                          const horasTareasCompletadas = tareasCompletadas.reduce((sum, t) => {
+                            const m = (t.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                            if (m) return sum + parseInt(m[1]);
+                            if (t.horasEstimadas) return sum + parseInt(t.horasEstimadas);
+                            return sum + (tareasDevCount > 0 ? Math.round(horasPrj / tareasDevCount) : 0);
+                          }, 0);
+
+                          const horasTareasTotales = horasTareasPendientes + horasTareasCompletadas;
+                          const saldoCupoReservado = Math.max(0, horasPrj - horasTareasTotales);
+                          const pisoMinimoReserva = Math.max(0, horasTareasPendientes);
+                          const porcentajeCompletado = horasPrj > 0 ? Math.round((horasTareasCompletadas / horasPrj) * 100) : 0;
                           const sinTareas = tareasDevCount === 0;
 
                           return (
@@ -6873,16 +6923,16 @@ export const LiderDashboard = () => {
                                         <button
                                           type="button"
                                           onClick={() => handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, horasPrj - 1)}
-                                          disabled={horasPrj <= 1 || updatingDevId === dev.idTrabajador}
+                                          disabled={horasPrj <= pisoMinimoReserva || updatingDevId === dev.idTrabajador}
                                           className="w-6 h-6 rounded-lg bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-600 flex items-center justify-center font-black text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
-                                          title={horasPrj <= 1 ? 'Mínimo 1 hora semanal obligatoria' : 'Reducir 1 hora semanal'}
+                                          title={horasPrj <= pisoMinimoReserva ? `Piso Mínimo Alcanzado: Se requieren ${pisoMinimoReserva}h para cubrir las tareas activas en proceso` : 'Reducir 1 hora semanal'}
                                         >
                                           -
                                         </button>
 
                                         <input
                                           type="number"
-                                          min="1"
+                                          min={pisoMinimoReserva}
                                           max="48"
                                           value={editingHoursMap[dev.idTrabajador] !== undefined ? editingHoursMap[dev.idTrabajador] : horasPrj}
                                           onChange={(e) => {
@@ -6891,7 +6941,7 @@ export const LiderDashboard = () => {
                                           }}
                                           onBlur={() => {
                                             const val = parseInt(editingHoursMap[dev.idTrabajador]);
-                                            if (!isNaN(val) && val !== horasPrj && val >= 1) {
+                                            if (!isNaN(val) && val !== horasPrj && val >= pisoMinimoReserva) {
                                               handleCambiarHorasDev(dev.idTrabajador, `${dev.nombre} ${dev.apellido}`, val);
                                             }
                                             setEditingHoursMap(prev => {
@@ -6906,7 +6956,7 @@ export const LiderDashboard = () => {
                                             }
                                           }}
                                           className="w-12 text-center bg-transparent font-mono text-xs font-black text-blue-600 dark:text-blue-400 focus:outline-none focus:bg-white dark:focus:bg-zinc-900 rounded-md border border-zinc-200 dark:border-zinc-700 focus:border-blue-500 py-0.5"
-                                          title="Haz clic para escribir directamente el número de horas y presiona Enter"
+                                          title={`Dedicación reservada. Mínimo permitido por tareas activas en proceso: ${pisoMinimoReserva}h/sem`}
                                         />
                                         <span className="text-[0.65rem] text-zinc-400 font-normal pr-1">h/sem</span>
 
@@ -6975,19 +7025,56 @@ export const LiderDashboard = () => {
                                 </div>
                               )}
 
-                              {/* Desglose de Reconciliación de Horas (Reservado vs Tareas) */}
-                              <div className="grid grid-cols-3 gap-2 text-[0.68rem] font-bold pt-1">
+                              {/* Desglose de Reconciliación de Horas (4 Métricas Claves) */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[0.68rem] font-bold pt-1">
                                 <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80">
-                                  <span className="text-zinc-400 block text-[0.6rem] font-normal">Horas Reservadas:</span>
+                                  <span className="text-zinc-400 block text-[0.6rem] font-normal">Reserva Total:</span>
                                   <span className="text-blue-600 dark:text-blue-400 font-mono text-xs font-black">{horasPrj}h/sem</span>
                                 </div>
-                                <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80">
-                                  <span className="text-zinc-400 block text-[0.6rem] font-normal">Horas en Tareas WBS:</span>
-                                  <span className="text-emerald-600 dark:text-emerald-400 font-mono text-xs font-black">{horasTareasDev}h/sem</span>
+                                <div className="p-2 rounded-xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/80">
+                                  <span className="text-blue-600 dark:text-blue-400 block text-[0.6rem] font-normal">En Proceso (Activas):</span>
+                                  <span className="text-blue-700 dark:text-blue-300 font-mono text-xs font-black">{horasTareasPendientes}h/sem</span>
+                                </div>
+                                <div className="p-2 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/80">
+                                  <span className="text-emerald-600 dark:text-emerald-400 block text-[0.6rem] font-normal">Finalizadas (Entregadas):</span>
+                                  <span className="text-emerald-700 dark:text-emerald-300 font-mono text-xs font-black">{horasTareasCompletadas}h/sem</span>
                                 </div>
                                 <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80">
                                   <span className="text-zinc-400 block text-[0.6rem] font-normal">Saldo Cupo Libre:</span>
-                                  <span className="text-zinc-900 dark:text-zinc-100 font-mono text-xs font-black">{saldoCupoReservado}h restantes</span>
+                                  <span className="text-zinc-900 dark:text-zinc-100 font-mono text-xs font-black">{saldoCupoReservado}h libres</span>
+                                </div>
+                              </div>
+
+                              {/* Barra de Distribución Horaria del Desarrollador */}
+                              <div className="space-y-1 pt-1">
+                                <div className="flex justify-between items-center text-[0.63rem] font-bold">
+                                  <span className="text-zinc-500 dark:text-zinc-400">Distribución Horaria y Entregables:</span>
+                                  <span className="text-blue-600 dark:text-blue-400 font-mono">
+                                    {horasTareasCompletadas}h Completadas ({porcentajeCompletado}%) • {horasTareasPendientes}h Activas • {saldoCupoReservado}h Libres
+                                  </span>
+                                </div>
+                                <div className="w-full h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex shadow-inner">
+                                  {horasPrj > 0 && horasTareasCompletadas > 0 && (
+                                    <div
+                                      style={{ width: `${Math.min(100, (horasTareasCompletadas / horasPrj) * 100)}%` }}
+                                      className="h-full bg-emerald-500 transition-all duration-300"
+                                      title={`Horas Finalizadas/Entregadas: ${horasTareasCompletadas}h`}
+                                    />
+                                  )}
+                                  {horasPrj > 0 && horasTareasPendientes > 0 && (
+                                    <div
+                                      style={{ width: `${Math.min(100, (horasTareasPendientes / horasPrj) * 100)}%` }}
+                                      className="h-full bg-blue-500 transition-all duration-300"
+                                      title={`Horas Pendientes en Proceso: ${horasTareasPendientes}h`}
+                                    />
+                                  )}
+                                  {horasPrj > 0 && saldoCupoReservado > 0 && (
+                                    <div
+                                      style={{ width: `${Math.min(100, (saldoCupoReservado / horasPrj) * 100)}%` }}
+                                      className="h-full bg-zinc-300 dark:bg-zinc-700 transition-all duration-300 opacity-60"
+                                      title={`Saldo Libre Sin Asignar: ${saldoCupoReservado}h`}
+                                    />
+                                  )}
                                 </div>
                               </div>
 
