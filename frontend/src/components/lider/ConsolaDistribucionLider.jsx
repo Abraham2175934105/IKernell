@@ -14,6 +14,36 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
   const [modo, setModo] = useState('AUTOMATICO_INTELIGENTE');
   const [semanaCodigo, setSemanaCodigo] = useState('2026-W36');
 
+  const [horasDevReales, setHorasDevReales] = useState(devAssignedHours);
+
+  // Cargar tareas de desarrollo asignadas en otros proyectos desde backend
+  useEffect(() => {
+    if (!token) return;
+    const fetchTareasReales = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/desarrollador/actividades', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (res.ok) {
+          const actividades = await res.json();
+          const sumaHoras = (actividades || [])
+            .filter(a => {
+              const st = (a.estado || '').toUpperCase();
+              return st !== 'COMPLETADA' && st !== 'FINALIZADA';
+            })
+            .reduce((acc, a) => acc + (parseInt(a.horasEstimadas || a.horas) || 0), 0);
+          if (sumaHoras > 0) setHorasDevReales(sumaHoras);
+        }
+      } catch (err) {
+        console.warn('No se pudieron consultar actividades reales de desarrollo:', err);
+      }
+    };
+    fetchTareasReales();
+  }, [token]);
+
   // Cargar distribución desde backend
   useEffect(() => {
     if (!user?.id && !user?.idTrabajador) return;
@@ -54,7 +84,8 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
 
   // Aplicar sugerencia inteligente automatizada basada en tareas WBS reales
   const aplicarSugerenciaInteligente = () => {
-    const hDevCalc = Math.min(44, Math.max(8, devAssignedHours > 0 ? devAssignedHours : 24));
+    const baseDev = horasDevReales > 0 ? horasDevReales : devAssignedHours;
+    const hDevCalc = Math.min(44, Math.max(8, baseDev > 0 ? baseDev : 24));
     const hLiderCalc = 48 - hDevCalc;
     setHorasDev(hDevCalc);
     setHorasLider(hLiderCalc);
@@ -127,6 +158,39 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
           <span>Auto-Calcular por WBS</span>
         </button>
       </div>
+
+      {/* Alerta de Desfase de Horas (RF-20 / 48h Dual) */}
+      {horasDev < horasDevReales && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 flex items-start gap-3 shadow-sm"
+        >
+          <AlertCircle size={20} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-xs">
+            <span className="font-black uppercase tracking-wide block text-amber-700 dark:text-amber-300">
+              ⚠️ Advertencia de Desfase en Jornada Horaria (RF-20)
+            </span>
+            <p className="font-semibold leading-relaxed">
+              Tienes <strong>{horasDevReales}h</strong> asignadas en tareas WBS activas de desarrollo (en otros proyectos), pero solo has reservado <strong>{horasDev}h</strong> en tu jornada de 48h. Debes ajustar tu reserva de horas o reasignar actividades.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const hDevCalc = Math.min(44, Math.max(8, horasDevReales));
+                const hLiderCalc = 48 - hDevCalc;
+                setHorasDev(hDevCalc);
+                setHorasLider(hLiderCalc);
+                setModo('AUTOMATICO_INTELIGENTE');
+                guardarEnBackend(hLiderCalc, hDevCalc, 'AUTOMATICO_INTELIGENTE');
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition-all cursor-pointer shadow-xs"
+            >
+              <Sparkles size={13} /> Auto-Ajustar a {horasDevReales}h de Desarrollo
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Grid de Tarjetas de Métricas de Horas Duales */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">

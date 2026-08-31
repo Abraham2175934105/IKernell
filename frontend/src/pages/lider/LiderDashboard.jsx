@@ -820,7 +820,7 @@ const DeveloperCombobox = ({
 };
 
 export const LiderDashboard = () => {
-  const { user } = useAuth();
+  const { user, activeRoleMode } = useAuth();
   const api = useApi();
 
   // Estados locales
@@ -833,6 +833,21 @@ export const LiderDashboard = () => {
   const [etapas, setEtapas] = useState([]);
   const [desarrolladores, setDesarrolladores] = useState([]);
   const [desarrolladoresAsignadosProyecto, setDesarrolladoresAsignadosProyecto] = useState([]);
+
+  // Segregación de Funciones RF-20: Excluir al Líder del proyecto actual de la lista de desarrolladores asignables
+  const desarrolladoresSinLiderActual = useMemo(() => {
+    const currentLiderId = String(
+      proyectoSeleccionado?.lider?.idTrabajador ||
+      proyectoSeleccionado?.idLider ||
+      user?.idTrabajador ||
+      user?.id ||
+      ''
+    );
+    return (desarrolladores || []).filter(d => {
+      const devId = String(d?.idTrabajador || d?.id || '');
+      return devId !== currentLiderId;
+    });
+  }, [desarrolladores, proyectoSeleccionado, user]);
   const [showNominaDevsModal, setShowNominaDevsModal] = useState(false);
   const [updatingDevId, setUpdatingDevId] = useState(null);
   const [errores, setErrores] = useState([]);
@@ -3546,6 +3561,32 @@ export const LiderDashboard = () => {
 
       <ErrorBoundary title="Error General del Dashboard del Líder">
 
+        {/* Banner Informativo de Modo Desarrollador Activo (RF-20) */}
+        {activeRoleMode === 'DESARROLLADOR' && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 p-4 rounded-3xl bg-gradient-to-r from-purple-950 via-zinc-900 to-indigo-950 text-white border border-purple-500/40 shadow-md flex items-center justify-between gap-4 flex-wrap"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black shrink-0 shadow-md shadow-purple-600/30">
+                <Code2 size={20} />
+              </div>
+              <div>
+                <span className="font-extrabold text-purple-300 uppercase tracking-widest text-[0.62rem] block">
+                  MODO TÉCNICO DE DESARROLLADOR ACTIVO (RF-20)
+                </span>
+                <span className="text-xs font-semibold text-zinc-200">
+                  Estás operando en tu perfil técnico de desarrollador. En este modo gestionas tus actividades WBS en proyectos donde no eres el Líder responsable.
+                </span>
+              </div>
+            </div>
+            <span className="px-3 py-1 rounded-full text-[0.65rem] font-mono font-black bg-purple-500/20 text-purple-200 border border-purple-400/30">
+              Segregación RF-20 Activa
+            </span>
+          </motion.div>
+        )}
+
         {/* Selector de Proyecto en Cabecera (Enterprise Jira/Linear Style) */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -5710,7 +5751,7 @@ export const LiderDashboard = () => {
                         setNuevaActividad({ ...nuevaActividad, idDesarrollador: idDev });
                         setFormErrors(p => ({ ...p, idDesarrollador: undefined }));
                       }}
-                      desarrolladores={desarrolladores}
+                      desarrolladores={desarrolladoresSinLiderActual}
                       desarrolladoresAsignadosProyecto={desarrolladoresAsignadosProyecto}
                       getDevCargaInfo={getDevCargaInfo}
                       getCleanEspecialidad={getCleanEspecialidad}
@@ -5977,7 +6018,7 @@ export const LiderDashboard = () => {
                           setAsignarDevForm({ ...asignarDevForm, idDesarrollador: idDev });
                           setAsignarDevError(null);
                         }}
-                        desarrolladores={desarrolladores}
+                        desarrolladores={desarrolladoresSinLiderActual}
                         getDevCargaInfo={getDevCargaInfo}
                         getCleanEspecialidad={getCleanEspecialidad}
                         placeholder="— Seleccione un desarrollador para vincular —"

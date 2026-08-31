@@ -421,6 +421,13 @@ public class LiderService {
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
 
+        // Regla de Negocio Crítica RF-20 (Segregación de Funciones): El Líder no puede desarrollarse a sí mismo en su propio proyecto
+        if (proyecto.getLider() != null && proyecto.getLider().getIdTrabajador().equals(idDesarrollador)) {
+            throw new IllegalArgumentException("Violación de Segregación de Funciones (RF-20): El usuario "
+                    + desarrollador.getNombre() + " " + desarrollador.getApellido()
+                    + " es el Líder responsable de este proyecto. Un Líder solo puede ser asignado como desarrollador en OTROS proyectos.");
+        }
+
         // Condición Crítica HU-12: Regla de las 48 horas semanales acumuladas
         int horasOtrasAsignaciones = proyectoDesarrolladorRepository
                 .calcularHorasAsignadasExcluyendoProyecto(desarrollador, idProyecto);
@@ -467,6 +474,14 @@ public class LiderService {
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
 
+        // Regla de Negocio Crítica RF-20 (Segregación de Funciones): El Líder no puede asignarse actividades técnicas en su propio proyecto
+        Proyecto proy = etapa.getProyecto();
+        if (proy != null && proy.getLider() != null && proy.getLider().getIdTrabajador().equals(idDesarrollador)) {
+            throw new IllegalArgumentException("Violación de Segregación de Funciones (RF-20): El usuario "
+                    + desarrollador.getNombre() + " " + desarrollador.getApellido()
+                    + " es el Líder responsable de este proyecto. Un Líder solo puede ejecutar tareas de desarrollo en OTROS proyectos.");
+        }
+
         // Persistencia
         actividad.setEtapa(etapa);
         actividad.setDesarrollador(desarrollador);
@@ -502,6 +517,12 @@ public class LiderService {
         Trabajador nuevoDesarrollador = trabajadorRepository.findById(nuevoDesarrolladorId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Desarrollador no encontrado con ID: " + nuevoDesarrolladorId));
+
+        // Regla de Negocio Crítica RF-20 (Segregación de Funciones)
+        Proyecto proyReasig = actividad.getEtapa() != null ? actividad.getEtapa().getProyecto() : null;
+        if (proyReasig != null && proyReasig.getLider() != null && proyReasig.getLider().getIdTrabajador().equals(nuevoDesarrolladorId)) {
+            throw new IllegalArgumentException("Violación de Segregación de Funciones (RF-20): El desarrollador seleccionado es el Líder responsable del proyecto. Un Líder solo puede actuar como desarrollador en OTROS proyectos.");
+        }
 
         // Persistencia
         actividad.setDesarrollador(nuevoDesarrollador);
