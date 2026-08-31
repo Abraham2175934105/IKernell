@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Cpu, Users, Briefcase, Activity, CheckSquare, Bug, AlertTriangle, 
   MessageSquare, BookOpen, GraduationCap, Sun, Moon, LogOut, 
-  Menu, X, Shield, Bell, ChevronRight, ChevronLeft, Layers, 
+  Menu, X, Shield, ChevronRight, ChevronLeft, Layers, 
   FileText, Sparkles, User, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -450,18 +450,6 @@ export const DashboardLayout = ({ children, activeTab, setActiveTab, customMetri
                 {customMetrics?.metric2 || 'Conexión Segura (JWT)'}
               </span>
             </div>
-
-            {/* Herramienta Global: Notificaciones Corporativas */}
-            <button
-              type="button"
-              onClick={() => toast.info('Centro de notificaciones: No hay alertas críticas pendientes.', { duration: 3000 })}
-              title="Notificaciones y Alertas del Sistema"
-              className="w-10 h-10 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center transition-all cursor-pointer shadow-sm relative hover:border-blue-400 dark:hover:border-blue-600"
-              aria-label="Ver Notificaciones"
-            >
-              <Bell size={17} />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600" />
-            </button>
 
             {/* Toggle Tema Claro / Oscuro */}
             <button
