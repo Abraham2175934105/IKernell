@@ -582,15 +582,6 @@ export const PerfilPage = () => {
                           </p>
                         </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={resetPasswordForm}
-                        className="p-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 text-xs font-bold transition-colors cursor-pointer"
-                        title="Cancelar y Ocultar Formulario"
-                      >
-                        Ocultar ×
-                      </button>
                     </div>
 
                     {passwordError && (
@@ -679,7 +670,7 @@ export const PerfilPage = () => {
                         </motion.div>
                       )}
 
-                      {/* 3. Confirmar Nueva Contraseña */}
+                      {/* 3. Confirmar Nueva Contraseña con Validación Visual en Tiempo Real */}
                       <div className="space-y-1.5">
                         <label className="font-extrabold text-zinc-800 dark:text-zinc-200 block text-xs">
                           Confirmar Nueva Contraseña *
@@ -691,7 +682,13 @@ export const PerfilPage = () => {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Repita la nueva contraseña"
-                            className="input-field w-full py-2.5 pl-3.5 pr-10 text-xs font-mono font-medium rounded-xl focus:ring-2 focus:ring-blue-500"
+                            className={`input-field w-full py-2.5 pl-3.5 pr-10 text-xs font-mono font-medium rounded-xl transition-all ${
+                              confirmPassword.length > 0
+                                ? (confirmPassword === newPassword
+                                    ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20'
+                                    : 'border-red-500 ring-2 ring-red-500/20 bg-red-50/20 dark:bg-red-950/20')
+                                : 'focus:ring-2 focus:ring-blue-500'
+                            }`}
                           />
                           <button
                             type="button"
@@ -702,6 +699,20 @@ export const PerfilPage = () => {
                             {showConfirmPass ? <EyeOff size={15} /> : <Eye size={15} />}
                           </button>
                         </div>
+
+                        {confirmPassword.length > 0 && (
+                          confirmPassword === newPassword ? (
+                            <p className="text-[0.68rem] font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mt-1 animate-fadeIn">
+                              <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                              <span>Las contraseñas coinciden perfectamente.</span>
+                            </p>
+                          ) : (
+                            <p className="text-[0.68rem] font-extrabold text-red-600 dark:text-red-400 flex items-center gap-1.5 mt-1 animate-fadeIn">
+                              <AlertTriangle size={13} className="text-red-500 shrink-0" />
+                              <span>Las contraseñas no coinciden. Verifique ambas claves.</span>
+                            </p>
+                          )
+                        )}
                       </div>
 
                       {/* Requisitos Dinámicos de Seguridad */}
@@ -710,32 +721,32 @@ export const PerfilPage = () => {
                           Validación de Seguridad en Tiempo Real
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[0.68rem]">
-                          <div className={`flex items-center gap-1.5 font-medium ${passwordRequirements.length ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-zinc-400'}`}>
+                          <div className={`flex items-center gap-1.5 font-medium transition-colors ${passwordRequirements.length ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-zinc-400'}`}>
                             <Check size={12} className={passwordRequirements.length ? 'text-emerald-500' : 'text-zinc-300 dark:text-zinc-600'} />
                             <span>8 a 20 caracteres</span>
                           </div>
 
-                          <div className={`flex items-center gap-1.5 font-medium ${passwordRequirements.upper ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-zinc-400'}`}>
+                          <div className={`flex items-center gap-1.5 font-medium transition-colors ${passwordRequirements.upper ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-zinc-400'}`}>
                             <Check size={12} className={passwordRequirements.upper ? 'text-emerald-500' : 'text-zinc-300 dark:text-zinc-600'} />
                             <span>Al menos 1 mayúscula</span>
                           </div>
 
-                          <div className={`flex items-center gap-1.5 font-medium ${passwordRequirements.lower ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-zinc-400'}`}>
+                          <div className={`flex items-center gap-1.5 font-medium transition-colors ${passwordRequirements.lower ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-zinc-400'}`}>
                             <Check size={12} className={passwordRequirements.lower ? 'text-emerald-500' : 'text-zinc-300 dark:text-zinc-600'} />
                             <span>Al menos 1 minúscula</span>
                           </div>
 
-                          <div className={`flex items-center gap-1.5 font-medium ${passwordRequirements.number ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-zinc-400'}`}>
+                          <div className={`flex items-center gap-1.5 font-medium transition-colors ${passwordRequirements.number ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-zinc-400'}`}>
                             <Check size={12} className={passwordRequirements.number ? 'text-emerald-500' : 'text-zinc-300 dark:text-zinc-600'} />
                             <span>Al menos 1 número</span>
                           </div>
 
-                          <div className={`flex items-center gap-1.5 font-medium ${passwordRequirements.different ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-zinc-400'}`}>
+                          <div className={`flex items-center gap-1.5 font-medium transition-colors ${passwordRequirements.different ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-zinc-400'}`}>
                             <Check size={12} className={passwordRequirements.different ? 'text-emerald-500' : 'text-zinc-300 dark:text-zinc-600'} />
                             <span>Diferente de actual</span>
                           </div>
 
-                          <div className={`flex items-center gap-1.5 font-medium ${passwordRequirements.match ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-zinc-400'}`}>
+                          <div className={`flex items-center gap-1.5 font-medium transition-colors ${passwordRequirements.match ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-zinc-400'}`}>
                             <Check size={12} className={passwordRequirements.match ? 'text-emerald-500' : 'text-zinc-300 dark:text-zinc-600'} />
                             <span>Coinciden exactamente</span>
                           </div>
@@ -748,7 +759,7 @@ export const PerfilPage = () => {
                           type="button"
                           onClick={resetPasswordForm}
                           disabled={submittingPassword}
-                          className="w-1/3 py-3 px-3 rounded-2xl outline-button font-bold text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                          className="w-1/3 py-3 px-3 rounded-2xl outline-button font-bold text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         >
                           Cancelar
                         </button>
