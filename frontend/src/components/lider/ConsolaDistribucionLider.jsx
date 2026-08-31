@@ -82,23 +82,70 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
     fetchDistribucion();
   }, [user, token, semanaCodigo]);
 
-  // Manejar cambio de Horas de Líder (asegurar suma = 48)
+  // Desglose de horas por estado WBS (Dividendo: Ejecutadas vs Activas Pendientes)
+  const desgloseDividendoDev = useMemo(() => {
+    let ejec = 0;
+    let prog = 0;
+    let pend = 0;
+
+    (actividadesDevList || []).forEach(a => {
+      const match = (a.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+      const hTask = match ? parseInt(match[1]) : (parseInt(a.horasEstimadas || a.horas) || 6);
+      const st = (a.estado || 'PENDIENTE').toUpperCase();
+
+      if (st === 'FINALIZADA' || st === 'COMPLETADA') {
+        ejec += hTask;
+      } else if (st === 'EN_PROGRESO' || st === 'EN_CURSO') {
+        prog += hTask;
+      } else {
+        pend += hTask;
+      }
+    });
+
+    const activas = prog + pend;
+    const totales = activas + ejec;
+
+    // Límite máximo de 30h para horas de desarrollo de un Líder (Mínimo 18h reservadas para dirección)
+    const devAutoCalc = Math.min(30, Math.max(0, activas > 0 ? activas : 24));
+    const liderAutoCalc = 48 - devAutoCalc;
+
+    return {
+      ejecutadas: ejec,
+      enProgreso: prog,
+      pendientes: pend,
+      activas,
+      totales,
+      devAutoCalc,
+      liderAutoCalc
+    };
+  }, [actividadesDevList]);
+
+  // Auto-cálculo reactivo cuando cambia la lista de tareas WBS o el token
+  useEffect(() => {
+    if (modo === 'AUTOMATICO_INTELIGENTE' && actividadesDevList.length > 0) {
+      setHorasDev(desgloseDividendoDev.devAutoCalc);
+      setHorasLider(desgloseDividendoDev.liderAutoCalc);
+    }
+  }, [desgloseDividendoDev, modo, actividadesDevList.length]);
+
+  // Manejar cambio de Horas de Líder (asegurar suma = 48 y límite dev <= 30h)
   const handleHorasLiderChange = (val) => {
-    const hl = Math.min(48, Math.max(0, parseInt(val) || 0));
+    const hl = Math.min(48, Math.max(18, parseInt(val) || 18));
+    const hd = 48 - hl;
     setHorasLider(hl);
-    setHorasDev(48 - hl);
+    setHorasDev(hd);
     setModo('MANUAL');
   };
 
-  // Aplicar sugerencia inteligente automatizada basada en tareas WBS reales
+  // Aplicar sugerencia inteligente automatizada basada en tareas WBS reales (Límite 30h dev / 18h líder)
   const aplicarSugerenciaInteligente = () => {
-    const baseDev = horasDevReales > 0 ? horasDevReales : devAssignedHours;
-    const hDevCalc = Math.min(44, Math.max(8, baseDev > 0 ? baseDev : 24));
-    const hLiderCalc = 48 - hDevCalc;
+    const hDevCalc = desgloseDividendoDev.devAutoCalc;
+    const hLiderCalc = desgloseDividendoDev.liderAutoCalc;
     setHorasDev(hDevCalc);
     setHorasLider(hLiderCalc);
     setModo('AUTOMATICO_INTELIGENTE');
     guardarEnBackend(hLiderCalc, hDevCalc, 'AUTOMATICO_INTELIGENTE');
+    toast.success(`Cálculo WBS Automático: ${hLiderCalc}h Líder / ${hDevCalc}h Desarrollador (Máx. 30h Dev)`);
   };
 
   // Guardar en backend
@@ -211,21 +258,28 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             <span className="text-xs bg-blue-200/60 dark:bg-blue-900/60 px-2 py-0.5 rounded-md font-mono">{horasLider}h</span>
           </div>
           <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400">
-            Revisión WBS, semáforo predictivo, evaluación de riesgos y coordinación del equipo.
+            Supervisión WBS, semáforo predictivo, evaluación de riesgos y coordinación del equipo (Mínimo 18h reservadas para gobierno del proyecto).
           </p>
         </div>
 
-        {/* Tarjeta Rol Desarrollador */}
+        {/* Tarjeta Rol Desarrollador con Dividendo Visual (Ejecutadas vs Restantes por Ejecutar) */}
         <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/90 dark:border-indigo-800/60 space-y-2">
           <div className="flex justify-between items-center text-indigo-700 dark:text-indigo-300 font-extrabold">
             <span className="flex items-center gap-1.5 text-[0.68rem] uppercase font-mono">
               <Code2 size={14} /> Horas Desarrollo Técnico
             </span>
-            <span className="text-xs bg-indigo-200/60 dark:bg-indigo-900/60 px-2 py-0.5 rounded-md font-mono">{horasDev}h</span>
+            <span className="text-xs bg-indigo-200/60 dark:bg-indigo-900/60 px-2 py-0.5 rounded-md font-mono">{horasDev}h <span className="text-[0.6rem] font-normal text-zinc-400">(Máx. 30h)</span></span>
           </div>
-          <p className="text-[0.68rem] text-zinc-600 dark:text-zinc-400">
-            Ejecución directa de actividades de código, pruebas y solución de errores técnicos en WBS.
-          </p>
+          <div className="space-y-1.5 pt-0.5">
+            <div className="flex items-center justify-between text-[0.68rem]">
+              <span className="font-semibold text-zinc-600 dark:text-zinc-400">Por Ejecutar (Activas):</span>
+              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{desgloseDividendoDev.activas}h</span>
+            </div>
+            <div className="flex items-center justify-between text-[0.68rem]">
+              <span className="font-semibold text-zinc-600 dark:text-zinc-400">Ya Ejecutadas (Cumplidas):</span>
+              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{desgloseDividendoDev.ejecutadas}h</span>
+            </div>
+          </div>
         </div>
 
         {/* Tarjeta Total & Estado */}
@@ -243,6 +297,34 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         </div>
       </div>
 
+      {/* Panel Explicativo Detallado de por qué esa cantidad de Horas como Líder y Desarrollador */}
+      <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/70 space-y-2.5 text-xs">
+        <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200 font-extrabold">
+          <Sparkles size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
+          <span>Explicación del Balance de Jornada Dual (Líder ↔ Desarrollador):</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[0.72rem] leading-relaxed">
+          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-900/60 space-y-1">
+            <span className="font-extrabold text-blue-700 dark:text-blue-300 block flex items-center gap-1">
+              <Crown size={12} /> Rol Dirección Líder ({horasLider}h / 48h):
+            </span>
+            <p className="text-zinc-600 dark:text-zinc-400 font-medium">
+              Asignación automática de <strong>{horasLider}h</strong> ({Math.round((horasLider/48)*100)}% de la jornada) para el seguimiento WBS, revisión de Pull Requests, semáforo predictivo de riesgos y reuniones de coordinación. <em>Se garantiza un mínimo legal de 18h de liderazgo.</em>
+            </p>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-indigo-100 dark:border-indigo-900/60 space-y-1">
+            <span className="font-extrabold text-indigo-700 dark:text-indigo-300 block flex items-center gap-1">
+              <Code2 size={12} /> Rol Desarrollo Técnico ({horasDev}h / 48h - Tope Máx 30h):
+            </span>
+            <p className="text-zinc-600 dark:text-zinc-400 font-medium">
+              Calculado según tus entregables en otros proyectos: <strong>{desgloseDividendoDev.activas}h activas por ejecutar</strong> ({desgloseDividendoDev.enProgreso}h en progreso + {desgloseDividendoDev.pendientes}h pendientes). <em>{desgloseDividendoDev.ejecutadas}h ya fueron ejecutadas y liberadas en WBS.</em>
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Sección de Desglose de Tareas WBS del Líder actuando como Desarrollador */}
       <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-3">
         <div className="flex justify-between items-center flex-wrap gap-2">
@@ -252,9 +334,16 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
               Entregables WBS Asignados como Desarrollador ({actividadesDevList.length} Tareas)
             </span>
           </div>
-          <span className="text-[0.68rem] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono">
-            {horasDevReales}h/sem Activas en Desarrollo
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[0.68rem] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono">
+              {desgloseDividendoDev.activas}h Activas Restantes
+            </span>
+            {desgloseDividendoDev.ejecutadas > 0 && (
+              <span className="text-[0.68rem] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-mono">
+                {desgloseDividendoDev.ejecutadas}h Ya Ejecutadas
+              </span>
+            )}
+          </div>
         </div>
 
         {actividadesDevList.length === 0 ? (
@@ -305,45 +394,59 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         )}
       </div>
 
-      {/* Barra Proporcional Interactivamente Ajustable */}
+      {/* Barra Proporcional Interactivamente Ajustable con Dividendo Color Coded */}
       <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-4">
         <div className="flex justify-between items-center text-xs font-bold flex-wrap gap-2">
           <span className="text-zinc-700 dark:text-zinc-300">
-            Barra Proporcional de Jornada Laboral (48 Horas Semanales):
+            Barra Proporcional de Jornada Laboral (48 Horas Semanales - Límite Dev 30h):
           </span>
           <span className="text-zinc-500 font-mono text-[0.7rem]">
             Modo: <strong className="text-blue-600 dark:text-blue-400">{modo.replace('_', ' ')}</strong>
           </span>
         </div>
 
-        {/* Visual Barra Proporcional */}
+        {/* Visual Barra Proporcional con Dividendo Visual (Dirección Líder + Dev Activo + Dev Ejecutado) */}
         <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden flex shadow-inner">
+          {/* Segmento 1: Dirección Líder (Azul Rey) */}
           <div
             style={{ width: `${(horasLider / 48) * 100}%` }}
-            className="bg-blue-600 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
-            title={`Líder: ${horasLider}h`}
+            className="bg-blue-700 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
+            title={`Líder: ${horasLider}h (Mínimo 18h)`}
           >
             {horasLider >= 8 && `${horasLider}h Líder`}
           </div>
+
+          {/* Segmento 2: Dev Activo por Ejecutar (Indigo) */}
           <div
-            style={{ width: `${(horasDev / 48) * 100}%` }}
+            style={{ width: `${(desgloseDividendoDev.activas / 48) * 100}%` }}
             className="bg-indigo-600 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
-            title={`Desarrollador: ${horasDev}h`}
+            title={`Dev Restante por Ejecutar: ${desgloseDividendoDev.activas}h`}
           >
-            {horasDev >= 8 && `${horasDev}h Dev`}
+            {desgloseDividendoDev.activas >= 6 && `${desgloseDividendoDev.activas}h Dev Activo`}
           </div>
+
+          {/* Segmento 3: Dev Ya Ejecutado (Esmeralda) */}
+          {desgloseDividendoDev.ejecutadas > 0 && (
+            <div
+              style={{ width: `${(desgloseDividendoDev.ejecutadas / 48) * 100}%` }}
+              className="bg-emerald-500 h-full transition-all duration-300 flex items-center justify-center text-[0.6rem] font-black text-white"
+              title={`Dev Ya Ejecutado: ${desgloseDividendoDev.ejecutadas}h`}
+            >
+              {desgloseDividendoDev.ejecutadas >= 4 && `${desgloseDividendoDev.ejecutadas}h Cumplidas`}
+            </div>
+          )}
         </div>
 
-        {/* Deslizador de Ajuste Físico */}
+        {/* Deslizador de Ajuste Físico con Límite Mínimo de 18h para Líder (Tope Máx 30h Dev) */}
         <div className="space-y-2">
           <div className="flex justify-between items-center text-xs text-zinc-500 font-medium">
-            <span>Ajustar horas como Líder: <strong className="text-blue-600 dark:text-blue-400">{horasLider}h</strong></span>
-            <span>Ajustar horas como Desarrollador: <strong className="text-indigo-600 dark:text-indigo-400">{horasDev}h</strong></span>
+            <span>Ajustar horas como Líder: <strong className="text-blue-600 dark:text-blue-400">{horasLider}h</strong> (Mín. 18h)</span>
+            <span>Ajustar horas como Desarrollador: <strong className="text-indigo-600 dark:text-indigo-400">{horasDev}h</strong> (Máx. 30h)</span>
           </div>
           <input
             type="range"
-            min="4"
-            max="44"
+            min="18"
+            max="48"
             step="1"
             value={horasLider}
             onChange={(e) => handleHorasLiderChange(e.target.value)}
@@ -353,7 +456,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
 
         {/* Botones de Presets Rápidos */}
         <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60">
-          <span className="text-[0.68rem] font-bold text-zinc-500">Configuraciones sugeridas:</span>
+          <span className="text-[0.68rem] font-bold text-zinc-500">Configuraciones sugeridas (Máx 30h Dev):</span>
           <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
@@ -364,10 +467,10 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             </button>
             <button
               type="button"
-              onClick={() => { setHorasLider(16); setHorasDev(32); setModo('MANUAL'); }}
+              onClick={() => { setHorasLider(18); setHorasDev(30); setModo('MANUAL'); }}
               className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:border-indigo-400 transition-all cursor-pointer shadow-2xs"
             >
-              Enfoque Técnico (16h Líder / 32h Dev)
+              Límite Máximo Técnico (18h Líder / 30h Dev)
             </button>
             <button
               type="button"
