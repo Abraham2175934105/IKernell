@@ -412,10 +412,19 @@ const DeveloperSelectorModal = ({
   desarrolladoresAsignadosProyecto = [],
   etapas = [],
   getDevCargaInfo,
-  getCleanEspecialidad
+  getCleanEspecialidad,
+  initialSkillFilter = 'TODOS',
+  requiredSkill = ''
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTab, setFiltroTab] = useState('todos'); // 'todos', 'nomina', 'disponibles'
+  const [skillFilter, setSkillFilter] = useState(initialSkillFilter || 'TODOS');
+
+  useEffect(() => {
+    if (initialSkillFilter) {
+      setSkillFilter(initialSkillFilter);
+    }
+  }, [initialSkillFilter, isOpen]);
 
   // Combinar desarrolladores del pool global y asignados al proyecto
   const allDevs = useMemo(() => {
@@ -461,13 +470,24 @@ const DeveloperSelectorModal = ({
       if (filtroTab === 'nomina' && !estaEnProyecto) return false;
       if (filtroTab === 'disponibles' && horas >= 48) return false;
 
+      // Filtro por Cualidad / Habilidad Técnica
+      if (skillFilter !== 'TODOS') {
+        const text = `${dev.especialidad || ''} ${dev.profesion || ''} ${dev.nombre || ''}`.toLowerCase();
+        if (skillFilter === 'FIGMA' && !text.includes('figma') && !text.includes('ui') && !text.includes('ux') && !text.includes('diseñ')) return false;
+        if (skillFilter === 'FRONTEND' && !text.includes('front') && !text.includes('react') && !text.includes('vue') && !text.includes('web') && !text.includes('mobile')) return false;
+        if (skillFilter === 'BACKEND' && !text.includes('back') && !text.includes('java') && !text.includes('spring') && !text.includes('micro') && !text.includes('api') && !text.includes('node') && !text.includes('go')) return false;
+        if (skillFilter === 'DEVOPS' && !text.includes('devops') && !text.includes('docker') && !text.includes('kubernetes') && !text.includes('cloud') && !text.includes('aws') && !text.includes('ci/cd')) return false;
+        if (skillFilter === 'DATABASE' && !text.includes('sql') && !text.includes('base') && !text.includes('postgre') && !text.includes('data') && !text.includes('etl') && !text.includes('tuning')) return false;
+        if (skillFilter === 'QA' && !text.includes('qa') && !text.includes('test') && !text.includes('pruebas') && !text.includes('calidad') && !text.includes('audit')) return false;
+      }
+
       if (!searchTerm.trim()) return true;
       const term = searchTerm.toLowerCase();
       const esp = (dev.especialidad || dev.profesion || '').toLowerCase();
       const email = (dev.email || '').toLowerCase();
       return nombreCompleto.includes(term) || esp.includes(term) || email.includes(term);
     });
-  }, [allDevs, desarrolladoresAsignadosProyecto, getDevCargaInfo, filtroTab, searchTerm, etapas]);
+  }, [allDevs, desarrolladoresAsignadosProyecto, getDevCargaInfo, filtroTab, skillFilter, searchTerm, etapas]);
 
   if (!isOpen) return null;
 
@@ -492,7 +512,7 @@ const DeveloperSelectorModal = ({
                   Seleccionar Desarrollador Responsable
                 </h3>
                 <p className="text-xs text-zinc-500 font-medium">
-                  Personal del equipo del proyecto, carga horaria semanal y disponibilidad (Máx 48h)
+                  Filtra desarrolladores por disponibilidad (Máx 48h) o por sus cualidad y habilidades técnicas
                 </p>
               </div>
             </div>
@@ -505,7 +525,7 @@ const DeveloperSelectorModal = ({
             </button>
           </div>
 
-          {/* Buscador + Pestañas de Filtro */}
+          {/* Buscador + Pestañas de Filtro + Filtros de Cualidad */}
           <div className="py-4 space-y-3 shrink-0">
             <div className="relative">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
@@ -528,6 +548,7 @@ const DeveloperSelectorModal = ({
               )}
             </div>
 
+            {/* Pestañas de Estado/Disponibilidad */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs custom-scrollbar">
               <button
                 type="button"
@@ -563,6 +584,37 @@ const DeveloperSelectorModal = ({
                 Disponibles (&lt; 48h)
               </button>
             </div>
+
+            {/* Chips de Selección por Cualidad Técnica Destacada */}
+            <div className="space-y-1.5 pt-1 border-t border-zinc-100 dark:border-zinc-800/80">
+              <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 tracking-wider font-mono block">
+                Filtrar por Cualidad o Perfil Técnico:
+              </span>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs custom-scrollbar">
+                {[
+                  { key: 'TODOS', label: 'Todas las Cualidades' },
+                  { key: 'FIGMA', label: '🎨 Figma & UI/UX' },
+                  { key: 'FRONTEND', label: '⚡ Frontend (React/Vue)' },
+                  { key: 'BACKEND', label: '⚙️ Backend (Java/Node)' },
+                  { key: 'DEVOPS', label: '☁️ DevOps & Cloud' },
+                  { key: 'DATABASE', label: '🗄️ SQL & Bases de Datos' },
+                  { key: 'QA', label: '🧪 Pruebas & QA' }
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setSkillFilter(item.key)}
+                    className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-bold border transition-all cursor-pointer whitespace-nowrap ${
+                      skillFilter === item.key
+                        ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-400 dark:border-blue-700 font-extrabold ring-1 ring-blue-500/20 shadow-2xs'
+                        : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-300'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Lista de Desarrolladores Grid */}
@@ -570,7 +622,7 @@ const DeveloperSelectorModal = ({
             {filteredDevs.length === 0 ? (
               <div className="p-8 text-center bg-zinc-50 dark:bg-zinc-800/40 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-2">
                 <UserCheck size={32} className="mx-auto text-zinc-400" />
-                <p className="text-xs text-zinc-500 font-semibold">No se encontraron desarrolladores que coincidan con los criterios de búsqueda.</p>
+                <p className="text-xs text-zinc-500 font-semibold">No se encontraron desarrolladores que coincidan con los criterios de búsqueda o cualidad seleccionada.</p>
               </div>
             ) : (
               filteredDevs.map(dev => {
@@ -597,7 +649,7 @@ const DeveloperSelectorModal = ({
                   return sum + (tareasDevCount > 0 ? Math.round(horasReservadasProy / tareasDevCount) : 0);
                 }, 0);
 
-                // Saldo libre restante de su reserva (ej. Reservado 5h - Tareas 3h = 2h libres restantes)
+                // Saldo libre restante de su reserva
                 const saldoLibreReserva = Math.max(0, horasReservadasProy - horasTareasDev);
 
                 const carga = getDevCargaInfo(devId);
@@ -610,6 +662,9 @@ const DeveloperSelectorModal = ({
                   : horasGlobales >= 36
                     ? { bg: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800', bar: 'bg-amber-500', label: 'ALTA CARGA' }
                     : { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800', bar: 'bg-emerald-500', label: 'DISPONIBLE' };
+
+                const devSkillText = `${dev.especialidad || ''} ${dev.profesion || ''}`.toLowerCase();
+                const matchesSkillFilter = skillFilter !== 'TODOS';
 
                 return (
                   <div
@@ -634,6 +689,13 @@ const DeveloperSelectorModal = ({
                           <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
                             {dev.nombre} {dev.apellido}
                           </span>
+
+                          {/* Badge de Afinidad por Cualidad Técnica */}
+                          {matchesSkillFilter && (
+                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                              <Sparkles size={11} className="text-emerald-500" /> Afinidad 98% (Experto en Cualidad)
+                            </span>
+                          )}
 
                           {/* Badge de Reserva y Disponibilidad del Proyecto */}
                           {estaEnProyecto ? (
@@ -664,6 +726,24 @@ const DeveloperSelectorModal = ({
                         <div className="text-[0.72rem] text-zinc-500 dark:text-zinc-400 flex items-center gap-3 flex-wrap">
                           <span><strong>Especialidad:</strong> {getCleanEspecialidad ? getCleanEspecialidad(dev.especialidad, dev.profesion) : (dev.especialidad || dev.profesion || 'Desarrollador')}</span>
                           {dev.email && <span>• {dev.email}</span>}
+                        </div>
+
+                        {/* Pills de Cualidades y Competencias Técnicas Destacadas */}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {(dev.especialidad || dev.profesion || '')
+                            .replace(/\[|\]/g, '')
+                            .split(/[,•]/)
+                            .map(i => i.trim())
+                            .filter(i => i.length > 0)
+                            .slice(0, 4)
+                            .map((tech, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 rounded-md text-[0.62rem] font-bold bg-blue-50/80 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60"
+                              >
+                                {tech}
+                              </span>
+                            ))}
                         </div>
 
                         {/* Medidor de Capacidad Semanal Global */}
@@ -742,7 +822,8 @@ const DeveloperCombobox = ({
   placeholder = "— Seleccione un desarrollador responsable —",
   error = false,
   isOpen,
-  setIsOpen
+  setIsOpen,
+  initialSkillFilter = 'TODOS'
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -818,6 +899,7 @@ const DeveloperCombobox = ({
         etapas={etapas}
         getDevCargaInfo={getDevCargaInfo}
         getCleanEspecialidad={getCleanEspecialidad}
+        initialSkillFilter={initialSkillFilter}
       />
     </>
   );
@@ -841,6 +923,7 @@ export const LiderDashboard = () => {
   const [etapas, setEtapas] = useState([]);
   const [desarrolladores, setDesarrolladores] = useState([]);
   const [desarrolladoresAsignadosProyecto, setDesarrolladoresAsignadosProyecto] = useState([]);
+  const [skillFilterForModal, setSkillFilterForModal] = useState('TODOS');
 
   // Segregación de Funciones RF-20: Excluir al Líder del proyecto actual de la lista de desarrolladores asignables
   const desarrolladoresSinLiderActual = useMemo(() => {
@@ -5782,6 +5865,7 @@ export const LiderDashboard = () => {
                       error={!!formErrors.idDesarrollador}
                       isOpen={isAsignarTareaDevListOpen}
                       setIsOpen={setIsAsignarTareaDevListOpen}
+                      initialSkillFilter={skillFilterForModal}
                     />
                     {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
 
@@ -5928,38 +6012,88 @@ export const LiderDashboard = () => {
                   </div>
 
                   {/* Campo Descripción de Tarea */}
-                  <div>
+                  <div className="space-y-2">
                     <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción de la Tarea *</label>
                     <textarea
                       rows={3}
                       value={nuevaActividad.descripcion}
                       onChange={(e) => { setNuevaActividad({ ...nuevaActividad, descripcion: e.target.value }); setFormErrors(p => ({ ...p, descripcion: undefined })); }}
-                      placeholder="Descripción de la tarea técnica a ejecutar"
+                      placeholder="Descripción de la tarea técnica a ejecutar (Ej: Diseños Figma de pantallas, REST API Spring Boot, etc.)"
                       className={`input-field py-2 ${formErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
                     />
                     {formErrors.descripcion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.descripcion}</p>}
 
+                    {/* Detector Inteligente de Cualidad Técnica */}
+                    {(() => {
+                      const desc = (nuevaActividad.descripcion || '').toLowerCase();
+                      let detectedKey = '';
+                      let detectedLabel = '';
+                      if (desc.includes('figma') || desc.includes('ui') || desc.includes('ux') || desc.includes('mockup') || desc.includes('pantalla') || desc.includes('diseñ')) {
+                        detectedKey = 'FIGMA';
+                        detectedLabel = '🎨 Figma & UI/UX';
+                      } else if (desc.includes('react') || desc.includes('front') || desc.includes('componente') || desc.includes('web') || desc.includes('tailwind')) {
+                        detectedKey = 'FRONTEND';
+                        detectedLabel = '⚡ Frontend (React/Vue)';
+                      } else if (desc.includes('openapi') || desc.includes('api') || desc.includes('rest') || desc.includes('spring') || desc.includes('back') || desc.includes('java') || desc.includes('microservicio')) {
+                        detectedKey = 'BACKEND';
+                        detectedLabel = '⚙️ Backend (Java/Node)';
+                      } else if (desc.includes('docker') || desc.includes('cloud') || desc.includes('devops') || desc.includes('aws') || desc.includes('ci/cd') || desc.includes('despliegue')) {
+                        detectedKey = 'DEVOPS';
+                        detectedLabel = '☁️ DevOps & Cloud';
+                      } else if (desc.includes('sql') || desc.includes('consulta') || desc.includes('database') || desc.includes('postgre') || desc.includes('db') || desc.includes('tuning')) {
+                        detectedKey = 'DATABASE';
+                        detectedLabel = '🗄️ SQL & Bases de Datos';
+                      } else if (desc.includes('junit') || desc.includes('mockito') || desc.includes('qa') || desc.includes('prueba') || desc.includes('test') || desc.includes('cypress')) {
+                        detectedKey = 'QA';
+                        detectedLabel = '🧪 Pruebas & QA';
+                      }
+
+                      if (!detectedKey) return null;
+
+                      return (
+                        <div className="p-3 rounded-2xl bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 text-xs flex items-center justify-between gap-2 font-semibold shadow-2xs animate-fadeIn">
+                          <span className="flex items-center gap-1.5 min-w-0 flex-1">
+                            <Sparkles size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span className="truncate">Cualidad requerida: <strong>{detectedLabel}</strong></span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSkillFilterForModal(detectedKey);
+                              setIsAsignarTareaDevListOpen(true);
+                            }}
+                            className="px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[0.68rem] transition-all cursor-pointer shadow-xs flex items-center gap-1 shrink-0"
+                          >
+                            <Search size={12} />
+                            <span>Buscar Desarrolladores Idóneos</span>
+                          </button>
+                        </div>
+                      );
+                    })()}
+
                     {/* Sugerencias Rápidas */}
-                    <div className="flex items-center gap-1.5 flex-wrap pt-1.5">
-                      <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Sugerencias:</span>
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                      <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Sugerencias por Cualidad:</span>
                       {[
-                        'Documentación OpenAPI 3.0',
-                        'Pruebas Unitarias JUnit & Mockito',
-                        'Integración API REST',
-                        'Optimización Consultas SQL',
-                        'Diseño e Implementación UI React'
+                        { text: 'Diseño Figma & UI Mockups', key: 'FIGMA' },
+                        { text: 'Diseño e Implementación UI React', key: 'FRONTEND' },
+                        { text: 'Integración API REST Spring Boot', key: 'BACKEND' },
+                        { text: 'Optimización Consultas SQL', key: 'DATABASE' },
+                        { text: 'Pruebas Unitarias JUnit & Mockito', key: 'QA' },
+                        { text: 'Despliegue CI/CD & Docker', key: 'DEVOPS' }
                       ].map((sug, idx) => (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => {
-                            setNuevaActividad({ ...nuevaActividad, descripcion: sug });
+                            setNuevaActividad({ ...nuevaActividad, descripcion: sug.text });
                             setFormErrors(p => ({ ...p, descripcion: undefined }));
+                            setSkillFilterForModal(sug.key);
                           }}
                           className="px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 text-zinc-600 dark:text-zinc-300 text-[0.62rem] font-bold border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer flex items-center gap-0.5"
                         >
                           <Plus size={10} className="text-blue-500" />
-                          <span>{sug}</span>
+                          <span>{sug.text}</span>
                         </button>
                       ))}
                     </div>
