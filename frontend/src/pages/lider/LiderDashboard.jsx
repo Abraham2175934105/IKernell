@@ -2316,6 +2316,7 @@ export const LiderDashboard = () => {
     e.preventDefault();
     const errors = {};
     if (!nuevaActividad.idEtapa) errors.idEtapa = 'Seleccione una etapa';
+    if (!nuevaActividad.cualidadTecnica) errors.cualidadTecnica = 'Seleccione la cualidad técnica requerida para la tarea';
     if (!nuevaActividad.idDesarrollador) errors.idDesarrollador = 'Seleccione un desarrollador';
     if (!nuevaActividad.descripcion?.trim()) errors.descripcion = 'Ingrese la descripción de la tarea';
 
@@ -6035,9 +6036,75 @@ export const LiderDashboard = () => {
                     })()}
                   </div>
 
-                  {/* Campo Desarrollador Responsable */}
+                  {/* Paso 2: Clasificación / Cualidad Técnica Requerida para la Tarea * */}
+                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-zinc-800 dark:text-zinc-200 block text-xs">
+                        Clasificación / Cualidad Técnica Requerida para la Tarea *
+                      </label>
+                      {nuevaActividad.cualidadNombre && (
+                        <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 flex items-center gap-1">
+                          <Sparkles size={11} /> Pre-filtro Activo: {nuevaActividad.cualidadNombre}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 font-medium">
+                      Seleccione el perfil técnico requerido. Al elegir una cualidad, la lista de desarrolladores se pre-filtrará automáticamente mostrando solo candidatos idóneos.
+                    </p>
+
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      {[
+                        { text: 'Diseño Figma & Wireframes', key: 'FIGMA', icon: Figma },
+                        { text: 'Diseño e Implementación UI React', key: 'FRONTEND', icon: Code2 },
+                        { text: 'Integración API REST Spring Boot', key: 'BACKEND', icon: Server },
+                        { text: 'Optimización Consultas SQL & Tuning', key: 'DATABASE', icon: Database },
+                        { text: 'Pruebas Unitarias JUnit & Mockito', key: 'QA', icon: TestTube2 },
+                        { text: 'Despliegue CI/CD & Docker', key: 'DEVOPS', icon: Cloud }
+                      ].map((sug, idx) => {
+                        const SugIcon = sug.icon;
+                        const isCurrentSkill = nuevaActividad.cualidadTecnica === sug.key;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setSkillFilterForModal(sug.key);
+                              setNuevaActividad(prev => ({
+                                ...prev,
+                                cualidadTecnica: sug.key,
+                                cualidadNombre: sug.text
+                              }));
+                              setFormErrors(p => ({ ...p, cualidadTecnica: undefined }));
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-[0.68rem] font-extrabold border transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs ${
+                              isCurrentSkill
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-500/30'
+                                : 'bg-white dark:bg-zinc-900 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                            }`}
+                          >
+                            <SugIcon size={13} className={isCurrentSkill ? 'text-white' : 'text-blue-500 shrink-0'} />
+                            <span>{sug.text}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {formErrors.cualidadTecnica && (
+                      <p className="text-[0.65rem] text-red-500 font-bold mt-1 animate-fadeIn">{formErrors.cualidadTecnica}</p>
+                    )}
+                  </div>
+
+                  {/* Paso 3: Campo Desarrollador Responsable */}
                   <div>
                     <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Desarrollador Responsable *</label>
+
+                    {!nuevaActividad.cualidadTecnica && (
+                      <div className="mb-2 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-[0.72rem] font-semibold flex items-center gap-2 animate-fadeIn">
+                        <Info size={15} className="text-amber-600 shrink-0" />
+                        <span>Por favor seleccione primero la <strong>Clasificación / Cualidad Técnica Requerida</strong> arriba para habilitar el selector pre-filtrado de candidatos idóneos.</span>
+                      </div>
+                    )}
+
                     <DeveloperCombobox
                       value={nuevaActividad.idDesarrollador}
                       onChange={(idDev) => {
@@ -6049,11 +6116,15 @@ export const LiderDashboard = () => {
                       etapas={etapas}
                       getDevCargaInfo={getDevCargaInfo}
                       getCleanEspecialidad={getCleanEspecialidad}
-                      placeholder="— Seleccione un desarrollador responsable —"
+                      placeholder={
+                        nuevaActividad.cualidadNombre
+                          ? `— Ver desarrolladores idóneos para ${nuevaActividad.cualidadNombre} —`
+                          : '— Seleccione una cualidad técnica arriba primero —'
+                      }
                       error={!!formErrors.idDesarrollador}
                       isOpen={isAsignarTareaDevListOpen}
                       setIsOpen={setIsAsignarTareaDevListOpen}
-                      initialSkillFilter={skillFilterForModal}
+                      initialSkillFilter={nuevaActividad.cualidadTecnica || skillFilterForModal}
                     />
                     {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
 
@@ -6067,17 +6138,7 @@ export const LiderDashboard = () => {
                         d => d && String(d.idTrabajador || d.id || d.idDesarrollador) === devId
                       );
 
-                      const cualidadKey = nuevaActividad.cualidadTecnica || (() => {
-                        const desc = (nuevaActividad.descripcion || '').toLowerCase();
-                        if (desc.includes('figma') || desc.includes('ui') || desc.includes('ux') || desc.includes('mockup') || desc.includes('pantalla') || desc.includes('diseñ')) return 'FIGMA';
-                        if (desc.includes('react') || desc.includes('front') || desc.includes('componente') || desc.includes('web') || desc.includes('tailwind')) return 'FRONTEND';
-                        if (desc.includes('openapi') || desc.includes('api') || desc.includes('rest') || desc.includes('spring') || desc.includes('back') || desc.includes('java') || desc.includes('microservicio')) return 'BACKEND';
-                        if (desc.includes('docker') || desc.includes('cloud') || desc.includes('devops') || desc.includes('aws') || desc.includes('ci/cd') || desc.includes('despliegue')) return 'DEVOPS';
-                        if (desc.includes('sql') || desc.includes('consulta') || desc.includes('database') || desc.includes('postgre') || desc.includes('db') || desc.includes('tuning')) return 'DATABASE';
-                        if (desc.includes('junit') || desc.includes('mockito') || desc.includes('qa') || desc.includes('prueba') || desc.includes('test') || desc.includes('cypress')) return 'QA';
-                        return null;
-                      })();
-
+                      const cualidadKey = nuevaActividad.cualidadTecnica;
                       if (!cualidadKey || !selectedDevObj) return null;
 
                       const text = `${selectedDevObj.especialidad || ''} ${selectedDevObj.profesion || ''} ${selectedDevObj.nombre || ''}`.toLowerCase();
@@ -6091,15 +6152,7 @@ export const LiderDashboard = () => {
 
                       if (isCompatible) return null;
 
-                      const cualidadNombreMap = {
-                        FIGMA: 'Figma & UI/UX',
-                        FRONTEND: 'Frontend (React/Vue)',
-                        BACKEND: 'Backend (Java/Spring)',
-                        DEVOPS: 'DevOps & Cloud',
-                        DATABASE: 'SQL & Bases de Datos',
-                        QA: 'Pruebas & QA'
-                      };
-                      const nombreCualidadReq = nuevaActividad.cualidadNombre || cualidadNombreMap[cualidadKey] || cualidadKey;
+                      const nombreCualidadReq = nuevaActividad.cualidadNombre || cualidadKey;
 
                       return (
                         <div className="mt-3 p-3.5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs space-y-2 animate-fadeIn shadow-2xs">
@@ -6110,23 +6163,9 @@ export const LiderDashboard = () => {
                                 ¡Advertencia de Perfil Técnico Incompatible!
                               </span>
                               <p className="text-[0.7rem] text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
-                                El desarrollador seleccionado <strong>{selectedDevObj.nombre} {selectedDevObj.apellido}</strong> ({getCleanEspecialidad ? getCleanEspecialidad(selectedDevObj.especialidad, selectedDevObj.profesion) : (selectedDevObj.especialidad || 'Desarrollador')}) no registra la cualidad técnica requerida (<strong>{nombreCualidadReq}</strong>). Se recomienda elegir un desarrollador idóneo.
+                                El desarrollador seleccionado <strong>{selectedDevObj.nombre} {selectedDevObj.apellido}</strong> ({getCleanEspecialidad ? getCleanEspecialidad(selectedDevObj.especialidad, selectedDevObj.profesion) : (selectedDevObj.especialidad || 'Desarrollador')}) no registra la cualidad técnica requerida (<strong>{nombreCualidadReq}</strong>).
                               </p>
                             </div>
-                          </div>
-
-                          <div className="flex items-center justify-end gap-2 pt-1 border-t border-amber-200/80 dark:border-amber-800/60">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSkillFilterForModal(cualidadKey);
-                                setIsAsignarTareaDevListOpen(true);
-                              }}
-                              className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[0.68rem] transition-all cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0"
-                            >
-                              <Search size={12} />
-                              <span>Buscar Desarrollador Idóneo ({nombreCualidadReq})</span>
-                            </button>
                           </div>
                         </div>
                       );
@@ -6192,7 +6231,7 @@ export const LiderDashboard = () => {
                     })()}
                   </div>
 
-                  {/* Campo Horas Semanales Dedicadas a esta Tarea + Simulador Matemático de Suma en Tiempo Real */}
+                  {/* Paso 4: Campo Horas Semanales Dedicadas a esta Tarea + Simulador Matemático de Suma en Tiempo Real */}
                   <div>
                     {(() => {
                       const devId = String(nuevaActividad.idDesarrollador || '');
@@ -6282,7 +6321,7 @@ export const LiderDashboard = () => {
                                   <Calculator size={16} className="text-blue-600 dark:text-blue-400" />
                                   <span>Desglose de Operación y Suma de Carga:</span>
                                 </span>
-                                <span className="font-mono text-[0.68rem] px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800">
+                                <span className="font-mono text-[0.68rem] px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:bg-blue-900/50 text-blue-300 font-bold border border-blue-200 dark:border-blue-800">
                                   Límite Legal: 48h/sem
                                 </span>
                               </div>
@@ -6370,7 +6409,7 @@ export const LiderDashboard = () => {
                                 <div className="p-3 rounded-xl bg-red-100 dark:bg-red-950/80 border border-red-300 dark:border-red-800 text-red-800 dark:text-red-300 text-[0.7rem] font-bold flex items-center gap-2 animate-fadeIn">
                                   <AlertTriangle size={15} className="text-red-600 shrink-0" />
                                   <span>
-                                    ¡Imposible asignar esta tarea! La suma de <strong>{horasActualesGlobales}h + {horasInputVal}h = {nuevaCargaResultante}h</strong> supera el límite permitido de 48 horas semanales. Por favor reduzca las horas o elija otro desarrollador.
+                                    ¡Imposible asignar esta tarea! La suma de <strong>{horasActualesGlobales}h + {horasInputVal}h = {nuevaCargaResultante}h</strong> supera el límite permitido de 48 horas semanales.
                                   </span>
                                 </div>
                               )}
@@ -6381,7 +6420,7 @@ export const LiderDashboard = () => {
                     })()}
                   </div>
 
-                  {/* Campo Descripción de Tarea */}
+                  {/* Paso 5: Campo Descripción de Tarea */}
                   <div className="space-y-2">
                     <label className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Descripción de la Tarea *</label>
                     <textarea
@@ -6392,63 +6431,6 @@ export const LiderDashboard = () => {
                       className={`input-field py-2 ${formErrors.descripcion ? 'border-red-400 dark:border-red-600' : ''}`}
                     />
                     {formErrors.descripcion && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.descripcion}</p>}
-
-                    {/* Subtítulo / Clasificación por Cualidad Técnica Activa */}
-                    {nuevaActividad.cualidadNombre && (
-                      <div className="p-2.5 rounded-2xl bg-blue-50/90 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 text-xs flex items-center justify-between gap-2 font-semibold shadow-2xs animate-fadeIn">
-                        <span className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <Sparkles size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                          <span className="truncate">Subtítulo / Clasificación Técnica: <strong>{nuevaActividad.cualidadNombre}</strong></span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSkillFilterForModal(nuevaActividad.cualidadTecnica || 'TODOS');
-                            setIsAsignarTareaDevListOpen(true);
-                          }}
-                          className="px-2.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[0.65rem] transition-all cursor-pointer shadow-xs flex items-center gap-1 shrink-0"
-                        >
-                          <Search size={11} />
-                          <span>Buscar Desarrolladores Idóneos</span>
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Clasificación por Cualidad Técnica (Abre modal pre-filtrado sin sobrescribir la descripción) */}
-                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                      <span className="text-[0.62rem] font-extrabold text-zinc-400 uppercase tracking-wider">Clasificación / Cualidad Técnica de la Tarea:</span>
-                      {[
-                        { text: 'Diseño Figma & Wireframes', key: 'FIGMA', icon: Figma },
-                        { text: 'Diseño e Implementación UI React', key: 'FRONTEND', icon: Code2 },
-                        { text: 'Integración API REST Spring Boot', key: 'BACKEND', icon: Server },
-                        { text: 'Optimización Consultas SQL & Tuning', key: 'DATABASE', icon: Database },
-                        { text: 'Pruebas Unitarias JUnit & Mockito', key: 'QA', icon: TestTube2 },
-                        { text: 'Despliegue CI/CD & Docker', key: 'DEVOPS', icon: Cloud }
-                      ].map((sug, idx) => {
-                        const SugIcon = sug.icon;
-                        const isCurrentSkill = nuevaActividad.cualidadTecnica === sug.key;
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setSkillFilterForModal(sug.key);
-                              setNuevaActividad(prev => ({ ...prev, cualidadTecnica: sug.key, cualidadNombre: sug.text }));
-                              setIsAsignarTareaDevListOpen(true);
-                            }}
-                            className={`px-2.5 py-1 rounded-lg text-[0.62rem] font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                              isCurrentSkill
-                                ? 'bg-blue-600 text-white border-blue-600 font-extrabold shadow-xs'
-                                : 'bg-zinc-100 dark:bg-zinc-800/80 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                            }`}
-                            title="Filtrar desarrolladores por esta cualidad sin alterar la descripción escrita"
-                          >
-                            <SugIcon size={12} className={isCurrentSkill ? 'text-white' : 'text-blue-500 shrink-0'} />
-                            <span>{sug.text}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
 
                   {/* Acciones */}
