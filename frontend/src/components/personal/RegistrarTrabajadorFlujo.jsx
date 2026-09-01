@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   UserPlus, Shield, GraduationCap, Code2, Briefcase, ChevronRight, 
   CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Plus, X, Sparkles, 
   Check, Laptop, Database, Cpu, Wrench, FileCode, Edit3, Compass,
-  ArrowRight, ArrowUp, Lock, CheckCircle, RefreshCw, KeyRound, Mail
+  ArrowRight, ArrowUp, Lock, CheckCircle, RefreshCw, KeyRound, Mail,
+  AlertOctagon, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
@@ -108,6 +109,8 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   const [formError, setFormError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [userCreatedSuccessData, setUserCreatedSuccessData] = useState(null);
+  const [showConfirmExitModal, setShowConfirmExitModal] = useState(false);
+  const [existingTrabajadores, setExistingTrabajadores] = useState([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -130,6 +133,22 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   const [customTecnicaInput, setCustomTecnicaInput] = useState('');
   const [activeTabTecnicas, setActiveTabTecnicas] = useState('TODAS');
 
+  // Precargar colaboradores para validación de unicidad en tiempo real
+  useEffect(() => {
+    const fetchTrabajadores = async () => {
+      try {
+        const endpoint = lockRoleToDesarrollador ? '/lider/trabajadores' : '/coordinador/trabajadores';
+        const res = await api.get(endpoint);
+        if (Array.isArray(res.data)) {
+          setExistingTrabajadores(res.data);
+        }
+      } catch (e) {
+        console.warn("No se pudieron precargar los trabajadores para unicidad local:", e);
+      }
+    };
+    fetchTrabajadores();
+  }, []);
+
   // Helper auto-generate corporate email
   const autoGenerarEmail = (nom, ape) => {
     if (!nom || !ape) return '';
@@ -141,7 +160,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   // Validations
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // VALIDACIONES ESTRUCTURADAS CON ERRORES POR CAMPO
+  // VALIDACIONES ESTRUCTURADAS Y UNICIDAD ESTRICTA DE 3 CAMPOS (CÉDULA, EMAIL CORP, EMAIL PERS)
   const validateStep1 = () => {
     const errors = {};
     if (!formData.nombre.trim() || formData.nombre.trim().length < 2) {
@@ -150,19 +169,34 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     if (!formData.apellido.trim() || formData.apellido.trim().length < 2) {
       errors.apellido = 'Ingrese los apellidos del colaborador.';
     }
-    if (!formData.identificacion.trim() || formData.identificacion.trim().length < 4) {
-      errors.identificacion = 'Ingrese la cédula o número de documento de identidad.';
+    
+    // UNICIDAD 1: CÉDULA / IDENTIFICACIÓN
+    const cleanId = formData.identificacion.trim();
+    if (!cleanId || cleanId.length < 4) {
+      errors.identificacion = 'Ingrese un número de cédula o identificación válido (mínimo 4 dígitos).';
+    } else if (existingTrabajadores.some(t => t.identificacion?.trim().toLowerCase() === cleanId.toLowerCase())) {
+      errors.identificacion = '❌ Esta cédula / identificación ya se encuentra registrada en PostgreSQL por otro colaborador.';
     }
-    if (!formData.email.trim() || !isValidEmail(formData.email)) {
-      errors.email = 'Ingrese un correo corporativo válido (@ikernell.org).';
+
+    // UNICIDAD 2: CORREO CORPORATIVO ÚNICO (@ikernell.org)
+    const cleanEmail = formData.email.trim();
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      errors.email = 'Ingrese un correo corporativo válido con formato usuario@ikernell.org.';
+    } else if (existingTrabajadores.some(t => t.email?.trim().toLowerCase() === cleanEmail.toLowerCase())) {
+      errors.email = '❌ Este correo corporativo ya pertenece a otro colaborador registrado en el sistema.';
     }
-    if (!formData.emailPersonal.trim() || !isValidEmail(formData.emailPersonal)) {
-      errors.emailPersonal = 'Ingrese un correo personal o alternativo válido.';
+
+    // UNICIDAD 3: CORREO PERSONAL / ALTERNATIVO
+    const cleanPersonal = formData.emailPersonal.trim();
+    if (!cleanPersonal || !isValidEmail(cleanPersonal)) {
+      errors.emailPersonal = 'Ingrese un correo personal o alternativo válido para notificaciones.';
+    } else if (existingTrabajadores.some(t => t.emailPersonal?.trim().toLowerCase() === cleanPersonal.toLowerCase())) {
+      errors.emailPersonal = '❌ Este correo personal ya pertenece a otro colaborador registrado en la empresa.';
     }
 
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
-      setFormError('🔒 Faltan campos obligatorios. Revise los elementos marcados en rojo.');
+      setFormError('🔒 Existen errores de unicidad o datos incompletos. Revise los campos marcados en rojo.');
       return false;
     }
     setFormError(null);
@@ -172,7 +206,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   const validateStep2 = () => {
     const errors = {};
     if (!formData.profesion) {
-      errors.profesion = 'Seleccione la titulación académica o profesión.';
+      errors.profesion = 'Seleccione la profesión o titulación académica del colaborador.';
     }
     if (!formData.especialidad) {
       errors.especialidad = 'Seleccione la especialidad técnica principal.';
@@ -200,6 +234,23 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     }
     setFormError(null);
     return true;
+  };
+
+  // Solicitar confirmación al hacer clic en Salir / Volver si hay información ingresada
+  const handleRequestExit = () => {
+    const isFormDirty = formData.nombre.trim() || 
+                        formData.apellido.trim() || 
+                        formData.identificacion.trim() || 
+                        formData.email.trim() || 
+                        formData.emailPersonal.trim() || 
+                        habilidadesDirectivas.length > 0 || 
+                        habilidadesTecnicas.length > 0;
+
+    if (isFormDirty && !userCreatedSuccessData) {
+      setShowConfirmExitModal(true);
+    } else {
+      onVolver();
+    }
   };
 
   // Porcentaje dinámico de avance
@@ -369,6 +420,25 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       const msg = err.response?.data?.message || err.message || 'Error al conectar con PostgreSQL.';
       setFormError(msg);
       toast.error(msg);
+
+      // Resaltar en rojo el campo duplicado específico retornado por Spring Boot / PostgreSQL
+      const newFieldErrors = {};
+      const msgLower = msg.toLowerCase();
+      if (msgLower.includes('cédula') || msgLower.includes('identificación') || msgLower.includes('identificacion')) {
+        newFieldErrors.identificacion = '❌ Esta cédula / identificación ya se encuentra registrada en el sistema.';
+        handleJumpToStep(1);
+      }
+      if (msgLower.includes('correo electrónico corporativo') || msgLower.includes('correo corporativo') || msgLower.includes('@ikernell.org')) {
+        newFieldErrors.email = '❌ Este correo corporativo ya pertenece a otro colaborador.';
+        handleJumpToStep(1);
+      }
+      if (msgLower.includes('correo electrónico personal') || msgLower.includes('correo personal')) {
+        newFieldErrors.emailPersonal = '❌ Este correo personal ya pertenece a otro colaborador.';
+        handleJumpToStep(1);
+      }
+      if (Object.keys(newFieldErrors).length > 0) {
+        setFieldErrors(prev => ({ ...prev, ...newFieldErrors }));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -402,20 +472,68 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-16">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-16 relative">
+
+      {/* MODAL INTERACTIVO DE CONFIRMACIÓN AL INTENTAR SALIR / ABANDONAR */}
+      <AnimatePresence>
+        {showConfirmExitModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-red-200 dark:border-red-900/60 shadow-2xl space-y-6 text-center"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto shadow-inner border border-red-200 dark:border-red-800">
+                <AlertOctagon size={32} className="animate-pulse" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                  ¿Está seguro que desea salir?
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium leading-relaxed">
+                  Si abandona este formulario en este momento, <strong className="text-red-600 dark:text-red-400">se perderá toda la información</strong> ingresada para este colaborador.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmExitModal(false)}
+                  className="flex-1 py-3.5 px-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 text-xs sm:text-sm font-extrabold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-all"
+                >
+                  Continuar Registrando
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirmExitModal(false);
+                    onVolver();
+                  }}
+                  className="flex-1 py-3.5 px-4 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-600/30 transition-all"
+                >
+                  <Trash2 size={16} />
+                  <span>Sí, Salir y Descartar</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       
       {/* 1. HEADER STICKY PERMANENTE CON ALTA VISIBILIDAD */}
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-200/90 dark:border-zinc-800/90 px-4 sm:px-6 lg:px-10 py-4 shadow-sm transition-all">
         <div className="max-w-[1500px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           
-          {/* TÍTULO Y BOTÓN DE RETORNO */}
+          {/* TÍTULO Y BOTÓN DE RETORNO CON ADVERTENCIA DE SALIDA */}
           <div className="flex items-center gap-3.5">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={onVolver}
-              className="p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-blue-600 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer shadow-xs"
-              title="Volver a la consola de personal"
+              onClick={handleRequestExit}
+              className="p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-red-600 hover:border-red-300 dark:hover:border-red-800 transition-all cursor-pointer shadow-xs"
+              title="Salir y descartar datos"
             >
               <ArrowLeft size={20} />
             </motion.button>
@@ -676,7 +794,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
             </div>
           </div>
 
-          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL CON ESPACIADO SEPARADO Y RESALTADO DE ERRORES POR CAMPO */}
+          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL CON UNICIDAD DE 3 CAMPOS Y ALERTAS DE ERROR */}
           <div className="lg:col-span-8">
             <div className="min-h-[60vh] relative">
               <AnimatePresence custom={slideDirection} mode="wait">
@@ -699,7 +817,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         </div>
                         <div>
                           <span className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
-                            Paso 1 de 3 • Autenticación Obligatoria
+                            Paso 1 de 3 • Autenticación & Unicidad Obligatoria
                           </span>
                           <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
                             1. Identificación & Credenciales de Acceso
@@ -803,9 +921,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         </select>
                       </div>
 
-                      {/* IDENTIFICACIÓN / CÉDULA */}
+                      {/* UNICIDAD 1: IDENTIFICACIÓN / CÉDULA */}
                       <div className="sm:col-span-2">
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Número de Identificación / Cédula *</label>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Número de Identificación / Cédula *</label>
+                          <span className="text-[0.68rem] text-red-600 dark:text-red-400 font-black uppercase tracking-wider bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-900/40">
+                            Único e Irrepetible
+                          </span>
+                        </div>
                         <input
                           type="text"
                           required
@@ -830,12 +953,12 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      {/* CORREO CORPORATIVO */}
+                      {/* UNICIDAD 2: CORREO CORPORATIVO */}
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Correo Corporativo Único *</label>
-                          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full">
-                            @ikernell.org
+                          <span className="text-[0.68rem] text-red-600 dark:text-red-400 font-black uppercase tracking-wider bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-900/40">
+                            Único @ikernell.org
                           </span>
                         </div>
                         <input
@@ -860,9 +983,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         )}
                       </div>
 
-                      {/* CORREO PERSONAL */}
+                      {/* UNICIDAD 3: CORREO PERSONAL */}
                       <div>
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Correo Personal / Alternativo *</label>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Correo Personal / Alternativo *</label>
+                          <span className="text-[0.68rem] text-red-600 dark:text-red-400 font-black uppercase tracking-wider bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-900/40">
+                            Único Notificaciones
+                          </span>
+                        </div>
                         <input
                           type="email"
                           required
@@ -1310,7 +1438,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          onClick={onVolver}
+                          onClick={handleRequestExit}
                           className="px-6 py-3.5 rounded-2xl border border-zinc-300 dark:border-zinc-700 text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
                         >
                           Cancelar
