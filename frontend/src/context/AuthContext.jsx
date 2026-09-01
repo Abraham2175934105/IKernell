@@ -59,20 +59,19 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setToken(null);
     try {
-      localStorage.clear();
-      sessionStorage.clear();
-      if (theme) localStorage.setItem('theme', theme);
-      if (skipLogoutConfirm) localStorage.setItem('ikernell_skip_logout_confirm', skipLogoutConfirm);
-      if (sidebarCollapsed) localStorage.setItem('sidebar_collapsed', sidebarCollapsed);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('active_role_mode');
     } catch (e) {
       console.error('[IKernell Auth] Error al limpiar almacenamiento:', e);
     }
   }, [token]);
 
-  // Listener reactivo para invalidación cross-tab y destrucción instantánea de sesión
+  // Listener reactivo para sincronización segura cross-tab
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if ((e.key === 'token' || e.key === 'user' || e.key === null) && (!e.newValue || e.key === null)) {
+      // Solo cerrar sesión si la clave 'token' fue removida explícitamente y la sesión estaba activa
+      if (e.key === 'token' && (!e.newValue || e.newValue === 'null')) {
         setUser(null);
         setToken(null);
       }

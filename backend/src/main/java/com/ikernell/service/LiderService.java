@@ -533,18 +533,74 @@ public class LiderService {
         return actividadRepository.save(actividad);
     }
 
-    // Consultas de proyectos por líder
-    @Transactional(readOnly = true)
+    // Consultas de proyectos por líder con inicialización WBS
+    @Transactional
     public List<Proyecto> listarProyectosPorLider(Long idLider) {
         Trabajador lider = trabajadorRepository.findById(idLider)
                 .orElseThrow(() -> new ResourceNotFoundException("Líder no encontrado con ID: " + idLider));
-        return proyectoRepository.findByLider(lider);
+        List<Proyecto> lista = proyectoRepository.findByLider(lider);
+        for (Proyecto prj : lista) {
+            if (prj.getEtapas() != null) {
+                org.hibernate.Hibernate.initialize(prj.getEtapas());
+                for (Etapa et : prj.getEtapas()) {
+                    if (et.getActividades() != null) {
+                        org.hibernate.Hibernate.initialize(et.getActividades());
+                    }
+                }
+            }
+            if (prj.getEtapas() == null || prj.getEtapas().isEmpty()) {
+                Etapa etapaInicial = new Etapa();
+                etapaInicial.setNombreEtapa("Fase 1: Levantamiento y Análisis de Requerimientos");
+                etapaInicial.setEstado("EN_PROGRESO");
+                etapaInicial.setProyecto(prj);
+                Etapa guardada = etapaRepository.save(etapaInicial);
+
+                Actividad actInicial = new Actividad();
+                actInicial.setDescripcion("Análisis de Requerimientos y Definición de Alcance WBS");
+                actInicial.setEstado("PENDIENTE");
+                actInicial.setEtapa(guardada);
+                if (prj.getLider() != null) {
+                    actInicial.setDesarrollador(prj.getLider());
+                }
+                actividadRepository.save(actInicial);
+                prj.getEtapas().add(guardada);
+            }
+        }
+        return lista;
     }
 
-    // Listado general de proyectos optimizado con FETCH del Líder
-    @Transactional(readOnly = true)
+    // Listado general de proyectos optimizado con FETCH del Líder y WBS
+    @Transactional
     public List<Proyecto> listarTodosLosProyectos() {
-        return proyectoRepository.findAllWithLider();
+        List<Proyecto> lista = proyectoRepository.findAllWithLider();
+        for (Proyecto prj : lista) {
+            if (prj.getEtapas() != null) {
+                org.hibernate.Hibernate.initialize(prj.getEtapas());
+                for (Etapa et : prj.getEtapas()) {
+                    if (et.getActividades() != null) {
+                        org.hibernate.Hibernate.initialize(et.getActividades());
+                    }
+                }
+            }
+            if (prj.getEtapas() == null || prj.getEtapas().isEmpty()) {
+                Etapa etapaInicial = new Etapa();
+                etapaInicial.setNombreEtapa("Fase 1: Levantamiento y Análisis de Requerimientos");
+                etapaInicial.setEstado("EN_PROGRESO");
+                etapaInicial.setProyecto(prj);
+                Etapa guardada = etapaRepository.save(etapaInicial);
+
+                Actividad actInicial = new Actividad();
+                actInicial.setDescripcion("Análisis de Requerimientos y Definición de Alcance WBS");
+                actInicial.setEstado("PENDIENTE");
+                actInicial.setEtapa(guardada);
+                if (prj.getLider() != null) {
+                    actInicial.setDesarrollador(prj.getLider());
+                }
+                actividadRepository.save(actInicial);
+                prj.getEtapas().add(guardada);
+            }
+        }
+        return lista;
     }
 
     // Consultas paginadas para tablas con alto volumen de proyectos

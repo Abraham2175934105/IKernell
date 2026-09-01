@@ -34,8 +34,9 @@ export const useApi = () => {
         return response.data;
       },
       (error) => {
-        // Si el token expiró o no tiene permisos (401 o 403), cerramos la sesión automáticamente
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        // Si el token expiró o es inválido (401), cerramos la sesión automáticamente
+        // NOTA: 403 (Forbidden) es una restricción de permisos en un recurso y no debe destruir la sesión del usuario
+        if (error.response && error.response.status === 401) {
           logout();
         }
         

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Clock, ShieldCheck, Sparkles, Sliders, CheckCircle2, AlertCircle, RefreshCw, Code2, Crown, Filter, Layers, Zap, Activity } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Clock, ShieldCheck, Sparkles, Sliders, CheckCircle2, AlertCircle, RefreshCw, Code2, Crown, Filter, Layers, Zap, Activity, PieChart, SlidersHorizontal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
@@ -14,6 +14,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
   const [modo, setModo] = useState('AUTOMATICO_INTELIGENTE');
   const [semanaCodigo, setSemanaCodigo] = useState('2026-W36');
   const [filtroEstadoTareas, setFiltroEstadoTareas] = useState('TODAS');
+  const [showTaskPercentages, setShowTaskPercentages] = useState(false);
 
   const [horasDevReales, setHorasDevReales] = useState(devAssignedHours);
   const [actividadesDevList, setActividadesDevList] = useState([]);
@@ -436,54 +437,167 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         )}
       </div>
 
-      {/* Barra Proporcional Interactivamente Ajustable con Dividendo Color Coded Multicapa */}
+      {/* Barra Proporcional Interactivamente Ajustable con Dividendo Color Coded Multicapa y Desglose Porcentual WBS */}
       <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 space-y-4">
         <div className="flex justify-between items-center text-xs font-bold flex-wrap gap-2">
-          <span className="text-zinc-700 dark:text-zinc-300">
-            Barra Proporcional de Jornada Laboral (48 Horas Semanales - Límite Dev 30h):
-          </span>
-          <span className="text-zinc-500 font-mono text-[0.7rem]">
-            Modo: <strong className="text-blue-600 dark:text-blue-400">{modo.replace('_', ' ')}</strong>
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-zinc-700 dark:text-zinc-300 font-extrabold">
+              Barra Proporcional de Jornada Laboral (48 Horas Semanales - Límite Dev 30h):
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowTaskPercentages(!showTaskPercentages)}
+              className="px-2.5 py-1 rounded-xl text-[0.65rem] font-black bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Ver o contraer el porcentaje exacto que representa cada tarea WBS en la jornada de 48h"
+            >
+              <PieChart size={13} className="text-purple-600 dark:text-purple-400" />
+              <span>{showTaskPercentages ? 'Ocultar Desglose % WBS' : '📊 Ver Porcentajes WBS por Tarea'}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-500 font-mono text-[0.7rem]">
+              Modo: <strong className={modo === 'MANUAL' ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}>{modo.replace('_', ' ')}</strong>
+            </span>
+            {modo === 'AUTOMATICO_INTELIGENTE' ? (
+              <button
+                type="button"
+                onClick={() => setModo('MANUAL')}
+                className="px-2.5 py-1 rounded-lg text-[0.65rem] font-extrabold bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700 flex items-center gap-1 cursor-pointer transition-all"
+                title="Haz clic si deseas modificar manualmente la barra y los deslizadores de horas"
+              >
+                <SlidersHorizontal size={12} /> Re-ajustar Horarios Manualmente
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={aplicarSugerenciaInteligente}
+                className="px-2.5 py-1 rounded-lg text-[0.65rem] font-extrabold bg-blue-50 hover:bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-700 flex items-center gap-1 cursor-pointer transition-all"
+                title="Restablecer al cálculo automático basado en entregables WBS"
+              >
+                <Sparkles size={12} /> Volver a Auto-Cálculo WBS
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Visual Barra Proporcional con Dividendo Visual (Dirección Líder + Dev Activo + Dev Ejecutado) */}
-        <div className="h-5 w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden flex shadow-inner border border-zinc-300 dark:border-zinc-700">
-          {/* Segmento 1: Dirección Líder (Azul Rey: bg-blue-600) */}
+        {/* Visual Barra Proporcional de Alto Contraste (Dirección Líder Sky Blue + Dev Activo Purple + Dev Ejecutado Emerald) */}
+        <div className="h-6 w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden flex shadow-inner border border-zinc-300 dark:border-zinc-700">
+          {/* Segmento 1: Dirección Líder (Azul Celeste Sky: bg-sky-500) */}
           <div
             style={{ width: `${(horasLider / 48) * 100}%` }}
-            className="bg-blue-600 h-full transition-all duration-300 flex items-center justify-center text-[0.65rem] font-black text-white px-2 shadow-xs shrink-0"
-            title={`👑 Dirección Líder: ${horasLider}h (Mínimo 18h)`}
+            className="bg-sky-500 h-full transition-all duration-300 flex items-center justify-center text-[0.68rem] font-black text-white px-2 shadow-xs shrink-0"
+            title={`👑 Dirección Líder: ${horasLider}h (${Math.round((horasLider/48)*100)}% de la jornada)`}
           >
             {horasLider >= 8 && `👑 ${horasLider}h Líder`}
           </div>
 
-          {/* Segmento 2: Dev Activo por Ejecutar (Índigo: bg-indigo-600) */}
-          <div
-            style={{ width: `${(Math.min(horasDev, desgloseDividendoDev.activas > 0 ? desgloseDividendoDev.activas : horasDev) / 48) * 100}%` }}
-            className="bg-indigo-600 h-full transition-all duration-300 flex items-center justify-center text-[0.65rem] font-black text-white px-2 shadow-xs shrink-0"
-            title={`💻 Dev Restante por Ejecutar: ${desgloseDividendoDev.activas > 0 ? desgloseDividendoDev.activas : horasDev}h`}
-          >
-            {(desgloseDividendoDev.activas > 0 ? desgloseDividendoDev.activas : horasDev) >= 6 && `💻 ${desgloseDividendoDev.activas > 0 ? desgloseDividendoDev.activas : horasDev}h Dev Activo`}
-          </div>
+          {/* Segmento 2: Dev Activo por Ejecutar (Violeta Púrpura Intenso: bg-purple-600) */}
+          {desgloseDividendoDev.activas > 0 && (
+            <div
+              style={{ width: `${(desgloseDividendoDev.activas / 48) * 100}%` }}
+              className="bg-purple-600 h-full transition-all duration-300 flex items-center justify-center text-[0.68rem] font-black text-white px-2 shadow-xs shrink-0"
+              title={`💻 Dev Restante por Ejecutar: ${desgloseDividendoDev.activas}h (${Math.round((desgloseDividendoDev.activas/48)*100)}% de la jornada)`}
+            >
+              {desgloseDividendoDev.activas >= 6 && `💻 ${desgloseDividendoDev.activas}h Dev Activo`}
+            </div>
+          )}
 
-          {/* Segmento 3: Dev Ya Ejecutado (Esmeralda: bg-emerald-500) */}
+          {/* Segmento 3: Dev Ya Ejecutado (Verde Esmeralda: bg-emerald-500) */}
           {desgloseDividendoDev.ejecutadas > 0 && (
             <div
-              style={{ width: `${(Math.min(horasDev, desgloseDividendoDev.ejecutadas) / 48) * 100}%` }}
-              className="bg-emerald-500 h-full transition-all duration-300 flex items-center justify-center text-[0.65rem] font-black text-white px-2 shadow-xs shrink-0"
-              title={`🟢 Dev Ya Ejecutado: ${desgloseDividendoDev.ejecutadas}h (Cumplido)`}
+              style={{ width: `${(desgloseDividendoDev.ejecutadas / 48) * 100}%` }}
+              className="bg-emerald-500 h-full transition-all duration-300 flex items-center justify-center text-[0.68rem] font-black text-white px-2 shadow-xs shrink-0"
+              title={`🟢 Dev Ya Ejecutado: ${desgloseDividendoDev.ejecutadas}h (${Math.round((desgloseDividendoDev.ejecutadas/48)*100)}% de la jornada)`}
             >
               {desgloseDividendoDev.ejecutadas >= 4 && `🟢 ${desgloseDividendoDev.ejecutadas}h Cumplidas`}
             </div>
           )}
+
+          {/* Segmento 4: Holgura / Reserva Libre (Ámbar: bg-amber-400) */}
+          {horasDev > desgloseDividendoDev.totales && (
+            <div
+              style={{ width: `${((horasDev - desgloseDividendoDev.totales) / 48) * 100}%` }}
+              className="bg-amber-400 h-full transition-all duration-300 flex items-center justify-center text-[0.65rem] font-black text-amber-950 px-2 shrink-0"
+              title={`🟡 Reserva Libre / Holgura Dev: ${horasDev - desgloseDividendoDev.totales}h`}
+            >
+              {horasDev - desgloseDividendoDev.totales >= 4 && `🟡 ${horasDev - desgloseDividendoDev.totales}h Libre`}
+            </div>
+          )}
         </div>
 
-        {/* Deslizador de Ajuste Físico con Límite Mínimo de 18h para Líder (Tope Máx 30h Dev) */}
-        <div className="space-y-2">
+        {/* Desglose Porcentual de Tareas WBS (Modal / Acordeón Interactivo) */}
+        <AnimatePresence>
+          {showTaskPercentages && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="p-4 rounded-2xl bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/70 space-y-3 text-xs"
+            >
+              <div className="flex items-center justify-between border-b border-purple-200/60 dark:border-purple-800/40 pb-2">
+                <span className="font-extrabold text-purple-900 dark:text-purple-200 flex items-center gap-1.5">
+                  <PieChart size={14} className="text-purple-600 dark:text-purple-400" />
+                  Desglose Porcentual de Entregables WBS sobre la Jornada (48 Horas Semanales):
+                </span>
+                <span className="font-mono text-[0.68rem] font-bold text-purple-700 dark:text-purple-300">
+                  Base: 48h Semanales (100%)
+                </span>
+              </div>
+
+              {actividadesDevList.length === 0 ? (
+                <div className="text-zinc-500 text-center py-2 text-xs">No hay entregables asignados actualmente.</div>
+              ) : (
+                <div className="space-y-2">
+                  {actividadesDevList.map((a, idx) => {
+                    const match = (a.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                    const hTask = match ? parseInt(match[1]) : (parseInt(a.horasEstimadas || a.horas) || 6);
+                    const pct = ((hTask / 48) * 100).toFixed(1);
+                    const stUpper = (a.estado || 'PENDIENTE').toUpperCase();
+                    const isFin = stUpper === 'FINALIZADA' || stUpper === 'COMPLETADO';
+                    const isProc = stUpper === 'EN_PROGRESO' || stUpper === 'EN_EJECUCION';
+
+                    return (
+                      <div key={a.idActividad || idx} className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-purple-100 dark:border-purple-900/60 space-y-1.5">
+                        <div className="flex justify-between items-center text-[0.72rem] font-bold">
+                          <span className="text-zinc-800 dark:text-zinc-200 truncate max-w-[65%]">
+                            • {a.descripcion}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-purple-700 dark:text-purple-300 font-extrabold">
+                              {hTask}h/sem ({pct}% de 48h)
+                            </span>
+                            {isFin ? (
+                              <span className="px-1.5 py-0.5 rounded text-[0.6rem] bg-emerald-100 text-emerald-800 font-black">CUMPLIDA</span>
+                            ) : isProc ? (
+                              <span className="px-1.5 py-0.5 rounded text-[0.6rem] bg-purple-100 text-purple-800 font-black">EN CURSO</span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded text-[0.6rem] bg-amber-100 text-amber-800 font-black">EN COLA</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Barra Mini Porcentual */}
+                        <div className="w-full h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                          <div
+                            style={{ width: `${pct}%` }}
+                            className={`h-full ${isFin ? 'bg-emerald-500' : isProc ? 'bg-purple-600' : 'bg-amber-400'}`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Deslizador de Ajuste Físico (Renderizado UNA SOLA VEZ) */}
+        <div className="space-y-2 pt-1">
           <div className="flex justify-between items-center text-xs text-zinc-500 font-medium">
-            <span>Ajustar horas como Líder: <strong className="text-blue-600 dark:text-blue-400">{horasLider}h</strong> (Mín. 18h)</span>
-            <span>Ajustar horas como Desarrollador: <strong className="text-indigo-600 dark:text-indigo-400">{horasDev}h</strong> (Máx. 30h)</span>
+            <span>Ajustar horas como Líder: <strong className="text-sky-600 dark:text-sky-400 font-mono font-extrabold">{horasLider}h</strong> (Mín. 18h)</span>
+            <span>Ajustar horas como Desarrollador: <strong className="text-purple-600 dark:text-purple-400 font-mono font-extrabold">{horasDev}h</strong> (Máx. 30h)</span>
           </div>
           <input
             type="range"
@@ -492,25 +606,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             step="1"
             value={horasLider}
             onChange={(e) => handleHorasLiderChange(e.target.value)}
-            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-          />
-        </div>
-
-        {/* Botones de Presets Rápidos */}
-        {/* Deslizador de Ajuste Físico con Límite Mínimo de 18h para Líder (Tope Máx 30h Dev) */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center text-xs text-zinc-500 font-medium">
-            <span>Ajustar horas como Líder: <strong className="text-blue-600 dark:text-blue-400">{horasLider}h</strong> (Mín. 18h)</span>
-            <span>Ajustar horas como Desarrollador: <strong className="text-indigo-600 dark:text-indigo-400">{horasDev}h</strong> (Máx. 30h)</span>
-          </div>
-          <input
-            type="range"
-            min="18"
-            max="48"
-            step="1"
-            value={horasLider}
-            onChange={(e) => handleHorasLiderChange(e.target.value)}
-            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-sky-600"
           />
         </div>
 
@@ -528,14 +624,14 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             <button
               type="button"
               onClick={() => { setHorasLider(18); setHorasDev(30); setModo('MANUAL'); }}
-              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:border-indigo-400 transition-all cursor-pointer shadow-2xs"
+              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:border-purple-400 transition-all cursor-pointer shadow-2xs"
             >
               Límite Máximo Técnico (18h Líder / 30h Dev)
             </button>
             <button
               type="button"
               onClick={() => { setHorasLider(32); setHorasDev(16); setModo('MANUAL'); }}
-              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:border-blue-400 transition-all cursor-pointer shadow-2xs"
+              className="px-3 py-1 rounded-xl text-[0.68rem] font-bold bg-white dark:bg-zinc-800 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:border-sky-400 transition-all cursor-pointer shadow-2xs"
             >
               Enfoque Dirección (32h Líder / 16h Dev)
             </button>

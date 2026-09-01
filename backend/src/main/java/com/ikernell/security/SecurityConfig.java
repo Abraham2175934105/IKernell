@@ -36,10 +36,10 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // Algoritmo de hash BCrypt unidireccional con sal aleatoria y costo computacional explícito (factor 12)
+    // Algoritmo de hash BCrypt unidireccional con sal aleatoria y costo computacional equilibrado (factor 10)
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
+        return new BCryptPasswordEncoder(10);
     }
 
     // Proveedor de autenticación que valida el usuario contra la base de datos PostgreSQL

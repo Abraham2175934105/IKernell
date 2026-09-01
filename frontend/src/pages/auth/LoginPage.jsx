@@ -46,54 +46,53 @@ const AdvancedLoginBackground = () => {
         }}
       />
 
-      {/* 2. Gradientes Radiales de Resplandor Neón Líquido */}
-      <motion.div
-        animate={{
-          scale: [1, 1.25, 1],
-          x: [0, 40, 0],
-          y: [0, -30, 0],
-          opacity: [0.35, 0.6, 0.35]
-        }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-32 -left-20 w-[600px] h-[600px] bg-gradient-to-br from-blue-500/20 via-indigo-600/15 to-transparent dark:from-blue-600/25 dark:via-cyan-500/20 rounded-full blur-[140px]"
-      />
-
-      <motion.div
-        animate={{
-          scale: [1, 1.2, 1],
-          x: [0, -45, 0],
-          y: [0, 35, 0],
-          opacity: [0.3, 0.55, 0.3]
-        }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-        className="absolute -bottom-32 -right-20 w-[580px] h-[580px] bg-gradient-to-tl from-cyan-400/20 via-blue-600/15 to-transparent dark:from-indigo-600/20 dark:via-blue-600/15 rounded-full blur-[130px]"
-      />
-
+      {/* 2. Gradientes Radiales de Resplandor Neón Líquido (Optimizado con GPU acceleration) */}
       <motion.div
         animate={{
           scale: [1, 1.15, 1],
-          opacity: [0.15, 0.35, 0.15]
+          opacity: [0.35, 0.55, 0.35]
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        style={{ willChange: 'transform, opacity' }}
+        className="absolute -top-32 -left-20 w-[500px] h-[500px] bg-gradient-to-br from-blue-500/20 via-indigo-600/15 to-transparent dark:from-blue-600/25 dark:via-cyan-500/20 rounded-full blur-3xl transform-gpu"
+      />
+
+      <motion.div
+        animate={{
+          scale: [1, 1.12, 1],
+          opacity: [0.3, 0.5, 0.3]
+        }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+        style={{ willChange: 'transform, opacity' }}
+        className="absolute -bottom-32 -right-20 w-[480px] h-[480px] bg-gradient-to-tl from-cyan-400/20 via-blue-600/15 to-transparent dark:from-indigo-600/20 dark:via-blue-600/15 rounded-full blur-3xl transform-gpu"
+      />
+
+      <motion.div
+        animate={{
+          scale: [1, 1.1, 1],
+          opacity: [0.15, 0.3, 0.15]
         }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[450px] h-[450px] bg-gradient-to-tr from-purple-500/15 via-blue-500/10 to-transparent dark:from-cyan-400/15 dark:via-blue-600/10 rounded-full blur-[120px]"
+        style={{ willChange: 'transform, opacity' }}
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-gradient-to-tr from-purple-500/15 via-blue-500/10 to-transparent dark:from-cyan-400/15 dark:via-blue-600/10 rounded-full blur-3xl transform-gpu"
       />
 
       {/* 3. Rayos de Escaneo de Datos Láser */}
       <motion.div
         animate={{
-          y: ['-100%', '250%'],
-          opacity: [0, 0.8, 0],
+          y: ['-100%', '200%'],
+          opacity: [0, 0.7, 0],
         }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute left-1/4 w-[1px] h-48 bg-gradient-to-b from-transparent via-blue-500/40 to-transparent"
+        className="absolute left-1/4 w-[1px] h-48 bg-gradient-to-b from-transparent via-blue-500/40 to-transparent transform-gpu"
       />
       <motion.div
         animate={{
-          y: ['-100%', '250%'],
-          opacity: [0, 0.8, 0],
+          y: ['-100%', '200%'],
+          opacity: [0, 0.7, 0],
         }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 3.5 }}
-        className="absolute right-1/3 w-[1px] h-56 bg-gradient-to-b from-transparent via-cyan-400/40 to-transparent"
+        className="absolute right-1/3 w-[1px] h-56 bg-gradient-to-b from-transparent via-cyan-400/40 to-transparent transform-gpu"
       />
 
       {/* 4. Nodos de Criptografía con Ondas de Pulso */}

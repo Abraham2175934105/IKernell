@@ -15,9 +15,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
+import com.ikernell.model.Etapa;
+import com.ikernell.model.Actividad;
+import com.ikernell.repository.EtapaRepository;
+import com.ikernell.repository.ActividadRepository;
 import com.ikernell.model.HistorialCambiosCoordinador;
 import com.ikernell.repository.HistorialCambiosCoordinadorRepository;
 
@@ -34,6 +35,8 @@ public class CoordinadorService {
     private final PasswordEncoder passwordEncoder;
     private final HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository;
     private final EmailService emailService;
+    private final EtapaRepository etapaRepository;
+    private final ActividadRepository actividadRepository;
 
     public CoordinadorService(TrabajadorRepository trabajadorRepository,
             ProyectoRepository proyectoRepository,
@@ -41,7 +44,9 @@ public class CoordinadorService {
             SolicitudContactoRepository solicitudContactoRepository,
             PasswordEncoder passwordEncoder,
             HistorialCambiosCoordinadorRepository historialCambiosCoordinadorRepository,
-            EmailService emailService) {
+            EmailService emailService,
+            EtapaRepository etapaRepository,
+            ActividadRepository actividadRepository) {
         this.trabajadorRepository = trabajadorRepository;
         this.proyectoRepository = proyectoRepository;
         this.proyectoDesarrolladorRepository = proyectoDesarrolladorRepository;
@@ -49,6 +54,8 @@ public class CoordinadorService {
         this.passwordEncoder = passwordEncoder;
         this.historialCambiosCoordinadorRepository = historialCambiosCoordinadorRepository;
         this.emailService = emailService;
+        this.etapaRepository = etapaRepository;
+        this.actividadRepository = actividadRepository;
     }
 
     // Registra un nuevo empleado cifrando la contraseña con BCrypt
@@ -134,10 +141,62 @@ public class CoordinadorService {
         return trabajadorRepository.findAll();
     }
 
-    // Consulta el listado completo de proyectos corporativos
-    @Transactional(readOnly = true)
+    // Consulta el listado completo de proyectos corporativos con inicialización de WBS
+    @Transactional
     public List<Proyecto> listarTodosProyectos() {
-        return proyectoRepository.findAll();
+        List<Proyecto> proyectos = proyectoRepository.findAll();
+        for (Proyecto prj : proyectos) {
+            if (prj.getEtapas() != null) {
+                org.hibernate.Hibernate.initialize(prj.getEtapas());
+                for (Etapa et : prj.getEtapas()) {
+                    if (et.getActividades() != null) {
+                        org.hibernate.Hibernate.initialize(et.getActividades());
+                    }
+                }
+            }
+            // Auto-generación de etapa y tarea inicial si el proyecto no posee fases WBS
+            if (prj.getEtapas() == null || prj.getEtapas().isEmpty()) {
+                if (etapaRepository != null) {
+                    Etapa etapaInicial = new Etapa();
+                    etapaInicial.setNombreEtapa("Fase 1: Levantamiento y Análisis de Requerimientos");
+                    etapaInicial.setEstado("EN_PROGRESO");
+                    etapaInicial.setProyecto(prj);
+                    Etapa guardada = etapaRepository.save(etapaInicial);
+                    
+                    Actividad actInicial = new Actividad();
+                    actInicial.setDescripcion("Análisis de Requerimientos y Definición de Alcance WBS");
+                    actInicial.setEstado("PENDIENTE");
+                    actInicial.setEtapa(guardada);
+                    if (prj.getLider() != null) {
+                        actInicial.setDesarrollador(prj.getLider());
+                    }
+                    if (actividadRepository != null) {
+                        actividadRepository.save(actInicial);
+                    }
+                    
+                    prj.getEtapas().add(guardada);
+                }
+            }
+        }
+        return proyectos;
+    }
+
+    // Elimina una fase WBS si no contiene tareas asociadas
+    @Transactional
+    public void eliminarEtapa(Long idEtapa) {
+        if (!etapaRepository.existsById(idEtapa)) {
+            throw new ResourceNotFoundException("Etapa no encontrada con ID: " + idEtapa);
+        }
+        Etapa etapa = etapaRepository.findById(idEtapa).get();
+        if (etapa.getProyecto() != null &&
+                ("FINALIZADO".equalsIgnoreCase(etapa.getProyecto().getEstado())
+                        || "COMPLETADO".equalsIgnoreCase(etapa.getProyecto().getEstado()))) {
+            throw new IllegalStateException("El proyecto se encuentra finalizado. No se pueden alterar fases de un proyecto cerrado.");
+        }
+        if (etapa.getActividades() != null && !etapa.getActividades().isEmpty()) {
+            throw new IllegalStateException("No se puede eliminar una etapa que contiene actividades asociadas.");
+        }
+        etapaRepository.deleteById(idEtapa);
     }
 
     // Consulta paginada para listas de personal extensas

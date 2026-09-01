@@ -150,6 +150,13 @@ public class CoordinadorController {
         return ResponseEntity.status(HttpStatus.CREATED).body(asignacion);
     }
 
+    @DeleteMapping("/etapas/{idEtapa}")
+    @Operation(summary = "Eliminar Etapa WBS (Coordinador)", description = "Elimina una etapa sin actividades asociadas del desglose WBS de un proyecto")
+    public ResponseEntity<Void> eliminarEtapa(@PathVariable Long idEtapa) {
+        coordinadorService.eliminarEtapa(idEtapa);
+        return ResponseEntity.noContent().build();
+    }
+
     // Gestión de solicitudes de contacto recibidas desde la landing pública
     @GetMapping("/solicitudes")
     @Operation(summary = "Listar solicitudes de contacto web", description = "Devuelve todas las consultas enviadas por el formulario público de la web")

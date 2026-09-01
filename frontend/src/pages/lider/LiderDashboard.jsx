@@ -14,7 +14,7 @@ import {
   Info, HelpCircle, FileText, Edit3, Filter, ShieldAlert, Check, Globe, FolderGit2, Building2, PieChart, FileCheck,
   FolderPlus, DollarSign, CircleDollarSign, CalendarClock, AlignLeft, Lock, Search, Eye, EyeOff,
   ArrowRight, ArrowLeft, Users, UserX, Code2, GraduationCap, BadgeCheck, Shield, Pause, Play, ClipboardList, FolderCheck, Mail,
-  Figma, Server, Cloud, Database, TestTube2, Award, SlidersHorizontal, AlertCircle, XCircle, Calculator, Target, Pin
+  Figma, Server, Cloud, Database, TestTube2, Award, SlidersHorizontal, AlertCircle, XCircle, Calculator, Target, Pin, Trash2, CheckSquare, Square
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1119,6 +1119,7 @@ export const LiderDashboard = () => {
   const [desarrolladores, setDesarrolladores] = useState([]);
   const [desarrolladoresAsignadosProyecto, setDesarrolladoresAsignadosProyecto] = useState([]);
   const [skillFilterForModal, setSkillFilterForModal] = useState('TODOS');
+  const [selectedDevIdsLider, setSelectedDevIdsLider] = useState([]);
 
   // Segregación de Funciones RF-20: Excluir al Líder del proyecto actual de la lista de desarrolladores asignables
   const desarrolladoresSinLiderActual = useMemo(() => {
@@ -1134,6 +1135,7 @@ export const LiderDashboard = () => {
       return devId !== currentLiderId;
     });
   }, [desarrolladores, proyectoSeleccionado, user]);
+  const [showModalIntegrantesLider, setShowModalIntegrantesLider] = useState(false);
   const [showNominaDevsModal, setShowNominaDevsModal] = useState(false);
   const [updatingDevId, setUpdatingDevId] = useState(null);
   const [errores, setErrores] = useState([]);
@@ -1950,7 +1952,10 @@ export const LiderDashboard = () => {
     if (!proyecto) return;
 
     if (proyecto.idProyecto === 'GLOBAL' || proyecto.idProyecto === 'TODOS' || !proyecto.idProyecto) {
-      setProyectoSeleccionado({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
+      setProyectoSeleccionado(prev => {
+        if (prev?.idProyecto === 'GLOBAL') return prev;
+        return { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' };
+      });
       try {
         setLoadingDetalle(true);
         const [erroresRes, interrupcionesRes, devsRes, cargasRes] = await Promise.all([
@@ -2018,22 +2023,27 @@ export const LiderDashboard = () => {
       const list = Array.isArray(data) ? data : [];
       setProyectos(list);
 
-      if (list.length > 0) {
-        const actual = proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL'
-          ? list.find(p => p.idProyecto === proyectoSeleccionado.idProyecto) || { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' }
-          : { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' };
-        seleccionarProyecto(actual);
-      } else {
-        setProyectoSeleccionado({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
-        seleccionarProyecto({ idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' });
-      }
+      setProyectoSeleccionado(prev => {
+        const targetPrj = (prev && prev.idProyecto !== 'GLOBAL')
+          ? list.find(p => p.idProyecto === prev.idProyecto)
+          : null;
+
+        if (targetPrj) {
+          seleccionarProyecto(targetPrj);
+          return targetPrj;
+        } else {
+          const globalPrj = { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' };
+          seleccionarProyecto(globalPrj);
+          return globalPrj;
+        }
+      });
     } catch (err) {
       console.error('Error cargando proyectos del líder:', err);
       toast.error('Error al sincronizar proyectos desde PostgreSQL.');
     } finally {
       setLoadingProyectos(false);
     }
-  }, [api, proyectoSeleccionado, seleccionarProyecto]);
+  }, [api, seleccionarProyecto]);
 
   // Manejador para refrescar manualmente con animación en el botón
   const handleManualRefresh = async () => {
@@ -2326,38 +2336,33 @@ export const LiderDashboard = () => {
     const errors = {};
 
     if (!nuevaActividad.idEtapa || nuevaActividad.idEtapa === '') {
-      errors.idEtapa = '⚠️ Por favor seleccione la etapa o fase WBS del proyecto.';
+      errors.idEtapa = 'Por favor seleccione la etapa o fase WBS del proyecto.';
     }
     if (!nuevaActividad.cualidadTecnica || nuevaActividad.cualidadTecnica === '') {
-      errors.cualidadTecnica = '⚠️ Debe seleccionar la cualidad técnica requerida para la tarea.';
+      errors.cualidadTecnica = 'Debe seleccionar la cualidad técnica requerida para la tarea.';
     }
     if (!nuevaActividad.idDesarrollador || nuevaActividad.idDesarrollador === '') {
-      errors.idDesarrollador = '⚠️ Debe seleccionar un desarrollador responsable de la lista pre-filtrada.';
+      errors.idDesarrollador = 'Debe seleccionar un desarrollador responsable de la lista pre-filtrada.';
     }
 
-    const devId = String(nuevaActividad.idDesarrollador || '');
-    const horasEstimadasNum = parseInt(nuevaActividad.horasEstimadas);
+    const targetDevIds = selectedDevIdsLider.length > 0
+      ? selectedDevIdsLider
+      : (nuevaActividad.idDesarrollador ? [nuevaActividad.idDesarrollador] : []);
+
+    if (targetDevIds.length === 0) {
+      errors.idDesarrollador = 'Seleccione al menos un desarrollador responsable.';
+    }
 
     if (!nuevaActividad.horasEstimadas || isNaN(horasEstimadasNum)) {
-      errors.horasEstimadas = '⚠️ Ingrese el número de horas semanales dedicadas a esta tarea (ej: 8h).';
+      errors.horasEstimadas = 'Ingrese el número de horas semanales dedicadas a esta tarea (ej: 8h).';
     } else if (horasEstimadasNum <= 0) {
-      errors.horasEstimadas = '⚠️ Las horas dedicadas deben ser un número positivo mayor a 0.';
-    } else if (devId) {
-      const carga = getDevCargaInfo(devId);
-      const horasGlobales = carga?.horasAsignadas || 0;
-      const estaEnProyecto = (desarrolladoresAsignadosProyecto || []).some(
-        a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
-      );
-      const maxHorasDisponiblesDev = Math.max(0, 48 - (horasGlobales - (estaEnProyecto ? 0 : 0)));
-      if (horasEstimadasNum > maxHorasDisponiblesDev || (horasGlobales + horasEstimadasNum) > 48) {
-        errors.horasEstimadas = `⚠️ ¡Límite legal excedido! El desarrollador solo dispone de ${maxHorasDisponiblesDev}h libres (Máximo 48h semanales).`;
-      }
+      errors.horasEstimadas = 'Las horas dedicadas deben ser un número positivo mayor a 0.';
     }
 
     if (!nuevaActividad.descripcion || !nuevaActividad.descripcion.trim()) {
-      errors.descripcion = '⚠️ Ingrese una descripción detallada de la tarea a realizar.';
+      errors.descripcion = 'Ingrese una descripción detallada de la tarea a realizar.';
     } else if (nuevaActividad.descripcion.trim().length < 5) {
-      errors.descripcion = '⚠️ La descripción debe tener al menos 5 caracteres explicativos del trabajo técnico.';
+      errors.descripcion = 'La descripción debe tener al menos 5 caracteres explicativos del trabajo técnico.';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -2366,64 +2371,50 @@ export const LiderDashboard = () => {
     }
 
     const etapaSeleccionada = (etapas || []).find(et => String(et?.idEtapa) === String(nuevaActividad.idEtapa));
-    const estaFinalizada = etapaSeleccionada && (
-      (etapaSeleccionada.estado || '').toUpperCase() === 'FINALIZADA' ||
-      (etapaSeleccionada.estado || '').toUpperCase() === 'COMPLETADO'
-    );
-
-    const dev = (desarrolladores || []).find(t => String(t.idTrabajador || t.id || t.idDesarrollador) === devId)
-      || (desarrolladoresAsignadosProyecto || []).map(a => a.desarrollador).find(d => d && String(d.idTrabajador || d.id || d.idDesarrollador) === devId);
-
-    const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${devId}`;
     const etapaNombre = etapaSeleccionada ? etapaSeleccionada.nombreEtapa : `Etapa #${nuevaActividad.idEtapa}`;
-
-    if (estaFinalizada) {
-      setEtapaAReabrirModalLider({
-        idEtapa: nuevaActividad.idEtapa,
-        etapaNombre,
-        nombreActividad: nuevaActividad.descripcion.trim(),
-        idDesarrollador: devId,
-        horasEstimadas: horasEstimadasNum,
-        devNombre,
-        etapaSeleccionada
-      });
-      return;
-    }
 
     try {
       setSubmittingActividad(true);
 
-      // Auto-vincular al desarrollador a la Nómina del Proyecto si no estaba vinculado
-      const estaEnProyecto = (desarrolladoresAsignadosProyecto || []).some(
-        a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === devId
-      );
+      for (const devId of targetDevIds) {
+        const dev = (desarrolladores || []).find(t => String(t.idTrabajador || t.id || t.idDesarrollador) === String(devId))
+          || (desarrolladoresAsignadosProyecto || []).map(a => a.desarrollador).find(d => d && String(d.idTrabajador || d.id || d.idDesarrollador) === String(devId));
 
-      if (!estaEnProyecto && proyectoSeleccionado?.idProyecto && proyectoSeleccionado.idProyecto !== 'GLOBAL') {
-        try {
-          await api.post(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/asignar`, {
-            idDesarrollador: parseInt(devId),
-            horasSemanales: Math.min(horasEstimadasNum || 10, 48)
-          });
-        } catch (linkErr) {
-          console.warn('Auto-vinculación a la nómina del proyecto:', linkErr);
+        const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${devId}`;
+
+        // Auto-vincular al desarrollador a la Nómina del Proyecto si no estaba vinculado
+        const estaEnProyecto = (desarrolladoresAsignadosProyecto || []).some(
+          a => String(a.desarrollador?.idTrabajador || a.idTrabajador) === String(devId)
+        );
+
+        if (!estaEnProyecto && proyectoSeleccionado?.idProyecto && proyectoSeleccionado.idProyecto !== 'GLOBAL') {
+          try {
+            await api.post(`/lider/proyectos/${proyectoSeleccionado.idProyecto}/asignar`, {
+              idDesarrollador: parseInt(devId),
+              horasSemanales: Math.min(horasEstimadasNum || 10, 48)
+            });
+          } catch (linkErr) {
+            console.warn('Auto-vinculación a la nómina del proyecto:', linkErr);
+          }
         }
+
+        await api.post('/lider/actividades', {
+          idEtapa: parseInt(nuevaActividad.idEtapa),
+          idDesarrollador: parseInt(devId),
+          descripcion: nuevaActividad.descripcion.trim()
+        });
+
+        registrarAccionLider(
+          proyectoSeleccionado.idProyecto,
+          'ASIGNACION_ACTIVIDAD',
+          `Actividad "${nuevaActividad.descripcion.trim()}" (${horasEstimadasNum}h/sem) asignada a ${devNombre} en fase "${etapaNombre}".`
+        );
       }
 
-      await api.post('/lider/actividades', {
-        idEtapa: parseInt(nuevaActividad.idEtapa),
-        idDesarrollador: parseInt(devId),
-        descripcion: nuevaActividad.descripcion.trim()
-      });
-
-      registrarAccionLider(
-        proyectoSeleccionado.idProyecto,
-        'ASIGNACION_ACTIVIDAD',
-        `Actividad "${nuevaActividad.descripcion.trim()}" (${horasEstimadasNum}h/sem) asignada a ${devNombre} en fase "${etapaNombre}".`
-      );
-
-      toast.success('Actividad asignada y vinculada a la nómina correctamente.');
+      toast.success(`Actividad asignada exitosamente a ${targetDevIds.length} desarrollador(es).`);
       setShowAsignarModal(false);
       setNuevaActividad({ idEtapa: '', idDesarrollador: '', descripcion: '', horasEstimadas: '8' });
+      setSelectedDevIdsLider([]);
       setFormErrors({});
 
       if (proyectoSeleccionado) {
@@ -3265,7 +3256,28 @@ export const LiderDashboard = () => {
     return { total: proyectos.length, activos, finalizados };
   }, [proyectos]);
 
-  // Handlers para Editar Etapa WBS
+  // Handlers para Eliminar y Editar Etapa WBS
+  const handleEliminarEtapaLider = async (etapa) => {
+    if (!etapa || !etapa.idEtapa) return;
+    const acts = etapa.actividades || [];
+    if (acts.length > 0) {
+      toast.error(`No se puede eliminar la etapa "${etapa.nombreEtapa}". Contiene ${acts.length} tarea(s) vinculada(s). Elimine o transfiera las tareas primero.`);
+      return;
+    }
+    if (!window.confirm(`¿Está seguro de eliminar la etapa "${etapa.nombreEtapa}"? Esta acción no se puede deshacer.`)) return;
+
+    try {
+      await api.delete(`/lider/etapas/${etapa.idEtapa}`);
+      toast.success(`Etapa "${etapa.nombreEtapa}" eliminada correctamente.`);
+      if (proyectoSeleccionado && proyectoSeleccionado.idProyecto) {
+        cargarDetalleProyecto(proyectoSeleccionado.idProyecto);
+      }
+    } catch (err) {
+      console.error('Error al eliminar etapa:', err);
+      toast.error(err.response?.data?.message || 'Error al eliminar la etapa WBS.');
+    }
+  };
+
   const handleAbrirEditarEtapa = (etapa) => {
     setEditingEtapaObj(etapa);
     setEditingEtapaForm({
@@ -4265,7 +4277,7 @@ export const LiderDashboard = () => {
                       title="Ver el historial acumulado de modificaciones y auditoría registradas en el proyecto"
                     >
                       <ClipboardList size={15} className="text-purple-600 dark:text-purple-400 shrink-0 group-hover:scale-115 group-hover:-rotate-12 transition-transform duration-300" />
-                      <span>Registro de Cambios</span>
+                      <span>Historial de Cambios</span>
                       {unreadHistorialCount > 0 && (
                         <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white font-extrabold text-[0.62rem] animate-pulse shadow-xs">
                           {unreadHistorialCount} nuevo{unreadHistorialCount > 1 ? 's' : ''}
@@ -4782,11 +4794,11 @@ export const LiderDashboard = () => {
                         </span>
                       </div>
 
-                      {/* 4ta Tarjeta Ejecutiva Interactiva: Desarrolladores Asignados al Proyecto */}
+                      {/* 4ta Tarjeta Ejecutiva Interactiva: Desarrolladores e Integrantes del Proyecto */}
                       <div
-                        onClick={() => setShowNominaDevsModal(true)}
+                        onClick={() => setShowModalIntegrantesLider(true)}
                         className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm h-full flex flex-col justify-between hover:border-blue-500 hover:shadow-md cursor-pointer transition-all duration-200 group relative overflow-hidden"
-                        title="Haga clic para ver la nómina completa del equipo y gestionar desarrolladores"
+                        title="Haga clic para ver la nómina completa del equipo e integrantes"
                       >
                         <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:bg-blue-500/10 transition-colors" />
                         <div>
@@ -4795,7 +4807,7 @@ export const LiderDashboard = () => {
                             <Users size={16} className="text-blue-600 dark:text-blue-400" />
                           </div>
                           <div className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
-                            {desarrolladoresAsignadosProyecto?.length || 0} Integrantes
+                            {(proyectoSeleccionado?.lider ? 1 : 0) + (desarrolladoresAsignadosProyecto?.length || 0)} Integrantes
                           </div>
                         </div>
                         <div className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between font-medium">
@@ -4920,15 +4932,32 @@ export const LiderDashboard = () => {
                                 )}
 
                                 {isMiProyecto && !isProyectoFinalizado && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAbrirEditarEtapa(etapa)}
-                                    className="p-1.5 px-2.5 rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-blue-400 transition-all cursor-pointer inline-flex items-center gap-1 text-[0.68rem] font-extrabold shadow-2xs"
-                                    title="Editar nombre y estado operativo de esta etapa WBS"
-                                  >
-                                    <Edit3 size={13} className="text-blue-600 dark:text-blue-400" />
-                                    <span>Editar</span>
-                                  </button>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAbrirEditarEtapa(etapa)}
+                                      className="p-1.5 px-2.5 rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-blue-400 transition-all cursor-pointer inline-flex items-center gap-1 text-[0.68rem] font-extrabold shadow-2xs"
+                                      title="Editar nombre y estado operativo de esta etapa WBS"
+                                    >
+                                      <Edit3 size={13} className="text-blue-600 dark:text-blue-400" />
+                                      <span>Editar</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleEliminarEtapaLider(etapa)}
+                                      disabled={totalTareas > 0}
+                                      title={totalTareas > 0 ? "No se puede eliminar una etapa que contiene tareas" : "Eliminar esta etapa vacía"}
+                                      className={`p-1.5 px-2.5 rounded-xl border transition-all cursor-pointer inline-flex items-center gap-1 text-[0.68rem] font-extrabold shadow-2xs ${
+                                        totalTareas > 0
+                                          ? 'opacity-40 cursor-not-allowed border-zinc-200 text-zinc-400 dark:border-zinc-800 dark:text-zinc-600'
+                                          : 'border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40'
+                                      }`}
+                                    >
+                                      <Trash2 size={13} />
+                                      <span>Eliminar</span>
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -6186,6 +6215,9 @@ export const LiderDashboard = () => {
                       value={nuevaActividad.idDesarrollador}
                       onChange={(idDev) => {
                         setNuevaActividad({ ...nuevaActividad, idDesarrollador: idDev });
+                        if (idDev && !selectedDevIdsLider.includes(idDev)) {
+                          setSelectedDevIdsLider(prev => [...prev, idDev]);
+                        }
                         setFormErrors(p => ({ ...p, idDesarrollador: undefined }));
                       }}
                       desarrolladores={desarrolladoresSinLiderActual}
@@ -6204,6 +6236,54 @@ export const LiderDashboard = () => {
                       setIsOpen={setIsAsignarTareaDevListOpen}
                       initialSkillFilter={nuevaActividad.cualidadTecnica || skillFilterForModal}
                     />
+
+                    {nuevaActividad.cualidadTecnica && (
+                      <div className="mt-2 space-y-1.5 max-h-40 overflow-y-auto p-2 bg-zinc-50 dark:bg-zinc-800/60 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+                        <span className="text-[0.65rem] font-bold text-zinc-500 block px-1">O seleccione múltiples desarrolladores responsables:</span>
+                        {(desarrolladoresSinLiderActual || []).map(dev => {
+                          const devIdStr = String(dev.idTrabajador || dev.id || dev.idDesarrollador);
+                          const isSelected = selectedDevIdsLider.includes(devIdStr);
+                          return (
+                            <div
+                              key={devIdStr}
+                              onClick={() => {
+                                setSelectedDevIdsLider(prev =>
+                                  prev.includes(devIdStr)
+                                    ? prev.filter(id => id !== devIdStr)
+                                    : [...prev, devIdStr]
+                                );
+                              }}
+                              className={`p-2 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100'
+                                  : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {}}
+                                  className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 shrink-0"
+                                />
+                                <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                  {dev.nombre} {dev.apellido}
+                                </span>
+                              </div>
+                              <span className="text-[0.62rem] text-zinc-500 dark:text-zinc-400 font-mono">
+                                {dev.especialidad || dev.profesion || 'Desarrollador'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {selectedDevIdsLider.length > 0 && (
+                      <p className="text-[0.68rem] font-bold text-blue-600 dark:text-blue-400 mt-1">
+                        ✓ {selectedDevIdsLider.length} desarrollador(es) seleccionado(s) para esta tarea.
+                      </p>
+                    )}
                     {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
 
                     {/* Alerta de Incompatibilidad entre Cualidad Requerida y Perfil del Desarrollador */}
@@ -10896,6 +10976,123 @@ export const LiderDashboard = () => {
                     className="px-6 py-2.5 text-xs font-bold cursor-pointer rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all"
                   >
                     Cerrar Ficha
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* ─── Modal de Integrantes del Equipo (Líder + Desarrolladores) ─── */}
+        <AnimatePresence>
+          {showModalIntegrantesLider && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-xl shadow-2xl space-y-6 max-h-[85vh] overflow-y-auto"
+              >
+                <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                      <Users size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100">
+                        Integrantes del Proyecto
+                      </h3>
+                      <p className="text-xs text-zinc-500 font-medium">
+                        Líder responsable y desarrolladores asignados en la nómina del proyecto
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowModalIntegrantesLider(false)}
+                    className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center justify-center cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Sección Líder */}
+                <div className="space-y-3">
+                  <span className="text-[0.68rem] font-extrabold uppercase font-mono tracking-wider text-zinc-400 block">
+                    Líder Responsable de Dirección (1)
+                  </span>
+                  {proyectoSeleccionado?.lider ? (
+                    <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-md">
+                          {getInitials(proyectoSeleccionado.lider.nombre, proyectoSeleccionado.lider.apellido)}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-black text-zinc-900 dark:text-zinc-100 truncate">
+                            {proyectoSeleccionado.lider.nombre} {proyectoSeleccionado.lider.apellido}
+                          </h4>
+                          <span className="text-[0.7rem] text-zinc-500 dark:text-zinc-400 block truncate">
+                            {proyectoSeleccionado.lider.email}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full text-[0.62rem] font-mono font-extrabold uppercase bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-700 shrink-0">
+                        LÍDER DE PROYECTO
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 text-xs text-zinc-400 italic">
+                      Sin Líder asignado a este proyecto.
+                    </div>
+                  )}
+                </div>
+
+                {/* Sección Desarrolladores */}
+                <div className="space-y-3">
+                  <span className="text-[0.68rem] font-extrabold uppercase font-mono tracking-wider text-zinc-400 block">
+                    Desarrolladores Asignados en Nómina ({(desarrolladoresAsignadosProyecto || []).length})
+                  </span>
+                  {(desarrolladoresAsignadosProyecto || []).length === 0 ? (
+                    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 text-xs text-zinc-400 italic">
+                      No hay desarrolladores asignados aún a este proyecto.
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {(desarrolladoresAsignadosProyecto || []).map((item, i) => {
+                        const dev = item.desarrollador || item;
+                        const hrs = item.horasSemanales || 40;
+                        return (
+                          <div key={dev.idTrabajador || i} className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                                {getInitials(dev.nombre, dev.apellido)}
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-xs font-black text-zinc-900 dark:text-zinc-100 truncate">
+                                  {dev.nombre} {dev.apellido}
+                                </h4>
+                                <span className="text-[0.68rem] text-zinc-500 dark:text-zinc-400 block truncate">
+                                  {dev.especialidad || dev.profesion || 'Desarrollador'} • {dev.email}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="px-2.5 py-0.5 rounded-full text-[0.62rem] font-mono font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 shrink-0">
+                              {hrs}h / sem
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowModalIntegrantesLider(false)}
+                    className="gradient-button text-xs py-2 px-5 font-extrabold rounded-2xl cursor-pointer"
+                  >
+                    Cerrar
                   </button>
                 </div>
               </motion.div>
