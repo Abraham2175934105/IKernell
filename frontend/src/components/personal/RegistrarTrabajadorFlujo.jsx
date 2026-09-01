@@ -5,7 +5,7 @@ import {
   CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Plus, X, Sparkles, 
   Check, Laptop, Database, Cpu, Wrench, FileCode, Edit3, Compass,
   ArrowRight, ArrowUp, Lock, CheckCircle, RefreshCw, KeyRound, Mail,
-  AlertOctagon, Trash2, Layers, Filter
+  AlertOctagon, Trash2, Layers, Filter, Tag
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
@@ -129,6 +129,9 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   const [habilidadesDirectivas, setHabilidadesDirectivas] = useState([]);
   const [habilidadesTecnicas, setHabilidadesTecnicas] = useState([]);
 
+  // MULTI-DOMINIO TÉCNICO VINCULADO DINÁMICAMENTE
+  const [selectedDominios, setSelectedDominios] = useState([]);
+
   const [customDirectivaInput, setCustomDirectivaInput] = useState('');
   const [customTecnicaInput, setCustomTecnicaInput] = useState('');
   const [activeTabTecnicas, setActiveTabTecnicas] = useState('TODAS');
@@ -155,6 +158,16 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     const cleanNom = nom.trim().toLowerCase().split(' ')[0].replace(/[^a-z]/g, '');
     const cleanApe = ape.trim().toLowerCase().split(' ')[0].replace(/[^a-z]/g, '');
     return `${cleanNom}.${cleanApe}@ikernell.org`;
+  };
+
+  // Helper para buscar a qué categoría pertenece una técnica
+  const findCategoryKeyForSkill = (skillName) => {
+    for (const [catKey, catObj] of Object.entries(CATEGORIAS_HABILIDADES)) {
+      if (catObj.skills.includes(skillName)) {
+        return catKey;
+      }
+    }
+    return null;
   };
 
   // Validations
@@ -320,11 +333,35 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     }
   };
 
+  // TOGGLE DE DOMINIO MANUALMENTE (PERMITE ELEGIR MÚLTIPLES DOMINIOS AL TIEMPO)
+  const handleToggleDominio = (catKey) => {
+    if (catKey === 'TODAS') {
+      setActiveTabTecnicas('TODAS');
+      return;
+    }
+
+    setActiveTabTecnicas(catKey);
+
+    if (selectedDominios.includes(catKey)) {
+      setSelectedDominios(selectedDominios.filter(d => d !== catKey));
+    } else {
+      setSelectedDominios([...selectedDominios, catKey]);
+    }
+  };
+
+  // TOGGLE DE TÉCNICA CON AUTO-VINCULACIÓN AL DOMINIO CORRESPONDIENTE
   const handleToggleTecnica = (skill) => {
     if (habilidadesTecnicas.includes(skill)) {
       setHabilidadesTecnicas(habilidadesTecnicas.filter(s => s !== skill));
     } else {
       setHabilidadesTecnicas([...habilidadesTecnicas, skill]);
+      
+      // AUTO-VINCULAR AUTOMÁTICAMENTE EL DOMINIO PADRE AL SELECCIONAR CUALQUIER TÉCNICA
+      const parentCatKey = findCategoryKeyForSkill(skill);
+      if (parentCatKey && !selectedDominios.includes(parentCatKey)) {
+        setSelectedDominios(prev => [...prev, parentCatKey]);
+      }
+
       if (fieldErrors.habilidades) setFieldErrors(prev => ({ ...prev, habilidades: null }));
     }
   };
@@ -333,6 +370,12 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     if (customTecnicaInput.trim() && !habilidadesTecnicas.includes(customTecnicaInput.trim())) {
       setHabilidadesTecnicas([...habilidadesTecnicas, customTecnicaInput.trim()]);
       setCustomTecnicaInput('');
+
+      // Auto vincular a la pestaña activa si no es TODAS
+      if (activeTabTecnicas !== 'TODAS' && !selectedDominios.includes(activeTabTecnicas)) {
+        setSelectedDominios(prev => [...prev, activeTabTecnicas]);
+      }
+
       if (fieldErrors.habilidades) setFieldErrors(prev => ({ ...prev, habilidades: null }));
     }
   };
@@ -351,6 +394,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     });
     setHabilidadesDirectivas([]);
     setHabilidadesTecnicas([]);
+    setSelectedDominios([]);
     setCompletedSteps({ 1: false, 2: false, 3: false });
     setActiveStep(1);
     setUserCreatedSuccessData(null);
@@ -376,6 +420,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
     setSubmitting(true);
     try {
+      // PRESERVAR DOMINIOS Y TÉCNICAS CONSOLIDADAS SIN PERDER INFORMACIÓN DE CATEGORÍA
+      const dominiosLabels = selectedDominios.map(k => CATEGORIAS_HABILIDADES[k]?.label).filter(Boolean);
+      
+      const payloadTecnicasConsolidadas = [
+        ...dominiosLabels.map(d => `[Dominio: ${d}]`),
+        ...habilidadesTecnicas
+      ].join(', ');
+
       const payload = {
         nombre: formData.nombre.trim(),
         apellido: formData.apellido.trim(),
@@ -386,7 +438,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
         profesion: formData.profesion,
         especialidad: formData.especialidad,
         habilidadesDirectivas: habilidadesDirectivas.join(', '),
-        habilidadesTecnicas: habilidadesTecnicas.join(', '),
+        habilidadesTecnicas: payloadTecnicasConsolidadas,
         estado: true
       };
 
@@ -473,22 +525,28 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
   // Componente de barra de filtros por categoría directamente integrado en la tarjeta del Stack Técnico
   const CategoryFilterBar = () => (
-    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 space-y-3 shadow-inner">
-      <div className="flex items-center justify-between">
+    <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 space-y-4 shadow-inner">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <span className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          <Filter size={15} className="text-emerald-600 dark:text-emerald-400" />
+          <Filter size={16} className="text-emerald-600 dark:text-emerald-400" />
           <span>FILTRAR SUGERENCIAS POR DOMINIO TÉCNICO / CATEGORÍA:</span>
         </span>
-        <span className="text-[0.68rem] font-black text-emerald-700 dark:text-emerald-300 uppercase bg-emerald-100 dark:bg-emerald-950 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-800">
-          {activeTabTecnicas === 'TODAS' ? 'TODAS LAS CATEGORÍAS' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label}
-        </span>
+        
+        {/* DOMINIO ACTUAL ACTIVO */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[0.65rem] font-bold text-zinc-400 uppercase">Enfoque:</span>
+          <span className="text-[0.68rem] font-black text-emerald-700 dark:text-emerald-300 uppercase bg-emerald-100 dark:bg-emerald-950 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-800">
+            {activeTabTecnicas === 'TODAS' ? 'TODAS LAS CATEGORÍAS' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label}
+          </span>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      {/* BOTONES DE DOMINIOS CON SELECCIÓN MÚLTIPLE INTELIGENTE */}
+      <div className="flex flex-wrap gap-2.5">
         <button
           type="button"
           onClick={() => setActiveTabTecnicas('TODAS')}
-          className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+          className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeTabTecnicas === 'TODAS' 
               ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/40 scale-105' 
               : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
@@ -499,24 +557,44 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
         {Object.entries(CATEGORIAS_HABILIDADES).map(([key, cat]) => {
           const IconComp = cat.icon;
-          const isActive = activeTabTecnicas === key;
+          const isFilterActive = activeTabTecnicas === key;
+          const isDomainSelected = selectedDominios.includes(key);
+          
           return (
             <button
               key={key}
               type="button"
-              onClick={() => setActiveTabTecnicas(key)}
-              className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer ${
-                isActive 
+              onClick={() => handleToggleDominio(key)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer ${
+                isFilterActive
                   ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/40 scale-105' 
-                  : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                  : isDomainSelected
+                    ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 border-2 border-emerald-500 shadow-xs'
+                    : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
               }`}
             >
               <IconComp size={15} />
               <span>{cat.label}</span>
+              {isDomainSelected && <span className="text-[0.65rem] bg-emerald-600 text-white px-1.5 py-0.2 rounded-full font-extrabold">✓</span>}
             </button>
           );
         })}
       </div>
+
+      {/* INSIGNIAS DE DOMINIOS SELECCIONADOS VINCULADOS */}
+      {selectedDominios.length > 0 && (
+        <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-700/80 flex items-center gap-2 flex-wrap">
+          <span className="text-[0.65rem] uppercase font-extrabold text-zinc-500 flex items-center gap-1">
+            <Tag size={12} className="text-emerald-600" /> Dominios Seleccionados ({selectedDominios.length}):
+          </span>
+          {selectedDominios.map(dKey => (
+            <span key={dKey} className="px-2.5 py-0.5 rounded-lg bg-emerald-600 text-white font-black text-[0.68rem] flex items-center gap-1.5 shadow-xs">
+              <span>{CATEGORIAS_HABILIDADES[dKey]?.label}</span>
+              <button type="button" onClick={() => setSelectedDominios(selectedDominios.filter(k => k !== dKey))} className="hover:text-red-200 font-bold">×</button>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -1196,7 +1274,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                   </motion.div>
                 )}
 
-                {/* SLIDE PASO 3: HABILIDADES WBS CON FILTRADO COMPLETO INTEGRADAS DENTRO DE CADA MÓDULO TÉCNICO */}
+                {/* SLIDE PASO 3: HABILIDADES WBS CON MULTI-SELECCIÓN DE DOMINIOS Y AUTO-VINCULACIÓN AL ELEGIR TÉCNICAS */}
                 {activeStep === 3 && (
                   <motion.div
                     key="step3"
@@ -1214,7 +1292,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         </div>
                         <div>
                           <span className="text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-                            Paso 3 de 3 • Habilidades Categorizadas
+                            Paso 3 de 3 • Habilidades Categorizadas & Dominios
                           </span>
                           <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
                             3. Stack Técnico & Habilidades WBS Categorizadas
@@ -1306,7 +1384,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           </div>
                         </div>
 
-                        {/* 3B: TÉCNICAS BLUE CON BARRA DE FILTROS INTEGRADA DIRECTAMENTE ADENTRO */}
+                        {/* 3B: TÉCNICAS BLUE CON BARRA DE FILTROS Y VINCULACIÓN AUTOMÁTICA DE DOMINIO */}
                         <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-blue-500/10 to-indigo-500/5 border border-blue-300 dark:border-blue-900/60 space-y-5">
                           <div className="flex justify-between items-center pb-2 border-b border-blue-200 dark:border-blue-800/60">
                             <span className="font-black text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2.5">
@@ -1357,7 +1435,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                                 SUGERENCIAS TÉCNICAS ({activeTabTecnicas === 'TODAS' ? 'TODAS LAS CATEGORÍAS' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label.toUpperCase()}):
                               </span>
                               <span className="text-xs font-bold text-blue-600">
-                                Clic para Activar / Desactivar
+                                Clic en una tecnología para seleccionarla y auto-vincular su Dominio
                               </span>
                             </div>
                             
