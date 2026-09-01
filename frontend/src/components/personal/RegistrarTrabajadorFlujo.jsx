@@ -562,7 +562,13 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
         }
       });
 
-      if (onSuccess) onSuccess();
+      if (onSuccess) {
+        try {
+          onSuccess();
+        } catch (callbackErr) {
+          console.warn("Callback onSuccess ejecutado con advertencia silenciosa:", callbackErr);
+        }
+      }
     } catch (err) {
       console.error("Error registrando trabajador:", err);
       const msg = err.response?.data?.message || err.message || 'Error al conectar con PostgreSQL.';

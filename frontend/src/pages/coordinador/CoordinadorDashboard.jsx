@@ -5144,8 +5144,9 @@ export const CoordinadorDashboard = () => {
               onVolver={() => setShowCreateModal(false)}
               onSuccess={() => {
                 setShowCreateModal(false);
-                cargarDatosTrabajadores();
-                toast.success("Colaborador registrado exitosamente en PostgreSQL");
+                if (typeof cargarDatos === 'function') {
+                  cargarDatos();
+                }
               }}
             />
           </div>

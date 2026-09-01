@@ -9910,8 +9910,9 @@ export const LiderDashboard = () => {
                 onVolver={() => setShowNuevoColaboradorModal(false)}
                 onSuccess={() => {
                   setShowNuevoColaboradorModal(false);
-                  cargarNominaDesarrolladores();
-                  toast.success("Desarrollador registrado exitosamente en PostgreSQL");
+                  if (typeof cargarProyectos === 'function') {
+                    cargarProyectos();
+                  }
                 }}
               />
             </div>
