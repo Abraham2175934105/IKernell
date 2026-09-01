@@ -207,12 +207,24 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     fetchTrabajadores();
   }, []);
 
-  // Helper auto-generate corporate email
+  // AUTO-GENERADOR DE CORREO CORPORATIVO CON GARANTÍA DE UNICIDAD INMEDIATA (JAMÁS SE REPITE)
   const autoGenerarEmail = (nom, ape) => {
     if (!nom || !ape) return '';
     const cleanNom = nom.trim().toLowerCase().split(' ')[0].replace(/[^a-z]/g, '');
     const cleanApe = ape.trim().toLowerCase().split(' ')[0].replace(/[^a-z]/g, '');
-    return `${cleanNom}.${cleanApe}@ikernell.org`;
+    if (!cleanNom || !cleanApe) return '';
+    
+    let baseEmail = `${cleanNom}.${cleanApe}@ikernell.org`;
+
+    // Si ya existe un colaborador en PostgreSQL con ese correo, le añade sufijo numérico único
+    if (existingTrabajadores.some(t => t.email?.trim().toLowerCase() === baseEmail.toLowerCase())) {
+      let counter = 2;
+      while (existingTrabajadores.some(t => t.email?.trim().toLowerCase() === `${cleanNom}.${cleanApe}${counter}@ikernell.org`.toLowerCase())) {
+        counter++;
+      }
+      baseEmail = `${cleanNom}.${cleanApe}${counter}@ikernell.org`;
+    }
+    return baseEmail;
   };
 
   // Helper para buscar a qué categoría pertenece una técnica
@@ -255,15 +267,15 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     if (!cleanEmail || !isValidEmail(cleanEmail)) {
       errors.email = 'Ingrese un correo corporativo válido con formato usuario@ikernell.org.';
     } else if (existingTrabajadores.some(t => t.email?.trim().toLowerCase() === cleanEmail.toLowerCase())) {
-      errors.email = '❌ Este correo corporativo ya pertenece a otro colaborador registrado en el sistema.';
+      errors.email = '❌ Este correo corporativo ya pertenece a otro colaborador registrado en el sistema. Modifique el nombre/apellido o agregue un sufijo.';
     }
 
-    // UNICIDAD 3: CORREO PERSONAL / ALTERNATIVO
+    // UNICIDAD 3: CORREO PERSONAL / ALTERNATIVO (NUNCA PUEDE EXISTIR PREVIAMENTE EN LA BASE DE DATOS)
     const cleanPersonal = formData.emailPersonal.trim();
     if (!cleanPersonal || !isValidEmail(cleanPersonal)) {
       errors.emailPersonal = 'Ingrese un correo personal o alternativo válido para notificaciones.';
     } else if (existingTrabajadores.some(t => t.emailPersonal?.trim().toLowerCase() === cleanPersonal.toLowerCase())) {
-      errors.emailPersonal = '❌ Este correo personal ya pertenece a otro colaborador registrado en la empresa.';
+      errors.emailPersonal = '❌ Este correo personal ya se encuentra registrado previamente por otro trabajador en el sistema. Utilice un correo personal único.';
     }
 
     setFieldErrors(errors);
@@ -540,11 +552,11 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
         handleJumpToStep(1);
       }
       if (msgLower.includes('correo electrónico corporativo') || msgLower.includes('correo corporativo') || msgLower.includes('@ikernell.org')) {
-        newFieldErrors.email = '❌ Este correo corporativo ya pertenece a otro colaborador.';
+        newFieldErrors.email = '❌ Este correo corporativo ya pertenece a otro colaborador registrado.';
         handleJumpToStep(1);
       }
       if (msgLower.includes('correo electrónico personal') || msgLower.includes('correo personal')) {
-        newFieldErrors.emailPersonal = '❌ Este correo personal ya pertenece a otro colaborador.';
+        newFieldErrors.emailPersonal = '❌ Este correo personal ya pertenece a otro colaborador registrado en la base de datos.';
         handleJumpToStep(1);
       }
       if (Object.keys(newFieldErrors).length > 0) {
@@ -827,7 +839,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 p-5 rounded-2xl bg-black/20 backdrop-blur-md border border-white/10 text-xs sm:text-sm">
                 <div className="space-y-1">
                   <span className="text-[0.7rem] uppercase font-black text-emerald-200 block flex items-center gap-1.5">
-                    <Shield size={14} /> Correo Corporativo Único
+                    <Shield size={14} /> Correo Corporativo Generado
                   </span>
                   <span className="font-mono font-black text-base text-white block">{userCreatedSuccessData.email}</span>
                 </div>
@@ -841,9 +853,9 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
                 <div className="space-y-1">
                   <span className="text-[0.7rem] uppercase font-black text-emerald-200 block flex items-center gap-1.5">
-                    <KeyRound size={14} /> Contraseña Inicial Temporizada
+                    <KeyRound size={14} /> Contraseña Aleatoria Enviada
                   </span>
-                  <span className="font-mono font-extrabold text-white block">Cifrada BCrypt • Enviada a Personal</span>
+                  <span className="font-mono font-extrabold text-white block">Enviada a Correo Personal</span>
                 </div>
               </div>
             </motion.div>
@@ -1167,12 +1179,12 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      {/* UNICIDAD 2: CORREO CORPORATIVO */}
+                      {/* UNICIDAD 2: CORREO CORPORATIVO AUTO-GENERADO CON BANNER EXPLICATIVO */}
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Correo Corporativo Único *</label>
-                          <span className="text-[0.68rem] text-red-600 dark:text-red-400 font-black uppercase tracking-wider bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-900/40">
-                            Único @ikernell.org
+                          <span className="text-[0.68rem] text-blue-700 dark:text-blue-300 font-black uppercase tracking-wider bg-blue-100 dark:bg-blue-950 px-2 py-0.5 rounded-md border border-blue-300 dark:border-blue-800">
+                            Auto-Generado Sistema
                           </span>
                         </div>
                         <input
@@ -1190,19 +1202,24 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                               : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                           }`}
                         />
-                        {fieldErrors.email && (
+                        {fieldErrors.email ? (
                           <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
                             <AlertTriangle size={13} /> {fieldErrors.email}
                           </p>
+                        ) : (
+                          <div className="mt-2 p-2.5 rounded-xl bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/80 text-[0.72rem] text-blue-900 dark:text-blue-200 font-bold flex items-start gap-2 shadow-xs">
+                            <Sparkles size={15} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                            <span>El correo corporativo es <strong>generado automáticamente por el sistema</strong> al ingresar nombre y apellido, garantizando que sea 100% único e irrepetible.</span>
+                          </div>
                         )}
                       </div>
 
-                      {/* UNICIDAD 3: CORREO PERSONAL */}
+                      {/* UNICIDAD 3: CORREO PERSONAL CON NOTIFICACIÓN DE CONTRASEÑA ALEATORIA */}
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Correo Personal / Alternativo *</label>
-                          <span className="text-[0.68rem] text-red-600 dark:text-red-400 font-black uppercase tracking-wider bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-900/40">
-                            Único Notificaciones
+                          <span className="text-[0.68rem] text-emerald-700 dark:text-emerald-300 font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800">
+                            Envío de Contraseña
                           </span>
                         </div>
                         <input
@@ -1220,10 +1237,15 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                               : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                           }`}
                         />
-                        {fieldErrors.emailPersonal && (
+                        {fieldErrors.emailPersonal ? (
                           <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
                             <AlertTriangle size={13} /> {fieldErrors.emailPersonal}
                           </p>
+                        ) : (
+                          <div className="mt-2 p-2.5 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/80 text-[0.72rem] text-emerald-900 dark:text-emerald-200 font-bold flex items-start gap-2 shadow-xs">
+                            <KeyRound size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                            <span>A este correo personal se le enviará automáticamente la <strong>contraseña temporal aleatoria y única</strong> generada por el sistema para su primer ingreso. Tampoco puede estar registrado previamente.</span>
+                          </div>
                         )}
                       </div>
                     </div>
