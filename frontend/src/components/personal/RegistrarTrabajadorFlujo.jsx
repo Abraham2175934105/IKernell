@@ -4,7 +4,7 @@ import {
   UserPlus, Shield, GraduationCap, Code2, Briefcase, ChevronRight, 
   CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Plus, X, Sparkles, 
   Check, Laptop, Database, Cpu, Wrench, FileCode, Edit3, Compass,
-  ArrowRight, ArrowUp, Lock, CheckCircle, RefreshCw, KeyRound, Copy, Mail
+  ArrowRight, ArrowUp, Lock, CheckCircle, RefreshCw, KeyRound, Mail
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
@@ -106,7 +106,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   const [completedSteps, setCompletedSteps] = useState({ 1: false, 2: false, 3: false });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
-  const [userCreatedSuccessData, setUserCreatedSuccessData] = useState(null); // Almacena usuario creado para alerta interactiva
+  const [userCreatedSuccessData, setUserCreatedSuccessData] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -320,7 +320,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       };
 
       const endpoint = lockRoleToDesarrollador ? '/lider/trabajadores' : '/coordinador/trabajadores';
-      const res = await api.post(endpoint, payload);
+      await api.post(endpoint, payload);
 
       setCompletedSteps({ 1: true, 2: true, 3: true });
       
@@ -385,8 +385,8 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-16">
       
       {/* 1. HEADER STICKY PERMANENTE CON ALTA VISIBILIDAD */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-200/90 dark:border-zinc-800/90 px-4 sm:px-6 lg:px-8 py-3.5 shadow-sm transition-all">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-200/90 dark:border-zinc-800/90 px-4 sm:px-6 lg:px-10 py-4 shadow-sm transition-all">
+        <div className="max-w-[1500px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           
           {/* TÍTULO Y BOTÓN DE RETORNO */}
           <div className="flex items-center gap-3.5">
@@ -401,11 +401,11 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
             </motion.button>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-0.5 rounded-full text-[0.68rem] font-black tracking-wider uppercase bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                <span className="px-3.5 py-0.5 rounded-full text-[0.7rem] font-black tracking-wider uppercase bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                   Alta Corporativa PostgreSQL
                 </span>
                 {lockRoleToDesarrollador && (
-                  <span className="px-3 py-0.5 rounded-full text-[0.68rem] font-extrabold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  <span className="px-3.5 py-0.5 rounded-full text-[0.7rem] font-extrabold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                     Solo Desarrolladores
                   </span>
                 )}
@@ -418,11 +418,11 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
           </div>
 
           {/* STEPPER SUPERIOR CON BOTONES INTERACTIVOS */}
-          <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs self-stretch md:self-auto justify-around">
+          <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-900 p-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs self-stretch md:self-auto justify-around">
             {[
-              { num: 1, label: 'Credenciales' },
+              { num: 1, label: 'Credenciales de Acceso' },
               { num: 2, label: 'Perfil Profesional' },
-              { num: 3, label: 'Stack Habilidades' }
+              { num: 3, label: 'Stack de Habilidades WBS' }
             ].map((st, idx) => (
               <React.Fragment key={st.num}>
                 <motion.button
@@ -430,7 +430,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleJumpToStep(st.num)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
                     activeStep === st.num
                       ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-500/40'
                       : completedSteps[st.num]
@@ -438,14 +438,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
                   }`}
                 >
-                  <span className={`w-5 h-5 rounded-full text-[0.68rem] flex items-center justify-center font-mono font-bold ${
+                  <span className={`w-5 h-5 rounded-full text-[0.7rem] flex items-center justify-center font-mono font-bold ${
                     activeStep === st.num ? 'bg-white text-blue-700' : completedSteps[st.num] ? 'bg-emerald-600 text-white' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
                   }`}>
                     {completedSteps[st.num] ? '✓' : st.num}
                   </span>
                   <span className="hidden sm:inline font-extrabold">{st.label}</span>
                 </motion.button>
-                {idx < 2 && <ChevronRight size={15} className="text-zinc-300 dark:text-zinc-700 shrink-0" />}
+                {idx < 2 && <ChevronRight size={16} className="text-zinc-300 dark:text-zinc-700 shrink-0" />}
               </React.Fragment>
             ))}
           </div>
@@ -453,8 +453,8 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
         </div>
       </header>
 
-      {/* 2. CONTENIDO CENTRADO Y AMPLIADO */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      {/* 2. CONTENIDO PRINCIPAL CON ANCHO EXPANDIDO PARA MONITORES */}
+      <main className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 space-y-8">
         
         {/* MODAL O BANNER INTERACTIVO DE ÉXITO TRAS CREAR TRABAJADOR */}
         <AnimatePresence>
@@ -480,42 +480,41 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={handleResetForm}
-                    className="px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-extrabold text-xs flex items-center gap-2 transition-all cursor-pointer border border-white/30"
+                    className="px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-extrabold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border border-white/30"
                   >
-                    <RefreshCw size={15} />
+                    <RefreshCw size={16} />
                     <span>Registrar Otro Colaborador</span>
                   </button>
                   <button
                     onClick={onVolver}
-                    className="px-5 py-2.5 rounded-2xl bg-white text-emerald-950 hover:bg-emerald-50 font-black text-xs flex items-center gap-2 transition-all cursor-pointer shadow-lg"
+                    className="px-6 py-2.5 rounded-2xl bg-white text-emerald-950 hover:bg-emerald-50 font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer shadow-lg"
                   >
-                    <CheckCircle2 size={16} />
+                    <CheckCircle2 size={18} />
                     <span>Ir a Consola de Personal</span>
                   </button>
                 </div>
               </div>
 
-              {/* CARD RESUMEN DE CREDENCIALES GENERADAS */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-black/20 backdrop-blur-md border border-white/10 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 p-5 rounded-2xl bg-black/20 backdrop-blur-md border border-white/10 text-xs sm:text-sm">
                 <div className="space-y-1">
-                  <span className="text-[0.68rem] uppercase font-bold text-emerald-200 block flex items-center gap-1.5">
+                  <span className="text-[0.7rem] uppercase font-black text-emerald-200 block flex items-center gap-1.5">
                     <Shield size={14} /> Correo Corporativo Único
                   </span>
-                  <span className="font-mono font-black text-sm text-white block">{userCreatedSuccessData.email}</span>
+                  <span className="font-mono font-black text-base text-white block">{userCreatedSuccessData.email}</span>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[0.68rem] uppercase font-bold text-emerald-200 block flex items-center gap-1.5">
+                  <span className="text-[0.7rem] uppercase font-black text-emerald-200 block flex items-center gap-1.5">
                     <Mail size={14} /> Correo Personal Notificado
                   </span>
                   <span className="font-semibold text-white block">{userCreatedSuccessData.emailPersonal}</span>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[0.68rem] uppercase font-bold text-emerald-200 block flex items-center gap-1.5">
+                  <span className="text-[0.7rem] uppercase font-black text-emerald-200 block flex items-center gap-1.5">
                     <KeyRound size={14} /> Contraseña Inicial Temporizada
                   </span>
                   <span className="font-mono font-extrabold text-white block">Cifrada BCrypt • Enviada a Personal</span>
@@ -540,27 +539,27 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
           </motion.div>
         )}
 
-        {/* LAYOUT DE 2 COLUMNAS CENTRADO */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* LAYOUT DE 2 COLUMNAS EXPANDIDO CON ESPACIADO GENEROSO */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           
-          {/* COLUMNA IZQUIERDA: LÍNEA DE TIEMPO LATERAL ANIMADA */}
+          {/* COLUMNA IZQUIERDA: LÍNEA DE TIEMPO LATERAL ANIMADA (STICKY) */}
           <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
             <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800/90 shadow-lg space-y-6">
               
               {/* ENCABEZADO DEL TIMELINE CON PROGRESO */}
               <div className="flex justify-between items-center pb-3 border-b border-zinc-100 dark:border-zinc-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
-                    <Compass size={20} />
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
+                    <Compass size={22} />
                   </div>
                   <div>
-                    <h3 className="text-xs font-black uppercase text-zinc-900 dark:text-zinc-100 tracking-wider">
+                    <h3 className="text-xs sm:text-sm font-black uppercase text-zinc-900 dark:text-zinc-100 tracking-wider">
                       Avance del Registro
                     </h3>
-                    <p className="text-[0.68rem] text-zinc-500 font-bold">Validación Paso a Paso</p>
+                    <p className="text-xs text-zinc-500 font-bold">Validación Paso a Paso</p>
                   </div>
                 </div>
-                <span className="text-xs font-black font-mono px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                <span className="text-xs font-black font-mono px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                   {progressPercentage}%
                 </span>
               </div>
@@ -654,7 +653,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                 })}
               </div>
 
-              {/* BOTÓN LATERAL REESTRUCTURADO: EN PASOS 1 Y 2 NAVEGA, SOLO EN PASO 3 PERMITE "CREAR TRABAJADOR" */}
+              {/* BOTÓN LATERAL REESTRUCTURADO */}
               <div className="pt-2">
                 {activeStep === 1 && (
                   <motion.button
@@ -703,7 +702,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
             </div>
           </div>
 
-          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL */}
+          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL CON ESPACIADO SEPARADO */}
           <div className="lg:col-span-8">
             <div className="min-h-[60vh] relative">
               <AnimatePresence custom={slideDirection} mode="wait">
@@ -717,9 +716,9 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="p-6 sm:p-9 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-blue-500/80 dark:border-blue-500/60 shadow-2xl space-y-7 ring-4 ring-blue-500/10"
+                    className="p-6 sm:p-10 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-blue-500/80 dark:border-blue-500/60 shadow-2xl space-y-8 ring-4 ring-blue-500/10"
                   >
-                    <div className="flex justify-between items-start pb-4 border-b border-zinc-100 dark:border-zinc-800">
+                    <div className="flex justify-between items-start pb-5 border-b border-zinc-100 dark:border-zinc-800">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center font-extrabold text-xl shadow-lg shadow-blue-500/20">
                           <Shield size={26} />
@@ -739,9 +738,9 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                       <div>
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-1.5">Nombres *</label>
+                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Nombres *</label>
                         <input
                           type="text"
                           required
@@ -752,12 +751,12 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                             setFormData(prev => ({ ...prev, nombre: val, email: auto || prev.email }));
                           }}
                           placeholder="Ej. Roberto"
-                          className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-1.5">Apellidos *</label>
+                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Apellidos *</label>
                         <input
                           type="text"
                           required
@@ -768,14 +767,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                             setFormData(prev => ({ ...prev, apellido: val, email: auto || prev.email }));
                           }}
                           placeholder="Ej. Gómez"
-                          className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-1.5">Rol Corporativo *</label>
+                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Rol Corporativo *</label>
                         {lockRoleToDesarrollador ? (
-                          <div className="w-full px-4 py-3 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs sm:text-sm font-extrabold flex items-center justify-between">
+                          <div className="w-full px-4 py-3.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs sm:text-sm font-extrabold flex items-center justify-between">
                             <span>DESARROLLADOR</span>
                             <span className="text-[0.65rem] font-black uppercase bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 px-2.5 py-0.5 rounded-md">Asignado por Líder</span>
                           </div>
@@ -783,7 +782,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           <select
                             value={formData.rol}
                             onChange={(e) => setFormData({ ...formData, rol: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-extrabold uppercase focus:outline-none focus:border-blue-500 cursor-pointer"
+                            className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-extrabold uppercase focus:outline-none focus:border-blue-500 cursor-pointer"
                           >
                             <option value="DESARROLLADOR">DESARROLLADOR (Operatividad WBS)</option>
                             <option value="LIDER">LÍDER DE PROYECTO (Perfil Híbrido Dual)</option>
@@ -793,13 +792,13 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                       <div>
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-1.5">País / Documento *</label>
+                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">País / Documento *</label>
                         <select
                           value={formData.paisCodigo}
                           onChange={(e) => setFormData({ ...formData, paisCodigo: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-bold focus:outline-none focus:border-blue-500 cursor-pointer"
+                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-bold focus:outline-none focus:border-blue-500 cursor-pointer"
                         >
                           {PAISES_IDENTIFICACION.map(p => (
                             <option key={p.code} value={p.code}>[{p.flag}] {p.docTipo}</option>
@@ -808,21 +807,21 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </div>
 
                       <div className="sm:col-span-2">
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-1.5">Número de Identificación / Cédula *</label>
+                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Número de Identificación / Cédula *</label>
                         <input
                           type="text"
                           required
                           value={formData.identificacion}
                           onChange={(e) => setFormData({ ...formData, identificacion: e.target.value })}
                           placeholder={PAISES_IDENTIFICACION.find(p => p.code === formData.paisCodigo)?.placeholder || 'Número de cédula'}
-                          className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div>
-                        <div className="flex justify-between items-center mb-1.5">
+                        <div className="flex justify-between items-center mb-2">
                           <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Correo Corporativo Único *</label>
                           <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full">
                             @ikernell.org
@@ -834,30 +833,31 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           placeholder="nombre.apellido@ikernell.org"
-                          className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-blue-500 transition-all"
+                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-blue-500 transition-all"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-1.5">Correo Personal / Alternativo *</label>
+                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Correo Personal / Alternativo *</label>
                         <input
                           type="email"
                           required
                           value={formData.emailPersonal}
                           onChange={(e) => setFormData({ ...formData, emailPersonal: e.target.value })}
                           placeholder="correo.personal@gmail.com"
-                          className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-blue-500 transition-all"
+                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-blue-500 transition-all"
                         />
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-5 border-t border-zinc-100 dark:border-zinc-800">
+                    {/* BOTÓN SIGUIENTE PASO */}
+                    <div className="flex justify-end pt-6 border-t border-zinc-100 dark:border-zinc-800">
                       <motion.button
                         type="button"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleNextStep(2)}
-                        className="px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-black flex items-center gap-2 cursor-pointer shadow-lg shadow-blue-500/25 transition-all"
+                        className="px-8 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-black flex items-center gap-3 cursor-pointer shadow-lg shadow-blue-500/25 transition-all"
                       >
                         <span>Continuar al Paso 2: Perfil Profesional</span>
                         <ArrowRight size={18} />
@@ -875,9 +875,9 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="p-6 sm:p-9 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-indigo-500/80 dark:border-indigo-500/60 shadow-2xl space-y-7 ring-4 ring-indigo-500/10"
+                    className="p-6 sm:p-10 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-indigo-500/80 dark:border-indigo-500/60 shadow-2xl space-y-8 ring-4 ring-indigo-500/10"
                   >
-                    <div className="flex justify-between items-start pb-4 border-b border-zinc-100 dark:border-zinc-800">
+                    <div className="flex justify-between items-start pb-5 border-b border-zinc-100 dark:border-zinc-800">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center font-extrabold text-xl shadow-lg shadow-indigo-500/20">
                           <GraduationCap size={26} />
@@ -897,14 +897,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                       <div>
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-1.5">Profesión / Titulación Académica *</label>
+                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Profesión / Titulación Académica *</label>
                         <select
                           required
                           value={formData.profesion}
                           onChange={(e) => setFormData({ ...formData, profesion: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-indigo-500 cursor-pointer"
+                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-indigo-500 cursor-pointer"
                         >
                           <option value="">-- Seleccionar Titulación --</option>
                           {TITULACIONES_PROFESIONALES.map((tit) => (
@@ -914,12 +914,12 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </div>
 
                       <div>
-                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-1.5">Especialidad Técnica Principal *</label>
+                        <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Especialidad Técnica Principal *</label>
                         <select
                           required
                           value={formData.especialidad}
                           onChange={(e) => setFormData({ ...formData, especialidad: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-bold focus:outline-none focus:border-indigo-500 cursor-pointer"
+                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-bold focus:outline-none focus:border-indigo-500 cursor-pointer"
                         >
                           <option value="Backend Java & Spring Boot">Backend Java & Spring Boot</option>
                           <option value="Frontend React & TypeScript">Frontend React & TypeScript</option>
@@ -932,11 +932,12 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-center pt-5 border-t border-zinc-100 dark:border-zinc-800">
+                    {/* NAVEGACIÓN TOTALMENTE SEPARADA CON FLEX RESPONSIVO */}
+                    <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 pt-6 border-t border-zinc-100 dark:border-zinc-800">
                       <button
                         type="button"
                         onClick={() => handlePrevStep(1)}
-                        className="px-6 py-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-all flex items-center gap-2"
+                        className="px-6 py-3.5 rounded-2xl border border-zinc-300 dark:border-zinc-700 text-xs sm:text-sm font-extrabold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-all flex items-center justify-center gap-2"
                       >
                         <ArrowUp size={16} className="-rotate-90" />
                         <span>Volver al Paso 1 (Credenciales)</span>
@@ -947,7 +948,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleNextStep(3)}
-                        className="px-8 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black flex items-center gap-2 cursor-pointer shadow-lg shadow-indigo-500/25 transition-all"
+                        className="px-8 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black flex items-center justify-center gap-3 cursor-pointer shadow-lg shadow-indigo-500/25 transition-all"
                       >
                         <span>Continuar al Paso 3: Stack Habilidades WBS</span>
                         <ArrowRight size={18} />
@@ -965,9 +966,9 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="p-6 sm:p-9 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-emerald-500/80 dark:border-emerald-500/60 shadow-2xl space-y-7 ring-4 ring-emerald-500/10"
+                    className="p-6 sm:p-10 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-emerald-500/80 dark:border-emerald-500/60 shadow-2xl space-y-8 ring-4 ring-emerald-500/10"
                   >
-                    <div className="flex justify-between items-start pb-4 border-b border-zinc-100 dark:border-zinc-800">
+                    <div className="flex justify-between items-start pb-5 border-b border-zinc-100 dark:border-zinc-800">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center font-extrabold text-xl shadow-lg shadow-emerald-500/20">
                           <Sparkles size={26} />
@@ -992,7 +993,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       <div className="space-y-6">
                         
                         {/* 3A: DIRECTIVAS AMBER */}
-                        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-amber-500/10 to-yellow-500/5 border border-amber-300 dark:border-amber-900/60 space-y-4">
+                        <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-amber-500/10 to-yellow-500/5 border border-amber-300 dark:border-amber-900/60 space-y-5">
                           <div className="flex justify-between items-center pb-2 border-b border-amber-200 dark:border-amber-800/60">
                             <span className="font-black text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2.5">
                               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 text-white flex items-center justify-center shadow-xs">
@@ -1009,23 +1010,23 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                               onChange={(e) => setCustomDirectivaInput(e.target.value)}
                               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomDirectiva(); } }}
                               placeholder="Escriba una habilidad de gestión y presione Enter..."
-                              className="flex-1 px-4 py-3 rounded-xl border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-900 text-xs sm:text-sm font-semibold"
+                              className="flex-1 px-4 py-3.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-white dark:bg-zinc-900 text-xs sm:text-sm font-semibold"
                             />
                             <button
                               type="button"
                               onClick={handleAddCustomDirectiva}
-                              className="px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs sm:text-sm cursor-pointer shadow-sm"
+                              className="px-6 py-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs sm:text-sm cursor-pointer shadow-sm"
                             >
                               + Agregar
                             </button>
                           </div>
 
-                          <div className="flex flex-wrap gap-2 p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-amber-200 dark:border-amber-800/60 min-h-[48px] items-center">
+                          <div className="flex flex-wrap gap-2 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-amber-200 dark:border-amber-800/60 min-h-[50px] items-center">
                             {habilidadesDirectivas.length === 0 ? (
                               <span className="text-xs text-zinc-400 italic">No hay habilidades directivas seleccionadas. Haga clic abajo...</span>
                             ) : (
                               habilidadesDirectivas.map(skill => (
-                                <span key={skill} className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800 text-xs sm:text-sm font-black flex items-center gap-2">
+                                <span key={skill} className="px-3.5 py-1.5 rounded-xl bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800 text-xs sm:text-sm font-black flex items-center gap-2">
                                   <span>{skill}</span>
                                   <button type="button" onClick={() => handleToggleDirectiva(skill)} className="hover:text-red-600 cursor-pointer font-black text-sm">×</button>
                                 </span>
@@ -1060,7 +1061,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         </div>
 
                         {/* 3B: TÉCNICAS BLUE */}
-                        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-blue-500/10 to-indigo-500/5 border border-blue-300 dark:border-blue-900/60 space-y-4">
+                        <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-blue-500/10 to-indigo-500/5 border border-blue-300 dark:border-blue-900/60 space-y-5">
                           <div className="flex justify-between items-center pb-2 border-b border-blue-200 dark:border-blue-800/60">
                             <span className="font-black text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2.5">
                               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-xs">
@@ -1077,23 +1078,23 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                               onChange={(e) => setCustomTecnicaInput(e.target.value)}
                               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomTecnica(); } }}
                               placeholder="Escriba tecnología (ej. Figma, Java 17, React) y Enter..."
-                              className="flex-1 px-4 py-3 rounded-xl border border-blue-300 dark:border-blue-800 bg-white dark:bg-zinc-900 text-xs sm:text-sm font-semibold"
+                              className="flex-1 px-4 py-3.5 rounded-xl border border-blue-300 dark:border-blue-800 bg-white dark:bg-zinc-900 text-xs sm:text-sm font-semibold"
                             />
                             <button
                               type="button"
                               onClick={handleAddCustomTecnica}
-                              className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm cursor-pointer shadow-sm"
+                              className="px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm cursor-pointer shadow-sm"
                             >
                               + Agregar
                             </button>
                           </div>
 
-                          <div className="flex flex-wrap gap-2 p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-blue-200 dark:border-blue-800/60 min-h-[48px] items-center">
+                          <div className="flex flex-wrap gap-2 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-blue-200 dark:border-blue-800/60 min-h-[50px] items-center">
                             {habilidadesTecnicas.length === 0 ? (
                               <span className="text-xs text-zinc-400 italic">No hay tecnologías seleccionadas aún. Haga clic abajo...</span>
                             ) : (
                               habilidadesTecnicas.map(skill => (
-                                <span key={skill} className="px-3 py-1.5 rounded-xl bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800 text-xs sm:text-sm font-black flex items-center gap-2">
+                                <span key={skill} className="px-3.5 py-1.5 rounded-xl bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800 text-xs sm:text-sm font-black flex items-center gap-2">
                                   <span>{skill}</span>
                                   <button type="button" onClick={() => handleToggleTecnica(skill)} className="hover:text-red-600 cursor-pointer font-black text-sm">×</button>
                                 </span>
@@ -1133,13 +1134,13 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </div>
                     ) : (
                       /* MÓDULO ÚNICO PARA DESARROLLADOR */
-                      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-300 dark:border-emerald-900/60 space-y-5">
+                      <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-300 dark:border-emerald-900/60 space-y-5">
                         
                         <div className="flex flex-wrap gap-2 pb-2 border-b border-emerald-200 dark:border-emerald-800/60">
                           <button
                             type="button"
                             onClick={() => setActiveTabTecnicas('TODAS')}
-                            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${activeTabTecnicas === 'TODAS' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'}`}
+                            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${activeTabTecnicas === 'TODAS' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'}`}
                           >
                             Todas las Categorías
                           </button>
@@ -1150,7 +1151,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                                 key={key}
                                 type="button"
                                 onClick={() => setActiveTabTecnicas(key)}
-                                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${activeTabTecnicas === key ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50'}`}
+                                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${activeTabTecnicas === key ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50'}`}
                               >
                                 <IconComp size={16} />
                                 <span>{cat.label}</span>
@@ -1166,18 +1167,18 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                             onChange={(e) => setCustomTecnicaInput(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomTecnica(); } }}
                             placeholder="Escriba tecnología / especialidad y presione Enter..."
-                            className="flex-1 px-4 py-3 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-900 text-xs sm:text-sm font-semibold"
+                            className="flex-1 px-4 py-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-900 text-xs sm:text-sm font-semibold"
                           />
                           <button
                             type="button"
                             onClick={handleAddCustomTecnica}
-                            className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm cursor-pointer shadow-sm"
+                            className="px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm cursor-pointer shadow-sm"
                           >
                             + Agregar
                           </button>
                         </div>
 
-                        <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 min-h-[52px] flex flex-wrap gap-2 items-center">
+                        <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 min-h-[56px] flex flex-wrap gap-2 items-center">
                           {habilidadesTecnicas.length === 0 ? (
                             <span className="text-xs sm:text-sm text-zinc-400 italic">No hay habilidades seleccionadas. Haga clic en las sugerencias abajo...</span>
                           ) : (
@@ -1227,17 +1228,17 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     )}
 
                     {/* BOTONES DE NAVEGACIÓN Y CREACIÓN DE TRABAJADOR */}
-                    <div className="flex justify-between items-center pt-5 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 pt-6 border-t border-zinc-100 dark:border-zinc-800">
                       <button
                         type="button"
                         onClick={() => handlePrevStep(2)}
-                        className="px-6 py-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-all flex items-center gap-2"
+                        className="px-6 py-3.5 rounded-2xl border border-zinc-300 dark:border-zinc-700 text-xs sm:text-sm font-extrabold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-all flex items-center justify-center gap-2"
                       >
                         <ArrowUp size={16} className="-rotate-90" />
                         <span>Volver al Paso 2 (Perfil Profesional)</span>
                       </button>
 
-                      <div className="flex gap-3">
+                      <div className="flex items-center gap-3">
                         <button
                           type="button"
                           onClick={onVolver}
@@ -1250,7 +1251,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           disabled={submitting}
-                          className="px-9 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-black flex items-center gap-2 cursor-pointer shadow-xl shadow-emerald-500/25 transition-all disabled:opacity-50"
+                          className="px-9 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-emerald-500/25 transition-all disabled:opacity-50"
                         >
                           {submitting ? (
                             <><Loader2 size={18} className="animate-spin" /> Guardando en PostgreSQL...</>
