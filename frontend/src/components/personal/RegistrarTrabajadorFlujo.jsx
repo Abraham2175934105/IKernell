@@ -90,13 +90,68 @@ const TITULACIONES_PROFESIONALES = [
   'Especialista en Ciberseguridad & DevOps'
 ];
 
+// VALIDACIÓN ESTRICTA Y CAPACIDAD DE DÍGITOS SEGÚN PAÍS
 const PAISES_IDENTIFICACION = [
-  { code: 'CO', flag: '🇨🇴', docTipo: 'Cédula de Ciudadanía', placeholder: 'Ej. 1018459203' },
-  { code: 'MX', flag: '🇲🇽', docTipo: 'CURP / INE', placeholder: 'Ej. GOMA800310HDFR' },
-  { code: 'PE', flag: '🇵🇪', docTipo: 'DNI Perú', placeholder: 'Ej. 45892014' },
-  { code: 'CL', flag: '🇨🇱', docTipo: 'RUT Chile', placeholder: 'Ej. 18.459.203-K' },
-  { code: 'AR', flag: '🇦🇷', docTipo: 'DNI Argentina', placeholder: 'Ej. 35.892.014' },
-  { code: 'EC', flag: '🇪🇨', docTipo: 'Cédula Ecuador', placeholder: 'Ej. 1718459203' }
+  { 
+    code: 'CO', 
+    flag: '🇨🇴', 
+    docTipo: 'Cédula de Ciudadanía', 
+    placeholder: 'Ej. 1018459203 (6 a 10 dígitos numéricos)', 
+    minLength: 6, 
+    maxLength: 10, 
+    numericOnly: true, 
+    errText: '❌ La Cédula de Ciudadanía (Colombia) debe tener entre 6 y 10 dígitos numéricos.' 
+  },
+  { 
+    code: 'MX', 
+    flag: '🇲🇽', 
+    docTipo: 'CURP / INE', 
+    placeholder: 'Ej. GOMA800310HDFR12', 
+    minLength: 10, 
+    maxLength: 18, 
+    numericOnly: false, 
+    errText: '❌ El CURP/INE (México) debe tener entre 10 y 18 caracteres alfanuméricos.' 
+  },
+  { 
+    code: 'PE', 
+    flag: '🇵🇪', 
+    docTipo: 'DNI Perú', 
+    placeholder: 'Ej. 45892014 (8 dígitos)', 
+    minLength: 8, 
+    maxLength: 8, 
+    numericOnly: true, 
+    errText: '❌ El DNI de Perú debe tener exactamente 8 dígitos numéricos.' 
+  },
+  { 
+    code: 'CL', 
+    flag: '🇨🇱', 
+    docTipo: 'RUT Chile', 
+    placeholder: 'Ej. 18459203K', 
+    minLength: 8, 
+    maxLength: 10, 
+    numericOnly: false, 
+    errText: '❌ El RUT chileno debe tener entre 8 y 10 caracteres.' 
+  },
+  { 
+    code: 'AR', 
+    flag: '🇦🇷', 
+    docTipo: 'DNI Argentina', 
+    placeholder: 'Ej. 35892014 (7 a 8 dígitos)', 
+    minLength: 7, 
+    maxLength: 8, 
+    numericOnly: true, 
+    errText: '❌ El DNI argentino debe tener entre 7 y 8 dígitos numéricos.' 
+  },
+  { 
+    code: 'EC', 
+    flag: '🇪🇨', 
+    docTipo: 'Cédula Ecuador', 
+    placeholder: 'Ej. 1718459203 (10 dígitos)', 
+    minLength: 10, 
+    maxLength: 10, 
+    numericOnly: true, 
+    errText: '❌ La Cédula ecuatoriana debe tener exactamente 10 dígitos numéricos.' 
+  }
 ];
 
 export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarrollador = false }) {
@@ -173,7 +228,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   // Validations
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // VALIDACIONES ESTRUCTURADAS Y UNICIDAD ESTRICTA DE 3 CAMPOS (CÉDULA, EMAIL CORP, EMAIL PERS)
+  // VALIDACIONES ESTRUCTURADAS Y UNICIDAD ESTRICTA DE 3 CAMPOS (CÉDULA CON LONGITUD DE PAÍS, EMAIL CORP, EMAIL PERS)
   const validateStep1 = () => {
     const errors = {};
     if (!formData.nombre.trim() || formData.nombre.trim().length < 2) {
@@ -183,10 +238,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       errors.apellido = 'Ingrese los apellidos del colaborador.';
     }
     
-    // UNICIDAD 1: CÉDULA / IDENTIFICACIÓN
+    // UNICIDAD Y VALIDACIÓN DE CÉDULA/IDENTIFICACIÓN POR PAÍS
     const cleanId = formData.identificacion.trim();
-    if (!cleanId || cleanId.length < 4) {
-      errors.identificacion = 'Ingrese un número de cédula o identificación válido (mínimo 4 dígitos).';
+    const currentPais = PAISES_IDENTIFICACION.find(p => p.code === formData.paisCodigo) || PAISES_IDENTIFICACION[0];
+
+    if (!cleanId || cleanId.length < currentPais.minLength || cleanId.length > currentPais.maxLength) {
+      errors.identificacion = currentPais.errText;
+    } else if (currentPais.numericOnly && !/^\d+$/.test(cleanId)) {
+      errors.identificacion = currentPais.errText;
     } else if (existingTrabajadores.some(t => t.identificacion?.trim().toLowerCase() === cleanId.toLowerCase())) {
       errors.identificacion = '❌ Esta cédula / identificación ya se encuentra registrada en PostgreSQL por otro colaborador.';
     }
@@ -209,7 +268,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
-      setFormError('🔒 Existen errores de unicidad o datos incompletos. Revise los campos marcados en rojo.');
+      setFormError('🔒 Existen errores de formato, unicidad o datos incompletos. Revise los campos marcados en rojo.');
       return false;
     }
     setFormError(null);
@@ -597,6 +656,8 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       )}
     </div>
   );
+
+  const currentPaisConfig = PAISES_IDENTIFICACION.find(p => p.code === formData.paisCodigo) || PAISES_IDENTIFICACION[0];
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-16 relative">
@@ -1039,7 +1100,19 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">País / Documento *</label>
                         <select
                           value={formData.paisCodigo}
-                          onChange={(e) => setFormData({ ...formData, paisCodigo: e.target.value })}
+                          onChange={(e) => {
+                            const newPais = e.target.value;
+                            const newPaisConfig = PAISES_IDENTIFICACION.find(p => p.code === newPais) || PAISES_IDENTIFICACION[0];
+                            let currentId = formData.identificacion;
+                            if (newPaisConfig.numericOnly) {
+                              currentId = currentId.replace(/\D/g, '');
+                            }
+                            if (currentId.length > newPaisConfig.maxLength) {
+                              currentId = currentId.slice(0, newPaisConfig.maxLength);
+                            }
+                            setFormData({ ...formData, paisCodigo: newPais, identificacion: currentId });
+                            if (fieldErrors.identificacion) setFieldErrors(prev => ({ ...prev, identificacion: null }));
+                          }}
                           className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-bold focus:outline-none focus:border-blue-500 cursor-pointer"
                         >
                           {PAISES_IDENTIFICACION.map(p => (
@@ -1048,10 +1121,12 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         </select>
                       </div>
 
-                      {/* UNICIDAD 1: IDENTIFICACIÓN / CÉDULA */}
+                      {/* UNICIDAD 1: IDENTIFICACIÓN / CÉDULA CON RESTRICCIÓN ESTRICTA DE DÍGITOS Y FORMATO */}
                       <div className="sm:col-span-2">
                         <div className="flex justify-between items-center mb-2">
-                          <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Número de Identificación / Cédula *</label>
+                          <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">
+                            Número de Identificación / Cédula * ({currentPaisConfig.minLength === currentPaisConfig.maxLength ? `${currentPaisConfig.maxLength} dígitos` : `${currentPaisConfig.minLength} a ${currentPaisConfig.maxLength} dígitos`})
+                          </label>
                           <span className="text-[0.68rem] text-red-600 dark:text-red-400 font-black uppercase tracking-wider bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-900/40">
                             Único e Irrepetible
                           </span>
@@ -1059,21 +1134,33 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         <input
                           type="text"
                           required
+                          maxLength={currentPaisConfig.maxLength}
                           value={formData.identificacion}
                           onChange={(e) => {
-                            setFormData({ ...formData, identificacion: e.target.value });
+                            let rawVal = e.target.value;
+                            if (currentPaisConfig.numericOnly) {
+                              rawVal = rawVal.replace(/\D/g, ''); // Filtrar inmediatamente cualquier letra o símbolo no numérico
+                            }
+                            if (rawVal.length > currentPaisConfig.maxLength) {
+                              rawVal = rawVal.slice(0, currentPaisConfig.maxLength);
+                            }
+                            setFormData({ ...formData, identificacion: rawVal });
                             if (fieldErrors.identificacion) setFieldErrors(prev => ({ ...prev, identificacion: null }));
                           }}
-                          placeholder={PAISES_IDENTIFICACION.find(p => p.code === formData.paisCodigo)?.placeholder || 'Número de cédula'}
+                          placeholder={currentPaisConfig.placeholder}
                           className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-mono font-bold focus:outline-none ${
                             fieldErrors.identificacion 
                               ? 'border-red-500 ring-2 ring-red-500/30 bg-red-50/20 dark:border-red-500 dark:bg-red-950/20' 
                               : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                           }`}
                         />
-                        {fieldErrors.identificacion && (
+                        {fieldErrors.identificacion ? (
                           <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
                             <AlertTriangle size={13} /> {fieldErrors.identificacion}
+                          </p>
+                        ) : (
+                          <p className="text-[0.7rem] text-zinc-400 font-semibold mt-1">
+                            {currentPaisConfig.numericOnly ? 'Solo se permiten dígitos numéricos (0-9).' : 'Permite caracteres alfanuméricos.'} máx {currentPaisConfig.maxLength} caracteres.
                           </p>
                         )}
                       </div>
