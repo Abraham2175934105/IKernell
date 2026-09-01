@@ -5815,87 +5815,152 @@ export const CoordinadorDashboard = () => {
 
                 {/* Panel Izquierdo: Ficha Personal, Credenciales & Stack (5 de 12 columnas) */}
                 <div className="space-y-5 lg:col-span-5">
-                  <div className="flex items-center gap-2 pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
-                    <ShieldCheck size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
-                      Ficha Personal, Credenciales & Stack Técnico
-                    </h4>
-                  </div>
+                  {(() => {
+                    const rawTec = selectedTrabajadorModal.habilidadesTecnicas || selectedTrabajadorModal.especialidad || '';
+                    const rawDir = selectedTrabajadorModal.habilidadesDirectivas || '';
 
-                  <div className="grid grid-cols-1 gap-3.5 text-xs">
-                    {/* Correos de Contacto */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo Principal:</span>
-                        <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
-                          <Mail size={15} className="text-blue-600 shrink-0" />
-                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.email}>
-                            {selectedTrabajadorModal.email}
+                    const dominiosList = [];
+                    const dMatches = rawTec.match(/\[Dominio:\s*([^\]]+)\]/gi);
+                    if (dMatches) {
+                      dMatches.forEach(m => {
+                        const dName = m.replace(/\[Dominio:\s*|\]/gi, '').trim();
+                        if (dName && !dominiosList.includes(dName)) dominiosList.push(dName);
+                      });
+                    }
+
+                    const cleanTecStr = rawTec.replace(/\[Dominio:\s*[^\]]+\]/gi, '');
+                    const tecnicasList = cleanTecStr.split(/[,•]/).map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('[Dominio:'));
+                    const directivasList = rawDir.split(/[,•]/).map(s => s.trim()).filter(s => s.length > 0);
+
+                    return (
+                      <>
+                        <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                              Ficha Personal, Credenciales & Stack
+                            </h4>
+                          </div>
+                          <span className="text-[0.65rem] font-mono font-black text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                            PostgreSQL Sincronizado
                           </span>
-                          <Lock size={13} className="text-zinc-400 ml-auto shrink-0" title="Correo Corporativo Protegido" />
                         </div>
-                      </div>
 
-                      <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Personal Alternativo:</span>
-                        <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
-                          <Mail size={15} className="text-zinc-500 shrink-0" />
-                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal || (selectedTrabajadorModal.email?.includes('@') ? `${selectedTrabajadorModal.email.split('@')[0]}.personal@gmail.com` : 'personal@gmail.com')}>
-                            {selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal || (selectedTrabajadorModal.email?.includes('@') ? `${selectedTrabajadorModal.email.split('@')[0]}.personal@gmail.com` : `${(selectedTrabajadorModal.nombre || 'usuario').toLowerCase()}.${(selectedTrabajadorModal.apellido || 'dev').toLowerCase()}.personal@gmail.com`)}
-                          </span>
+                        <div className="grid grid-cols-1 gap-3.5 text-xs">
+                          {/* Correos de Contacto */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-blue-300 dark:hover:border-blue-700 transition-colors shadow-2xs">
+                              <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Corporativo Único:</span>
+                              <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
+                                <Mail size={15} className="text-blue-600 shrink-0" />
+                                <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.email}>
+                                  {selectedTrabajadorModal.email}
+                                </span>
+                                <Lock size={13} className="text-zinc-400 ml-auto shrink-0" title="Correo Corporativo Protegido" />
+                              </div>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors shadow-2xs">
+                              <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Correo Personal / Alternativo:</span>
+                              <div className="flex items-center gap-2.5 mt-1.5 min-w-0">
+                                <Mail size={15} className="text-emerald-600 shrink-0" />
+                                <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs truncate" title={selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal}>
+                                  {selectedTrabajadorModal.emailPersonal || selectedTrabajadorModal.correoPersonal || (selectedTrabajadorModal.email?.includes('@') ? `${selectedTrabajadorModal.email.split('@')[0]}.personal@gmail.com` : 'personal@gmail.com')}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Profesión & Dominios Técnicos Especializados */}
+                          <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-3 shadow-2xs">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Profesión & Titulación:</span>
+                                <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm block">
+                                  {selectedTrabajadorModal.profesion || 'Ingeniero de Software'}
+                                </span>
+                              </div>
+                              <span className="text-[0.65rem] font-mono font-bold px-2.5 py-1 rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
+                                ID: #{selectedTrabajadorModal.identificacion || selectedTrabajadorModal.idTrabajador}
+                              </span>
+                            </div>
+
+                            {/* DOMINIOS SELECCIONADOS VINCULADOS */}
+                            {dominiosList.length > 0 && (
+                              <div className="pt-2.5 border-t border-zinc-200/80 dark:border-zinc-700/80 space-y-1.5">
+                                <span className="text-[0.62rem] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                                  <Tag size={12} className="text-emerald-600" /> Dominios Técnicos Especializados ({dominiosList.length}):
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {dominiosList.map((dom, dIdx) => (
+                                    <span key={dIdx} className="px-3 py-1 rounded-xl text-[0.68rem] font-black bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1.5 shadow-2xs">
+                                      <span>🌐 {dom}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* STACK TÉCNICO WBS & HABILIDADES INDIVIDUALES */}
+                          <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2.5 shadow-2xs">
+                            <span className="text-[0.65rem] font-black text-blue-800 dark:text-blue-200 uppercase flex items-center gap-1.5">
+                              <Sparkles size={14} className="text-blue-600 shrink-0" /> Tecnologías & Stack Técnico WBS ({tecnicasList.length}):
+                            </span>
+                            <div className="flex flex-wrap gap-1.5 max-h-[160px] overflow-y-auto pr-1">
+                              {tecnicasList.length === 0 ? (
+                                <span className="text-zinc-400 italic text-xs">Sin tecnologías registradas.</span>
+                              ) : (
+                                tecnicasList.map((tech, idx) => (
+                                  <motion.span
+                                    key={idx}
+                                    whileHover={{ scale: 1.05, y: -1 }}
+                                    className="px-3 py-1.5 rounded-xl text-[0.68rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs cursor-default select-none"
+                                  >
+                                    {tech}
+                                  </motion.span>
+                                ))
+                              )}
+                            </div>
+                          </div>
+
+                          {/* HABILIDADES DIRECTIVAS / GESTIÓN (SI EXISTEN) */}
+                          {directivasList.length > 0 && (
+                            <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-900/60 space-y-2 shadow-2xs">
+                              <span className="text-[0.65rem] font-black text-amber-900 dark:text-amber-200 uppercase flex items-center gap-1.5">
+                                <Briefcase size={14} className="text-amber-600 shrink-0" /> Competencias Directivas & Gestión ({directivasList.length}):
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {directivasList.map((dir, idx) => (
+                                  <span key={idx} className="px-3 py-1 rounded-xl text-[0.68rem] font-black bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800 shadow-2xs">
+                                    💼 {dir}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Estado Lógico & Primer Login */}
+                          <div className="grid grid-cols-2 gap-3.5">
+                            <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                              <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Estado en Plataforma:</span>
+                              <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${selectedTrabajadorModal.estado ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                                <span className={`w-2.5 h-2.5 rounded-full ${selectedTrabajadorModal.estado ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                                {selectedTrabajadorModal.estado ? 'HABILITADO' : 'INHABILITADO'}
+                              </span>
+                            </div>
+                            <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
+                              <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Primer Login:</span>
+                              <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                <span className={`w-2.5 h-2.5 rounded-full ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+                                {(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'Sí (Validado)' : 'Pendiente primera sesión'}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Profesión & Especialidad Desglosada en Tech Pills */}
-                    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2.5">
-                      <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Profesión & Competencias Técnicas:</span>
-                      <span className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm block">
-                        {selectedTrabajadorModal.profesion || 'Ingeniero de Software'}
-                      </span>
-
-                      <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-700/50">
-                        <span className="text-[0.65rem] font-bold text-zinc-500 block mb-2 flex items-center gap-1.5">
-                          <Sparkles size={13} className="text-amber-500 shrink-0" /> Tecnologías & Disciplinas Destacadas:
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {(selectedTrabajadorModal.especialidad || 'Desarrollo de Software')
-                            .replace(/\[|\]/g, '')
-                            .split(/[,•]/)
-                            .map(item => item.trim())
-                            .filter(item => item.length > 0)
-                            .map((tech, idx) => (
-                              <motion.span
-                                key={idx}
-                                whileHover={{ scale: 1.06, y: -1 }}
-                                whileTap={{ scale: 0.96 }}
-                                className="px-3 py-1.5 rounded-xl text-[0.68rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs cursor-default select-none transition-colors hover:border-blue-400"
-                              >
-                                {tech}
-                              </motion.span>
-                            ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Estado Lógico & Primer Login */}
-                    <div className="grid grid-cols-2 gap-3.5">
-                      <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
-                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Estado en Plataforma:</span>
-                        <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${selectedTrabajadorModal.estado ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
-                          <span className={`w-2.5 h-2.5 rounded-full ${selectedTrabajadorModal.estado ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-                          {selectedTrabajadorModal.estado ? 'HABILITADO' : 'INHABILITADO'}
-                        </span>
-                      </div>
-                      <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80">
-                        <span className="text-[0.62rem] font-extrabold uppercase text-zinc-400 block font-mono">Primer Login:</span>
-                        <span className={`font-extrabold text-xs mt-1 inline-flex items-center gap-2 ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                          <span className={`w-2.5 h-2.5 rounded-full ${(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
-                          {(selectedTrabajadorModal.primerLogin === false || selectedTrabajadorModal.primerLoginRealizado === true) ? 'Sí (Validado)' : 'Pendiente primera sesión'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Panel Derecho: Subpanel Lateral de Carga Horaria, Tareas & Proyectos (7 de 12 columnas) */}
