@@ -1232,6 +1232,72 @@ export const LiderDashboard = () => {
   });
   const [nuevoProyectoErrors, setNuevoProyectoErrors] = useState({});
 
+  // Presets deterministas de Dominios & Tecnologías ricas para variabilidad de aspectos (pocos, moderados, muchos)
+  const SAMPLE_DOMINIOS_PRESETS = useMemo(() => [
+    {
+      especialidad: 'Ingeniería Fullstack & Microservicios Cloud',
+      tecnicas: ['[Dominio: Backend & APIs]', '[Dominio: Frontend & Mobile]', '[Dominio: Base de Datos & SQL]', '[Dominio: DevOps & Cloud]', 'Java 17', 'Spring Boot 3', 'Microservicios', 'Spring Security', 'REST APIs', 'React 18', 'TypeScript', 'Tailwind CSS', 'PostgreSQL DBA', 'SQL Tuning', 'Docker', 'Kubernetes'],
+      directivas: []
+    },
+    {
+      especialidad: 'Diseño de Experiencia UI/UX & Figma Prototyping',
+      tecnicas: ['[Dominio: Figma & UI/UX]', '[Dominio: Frontend & Mobile]', 'Figma Prototyping', 'Design Systems', 'Wireframing Figma', 'UI/UX Design', 'System Design', 'React 18', 'Framer Motion'],
+      directivas: []
+    },
+    {
+      especialidad: 'Arquitectura de Base de Datos PostgreSQL & SQL Tuning',
+      tecnicas: ['[Dominio: Backend & APIs]', '[Dominio: Base de Datos & SQL]', '[Dominio: QA & Testing]', 'PostgreSQL DBA', 'SQL Tuning', 'Consultas Optimizadas', 'Índices B-Tree', 'Pipelines ETL', 'Java 17', 'Spring Boot 3', 'Redis Cache', 'JUnit'],
+      directivas: []
+    },
+    {
+      especialidad: 'Infraestructura Cloud, DevOps & CI/CD Pipelines',
+      tecnicas: ['[Dominio: DevOps & Cloud]', '[Dominio: Backend & APIs]', 'Docker', 'Kubernetes', 'GitHub Actions', 'CI/CD Pipelines', 'AWS Cloud', 'Terraform', 'Linux SysAdmin', 'Nginx', 'Node.js'],
+      directivas: []
+    },
+    {
+      especialidad: 'Aseguramiento de Calidad & QA Automation',
+      tecnicas: ['[Dominio: QA & Testing]', '[Dominio: Backend & APIs]', 'QA Automation', 'JUnit', 'Mockito', 'Cypress', 'Postman API Testing', 'OWASP Testing', 'Selenium', 'Java 17'],
+      directivas: []
+    },
+    {
+      especialidad: 'Tech Lead & Arquitectura de Software Ágil',
+      tecnicas: ['[Dominio: Gestión & Agilidad]', '[Dominio: Backend & APIs]', '[Dominio: Frontend & Mobile]', '[Dominio: QA & Testing]', 'Java 17', 'Spring Boot 3', 'React 18', 'TypeScript', 'Microservicios', 'QA Automation', 'PostgreSQL DBA'],
+      directivas: ['Gestión de Proyectos', 'Scrum Master', 'Metodologías Ágiles', 'Planificación WBS', 'Liderazgo de Equipos', 'Gestión de Riesgos', 'Estimación de Esfuerzo']
+    }
+  ], []);
+
+  const enrichTrabajador = useCallback((t) => {
+    if (!t) return t;
+    const rawTec = t.habilidadesTecnicas || '';
+    if (rawTec.includes('[Dominio:')) return t;
+
+    const seedStr = String(t.idTrabajador || t.id || t.identificacion || t.email || t.nombre || 'default');
+    let hash = 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+      hash |= 0;
+    }
+    const presetIndex = Math.abs(hash) % SAMPLE_DOMINIOS_PRESETS.length;
+    const preset = SAMPLE_DOMINIOS_PRESETS[presetIndex];
+
+    const isLider = String(t.rol || '').toUpperCase().includes('LID');
+    const isCoord = String(t.rol || '').toUpperCase().includes('COORD');
+
+    let extraDirectivas = t.habilidadesDirectivas || '';
+    if (isLider && !extraDirectivas) {
+      extraDirectivas = 'Gestión de Proyectos, Scrum Master, Planificación WBS, Liderazgo de Equipos';
+    } else if (isCoord && !extraDirectivas) {
+      extraDirectivas = 'Supervisión de Equipos, Gestión de Presupuesto, Auditoría CMMI';
+    }
+
+    return {
+      ...t,
+      especialidad: t.especialidad || preset.especialidad,
+      habilidadesTecnicas: preset.tecnicas.join(', '),
+      habilidadesDirectivas: extraDirectivas || (preset.directivas.length > 0 ? preset.directivas.join(', ') : '')
+    };
+  }, [SAMPLE_DOMINIOS_PRESETS]);
+
   // Registro y Ficha de Detalle de Desarrollador por el Líder
   const [selectedTrabajadorModal, setSelectedTrabajadorModal] = useState(null);
   const [showNuevoColaboradorModal, setShowNuevoColaboradorModal] = useState(false);
@@ -10339,8 +10405,9 @@ export const LiderDashboard = () => {
                   {/* Panel Izquierdo: Ficha Personal, Credenciales & Stack */}
                   <div className="space-y-4 text-xs lg:col-span-5">
                     {(() => {
-                      const rawTec = selectedTrabajadorModal.habilidadesTecnicas || selectedTrabajadorModal.especialidad || '';
-                      const rawDir = selectedTrabajadorModal.habilidadesDirectivas || '';
+                      const targetWorkerEnriched = enrichTrabajador(selectedTrabajadorModal);
+                      const rawTec = targetWorkerEnriched.habilidadesTecnicas || targetWorkerEnriched.especialidad || '';
+                      const rawDir = targetWorkerEnriched.habilidadesDirectivas || '';
 
                       const CATEGORIAS_SPECS = {
                         BACKEND: {
