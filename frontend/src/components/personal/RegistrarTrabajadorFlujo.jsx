@@ -5,7 +5,7 @@ import {
   CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Plus, X, Sparkles, 
   Check, Laptop, Database, Cpu, Wrench, FileCode, Edit3, Compass,
   ArrowRight, ArrowUp, Lock, CheckCircle, RefreshCw, KeyRound, Mail,
-  AlertOctagon, Trash2
+  AlertOctagon, Trash2, Layers, Filter
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
@@ -1147,7 +1147,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                   </motion.div>
                 )}
 
-                {/* SLIDE PASO 3: HABILIDADES WBS (0 PRESELECCIONADAS DE DEFECTO Y BOTÓN CREAR TRABAJADOR) */}
+                {/* SLIDE PASO 3: HABILIDADES WBS CON FILTRADO COMPLETO POR CATEGORÍAS */}
                 {activeStep === 3 && (
                   <motion.div
                     key="step3"
@@ -1185,6 +1185,53 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </p>
                     )}
 
+                    {/* PESTAÑAS DE FILTRADO POR CATEGORÍA TÉCNICA PRINCIPAL (BACKEND, FRONTEND, FIGMA, DB, QA, DEVOPS) */}
+                    <div className="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                          <Filter size={15} className="text-emerald-600" />
+                          <span>Filtrar Sugerencias por Dominio Técnico / Categoría:</span>
+                        </span>
+                        <span className="text-[0.68rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full">
+                          {activeTabTecnicas === 'TODAS' ? 'Todas las Categorías' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTabTecnicas('TODAS')}
+                          className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                            activeTabTecnicas === 'TODAS' 
+                              ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30 scale-105' 
+                              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                          }`}
+                        >
+                          🌐 Todas las Categorías
+                        </button>
+
+                        {Object.entries(CATEGORIAS_HABILIDADES).map(([key, cat]) => {
+                          const IconComp = cat.icon;
+                          const isActive = activeTabTecnicas === key;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setActiveTabTecnicas(key)}
+                              className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer ${
+                                isActive 
+                                  ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30 scale-105' 
+                                  : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                              }`}
+                            >
+                              <IconComp size={15} />
+                              <span>{cat.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     {/* SI ES LÍDER -> 2 CAMPOS DE HABILIDADES */}
                     {formData.rol === 'LIDER' ? (
                       <div className="space-y-6">
@@ -1220,10 +1267,10 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
                           <div className="flex flex-wrap gap-2 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-amber-200 dark:border-amber-800/60 min-h-[50px] items-center">
                             {habilidadesDirectivas.length === 0 ? (
-                              <span className="text-xs text-zinc-400 italic">No hay habilidades directivas seleccionadas. Haga clic abajo...</span>
+                              <span className="text-xs text-zinc-400 italic">No hay habilidades directivas seleccionadas. Haga clic en las sugerencias abajo...</span>
                             ) : (
                               habilidadesDirectivas.map(skill => (
-                                <span key={skill} className="px-3.5 py-1.5 rounded-xl bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800 text-xs sm:text-sm font-black flex items-center gap-2">
+                                <span key={skill} className="px-3.5 py-1.5 rounded-xl bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800 text-xs sm:text-sm font-black flex items-center gap-2 shadow-xs">
                                   <span>{skill}</span>
                                   <button type="button" onClick={() => handleToggleDirectiva(skill)} className="hover:text-red-600 cursor-pointer font-black text-sm">×</button>
                                 </span>
@@ -1257,7 +1304,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           </div>
                         </div>
 
-                        {/* 3B: TÉCNICAS BLUE */}
+                        {/* 3B: TÉCNICAS BLUE FILTRADAS POR CATEGORÍA */}
                         <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-blue-500/10 to-indigo-500/5 border border-blue-300 dark:border-blue-900/60 space-y-5">
                           <div className="flex justify-between items-center pb-2 border-b border-blue-200 dark:border-blue-800/60">
                             <span className="font-black text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2.5">
@@ -1288,10 +1335,10 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
                           <div className="flex flex-wrap gap-2 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-blue-200 dark:border-blue-800/60 min-h-[50px] items-center">
                             {habilidadesTecnicas.length === 0 ? (
-                              <span className="text-xs text-zinc-400 italic">No hay tecnologías seleccionadas aún. Haga clic abajo...</span>
+                              <span className="text-xs text-zinc-400 italic">No hay tecnologías seleccionadas aún. Haga clic en las sugerencias abajo...</span>
                             ) : (
                               habilidadesTecnicas.map(skill => (
-                                <span key={skill} className="px-3.5 py-1.5 rounded-xl bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800 text-xs sm:text-sm font-black flex items-center gap-2">
+                                <span key={skill} className="px-3.5 py-1.5 rounded-xl bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800 text-xs sm:text-sm font-black flex items-center gap-2 shadow-xs">
                                   <span>{skill}</span>
                                   <button type="button" onClick={() => handleToggleTecnica(skill)} className="hover:text-red-600 cursor-pointer font-black text-sm">×</button>
                                 </span>
@@ -1300,12 +1347,18 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           </div>
 
                           <div className="space-y-2">
-                            <span className="text-xs font-extrabold text-blue-900 dark:text-blue-200 uppercase block">
-                              Sugerencias Rápidas Técnicas (Clic para Activar/Desactivar):
-                            </span>
-                            <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto pr-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-extrabold text-blue-900 dark:text-blue-200 uppercase block">
+                                Sugerencias Técnicas ({activeTabTecnicas === 'TODAS' ? 'Todas las Categorías' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label}):
+                              </span>
+                              <span className="text-xs font-bold text-blue-600">
+                                Clic para Activar / Desactivar
+                              </span>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2 max-h-[180px] overflow-y-auto pr-1">
                               {Object.entries(CATEGORIAS_HABILIDADES)
-                                .filter(([key]) => key !== 'GESTION')
+                                .filter(([key]) => activeTabTecnicas === 'TODAS' || activeTabTecnicas === key)
                                 .flatMap(([, cat]) => cat.skills)
                                 .map(skill => {
                                   const isSel = habilidadesTecnicas.includes(skill);
@@ -1316,8 +1369,8 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                                       onClick={() => handleToggleTecnica(skill)}
                                       className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold border transition-all cursor-pointer ${
                                         isSel 
-                                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
-                                          : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-blue-50'
+                                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm ring-2 ring-blue-500/30' 
+                                          : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-blue-50 dark:hover:bg-blue-950/40'
                                       }`}
                                     >
                                       {isSel ? '✓ ' : '+ '}{skill}
@@ -1330,40 +1383,16 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
                       </div>
                     ) : (
-                      /* MÓDULO ÚNICO PARA DESARROLLADOR */
+                      /* MÓDULO ÚNICO PARA DESARROLLADOR CON FILTRADO POR CATEGORÍAS */
                       <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-300 dark:border-emerald-900/60 space-y-5">
                         
-                        <div className="flex flex-wrap gap-2 pb-2 border-b border-emerald-200 dark:border-emerald-800/60">
-                          <button
-                            type="button"
-                            onClick={() => setActiveTabTecnicas('TODAS')}
-                            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${activeTabTecnicas === 'TODAS' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'}`}
-                          >
-                            Todas las Categorías
-                          </button>
-                          {Object.entries(CATEGORIAS_HABILIDADES).map(([key, cat]) => {
-                            const IconComp = cat.icon;
-                            return (
-                              <button
-                                key={key}
-                                type="button"
-                                onClick={() => setActiveTabTecnicas(key)}
-                                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${activeTabTecnicas === key ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50'}`}
-                              >
-                                <IconComp size={16} />
-                                <span>{cat.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-
                         <div className="flex gap-2">
                           <input
                             type="text"
                             value={customTecnicaInput}
                             onChange={(e) => setCustomTecnicaInput(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomTecnica(); } }}
-                            placeholder="Escriba tecnología / especialidad y presione Enter..."
+                            placeholder="Escriba tecnología / especialidad (ej. Java 17, Figma, PostgreSQL) y Enter..."
                             className="flex-1 px-4 py-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-900 text-xs sm:text-sm font-semibold"
                           />
                           <button
@@ -1391,12 +1420,13 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-xs sm:text-sm font-extrabold text-emerald-900 dark:text-emerald-200 uppercase tracking-wider">
-                              Sugerencias Rápidas Disponibles (Clic para Activar/Desactivar):
+                              Sugerencias Rápidas ({activeTabTecnicas === 'TODAS' ? 'Todas las Categorías' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label}):
                             </span>
                             <span className="text-xs font-bold text-zinc-500">
                               {habilidadesTecnicas.length} seleccionadas
                             </span>
                           </div>
+
                           <div className="flex flex-wrap gap-2 max-h-[180px] overflow-y-auto pr-1">
                             {Object.entries(CATEGORIAS_HABILIDADES)
                               .filter(([key]) => activeTabTecnicas === 'TODAS' || activeTabTecnicas === key)
@@ -1410,8 +1440,8 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                                     onClick={() => handleToggleTecnica(skill)}
                                     className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold border transition-all cursor-pointer ${
                                       isSel 
-                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' 
-                                        : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50'
+                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/30' 
+                                        : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
                                     }`}
                                   >
                                     {isSel ? '✓ ' : '+ '}{skill}
