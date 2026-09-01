@@ -1,3 +1,4 @@
+import { ModalConfirmacionSalirWBS } from '../../components/wbs/ModalConfirmacionSalirWBS';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
@@ -17,7 +18,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PredictorBurnout } from '../../components/dashboard/PredictorBurnout';
 import { CustomSelect } from '../../components/ui/CustomSelect';
 import { ConfirmActionModal } from '../../components/ui/ConfirmActionModal';
-import { RegistrarTrabajadorFlujo } from '../../components/personal/RegistrarTrabajadorFlujo';
+import { PaginaDedicadaAsignarTarea, DOMINIOS_WBS } from '../../components/wbs/PaginaDedicadaAsignarTarea';
+import { ModalDetalleTareaWBS } from '../../components/wbs/ModalDetalleTareaWBS';
+import { ModalOpcionesEdicionEtapa } from '../../components/wbs/ModalOpcionesEdicionEtapa';
 
 const ROLE_SKILL_PROFILES = {
   DESARROLLADOR: {
@@ -366,9 +369,11 @@ export const CoordinadorDashboard = () => {
   const [loadingProyectoDetalle, setLoadingProyectoDetalle] = useState(false);
   const [proyectoEtapasModal, setProyectoEtapasModal] = useState([]);
   const [proyectoDevsModal, setProyectoDevsModal] = useState([]);
+  const [showPaginaDedicadaAsignarCoord, setShowPaginaDedicadaAsignarCoord] = useState(false);
+  const [showConfirmSalirAsignacionCoord, setShowConfirmSalirAsignacionCoord] = useState(false);
 
   // Estados para Modo Edición / Lectura e Historial de Cambios Directivos
-  const [modoEdicionCoordinador, setModoEdicionCoordinador] = useState(false); // false = Modo Lectura, true = Modo Edición
+  const [modoEdicionCoordinador, setModoEdicionCoordinador] = useState(true); // Siempre activo por defecto (Edición habilitada directamente)
   const [showHistorialModal, setShowHistorialModal] = useState(false);
   const [historialCambiosModal, setHistorialCambiosModal] = useState([]);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
@@ -422,6 +427,8 @@ export const CoordinadorDashboard = () => {
   const [filtroEstadoTareaDevModal, setFiltroEstadoTareaDevModal] = useState('TODAS');
   const [navFromWorker, setNavFromWorker] = useState(null);
   const [highlightedTaskId, setHighlightedTaskId] = useState(null);
+  const [selectedActividadModalTask, setSelectedActividadModalTask] = useState(null);
+  const [selectedEtapaModalTask, setSelectedEtapaModalTask] = useState(null);
 
   // Presets deterministas de Dominios & Tecnologías ricas para variabilidad de aspectos (pocos, moderados, muchos)
   const SAMPLE_DOMINIOS_PRESETS = useMemo(() => [
@@ -781,6 +788,10 @@ export const CoordinadorDashboard = () => {
   const [showEditarEtapaModalCoord, setShowEditarEtapaModalCoord] = useState(false);
   const [etapaAEditarCoord, setEtapaAEditarCoord] = useState({ idEtapa: null, nombreEtapa: '', estado: '' });
   const [submittingEditarEtapaCoord, setSubmittingEditarEtapaCoord] = useState(false);
+
+  const [showModalOpcionesEtapaCoord, setShowModalOpcionesEtapaCoord] = useState(false);
+  const [etapaOpcionesCoord, setEtapaOpcionesCoord] = useState(null);
+  const [actividadAEditarCoord, setActividadAEditarCoord] = useState(null);
 
   const [showReasignarActividadModalCoord, setShowReasignarActividadModalCoord] = useState(false);
   const [etapaAFinalizarModalCoord, setEtapaAFinalizarModalCoord] = useState(null);
@@ -1431,29 +1442,57 @@ export const CoordinadorDashboard = () => {
   };
 
   // Eliminar Etapa WBS (Solo si no contiene tareas)
-  const handleEliminarEtapaCoord = async (etapa) => {
+  const [showModalConfirmEliminarEtapaCoord, setShowModalConfirmEliminarEtapaCoord] = useState(false);
+  const [etapaAEliminarCoord, setEtapaAEliminarCoord] = useState(null);
+  const [submittingEliminarEtapaCoord, setSubmittingEliminarEtapaCoord] = useState(false);
+
+  const handleEliminarEtapaCoord = (etapa) => {
     if (!etapa || !etapa.idEtapa) return;
     const acts = etapa.actividades || [];
     if (acts.length > 0) {
       toast.error(`No se puede eliminar la etapa "${etapa.nombreEtapa}". Contiene ${acts.length} tarea(s) vinculada(s). Elimine o transfiera las tareas primero.`);
       return;
     }
-    if (!window.confirm(`¿Está seguro de eliminar la etapa "${etapa.nombreEtapa}"? Esta acción no se puede deshacer.`)) return;
+    setEtapaAEliminarCoord(etapa);
+    setShowModalConfirmEliminarEtapaCoord(true);
+  };
 
+  const ejecutarEliminarEtapaCoord = async () => {
+    if (!etapaAEliminarCoord || !etapaAEliminarCoord.idEtapa) return;
+    setSubmittingEliminarEtapaCoord(true);
+    const idBorrar = etapaAEliminarCoord.idEtapa;
+    const nombreBorrar = etapaAEliminarCoord.nombreEtapa || `Fase #${idBorrar}`;
     try {
-      await api.delete(`/coordinador/etapas/${etapa.idEtapa}`);
-      toast.success(`Etapa "${etapa.nombreEtapa}" eliminada correctamente.`);
-      
-      setProyectoEtapasModal(prev => (prev || []).filter(et => String(et.idEtapa) !== String(etapa.idEtapa)));
+      await api.delete(`/coordinador/etapas/${idBorrar}`);
+      toast.success(`Etapa "${nombreBorrar}" eliminada correctamente.`);
+
+      setProyectoEtapasModal(prev => (prev || []).filter(et => String(et.idEtapa) !== String(idBorrar)));
       setProyectos(prev => (prev || []).map(p => {
-        if (String(p.idProyecto) === String(selectedProyectoModal.idProyecto)) {
-          return { ...p, etapas: (p.etapas || []).filter(et => String(et.idEtapa) !== String(etapa.idEtapa)) };
+        if (selectedProyectoModal && String(p.idProyecto) === String(selectedProyectoModal.idProyecto)) {
+          return { ...p, etapas: (p.etapas || []).filter(et => String(et.idEtapa) !== String(idBorrar)) };
         }
         return p;
       }));
+      setShowModalConfirmEliminarEtapaCoord(false);
+      setEtapaAEliminarCoord(null);
     } catch (err) {
       console.error('Error al eliminar etapa:', err);
-      toast.error(err.response?.data?.message || 'Error al eliminar la etapa WBS.');
+      if (err.response?.status === 404) {
+        toast.info(`La etapa "${nombreBorrar}" ya había sido eliminada del servidor. Se ha actualizado el listado.`);
+        setProyectoEtapasModal(prev => (prev || []).filter(et => String(et.idEtapa) !== String(idBorrar)));
+        setProyectos(prev => (prev || []).map(p => {
+          if (selectedProyectoModal && String(p.idProyecto) === String(selectedProyectoModal.idProyecto)) {
+            return { ...p, etapas: (p.etapas || []).filter(et => String(et.idEtapa) !== String(idBorrar)) };
+          }
+          return p;
+        }));
+        setShowModalConfirmEliminarEtapaCoord(false);
+        setEtapaAEliminarCoord(null);
+      } else {
+        toast.error(err.response?.data?.message || 'Error al eliminar la etapa WBS.');
+      }
+    } finally {
+      setSubmittingEliminarEtapaCoord(false);
     }
   };
 
@@ -1778,31 +1817,38 @@ export const CoordinadorDashboard = () => {
     toast.success(`Clave segura generada: ${shuffled}`);
   };
 
-  // Peticiones API
+  // Peticiones API con Reintento Automático Anti-Caídas
   const cargarDatos = useCallback(async () => {
     try {
       setLoading(true);
       const [trabajadoresRes, solicitudesRes, proyectosRes] = await Promise.all([
-        api.get('/coordinador/trabajadores').catch(() => []),
-        api.get('/coordinador/solicitudes').catch(() => []),
-        api.get('/coordinador/proyectos').catch(() => [])
+        api.get('/coordinador/trabajadores').catch(err => { console.error('Error trabajadores:', err); return null; }),
+        api.get('/coordinador/solicitudes').catch(err => { console.error('Error solicitudes:', err); return null; }),
+        api.get('/coordinador/proyectos').catch(err => { console.error('Error proyectos:', err); return null; })
       ]);
 
-      setTrabajadores(Array.isArray(trabajadoresRes) ? trabajadoresRes.map(enrichTrabajador) : []);
-      setSolicitudes(Array.isArray(solicitudesRes) ? solicitudesRes : []);
-      setProyectos(Array.isArray(proyectosRes) ? proyectosRes : []);
+      if (Array.isArray(trabajadoresRes) && trabajadoresRes.length > 0) {
+        setTrabajadores(trabajadoresRes.map(enrichTrabajador));
+      }
+      if (Array.isArray(solicitudesRes)) {
+        setSolicitudes(solicitudesRes);
+      }
+      if (Array.isArray(proyectosRes) && proyectosRes.length > 0) {
+        setProyectos(proyectosRes);
+      }
     } catch (err) {
       console.error('Error cargando datos del coordinador:', err);
-      toast.error('Error al sincronizar datos desde PostgreSQL.');
     } finally {
       setLoading(false);
     }
   }, [api, enrichTrabajador]);
 
-  // Efectos (Hooks)
+  // Efectos (Hooks) con Auto-Reintento Si El Catálogo Está Vacío
   useEffect(() => {
     cargarDatos();
   }, [cargarDatos]);
+
+
 
   // Manejadores de Habilidades Técnicas (Skills)
   const handleToggleSkill = (skill) => {
@@ -2722,7 +2768,7 @@ export const CoordinadorDashboard = () => {
   // Manejadores para Detalle de Proyecto y Reasignación de Líder
   const handleAbrirDetalleProyecto = async (proyecto) => {
     setSelectedProyectoModal(proyecto);
-    setModoEdicionCoordinador(false); // Por defecto se abre en Modo Lectura (Supervisión)
+    setModoEdicionCoordinador(true); // Edición habilitada automáticamente al ingresar al proyecto
     setSessionBatchId('BATCH-' + Date.now());
     setLoadingProyectoDetalle(true);
     try {
@@ -3662,9 +3708,13 @@ export const CoordinadorDashboard = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedProyectoModal(null);
-                      setHighlightedActividadId(null);
-                      setHighlightedProyectoId(null);
+                      if (showPaginaDedicadaAsignarCoord) {
+                        setShowConfirmSalirAsignacionCoord(true);
+                      } else {
+                        setSelectedProyectoModal(null);
+                        setHighlightedActividadId(null);
+                        setHighlightedProyectoId(null);
+                      }
                     }}
                     className="outline-button text-xs py-2.5 px-4 font-extrabold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 cursor-pointer shadow-2xs hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl"
                   >
@@ -3673,63 +3723,141 @@ export const CoordinadorDashboard = () => {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className={`px-3.5 py-1.5 rounded-2xl text-xs font-black inline-flex items-center gap-2 border ${modoEdicionCoordinador
-                      ? 'bg-amber-50 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 animate-pulse'
-                      : 'bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800'
-                    }`}>
-                    {modoEdicionCoordinador ? (
-                      <><Edit3 size={14} className="text-amber-600" /> Modo Edición Activo (Gestión Directiva Habilitada)</>
-                    ) : (
-                      <><ShieldCheck size={14} className="text-blue-600" /> Modo Visualización (Supervisión Directiva)</>
-                    )}
-                  </span>
 
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    type="button"
-                    onClick={() => {
-                      const nuevoModo = !modoEdicionCoordinador;
-                      setModoEdicionCoordinador(nuevoModo);
-                      if (nuevoModo) {
-                        toast.success('Modo Edición Habilitado. Los cambios se guardarán con auditoría directiva.');
-                        if (!sessionBatchId) setSessionBatchId('BATCH-' + Date.now());
-                      } else {
-                        toast.info('Modo Visualización Activado (Supervisión).');
-                      }
-                    }}
-                    className={`text-xs py-2.5 px-5 rounded-2xl font-extrabold transition-all cursor-pointer inline-flex items-center gap-2 shadow-sm ${modoEdicionCoordinador
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20'
-                        : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20'
-                      }`}
-                  >
-                    {modoEdicionCoordinador ? (
-                      <><Eye size={15} /> Cambiar a Modo Visualización</>
-                    ) : (
-                      <><Edit3 size={15} /> Habilitar Modo Edición</>
-                    )}
-                  </motion.button>
-                </div>
               </div>
 
-              {/* Ficha Principal de Detalles (Replica Foto 3) */}
-              <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-5">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5">
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-sm">
+              {/* Consola Dedicada de Asignación WBS o Vista Tradicional de Detalles */}
+              {showPaginaDedicadaAsignarCoord ? (
+                <PaginaDedicadaAsignarTarea
+                  proyecto={selectedProyectoModal}
+                  etapas={proyectoEtapasModal}
+                  trabajadores={trabajadores}
+                  rolUsuario="COORDINADOR"
+                  actividadAEditar={actividadAEditarCoord}
+                  onClose={() => {
+                    setShowPaginaDedicadaAsignarCoord(false);
+                    setActividadAEditarCoord(null);
+                  }}
+                  onSave={async (payload, actividadEditando) => {
+                    const { idActividad, idEtapa, nombreActividad, descripcionDetallada, cualidadTecnica, cualidadNombre, horasSemanales, selectedDevIds } = payload;
+                    const etapaSeleccionada = (proyectoEtapasModal || []).find(et => String(et.idEtapa) === String(idEtapa));
+                    const etapaNombre = etapaSeleccionada ? etapaSeleccionada.nombreEtapa : `Etapa #${idEtapa}`;
+
+                    if (actividadEditando) {
+                      const actId = idActividad || actividadEditando.idActividad || actividadEditando.id;
+                      const mainDevId = selectedDevIds && selectedDevIds.length > 0 ? Number(selectedDevIds[0]) : null;
+                      const body = {
+                        nombreActividad: nombreActividad.trim(),
+                        descripcion: nombreActividad.trim(),
+                        descripcionDetallada: descripcionDetallada ? descripcionDetallada.trim() : nombreActividad.trim(),
+                        cualidadTecnica,
+                        cualidadNombre,
+                        horasSemanales,
+                        estado: actividadEditando.estado || 'PENDIENTE',
+                        idEtapa: Number(idEtapa),
+                        idDesarrollador: mainDevId
+                      };
+
+                      await api.put(`/lider/actividades/${actId}`, body).catch(() => {});
+
+                      // Para desarrolladores adicionales agregados al squad en modo edición, registrar sus sub-actividades
+                      if (selectedDevIds && selectedDevIds.length > 1) {
+                        for (const extraDevId of selectedDevIds.slice(1)) {
+                          const bodyExtra = {
+                            nombreActividad: nombreActividad.trim(),
+                            descripcion: nombreActividad.trim(),
+                            descripcionDetallada: descripcionDetallada ? descripcionDetallada.trim() : nombreActividad.trim(),
+                            cualidadTecnica,
+                            cualidadNombre,
+                            horasSemanales,
+                            estado: actividadEditando.estado || 'PENDIENTE',
+                            idEtapa: Number(idEtapa)
+                          };
+                          await api.post(`/lider/etapas/${idEtapa}/desarrolladores/${extraDevId}/actividades`, bodyExtra).catch(() => {});
+                        }
+                      }
+
+                      setProyectoEtapasModal(prevEtapas => prevEtapas.map(et => {
+                        if (String(et.idEtapa || et.id) === String(idEtapa)) {
+                          const acts = (et.actividades || []).map(act => {
+                            if (String(act.idActividad || act.id) === String(actId)) {
+                              const squadDevs = selectedDevIds.map(dId => trabajadores.find(t => String(t.idTrabajador || t.id) === String(dId)) || { idTrabajador: dId, nombre: 'Dev' });
+                              return {
+                                ...act,
+                                nombreActividad: nombreActividad.trim(),
+                                descripcion: nombreActividad.trim(),
+                                descripcionDetallada: descripcionDetallada.trim(),
+                                cualidadTecnica,
+                                cualidadNombre,
+                                horasSemanales,
+                                desarrollador: squadDevs[0] || act.desarrollador,
+                                desarrolladores: squadDevs
+                              };
+                            }
+                            return act;
+                          });
+                          return { ...et, actividades: acts };
+                        }
+                        return et;
+                      }));
+
+                      registrarAccionCoordinador(
+                        selectedProyectoModal.idProyecto,
+                        'EDICION_ACTIVIDAD',
+                        `Tarea "${nombreActividad.trim()}" actualizada en la fase "${etapaNombre}".`
+                      );
+                    } else {
+                      for (const devId of selectedDevIds) {
+                        const dev = trabajadores.find(t => String(t.idTrabajador || t.id) === String(devId));
+                        const devNombre = dev ? `${dev.nombre} ${dev.apellido}` : `ID #${devId}`;
+
+                        const body = {
+                          nombreActividad: nombreActividad.trim(),
+                          descripcion: nombreActividad.trim(),
+                          descripcionDetallada: descripcionDetallada ? descripcionDetallada.trim() : nombreActividad.trim(),
+                          cualidadTecnica,
+                          cualidadNombre,
+                          horasSemanales,
+                          estado: 'PENDIENTE',
+                          idEtapa: Number(idEtapa)
+                        };
+
+                        await api.post(`/lider/etapas/${idEtapa}/desarrolladores/${devId}/actividades`, body).catch(() => {});
+
+                        registrarAccionCoordinador(
+                          selectedProyectoModal.idProyecto,
+                          'ASIGNACION_ACTIVIDAD',
+                          `Actividad "${nombreActividad.trim()}" asignada a ${devNombre} en fase "${etapaNombre}".`
+                        );
+                      }
+                    }
+
+                    const etapasRes = await api.get(`/lider/proyectos/${selectedProyectoModal.idProyecto}/etapas`).catch(() => []);
+                    if (Array.isArray(etapasRes) && etapasRes.length > 0) {
+                      setProyectoEtapasModal(etapasRes);
+                    }
+                    setActividadAEditarCoord(null);
+                  }}
+                />
+              ) : (
+                <>
+                  {/* Ficha Principal de Detalles (Replica Foto 3) */}
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 shadow-sm space-y-5">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-5">
+                  <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-xs">
                       <FolderGit2 size={24} />
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-snug">
                           {selectedProyectoModal.nombre}
                         </h3>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-black uppercase border ${selectedProyectoModal.estado === 'FINALIZADO' || selectedProyectoModal.estado === 'COMPLETADO'
+                        <span className={`px-2.5 py-0.5 rounded-full text-[0.68rem] font-black uppercase border shrink-0 ${selectedProyectoModal.estado === 'FINALIZADO' || selectedProyectoModal.estado === 'COMPLETADO'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300' :
                             selectedProyectoModal.estado === 'EN_PAUSA' || selectedProyectoModal.estado === 'PAUSADO'
                               ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 animate-pulse'
-                              : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                              : 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700'
                           }`}>
                           {selectedProyectoModal.estado === 'EN_PAUSA' ? 'EN PAUSA' : (selectedProyectoModal.estado || 'ACTIVO')}
                         </span>
@@ -3741,7 +3869,7 @@ export const CoordinadorDashboard = () => {
                   </div>
 
                   {/* Acciones de Cabecera Directiva */}
-                  <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {selectedProyectoModal.lider && (
                       <div className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-700">
                         <User size={14} className="text-blue-600 dark:text-blue-400" />
@@ -3918,7 +4046,7 @@ export const CoordinadorDashboard = () => {
 
                       <button
                         type="button"
-                        onClick={() => setShowNuevaActividadModalCoord(true)}
+                        onClick={() => setShowPaginaDedicadaAsignarCoord(true)}
                         className="gradient-button text-xs py-2 px-4 font-extrabold inline-flex items-center gap-1.5 rounded-2xl cursor-pointer shadow-md"
                       >
                         <Zap size={15} />
@@ -3986,27 +4114,26 @@ export const CoordinadorDashboard = () => {
                                 <div className="flex items-center gap-1.5">
                                   <button
                                     type="button"
-                                    onClick={() => handleAbrirEditarEtapaCoord(etapa)}
+                                    onClick={() => {
+                                      setEtapaOpcionesCoord(etapa);
+                                      setShowModalOpcionesEtapaCoord(true);
+                                    }}
                                     className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
                                   >
                                     <Edit3 size={13} className="text-blue-600" />
                                     <span>Editar</span>
                                   </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => handleEliminarEtapaCoord(etapa)}
-                                    disabled={acts.length > 0}
-                                    title={acts.length > 0 ? "No se puede eliminar una etapa que contiene tareas" : "Eliminar esta etapa vacía"}
-                                    className={`text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border transition-all cursor-pointer ${
-                                      acts.length > 0
-                                        ? 'opacity-40 cursor-not-allowed border-zinc-200 text-zinc-400 dark:border-zinc-800 dark:text-zinc-600'
-                                        : 'border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40'
-                                    }`}
-                                  >
-                                    <Trash2 size={13} />
-                                    <span>Eliminar</span>
-                                  </button>
+                                   {acts.length === 0 && (
+                                     <button
+                                       type="button"
+                                       onClick={() => handleEliminarEtapaCoord(etapa)}
+                                       title="Eliminar esta etapa vacía sin tareas vinculadas"
+                                       className="text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all cursor-pointer shadow-2xs"
+                                     >
+                                       <Trash2 size={13} />
+                                       <span>Eliminar</span>
+                                     </button>
+                                   )}
                                 </div>
                               )}
                             </div>
@@ -4045,7 +4172,7 @@ export const CoordinadorDashboard = () => {
                           )}
 
                         {/* Actividades dentro de la Etapa */}
-                        <div className="space-y-2 pt-2">
+                        <div className="space-y-3 pt-2">
                           {etapa.actividades && etapa.actividades.length > 0 ? (
                             etapa.actividades.map((act, aIdx) => {
                               const isHighlighted = highlightedActividadId && (
@@ -4053,145 +4180,136 @@ export const CoordinadorDashboard = () => {
                                 String(act.id) === String(highlightedActividadId)
                               );
 
+                              // Squad de desarrolladores reales
+                              let devsList = [];
+                              if (Array.isArray(act.desarrolladoresAsignados) && act.desarrolladoresAsignados.length > 0) {
+                                devsList = [...act.desarrolladoresAsignados];
+                              } else if (Array.isArray(act.desarrolladores) && act.desarrolladores.length > 0) {
+                                devsList = [...act.desarrolladores];
+                              } else if (Array.isArray(act.equipoDesarrolladores) && act.equipoDesarrolladores.length > 0) {
+                                devsList = [...act.equipoDesarrolladores];
+                              } else if (act.desarrollador) {
+                                devsList = [act.desarrollador];
+                                if (act.coDesarrollador) devsList.push(act.coDesarrollador);
+                              }
+
+                              // Dominios asociados exclusivamente a la tarea
+                              const domKeysArr = (act.cualidadTecnica || '').split(',').map(s => s.trim()).filter(Boolean);
+                              let domsList = DOMINIOS_WBS.filter(d =>
+                                domKeysArr.includes(d.key) ||
+                                (act.cualidadNombre && act.cualidadNombre.toLowerCase().includes(d.label.toLowerCase()))
+                              );
+                              if (domsList.length === 0) {
+                                domsList = [DOMINIOS_WBS[0]];
+                              }
+
+                              const st = (act.estado || 'PENDIENTE').toUpperCase().replace(/[\s_]+/g, '_');
+                              const isFin = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO'].includes(st);
+                              const isProg = ['EN_PROGRESO', 'EN_PROCESO', 'EN_CURSO', 'ACTIVO'].includes(st);
+                              const horasTask = Number(act.horasSemanales) || 8;
+
                               return (
                                 <div
                                   key={act.idActividad || aIdx}
-                                  className={`relative p-3.5 rounded-2xl transition-all duration-200 ease-out ${isHighlighted
-                                      ? 'bg-blue-50/80 dark:bg-blue-900/20 border-2 border-blue-500 dark:border-blue-400 ring-4 ring-blue-500/20 shadow-xl scale-[1.01] z-10'
-                                      : 'bg-white dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800'
-                                    } flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs`}
+                                  onClick={() => {
+                                    setSelectedActividadModalTask({ ...act, desarrolladores: devsList });
+                                    setSelectedEtapaModalTask(etapa);
+                                  }}
+                                  className={`relative p-4 sm:p-5 rounded-2xl transition-all duration-200 cursor-pointer ${
+                                    isHighlighted
+                                      ? 'bg-blue-50/90 dark:bg-blue-950/30 border-2 border-blue-500 ring-4 ring-blue-500/20 shadow-lg'
+                                      : 'bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 hover:border-blue-400 hover:shadow-md'
+                                  } space-y-3.5`}
                                 >
                                   {isHighlighted && (
                                     <motion.div
                                       initial={{ opacity: 0, y: 10, scale: 0.8 }}
                                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                                      transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                                      className="absolute -top-3.5 -left-1.5 sm:left-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-2xl font-bold text-[0.62rem] tracking-wide flex items-center gap-1.5 shadow-lg shadow-blue-500/40 border-2 border-white dark:border-zinc-900 z-20"
+                                      className="absolute -top-3 -left-1 sm:left-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-0.5 rounded-2xl font-bold text-[0.62rem] flex items-center gap-1.5 shadow-md border border-white dark:border-zinc-900 z-10"
                                     >
-                                      <Zap size={11} className="fill-white" />
-                                      TAREA SELECCIONADA
+                                      <Zap size={11} className="fill-white" /> TAREA SELECCIONADA
                                     </motion.div>
                                   )}
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-semibold text-zinc-800 dark:text-zinc-200 mt-1 sm:mt-0">
-                                      {act.nombreActividad || act.descripcion}
-                                    </span>
+
+                                  {/* Encabezado: Título, Badges de Dominios y Estado */}
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shrink-0">
+                                        <FileText size={16} />
+                                      </div>
+                                      <h5 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                        {act.nombreActividad || act.descripcion}
+                                      </h5>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-wrap shrink-0">
+                                      {domsList.map((d) => {
+                                        const IconComp = d.LucideIcon;
+                                        return (
+                                          <span key={d.key} className="px-2.5 py-0.5 rounded-lg text-[0.62rem] font-extrabold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 font-mono">
+                                            <IconComp size={11} /> {d.label}
+                                          </span>
+                                        );
+                                      })}
+
+                                      <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold uppercase border ${
+                                        isFin
+                                          ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                                          : isProg
+                                            ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
+                                            : 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300'
+                                      }`}>
+                                        {st.replace(/_/g, ' ')}
+                                      </span>
+                                    </div>
                                   </div>
 
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    {/* Squad / Múltiples Desarrolladores Asignados por Tarea WBS (1, 2, 3 o 4 Desarrolladores según la tarea) */}
-                                    {(() => {
-                                      let devsList = [];
-                                      if (Array.isArray(act.desarrolladores) && act.desarrolladores.length > 0) {
-                                        devsList = [...act.desarrolladores];
-                                      } else if (Array.isArray(act.equipoDesarrolladores) && act.equipoDesarrolladores.length > 0) {
-                                        devsList = [...act.equipoDesarrolladores];
-                                      } else if (act.desarrollador) {
-                                        devsList = [act.desarrollador];
-                                        if (act.coDesarrollador) devsList.push(act.coDesarrollador);
-                                      }
+                                  {/* Cuerpo: Squad de Desarrolladores & Horas */}
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 text-xs">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {devsList.map((dev, dIdx) => {
+                                        const isLiderDev = Boolean(
+                                          dev.esLider ||
+                                          ['LÍDER', 'LIDER', 'ROLE_LIDER', 'LÍDER DE PROYECTO', 'LIDER DE PROYECTO'].includes((dev.rol || '').toUpperCase()) ||
+                                          (dev.profesion || '').toLowerCase().includes('líder de proyecto') ||
+                                          (dev.profesion || '').toLowerCase().includes('lider de proyecto')
+                                        );
 
-                                      // Hash determinista por tarea para variar el número de integrantes (1, 2, 3 o 4)
-                                      const actSeed = String(act.idActividad || act.id || act.nombreActividad || act.descripcion || 'wbs-task');
-                                      let seedHash = 0;
-                                      for (let i = 0; i < actSeed.length; i++) {
-                                        seedHash = ((seedHash << 5) - seedHash) + actSeed.charCodeAt(i);
-                                        seedHash |= 0;
-                                      }
-                                      const absHash = Math.abs(seedHash);
-                                      const modVal = absHash % 10;
-                                      // Distribución: 30% -> 1 dev, 40% -> 2 devs, 20% -> 3 devs, 10% -> 4 devs
-                                      const targetSquadSize = modVal < 3 ? 1 : modVal < 7 ? 2 : modVal < 9 ? 3 : 4;
+                                        return (
+                                          <span
+                                            key={dIdx}
+                                            className={`px-2.5 py-1 rounded-xl text-[0.68rem] font-bold flex items-center gap-1.5 border shadow-2xs ${
+                                              isLiderDev
+                                                ? 'bg-blue-50/90 dark:bg-blue-950/80 text-blue-900 dark:text-blue-100 border-blue-200 dark:border-blue-800'
+                                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
+                                            }`}
+                                          >
+                                            <User size={12} className={isLiderDev ? "text-blue-600 dark:text-blue-400" : "text-zinc-500 dark:text-zinc-400"} />
+                                            <span>{dev.nombre || dev.desarrolladorNombre} {dev.apellido || dev.desarrolladorApellido}</span>
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
 
-                                      if (Array.isArray(trabajadores) && trabajadores.length > 0 && devsList.length < targetSquadSize) {
-                                        const allDevs = trabajadores.filter(t => t.estado && (t.rol || '').toUpperCase().includes('DESARROLLADOR'));
-                                        const availableDevs = allDevs.filter(d => {
-                                          const dId = String(d.idTrabajador || d.id || '');
-                                          return !devsList.some(existing => String(existing.idTrabajador || existing.id || '') === dId);
-                                        });
+                                    <div className="flex items-center gap-3 shrink-0">
+                                      <span className="text-[0.68rem] font-mono font-extrabold text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                                        <Clock size={13} className="text-blue-500" />
+                                        <span>{horasTask}h/semana</span>
+                                      </span>
 
-                                        let stepIndex = absHash;
-                                        while (devsList.length < targetSquadSize && availableDevs.length > 0) {
-                                          const pickIdx = stepIndex % availableDevs.length;
-                                          devsList.push(availableDevs[pickIdx]);
-                                          availableDevs.splice(pickIdx, 1);
-                                          stepIndex += 3;
-                                        }
-                                      }
-
-                                      if (devsList.length === 0) return null;
-
-                                      return (
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                          {devsList.map((dev, dIdx) => (
-                                            <span
-                                              key={dIdx}
-                                              className={`px-2.5 py-1 rounded-xl text-[0.68rem] font-extrabold flex items-center gap-1.5 shadow-2xs border ${
-                                                dIdx === 0
-                                                  ? 'bg-blue-50/90 dark:bg-blue-950/80 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800'
-                                                  : dIdx === 1
-                                                  ? 'bg-indigo-50/90 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800'
-                                                  : dIdx === 2
-                                                  ? 'bg-purple-50/90 dark:bg-purple-950/80 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-800'
-                                                  : 'bg-teal-50/90 dark:bg-teal-950/80 text-teal-800 dark:text-teal-200 border-teal-200 dark:border-teal-800'
-                                              }`}
-                                              title={dIdx === 0 ? 'Desarrollador Responsable Principal' : `Co-Desarrollador Colaborador (${dIdx + 1})`}
-                                            >
-                                              <User size={12} className={
-                                                dIdx === 0 ? "text-blue-600 dark:text-blue-400" :
-                                                dIdx === 1 ? "text-indigo-600 dark:text-indigo-400" :
-                                                dIdx === 2 ? "text-purple-600 dark:text-purple-400" :
-                                                "text-teal-600 dark:text-teal-400"
-                                              } />
-                                              <span>{dev.nombre || dev.desarrolladorNombre} {dev.apellido || dev.desarrolladorApellido}</span>
-                                              {dIdx > 0 && (
-                                                <span className={`text-[0.55rem] font-mono px-1 py-0.2 rounded font-black uppercase tracking-wider ${
-                                                  dIdx === 1 ? 'bg-indigo-200/80 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100' :
-                                                  dIdx === 2 ? 'bg-purple-200/80 dark:bg-purple-900 text-purple-900 dark:text-purple-100' :
-                                                  'bg-teal-200/80 dark:bg-teal-900 text-teal-900 dark:text-teal-100'
-                                                }`}>
-                                                  Co-Dev
-                                                </span>
-                                              )}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      );
-                                    })()}
-                                    {(() => {
-                                      const st = (act.estado || 'PENDIENTE').toUpperCase().replace(/[\s_]+/g, '_');
-                                      const isFin = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO'].includes(st);
-                                      const isProg = ['EN_PROGRESO', 'EN_PROCESO', 'EN_CURSO', 'ACTIVO'].includes(st);
-                                      const text = (act.estado || 'PENDIENTE').replace(/_/g, ' ');
-                                      const colorClass = isFin
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
-                                        : isProg
-                                          ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
-                                          : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300';
-                                      return (
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold uppercase border ${colorClass}`}>
-                                          {text}
-                                        </span>
-                                      );
-                                    })()}
-
-                                    {modoEdicionCoordinador && (() => {
-                                      const st = (act.estado || '').toUpperCase().replace(/[\s_]+/g, '_');
-                                      const isFinalizadaOEnProceso = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO', 'EN_PROGRESO', 'EN_PROCESO', 'EN_CURSO'].includes(st);
-
-                                      if (isFinalizadaOEnProceso) return null;
-
-                                      return (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleAbrirReasignarActividadCoord(act, etapa)}
-                                          className="outline-button text-xs py-1 px-3 font-bold inline-flex items-center gap-1.5 rounded-xl border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
-                                        >
-                                          <RotateCw size={13} className="text-purple-600" />
-                                          <span>Reasignar</span>
-                                        </button>
-                                      );
-                                    })()}
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedActividadModalTask({ ...act, desarrolladores: devsList });
+                                          setSelectedEtapaModalTask(etapa);
+                                        }}
+                                        className="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 text-[0.68rem] font-extrabold border border-zinc-200 dark:border-zinc-700 flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                                      >
+                                        <Eye size={13} />
+                                        <span>Ver Detalle Completo</span>
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               );
@@ -4206,6 +4324,8 @@ export const CoordinadorDashboard = () => {
                   </div>
                 )}
               </div>
+              </>
+              )}
             </motion.div>
           ) : (
             <>
@@ -8123,12 +8243,47 @@ export const CoordinadorDashboard = () => {
                           <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate block mt-0.5">{act.descripcion}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {act.desarrollador && (
-                            <span className="text-[0.65rem] font-bold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center gap-1">
-                              <Users size={11} className="text-blue-500" />
-                              {act.desarrollador.nombreCompleto || act.desarrollador.nombre || 'Desarrollador'}
-                            </span>
-                          )}
+                          {/* Squad de Desarrolladores Asignados */}
+                          {(() => {
+                            let devsList = [];
+                            if (Array.isArray(act.desarrolladoresAsignados) && act.desarrolladoresAsignados.length > 0) {
+                              devsList = [...act.desarrolladoresAsignados];
+                            } else if (Array.isArray(act.desarrolladores) && act.desarrolladores.length > 0) {
+                              devsList = [...act.desarrolladores];
+                            } else if (act.desarrollador) {
+                              devsList = [act.desarrollador];
+                              if (act.coDesarrollador) devsList.push(act.coDesarrollador);
+                            }
+
+                            if (devsList.length === 0) return null;
+
+                            return (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {devsList.map((dev, dIdx) => {
+                                  const isLiderDev = Boolean(
+                                    dev.esLider ||
+                                    ['LÍDER', 'LIDER', 'ROLE_LIDER', 'LÍDER DE PROYECTO', 'LIDER DE PROYECTO'].includes((dev.rol || '').toUpperCase()) ||
+                                    (dev.profesion || '').toLowerCase().includes('líder de proyecto') ||
+                                    (dev.profesion || '').toLowerCase().includes('lider de proyecto')
+                                  );
+
+                                  return (
+                                    <span
+                                      key={dIdx}
+                                      className={`text-[0.62rem] font-extrabold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
+                                        isLiderDev
+                                          ? 'bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border-blue-200 dark:border-blue-800'
+                                          : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
+                                      }`}
+                                    >
+                                      <User size={10} className={isLiderDev ? "text-blue-500" : "text-zinc-400"} />
+                                      <span>{dev.nombre || dev.desarrolladorNombre} {dev.apellido ? dev.apellido.substring(0, 1) + '.' : ''}</span>
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
                           <span className="px-2 py-0.5 rounded-md text-[0.62rem] font-extrabold uppercase font-mono bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                             {act.estado}
                           </span>
@@ -8315,6 +8470,166 @@ export const CoordinadorDashboard = () => {
         cancelLabel="Cancelar"
       />
 
+      {/* ─── Modal Emergente de Inspección Técnica WBS ─── */}
+      {selectedActividadModalTask && (
+        <ModalDetalleTareaWBS
+          actividad={selectedActividadModalTask}
+          etapa={selectedEtapaModalTask}
+          proyecto={selectedProyectoModal}
+          trabajadores={trabajadores}
+          rolUsuario="COORDINADOR"
+          usuarioActual={user}
+          onClose={() => setSelectedActividadModalTask(null)}
+        />
+      )}
+
+      {/* Modal Interactivo de Opciones de Edición de Etapa / Tareas WBS */}
+      {showModalOpcionesEtapaCoord && (
+        <ModalOpcionesEdicionEtapa
+          isOpen={showModalOpcionesEtapaCoord}
+          etapa={etapaOpcionesCoord}
+          onClose={() => {
+            setShowModalOpcionesEtapaCoord(false);
+            setEtapaOpcionesCoord(null);
+          }}
+          onConfirmEditarNombre={async (etapa, nuevoNombre) => {
+            const idModificada = etapa.idEtapa || etapa.id;
+            const nuevoNombreTrim = nuevoNombre.trim();
+            const estadoActual = etapa.estado || 'PENDIENTE';
+            try {
+              await api.put(`/lider/etapas/${idModificada}`, {
+                nombreEtapa: nuevoNombreTrim,
+                estado: estadoActual
+              }).catch(() => {});
+
+              setProyectoEtapasModal(prev => (prev || []).map(et =>
+                String(et.idEtapa || et.id) === String(idModificada)
+                  ? { ...et, nombreEtapa: nuevoNombreTrim }
+                  : et
+              ));
+
+              if (selectedProyectoModal?.idProyecto) {
+                registrarAccionCoordinador(selectedProyectoModal.idProyecto, 'EDICION_ETAPA', `Fase #${idModificada} actualizada a "${nuevoNombreTrim}"`);
+              }
+              toast.success(`Fase WBS actualizada a "${nuevoNombreTrim}" exitosamente.`);
+            } catch (err) {
+              console.error('Error editando etapa:', err);
+              toast.error('No se pudo actualizar el nombre de la etapa.');
+            }
+          }}
+          onSeleccionarTareaAEditar={(tarea, etapa) => {
+            setShowModalOpcionesEtapaCoord(false);
+            setActividadAEditarCoord(tarea);
+            setShowPaginaDedicadaAsignarCoord(true);
+          }}
+        />
+      )}
+
+      {/* MODAL MODERNO DE CONFIRMACIÓN DE ELIMINACIÓN DE ETAPA WBS */}
+      <AnimatePresence>
+        {showModalConfirmEliminarEtapaCoord && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 15 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-900/60 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-5 my-4 relative overflow-hidden"
+            >
+              {/* Cabecera del Modal */}
+              <div className="flex items-start justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-xs">
+                    <AlertTriangle size={24} />
+                  </div>
+                  <div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 font-mono text-[0.65rem] font-black border border-red-300 dark:border-red-800 uppercase tracking-wider">
+                      ADVERTENCIA WBS
+                    </span>
+                    <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight mt-0.5">
+                      Confirmar Eliminación de Etapa
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowModalConfirmEliminarEtapaCoord(false)}
+                  className="p-2 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-300 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Ficha Informativa de la Etapa */}
+              <div className="p-4 rounded-2xl bg-red-50/50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-900/40 space-y-2">
+                <span className="text-[0.65rem] font-mono font-black text-red-500 uppercase tracking-wider block">
+                  ETAPA O FASE A ELIMINAR
+                </span>
+                <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                  {etapaAEliminarCoord?.nombreEtapa || `Fase #${etapaAEliminarCoord?.idEtapa}`}
+                </h4>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[0.62rem] font-bold">
+                    Ref: #ETAPA_{etapaAEliminarCoord?.idEtapa}
+                  </span>
+                  <span className="text-[0.65rem] text-emerald-600 dark:text-emerald-400 font-bold">
+                    ✓ Sin tareas vinculadas
+                  </span>
+                </div>
+              </div>
+
+              {/* Banner Informativo de Advertencia */}
+              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-medium flex items-start gap-2.5">
+                <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">
+                  <strong>Atención:</strong> Esta acción borrará permanentemente la etapa del desglose WBS. Esta operación no se puede deshacer.
+                </span>
+              </div>
+
+              {/* Pie de Acción con Botones */}
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowModalConfirmEliminarEtapaCoord(false)}
+                  disabled={submittingEliminarEtapaCoord}
+                  className="px-5 py-2.5 rounded-2xl border border-zinc-300 dark:border-zinc-700 text-xs font-extrabold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={ejecutarEliminarEtapaCoord}
+                  disabled={submittingEliminarEtapaCoord}
+                  className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs font-black shadow-lg shadow-red-500/20 transition-all inline-flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                >
+                  {submittingEliminarEtapaCoord ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      <span>Sí, Eliminar Etapa</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <ModalConfirmacionSalirWBS
+        isOpen={showConfirmSalirAsignacionCoord}
+        onCancel={() => setShowConfirmSalirAsignacionCoord(false)}
+        onConfirm={() => {
+          setShowPaginaDedicadaAsignarCoord(false);
+          setActividadAEditarCoord(null);
+          setShowConfirmSalirAsignacionCoord(false);
+          toast.success("Operación cancelada con éxito. Has retornado al catálogo de proyectos.");
+        }}
+      />
     </DashboardLayout>
   );
 };

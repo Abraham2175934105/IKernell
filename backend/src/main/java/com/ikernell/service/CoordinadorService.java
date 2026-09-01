@@ -176,6 +176,9 @@ public class CoordinadorService {
                         actividadRepository.save(actInicial);
                     }
                     
+                    if (prj.getEtapas() == null) {
+                        prj.setEtapas(new java.util.ArrayList<>());
+                    }
                     prj.getEtapas().add(guardada);
                 }
             }

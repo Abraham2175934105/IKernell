@@ -29,6 +29,18 @@ public class Actividad {
     @Column(name = "descripcion", nullable = false, columnDefinition = "TEXT")
     private String descripcion;
 
+    @Column(name = "descripcion_detallada", columnDefinition = "TEXT")
+    private String descripcionDetallada;
+
+    @Column(name = "cualidad_tecnica", length = 255)
+    private String cualidadTecnica;
+
+    @Column(name = "cualidad_nombre", length = 255)
+    private String cualidadNombre;
+
+    @Column(name = "horas_semanales")
+    private Integer horasSemanales;
+
     @Column(name = "estado", nullable = false, length = 20)
     private String estado;
 
@@ -84,6 +96,38 @@ public class Actividad {
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+
+    public String getDescripcionDetallada() {
+        return descripcionDetallada;
+    }
+
+    public void setDescripcionDetallada(String descripcionDetallada) {
+        this.descripcionDetallada = descripcionDetallada;
+    }
+
+    public String getCualidadTecnica() {
+        return cualidadTecnica;
+    }
+
+    public void setCualidadTecnica(String cualidadTecnica) {
+        this.cualidadTecnica = cualidadTecnica;
+    }
+
+    public String getCualidadNombre() {
+        return cualidadNombre;
+    }
+
+    public void setCualidadNombre(String cualidadNombre) {
+        this.cualidadNombre = cualidadNombre;
+    }
+
+    public Integer getHorasSemanales() {
+        return horasSemanales;
+    }
+
+    public void setHorasSemanales(Integer horasSemanales) {
+        this.horasSemanales = horasSemanales;
     }
 
     public String getEstado() {

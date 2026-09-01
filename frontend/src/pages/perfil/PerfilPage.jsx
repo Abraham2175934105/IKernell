@@ -9,7 +9,7 @@ import {
   CheckCircle2, AlertTriangle, Loader2, Briefcase,
   GraduationCap, Building2, Calendar, MapPin, Check,
   RefreshCw, Sparkles, CheckCircle, Info, ArrowRight, ShieldAlert, Cpu,
-  Code2, FileCode, Palette, Database, Server, GitBranch, Zap, Terminal, Award, Boxes, Container, Globe
+  Code2, FileCode, Palette, Database, Server, GitBranch, Zap, Terminal, Award, Boxes, Container, Globe, Layers
 } from 'lucide-react';
 
 const containerVariants = {

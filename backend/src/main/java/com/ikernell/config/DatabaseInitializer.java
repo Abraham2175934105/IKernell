@@ -32,6 +32,22 @@ public class DatabaseInitializer implements CommandLineRunner {
             ejecutarScriptDataSql();
             Integer conteoNuevo = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM proyecto", Integer.class);
             log.info("Sembrado y actualización de proyectos finalizado exitosamente. Conteo actual: {}", conteoNuevo);
+
+            // Sembrado preventivo de Solicitudes de Contacto Web si la tabla está vacía
+            Integer conteoSolicitudes = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM solicitud_contacto", Integer.class);
+            if (conteoSolicitudes == null || conteoSolicitudes == 0) {
+                log.info("Sembrando solicitudes de contacto web iniciales...");
+                jdbcTemplate.execute("""
+                    INSERT INTO solicitud_contacto (nombre_remitente, email_remitente, telefono, asunto, mensaje, fecha_envio, atendido, estado) VALUES
+                    ('Carlos Mendoza', 'carlos.mendoza@techcorp.io', '+57 310 456 7890', 'Cotización Migración Cloud AWS', 'Requerimos evaluar la migración de nuestra infraestructura on-premise a microservicios en AWS EKS.', NOW() - INTERVAL '2 days', false, 'PENDIENTE'),
+                    ('Andrea Villamizar', 'andrea.v@bancofinanciero.com', '+57 320 888 1234', 'Auditoría CMMI Dev Level 3', 'Solicito propuesta técnica para acompañamiento en certificación CMMI Dev Nivel 3 para nuestro equipo.', NOW() - INTERVAL '1 day', false, 'EN_PROCESO'),
+                    ('Jorge Eliécer Gaitán', 'jorge.gaitan@innovasolutions.co', '+57 300 111 2233', 'Consultoría Desarrollo Mobile React Native', 'Interesados en contratar células de desarrollo senior para potenciar nuestra billetera digital.', NOW() - INTERVAL '5 hours', false, 'PENDIENTE'),
+                    ('Laura Sofía Castro', 'laura.castro@logistics.com', '+57 315 777 9988', 'Integración API Pasarela Pagos', 'Necesitamos asistencia para integración segura con PCI-DSS y arquitectura de microservicios.', NOW() - INTERVAL '3 days', true, 'ATENDIDO'),
+                    ('Mauricio Peralta', 'm.peralta@saluddigital.org', '+57 318 444 5566', 'Desarrollo Sistema Telemedicina', 'Cotización de sistema de gestión hospitalaria en la nube con altos estándares de seguridad.', NOW() - INTERVAL '4 days', false, 'REABIERTAS'),
+                    ('Valeria Restrepo', 'valeria.r@fintechgroup.co', '+57 301 666 4422', 'Soporte DevOps & Kubernetes', 'Requerimos optimización de pipelines CI/CD y despliegue automatizado con Helm en GCP.', NOW() - INTERVAL '6 hours', false, 'PENDIENTE');
+                """);
+                log.info("Solicitudes de contacto web sembradas exitosamente.");
+            }
         } catch (Exception e) {
             log.warn("Nota sobre sincronización de datos: {}", e.getMessage());
         }

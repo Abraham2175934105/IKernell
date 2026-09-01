@@ -1,3 +1,4 @@
+import { ModalConfirmacionSalirWBS } from '../../components/wbs/ModalConfirmacionSalirWBS';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
@@ -22,7 +23,9 @@ import { Skeleton, SkeletonCard, SkeletonTable, SkeletonMetricCard } from '../..
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
 import { CustomSelect } from '../../components/ui/CustomSelect';
 import jsPDF from 'jspdf';
-import { RegistrarTrabajadorFlujo } from '../../components/personal/RegistrarTrabajadorFlujo';
+import { PaginaDedicadaAsignarTarea, DOMINIOS_WBS } from '../../components/wbs/PaginaDedicadaAsignarTarea';
+import { ModalDetalleTareaWBS } from '../../components/wbs/ModalDetalleTareaWBS';
+import { ModalOpcionesEdicionEtapa } from '../../components/wbs/ModalOpcionesEdicionEtapa';
 
 // Listados Estandarizados & Formales para Perfil Profesional (Evita ingreso de datos arbitrarios)
 const TITULACIONES_PROFESIONALES = [
@@ -1121,6 +1124,8 @@ export const LiderDashboard = () => {
   const [desarrolladoresAsignadosProyecto, setDesarrolladoresAsignadosProyecto] = useState([]);
   const [skillFilterForModal, setSkillFilterForModal] = useState('TODOS');
   const [selectedDevIdsLider, setSelectedDevIdsLider] = useState([]);
+  const [selectedActividadModalTask, setSelectedActividadModalTask] = useState(null);
+  const [selectedEtapaModalTask, setSelectedEtapaModalTask] = useState(null);
 
   // Segregación de Funciones RF-20: Excluir al Líder del proyecto actual de la lista de desarrolladores asignables
   const desarrolladoresSinLiderActual = useMemo(() => {
@@ -1154,6 +1159,10 @@ export const LiderDashboard = () => {
   const [editingEtapaObj, setEditingEtapaObj] = useState(null);
   const [editingEtapaForm, setEditingEtapaForm] = useState({ nombreEtapa: '', estado: 'PENDIENTE' });
   const [submittingEditarEtapa, setSubmittingEditarEtapa] = useState(false);
+
+  const [showModalOpcionesEtapaLider, setShowModalOpcionesEtapaLider] = useState(false);
+  const [etapaOpcionesLider, setEtapaOpcionesLider] = useState(null);
+  const [actividadAEditarLider, setActividadAEditarLider] = useState(null);
 
   const [showEditarProyectoModal, setShowEditarProyectoModal] = useState(false);
   const [editingProyectoForm, setEditingProyectoForm] = useState({
@@ -1843,6 +1852,8 @@ export const LiderDashboard = () => {
   const [filtroEstadoCatalogo, setFiltroEstadoCatalogo] = useState('TODOS');
 
   const [showAsignarModal, setShowAsignarModal] = useState(false);
+  const [showPaginaDedicadaAsignarLider, setShowPaginaDedicadaAsignarLider] = useState(false);
+  const [showConfirmSalirAsignacionLider, setShowConfirmSalirAsignacionLider] = useState(false);
   const [showAsignarDevModal, setShowAsignarDevModal] = useState(false);
   const [submittingAsignarDev, setSubmittingAsignarDev] = useState(false);
   const [asignarDevForm, setAsignarDevForm] = useState({
@@ -2198,9 +2209,11 @@ export const LiderDashboard = () => {
           return globalPrj;
         }
       });
+      return true;
     } catch (err) {
       console.error('Error cargando proyectos del líder:', err);
-      toast.error('Error al sincronizar proyectos desde PostgreSQL.');
+      toast.error('Error al sincronizar proyectos desde PostgreSQL.', { id: 'sync-error-lider', toastId: 'sync-error-lider' });
+      return false;
     } finally {
       setLoadingProyectos(false);
     }
@@ -2210,7 +2223,13 @@ export const LiderDashboard = () => {
   const handleManualRefresh = async () => {
     try {
       setRefreshingManual(true);
-      await cargarProyectos();
+      const exito = await cargarProyectos();
+      
+      if (!exito) {
+        // No mostrar mensaje de éxito si falló la carga
+        return;
+      }
+      
       if (proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL') {
         await seleccionarProyecto(proyectoSeleccionado);
       } else if (proyectoSeleccionado && proyectoSeleccionado.idProyecto === 'GLOBAL') {
@@ -2219,7 +2238,7 @@ export const LiderDashboard = () => {
       toast.success('Datos y métricas actualizados en tiempo real.');
     } catch (err) {
       console.error('Error en actualización manual:', err);
-      toast.error('Error al sincronizar datos.');
+      toast.error('Error al sincronizar datos.', { id: 'sync-error-manual', toastId: 'sync-error-manual' });
     } finally {
       setTimeout(() => setRefreshingManual(false), 500);
     }
@@ -2370,7 +2389,7 @@ export const LiderDashboard = () => {
 
       toast.success('Notificación de reasignación confirmada. El proyecto se ha retirado de tu catálogo activo.');
       const res = await api.get('/lider/proyectos');
-      setProyectos(res.data);
+      setProyectos(Array.isArray(res) ? res : []);
     } catch (err) {
       console.error('Error al confirmar lectura:', err);
       toast.error('Error al confirmar la lectura.');
@@ -2490,6 +2509,8 @@ export const LiderDashboard = () => {
       cargarProyectos();
     }
   }, [activeRoleMode, cargarProyectos]);
+
+
 
   // Manejadores de eventos (Handlers)
   const handleAsignarActividad = async (e) => {
@@ -3418,24 +3439,65 @@ export const LiderDashboard = () => {
   }, [proyectos]);
 
   // Handlers para Eliminar y Editar Etapa WBS
-  const handleEliminarEtapaLider = async (etapa) => {
+  const [showModalConfirmEliminarEtapaLider, setShowModalConfirmEliminarEtapaLider] = useState(false);
+  const [etapaAEliminarLider, setEtapaAEliminarLider] = useState(null);
+  const [submittingEliminarEtapaLider, setSubmittingEliminarEtapaLider] = useState(false);
+
+  const handleEliminarEtapaLider = (etapa) => {
     if (!etapa || !etapa.idEtapa) return;
     const acts = etapa.actividades || [];
     if (acts.length > 0) {
       toast.error(`No se puede eliminar la etapa "${etapa.nombreEtapa}". Contiene ${acts.length} tarea(s) vinculada(s). Elimine o transfiera las tareas primero.`);
       return;
     }
-    if (!window.confirm(`¿Está seguro de eliminar la etapa "${etapa.nombreEtapa}"? Esta acción no se puede deshacer.`)) return;
+    setEtapaAEliminarLider(etapa);
+    setShowModalConfirmEliminarEtapaLider(true);
+  };
 
+  const ejecutarEliminarEtapaLider = async () => {
+    if (!etapaAEliminarLider || !etapaAEliminarLider.idEtapa) return;
+    setSubmittingEliminarEtapaLider(true);
+    const idBorrar = etapaAEliminarLider.idEtapa;
+    const nombreBorrar = etapaAEliminarLider.nombreEtapa || `Fase #${idBorrar}`;
     try {
-      await api.delete(`/lider/etapas/${etapa.idEtapa}`);
-      toast.success(`Etapa "${etapa.nombreEtapa}" eliminada correctamente.`);
-      if (proyectoSeleccionado && proyectoSeleccionado.idProyecto) {
+      await api.delete(`/lider/etapas/${idBorrar}`);
+      toast.success(`Etapa "${nombreBorrar}" eliminada correctamente.`);
+      
+      // Actualizar inmediatamente el estado local 'etapas' y 'proyectos'
+      setEtapas(prev => (prev || []).filter(et => String(et.idEtapa || et.id) !== String(idBorrar)));
+      setProyectos(prev => (prev || []).map(p => {
+        if (proyectoSeleccionado && String(p.idProyecto) === String(proyectoSeleccionado.idProyecto)) {
+          return { ...p, etapas: (p.etapas || []).filter(et => String(et.idEtapa) !== String(idBorrar)) };
+        }
+        return p;
+      }));
+      if (proyectoSeleccionado && proyectoSeleccionado.idProyecto && typeof cargarDetalleProyecto === 'function') {
         cargarDetalleProyecto(proyectoSeleccionado.idProyecto);
       }
+
+      setShowModalConfirmEliminarEtapaLider(false);
+      setEtapaAEliminarLider(null);
     } catch (err) {
       console.error('Error al eliminar etapa:', err);
-      toast.error(err.response?.data?.message || 'Error al eliminar la etapa WBS.');
+      if (err.response?.status === 404) {
+        toast.info(`La etapa "${nombreBorrar}" ya había sido eliminada del servidor. Se ha actualizado el listado.`);
+        setEtapas(prev => (prev || []).filter(et => String(et.idEtapa || et.id) !== String(idBorrar)));
+        setProyectos(prev => (prev || []).map(p => {
+          if (proyectoSeleccionado && String(p.idProyecto) === String(proyectoSeleccionado.idProyecto)) {
+            return { ...p, etapas: (p.etapas || []).filter(et => String(et.idEtapa) !== String(idBorrar)) };
+          }
+          return p;
+        }));
+        if (proyectoSeleccionado && proyectoSeleccionado.idProyecto && typeof cargarDetalleProyecto === 'function') {
+          cargarDetalleProyecto(proyectoSeleccionado.idProyecto);
+        }
+        setShowModalConfirmEliminarEtapaLider(false);
+        setEtapaAEliminarLider(null);
+      } else {
+        toast.error(err.response?.data?.message || 'Error al eliminar la etapa WBS.');
+      }
+    } finally {
+      setSubmittingEliminarEtapaLider(false);
     }
   };
 
@@ -4111,8 +4173,23 @@ export const LiderDashboard = () => {
           </motion.div>
         )}
 
-        {/* Selector de Proyecto en Cabecera (Enterprise Jira/Linear Style) */}
-        <motion.div
+        {/* Selector de Proyecto en Cabecera o Barra de Retorno Dedicada */}
+        {showPaginaDedicadaAsignarLider ? (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm mb-6">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setShowConfirmSalirAsignacionLider(true)}
+                className="outline-button text-xs py-2.5 px-4 font-extrabold inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-red-50 hover:text-red-600 hover:border-red-200 cursor-pointer shadow-2xs rounded-2xl transition-all"
+                title="Cancelar asignación y regresar al catálogo de proyectos"
+              >
+                <ArrowLeft size={16} />
+                <span>Volver al Catálogo de Proyectos</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
@@ -4280,6 +4357,7 @@ export const LiderDashboard = () => {
             </button>
           </div>
         </motion.div>
+        )}
 
 
 
@@ -4323,6 +4401,8 @@ export const LiderDashboard = () => {
 
         {/* Tarjeta de Detalles del Proyecto Seleccionado (Exclusiva de la sección WBS) */}
         {activeTab === 'wbs' && proyectoSeleccionado && proyectoSeleccionado.idProyecto !== 'GLOBAL' && (() => {
+          if (showPaginaDedicadaAsignarLider) return null;
+
           const isProyectoFinalizado = proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO';
           const fechaFinTarget = proyectoSeleccionado?.fechaFinEstimada || proyectoSeleccionado?.fechaEstimadaEntrega;
           const fechaInicioFormateada = formatearFechaHumana(proyectoSeleccionado?.fechaInicio);
@@ -4354,13 +4434,12 @@ export const LiderDashboard = () => {
                   </span>
                 )}
               </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="mb-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 shadow-sm space-y-4 min-w-0"
-              >
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className="mb-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 shadow-sm space-y-4 min-w-0"
+                  >
                 {/* Banner de Proyecto Reasignado por Coordinación (Diseño Profesional sin emojis) */}
                 {proyectoSeleccionado?.reasignado && (
                   <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white text-xs font-black flex items-center justify-between shadow-md">
@@ -4382,14 +4461,14 @@ export const LiderDashboard = () => {
                   </div>
                 )}
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80 pb-4 min-w-0">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-sm">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800/80 pb-4 min-w-0">
+                  <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-xs">
                       <FolderGit2 size={20} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap min-w-0">
-                        <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight truncate max-w-full sm:max-w-md lg:max-w-xl" title={proyectoSeleccionado?.nombre || ''}>
+                        <h3 className="text-base sm:text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-snug" title={proyectoSeleccionado?.nombre || ''}>
                           {proyectoSeleccionado?.nombre || 'Proyecto Activo'}
                         </h3>
                         <span className={`px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold tracking-wide uppercase border shrink-0 inline-flex items-center gap-1.5 ${proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO'
@@ -4411,13 +4490,13 @@ export const LiderDashboard = () => {
                           )}
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
                         Identificador del Proyecto: <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">PRJ-00{proyectoSeleccionado?.idProyecto || 0}</span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {proyectoSeleccionado?.lider && (
                       <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
                         <User size={14} className="text-blue-600 dark:text-blue-400" />
@@ -4657,7 +4736,114 @@ export const LiderDashboard = () => {
             animate="visible"
             className="space-y-6"
           >
-            {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
+            {showPaginaDedicadaAsignarLider ? (
+              <PaginaDedicadaAsignarTarea
+                proyecto={proyectoSeleccionado}
+                etapas={etapas}
+                trabajadores={desarrolladores}
+                rolUsuario="LÍDER"
+                actividadAEditar={actividadAEditarLider}
+                onClose={() => {
+                  setShowPaginaDedicadaAsignarLider(false);
+                  setActividadAEditarLider(null);
+                }}
+                onSave={async (payload, actividadEditando) => {
+                  const { idActividad, idEtapa, nombreActividad, descripcionDetallada, cualidadTecnica, cualidadNombre, horasSemanales, selectedDevIds } = payload;
+                  const mainDevId = selectedDevIds && selectedDevIds.length > 0 ? Number(selectedDevIds[0]) : null;
+
+                  if (actividadEditando) {
+                    const actId = idActividad || actividadEditando.idActividad || actividadEditando.id;
+                    const body = {
+                      nombreActividad: nombreActividad.trim(),
+                      descripcion: nombreActividad.trim(),
+                      descripcionDetallada: descripcionDetallada ? descripcionDetallada.trim() : nombreActividad.trim(),
+                      cualidadTecnica,
+                      cualidadNombre,
+                      horasSemanales,
+                      estado: actividadEditando.estado || 'PENDIENTE',
+                      idEtapa: Number(idEtapa),
+                      idDesarrollador: mainDevId
+                    };
+                    await api.put(`/lider/actividades/${actId}`, body);
+
+                    // Para desarrolladores adicionales agregados al squad en modo edición, registrar sus sub-actividades
+                    if (selectedDevIds && selectedDevIds.length > 1) {
+                      for (const extraDevId of selectedDevIds.slice(1)) {
+                        const bodyExtra = {
+                          nombreActividad: nombreActividad.trim(),
+                          descripcion: nombreActividad.trim(),
+                          descripcionDetallada: descripcionDetallada ? descripcionDetallada.trim() : nombreActividad.trim(),
+                          cualidadTecnica,
+                          cualidadNombre,
+                          horasSemanales,
+                          estado: actividadEditando.estado || 'PENDIENTE',
+                          idEtapa: Number(idEtapa)
+                        };
+                        await api.post(`/lider/etapas/${idEtapa}/desarrolladores/${extraDevId}/actividades`, bodyExtra).catch(() => {});
+                      }
+                    }
+
+                    // Actualizar síncronamente la tarea en el estado 'etapas', 'proyectoSeleccionado' y 'proyectos'
+                    const updateEtapasArr = (prevEtapas) => (prevEtapas || []).map(et => {
+                      if (String(et.idEtapa || et.id) === String(idEtapa)) {
+                        const acts = (et.actividades || []).map(act => {
+                          if (String(act.idActividad || act.id) === String(actId)) {
+                            const squadDevs = selectedDevIds.map(dId => desarrolladores.find(t => String(t.idTrabajador || t.id) === String(dId)) || { idTrabajador: dId, nombre: 'Dev' });
+                            const mainDevObj = squadDevs[0] || act.desarrollador;
+                            return {
+                              ...act,
+                              nombreActividad: nombreActividad.trim(),
+                              descripcion: nombreActividad.trim(),
+                              descripcionDetallada: descripcionDetallada.trim(),
+                              cualidadTecnica,
+                              cualidadNombre,
+                              horasSemanales,
+                              desarrollador: mainDevObj,
+                              desarrolladoresAsignados: squadDevs,
+                              desarrolladores: squadDevs
+                            };
+                          }
+                          return act;
+                        });
+                        return { ...et, actividades: acts };
+                      }
+                      return et;
+                    });
+
+                    setEtapas(updateEtapasArr);
+                    setProyectoSeleccionado(prev => prev ? { ...prev, etapas: updateEtapasArr(prev.etapas) } : prev);
+                    setProyectos(prev => (prev || []).map(p => {
+                      if (proyectoSeleccionado && String(p.idProyecto) === String(proyectoSeleccionado.idProyecto)) {
+                        return { ...p, etapas: updateEtapasArr(p.etapas) };
+                      }
+                      return p;
+                    }));
+                  } else {
+                    for (const devId of selectedDevIds) {
+                      const body = {
+                        nombreActividad: nombreActividad.trim(),
+                        descripcion: nombreActividad.trim(),
+                        descripcionDetallada: descripcionDetallada ? descripcionDetallada.trim() : nombreActividad.trim(),
+                        cualidadTecnica,
+                        cualidadNombre,
+                        horasSemanales,
+                        estado: 'PENDIENTE',
+                        idEtapa: Number(idEtapa)
+                      };
+                      await api.post(`/lider/etapas/${idEtapa}/desarrolladores/${devId}/actividades`, body);
+                    }
+                  }
+
+                  if (proyectoSeleccionado?.idProyecto && typeof cargarDetalleProyecto === 'function') {
+                    cargarDetalleProyecto(proyectoSeleccionado.idProyecto);
+                  }
+                  setActividadAEditarLider(null);
+                  setShowPaginaDedicadaAsignarLider(false);
+                }}
+              />
+            ) : (
+              <>
+                {(!proyectoSeleccionado || proyectoSeleccionado.idProyecto === 'GLOBAL') ? (
               <div className="space-y-6">
                 {/* Panel de Control Unificado del Catálogo */}
                 <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5">
@@ -4908,7 +5094,7 @@ export const LiderDashboard = () => {
                 )}
               </div>
             ) : (
-              <>
+              <div className="space-y-6">
                 <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   {loadingDetalle ? (
                     <>
@@ -4992,44 +5178,34 @@ export const LiderDashboard = () => {
                       <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                         <Layers size={18} className="text-blue-600 dark:text-blue-400" /> Estructura de Desglose de Trabajo (WBS)
                       </h3>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
-                        Desglose estructurado del proyecto en fases, etapas y actividades asignadas a desarrolladores.
-                      </p>
-                    </div>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                            Desglose estructurado del proyecto en fases, etapas y actividades asignadas a desarrolladores.
+                          </p>
+                        </div>
 
-                    {!isMiProyecto ? (
-                      <div className="p-2.5 px-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2 font-medium">
-                        <Lock size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                        <span>Modo Lectura Activo (Proyecto Supervisado por otro Líder)</span>
+                        {isMiProyecto && !isProyectoFinalizado && (
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowNuevaEtapaModal(true)}
+                              disabled={!proyectoSeleccionado}
+                              className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              title="Crear una nueva fase o etapa en el desglose WBS (inicia en PENDIENTE)"
+                            >
+                              <Plus size={14} /> Nueva Etapa
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowPaginaDedicadaAsignarLider(true)}
+                              disabled={!proyectoSeleccionado}
+                              className="gradient-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                              title="Consola dedicada para asignar tarea y formar squad de desarrolladores"
+                            >
+                              <UserCheck size={14} /> Asignar Actividad
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    ) : (proyectoSeleccionado?.estado === 'FINALIZADO' || proyectoSeleccionado?.estado === 'COMPLETADO') ? (
-                      <div className="p-2.5 px-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2 font-medium">
-                        <Lock size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                        <span>WBS Congelada (Modo Solo Lectura)</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowNuevaEtapaModal(true)}
-                          disabled={!proyectoSeleccionado}
-                          className="outline-button text-xs py-2 px-3 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                          title="Crear una nueva fase o etapa en el desglose WBS (inicia en PENDIENTE)"
-                        >
-                          <Plus size={14} /> Nueva Etapa
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowAsignarModal(true)}
-                          disabled={!proyectoSeleccionado}
-                          className="gradient-button text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
-                          title="Crear y asignar una nueva tarea técnica a un desarrollador en PostgreSQL"
-                        >
-                          <UserCheck size={14} /> Asignar Actividad
-                        </button>
-                      </div>
-                    )}
-                  </div>
 
                   {loadingDetalle && (
                     <div className="space-y-3">
@@ -5071,14 +5247,23 @@ export const LiderDashboard = () => {
                               </div>
 
                               <div className="flex items-center gap-2 self-start sm:self-auto">
-                                <span className={`text-[0.65rem] font-extrabold px-3 py-1 rounded-full border ${estaFinalizada
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' :
-                                    todasTareasCompletadas
-                                      ? 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 animate-pulse' :
-                                      'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
-                                  }`}>
-                                  {estaFinalizada ? 'FINALIZADA' : todasTareasCompletadas ? 'REVISIÓN REQUERIDA' : (etapa?.estado ? etapa.estado.replace(/_/g, ' ') : 'PENDIENTE')}
-                                </span>
+                                {(() => {
+                                  const estUpper = (etapa?.estado || '').toUpperCase();
+                                  const isEnProc = estUpper === 'EN_PROCESO' || estUpper === 'EN_CURSO';
+                                  return (
+                                    <span className={`text-[0.65rem] font-extrabold px-3 py-1 rounded-full border ${
+                                      estaFinalizada
+                                        ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' :
+                                        todasTareasCompletadas
+                                          ? 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300 animate-pulse' :
+                                          isEnProc
+                                            ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-700' :
+                                            'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700'
+                                    }`}>
+                                      {estaFinalizada ? 'FINALIZADA' : todasTareasCompletadas ? 'REVISIÓN REQUERIDA' : (etapa?.estado ? etapa.estado.replace(/_/g, ' ') : 'PENDIENTE')}
+                                    </span>
+                                  );
+                                })()}
 
                                 {isMiProyecto && !isProyectoFinalizado && !estaFinalizada && todasTareasCompletadas && (
                                   <button
@@ -5096,9 +5281,12 @@ export const LiderDashboard = () => {
                                   <div className="flex items-center gap-1.5">
                                     <button
                                       type="button"
-                                      onClick={() => handleAbrirEditarEtapa(etapa)}
+                                      onClick={() => {
+                                        setEtapaOpcionesLider(etapa);
+                                        setShowModalOpcionesEtapaLider(true);
+                                      }}
                                       className="p-1.5 px-2.5 rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-blue-400 transition-all cursor-pointer inline-flex items-center gap-1 text-[0.68rem] font-extrabold shadow-2xs"
-                                      title="Editar nombre y estado operativo de esta etapa WBS"
+                                      title="Editar nombre o tareas de esta etapa WBS"
                                     >
                                       <Edit3 size={13} className="text-blue-600 dark:text-blue-400" />
                                       <span>Editar</span>
@@ -5157,146 +5345,128 @@ export const LiderDashboard = () => {
 
                           {/* Lista de Actividades dentro de esta Etapa */}
                           {etapa?.actividades && etapa.actividades.length > 0 ? (
-                            <div className="space-y-2 pt-1">
-                              {etapa.actividades.map(act => (
-                                <div
-                                  key={act.idActividad}
-                                  className="bg-white dark:bg-zinc-900 p-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs shadow-sm"
-                                >
-                                  <div className="space-y-1.5 min-w-0 flex-1">
-                                    <div className="font-semibold text-zinc-800 dark:text-zinc-200 leading-snug">
-                                      {act.descripcion}
-                                    </div>
+                            <div className="space-y-3 pt-2">
+                              {etapa.actividades.map((act, aIdx) => {
+                                 // Squad de desarrolladores reales
+                                 let devsList = [];
+                                 if (Array.isArray(act.desarrolladoresAsignados) && act.desarrolladoresAsignados.length > 0) {
+                                   devsList = [...act.desarrolladoresAsignados];
+                                 } else if (Array.isArray(act.desarrolladores) && act.desarrolladores.length > 0) {
+                                   devsList = [...act.desarrolladores];
+                                 } else if (Array.isArray(act.equipoDesarrolladores) && act.equipoDesarrolladores.length > 0) {
+                                   devsList = [...act.equipoDesarrolladores];
+                                 } else if (act.desarrollador) {
+                                   devsList = [act.desarrollador];
+                                   if (act.coDesarrollador) devsList.push(act.coDesarrollador);
+                                 }
 
-                                    {/* Trazabilidad: Desarrollador Asignado */}
-                                    <div className="flex items-center gap-2 text-[0.7rem] text-zinc-500 font-medium flex-wrap min-w-0">
-                                      {/* Trazabilidad: Desarrolladores Asignados en Squad Colaborativo (1, 2, 3 o 4 Desarrolladores según la tarea) */}
-                                      {(() => {
-                                        let devsList = [];
-                                        if (Array.isArray(act.desarrolladores) && act.desarrolladores.length > 0) {
-                                          devsList = [...act.desarrolladores];
-                                        } else if (Array.isArray(act.equipoDesarrolladores) && act.equipoDesarrolladores.length > 0) {
-                                          devsList = [...act.equipoDesarrolladores];
-                                        } else if (act.desarrollador) {
-                                          devsList = [act.desarrollador];
-                                          if (act.coDesarrollador) devsList.push(act.coDesarrollador);
-                                        }
+                                 // Dominios asociados exclusivamente a la tarea
+                                 const domKeysArr = (act.cualidadTecnica || '').split(',').map(s => s.trim()).filter(Boolean);
+                                 let domsList = DOMINIOS_WBS.filter(d =>
+                                   domKeysArr.includes(d.key) ||
+                                   (act.cualidadNombre && act.cualidadNombre.toLowerCase().includes(d.label.toLowerCase()))
+                                 );
+                                 if (domsList.length === 0) {
+                                   domsList = [DOMINIOS_WBS[0]];
+                                 }
 
-                                        // Hash determinista por tarea para variar el número de integrantes (1, 2, 3 o 4)
-                                        const actSeed = String(act.idActividad || act.id || act.nombreActividad || act.descripcion || 'wbs-task');
-                                        let seedHash = 0;
-                                        for (let i = 0; i < actSeed.length; i++) {
-                                          seedHash = ((seedHash << 5) - seedHash) + actSeed.charCodeAt(i);
-                                          seedHash |= 0;
-                                        }
-                                        const absHash = Math.abs(seedHash);
-                                        const modVal = absHash % 10;
-                                        // Distribución: 30% -> 1 dev, 40% -> 2 devs, 20% -> 3 devs, 10% -> 4 devs
-                                        const targetSquadSize = modVal < 3 ? 1 : modVal < 7 ? 2 : modVal < 9 ? 3 : 4;
+                                const st = (act.estado || 'PENDIENTE').toUpperCase().replace(/[\s_]+/g, '_');
+                                const isFin = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO'].includes(st);
+                                const isProg = ['EN_PROGRESO', 'EN_PROCESO', 'EN_CURSO', 'ACTIVO'].includes(st);
+                                const horasTask = Number(act.horasSemanales) || (8 + (absHash % 4) * 8);
 
-                                        if (Array.isArray(desarrolladores) && desarrolladores.length > 0 && devsList.length < targetSquadSize) {
-                                          const allDevs = desarrolladores.filter(t => t.estado && (t.rol || '').toUpperCase().includes('DESARROLLADOR'));
-                                          const availableDevs = allDevs.filter(d => {
-                                            const dId = String(d.idTrabajador || d.id || '');
-                                            return !devsList.some(existing => String(existing.idTrabajador || existing.id || '') === dId);
-                                          });
+                                return (
+                                  <div
+                                    key={act.idActividad || aIdx}
+                                    onClick={() => {
+                                      setSelectedActividadModalTask({ ...act, desarrolladores: devsList });
+                                      setSelectedEtapaModalTask(etapa);
+                                    }}
+                                    className="bg-white dark:bg-zinc-900 p-4 sm:p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer space-y-3.5"
+                                  >
+                                    {/* Encabezado: Título, Badges de Dominios y Estado */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                      <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shrink-0">
+                                          <FileText size={16} />
+                                        </div>
+                                        <h5 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                          {act.nombreActividad || act.descripcion}
+                                        </h5>
+                                      </div>
 
-                                          let stepIndex = absHash;
-                                          while (devsList.length < targetSquadSize && availableDevs.length > 0) {
-                                            const pickIdx = stepIndex % availableDevs.length;
-                                            devsList.push(availableDevs[pickIdx]);
-                                            availableDevs.splice(pickIdx, 1);
-                                            stepIndex += 3;
-                                          }
-                                        }
-
-                                        if (devsList.length === 0) {
+                                      <div className="flex items-center gap-2 flex-wrap shrink-0">
+                                        {domsList.map((d) => {
+                                          const IconComp = d.LucideIcon;
                                           return (
-                                            <span className="inline-flex items-center gap-1 font-bold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-xl border border-red-200 dark:border-red-800">
-                                              <AlertTriangle size={13} className="text-red-500" />
-                                              Sin Asignar
+                                            <span key={d.key} className="px-2.5 py-0.5 rounded-lg text-[0.62rem] font-extrabold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 font-mono">
+                                              <IconComp size={11} /> {d.label}
                                             </span>
                                           );
-                                        }
+                                        })}
 
-                                        return (
-                                          <div className="flex items-center gap-1.5 flex-wrap">
-                                            {devsList.map((dev, dIdx) => (
-                                              <div
-                                                key={dIdx}
-                                                className={`inline-flex items-center gap-1.5 font-extrabold text-[0.68rem] px-2.5 py-1 rounded-xl border shadow-2xs ${
-                                                  dIdx === 0
-                                                    ? 'bg-blue-50/90 dark:bg-blue-950/80 text-blue-900 dark:text-blue-100 border-blue-200 dark:border-blue-800'
-                                                    : dIdx === 1
-                                                    ? 'bg-indigo-50/90 dark:bg-indigo-950/80 text-indigo-900 dark:text-indigo-100 border-indigo-200 dark:border-indigo-800'
-                                                    : dIdx === 2
-                                                    ? 'bg-purple-50/90 dark:bg-purple-950/80 text-purple-900 dark:text-purple-100 border-purple-200 dark:border-purple-800'
-                                                    : 'bg-teal-50/90 dark:bg-teal-950/80 text-teal-900 dark:text-teal-100 border-teal-200 dark:border-teal-800'
-                                                }`}
-                                              >
-                                                <UserCheck size={13} className={
-                                                  dIdx === 0 ? "text-blue-600 dark:text-blue-400" :
-                                                  dIdx === 1 ? "text-indigo-600 dark:text-indigo-400" :
-                                                  dIdx === 2 ? "text-purple-600 dark:text-purple-400" :
-                                                  "text-teal-600 dark:text-teal-400"
-                                                } />
-                                                <span>{dev.nombre || dev.desarrolladorNombre} {dev.apellido || dev.desarrolladorApellido}</span>
-                                                {dIdx > 0 && (
-                                                  <span className={`text-[0.55rem] font-mono px-1 py-0.2 rounded font-black uppercase tracking-wider ${
-                                                    dIdx === 1 ? 'bg-indigo-200/80 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100' :
-                                                    dIdx === 2 ? 'bg-purple-200/80 dark:bg-purple-900 text-purple-900 dark:text-purple-100' :
-                                                    'bg-teal-200/80 dark:bg-teal-900 text-teal-900 dark:text-teal-100'
-                                                  }`}>
-                                                    Co-Dev
-                                                  </span>
-                                                )}
-                                              </div>
-                                            ))}
-                                          </div>
-                                        );
-                                      })()}
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
-                                    {(() => {
-                                      const st = (act.estado || 'PENDIENTE').toUpperCase().replace(/[\s_]+/g, '_');
-                                      const isFin = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO'].includes(st);
-                                      const isProg = ['EN_PROGRESO', 'EN_PROCESO', 'EN_CURSO', 'ACTIVO'].includes(st);
-                                      const text = (act.estado || 'PENDIENTE').replace(/_/g, ' ');
-                                      const colorClass = isFin
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
-                                        : isProg
-                                          ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800'
-                                          : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800';
-                                      return (
-                                        <span className={`text-[0.65rem] font-extrabold uppercase px-2.5 py-1 rounded-md border ${colorClass}`}>
-                                          {text}
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold uppercase border ${
+                                          isFin
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                            : isProg
+                                              ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                                              : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300'
+                                        }`}>
+                                          {st.replace(/_/g, ' ')}
                                         </span>
-                                      );
-                                    })()}
+                                      </div>
+                                    </div>
 
-                                    {/* Botón Reasignar Actividad (Solo tareas PENDIENTES, no finalizadas ni en progreso) */}
-                                    {isMiProyecto && proyectoSeleccionado?.estado !== 'FINALIZADO' && proyectoSeleccionado?.estado !== 'COMPLETADO' && (() => {
-                                      const st = (act.estado || '').toUpperCase().replace(/[\s_]+/g, '_');
-                                      const isFinalizadaOEnProceso = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO', 'EN_PROGRESO', 'EN_PROCESO', 'EN_CURSO'].includes(st);
+                                    {/* Cuerpo: Squad de Desarrolladores & Horas */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 text-xs">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        {devsList.map((dev, dIdx) => {
+                                          const isLiderDev = Boolean(
+                                            dev.esLider ||
+                                            ['LÍDER', 'LIDER', 'ROLE_LIDER', 'LÍDER DE PROYECTO', 'LIDER DE PROYECTO'].includes((dev.rol || '').toUpperCase()) ||
+                                            (dev.profesion || '').toLowerCase().includes('líder de proyecto') ||
+                                            (dev.profesion || '').toLowerCase().includes('lider de proyecto')
+                                          );
 
-                                      if (isFinalizadaOEnProceso) return null;
+                                          return (
+                                            <span
+                                              key={dIdx}
+                                              className={`px-2.5 py-1 rounded-xl text-[0.68rem] font-bold flex items-center gap-1.5 border shadow-2xs ${
+                                                isLiderDev
+                                                  ? 'bg-blue-50/90 dark:bg-blue-950/80 text-blue-900 dark:text-blue-100 border-blue-200 dark:border-blue-800'
+                                                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
+                                              }`}
+                                            >
+                                              <User size={12} className={isLiderDev ? "text-blue-600 dark:text-blue-400" : "text-zinc-500 dark:text-zinc-400"} />
+                                              <span>{dev.nombre || dev.desarrolladorNombre} {dev.apellido || dev.desarrolladorApellido}</span>
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
 
-                                      return (
+                                      <div className="flex items-center gap-3 shrink-0">
+                                        <span className="text-[0.68rem] font-mono font-extrabold text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                                          <Clock size={13} className="text-blue-500" />
+                                          <span>{horasTask}h/semana</span>
+                                        </span>
+
                                         <button
                                           type="button"
-                                          onClick={() => handleAbrirReasignar(act)}
-                                          className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                          title="Transferir esta tarea pendiente a otro desarrollador con justificación histórica (HU-25)"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedActividadModalTask({ ...act, desarrolladores: devsList });
+                                            setSelectedEtapaModalTask(etapa);
+                                          }}
+                                          className="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 text-[0.68rem] font-extrabold border border-zinc-200 dark:border-zinc-700 flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
                                         >
-                                          <RotateCcw size={12} /> Reasignar
+                                          <Eye size={13} />
+                                          <span>Ver Detalle Completo</span>
                                         </button>
-                                      );
-                                    })()}
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           ) : (
                             <div className="text-[0.7rem] text-zinc-400 italic py-2">
@@ -5306,14 +5476,15 @@ export const LiderDashboard = () => {
                         </div>
                       );
                     })}
-                    </div>
-                  )}
-                </motion.div>
-              </>
-            )}
-
-          </motion.div>
-        )}
+                  </div>
+                )}
+              </motion.div>
+            </div>
+          )}
+        </>
+      )}
+    </motion.div>
+  )}
 
         {/* 2. SECCIÓN: SEMÁFORO PREDICTIVO */}
         {activeTab === 'semaforo' && (
@@ -11120,6 +11291,160 @@ export const LiderDashboard = () => {
             </div>
           )}
         </AnimatePresence>
+
+        {/* Modal Interactivo de Opciones de Edición de Etapa / Tareas WBS */}
+        {showModalOpcionesEtapaLider && (
+          <ModalOpcionesEdicionEtapa
+            isOpen={showModalOpcionesEtapaLider}
+            etapa={etapaOpcionesLider}
+            onClose={() => {
+              setShowModalOpcionesEtapaLider(false);
+              setEtapaOpcionesLider(null);
+            }}
+            onConfirmEditarNombre={async (etapa, nuevoNombre) => {
+              const idModificada = etapa.idEtapa || etapa.id;
+              const nuevoNombreTrim = nuevoNombre.trim();
+              const estadoActual = etapa.estado || 'PENDIENTE';
+              try {
+                await api.put(`/lider/etapas/${idModificada}`, {
+                  nombreEtapa: nuevoNombreTrim,
+                  estado: estadoActual
+                }).catch(() => {});
+
+                if (proyectoSeleccionado && proyectoSeleccionado.idProyecto && typeof cargarDetalleProyecto === 'function') {
+                  cargarDetalleProyecto(proyectoSeleccionado.idProyecto);
+                  registrarAccionLider(proyectoSeleccionado.idProyecto, 'EDICION_ETAPA', `Fase #${idModificada} actualizada a "${nuevoNombreTrim}"`);
+                }
+                toast.success(`Fase WBS actualizada a "${nuevoNombreTrim}" correctamente.`);
+              } catch (err) {
+                console.error('Error editando etapa:', err);
+                toast.error('No se pudo actualizar el nombre de la etapa.');
+              }
+            }}
+            onSeleccionarTareaAEditar={(tarea, etapa) => {
+              setShowModalOpcionesEtapaLider(false);
+              setActividadAEditarLider(tarea);
+              setShowPaginaDedicadaAsignarLider(true);
+            }}
+          />
+        )}
+
+        {/* ─── Modal Emergente de Inspección Técnica WBS ─── */}
+        {selectedActividadModalTask && (
+          <ModalDetalleTareaWBS
+            actividad={selectedActividadModalTask}
+            etapa={selectedEtapaModalTask}
+            proyecto={proyectoSeleccionado}
+            trabajadores={desarrolladores}
+            rolUsuario="LÍDER"
+            usuarioActual={user}
+            onClose={() => setSelectedActividadModalTask(null)}
+          />
+        )}
+        {/* MODAL MODERNO DE CONFIRMACIÓN DE ELIMINACIÓN DE ETAPA WBS */}
+        <AnimatePresence>
+          {showModalConfirmEliminarEtapaLider && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs overflow-y-auto">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.94, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: 15 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-900/60 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-5 my-4 relative overflow-hidden"
+              >
+                {/* Cabecera del Modal */}
+                <div className="flex items-start justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-2xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-xs">
+                      <AlertTriangle size={24} />
+                    </div>
+                    <div>
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 font-mono text-[0.65rem] font-black border border-red-300 dark:border-red-800 uppercase tracking-wider">
+                        ADVERTENCIA WBS
+                      </span>
+                      <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight mt-0.5">
+                        Confirmar Eliminación de Etapa
+                      </h3>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowModalConfirmEliminarEtapaLider(false)}
+                    className="p-2 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-300 transition-colors cursor-pointer"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Ficha Informativa de la Etapa */}
+                <div className="p-4 rounded-2xl bg-red-50/50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-900/40 space-y-2">
+                  <span className="text-[0.65rem] font-mono font-black text-red-500 uppercase tracking-wider block">
+                    ETAPA O FASE A ELIMINAR
+                  </span>
+                  <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                    {etapaAEliminarLider?.nombreEtapa || `Fase #${etapaAEliminarLider?.idEtapa}`}
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[0.62rem] font-bold">
+                      Ref: #ETAPA_{etapaAEliminarLider?.idEtapa}
+                    </span>
+                    <span className="text-[0.65rem] text-emerald-600 dark:text-emerald-400 font-bold">
+                      ✓ Sin tareas vinculadas
+                    </span>
+                  </div>
+                </div>
+
+                {/* Banner Informativo de Advertencia */}
+                <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-medium flex items-start gap-2.5">
+                  <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">
+                    <strong>Atención:</strong> Esta acción borrará permanentemente la etapa del desglose WBS. Esta operación no se puede deshacer.
+                  </span>
+                </div>
+
+                {/* Pie de Acción con Botones */}
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowModalConfirmEliminarEtapaLider(false)}
+                    disabled={submittingEliminarEtapaLider}
+                    className="px-5 py-2.5 rounded-2xl border border-zinc-300 dark:border-zinc-700 text-xs font-extrabold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={ejecutarEliminarEtapaLider}
+                    disabled={submittingEliminarEtapaLider}
+                    className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs font-black shadow-lg shadow-red-500/20 transition-all inline-flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                  >
+                    {submittingEliminarEtapaLider ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Eliminando...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={16} />
+                        <span>Sí, Eliminar Etapa</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <ModalConfirmacionSalirWBS
+          isOpen={showConfirmSalirAsignacionLider}
+          onCancel={() => setShowConfirmSalirAsignacionLider(false)}
+          onConfirm={() => {
+            setShowPaginaDedicadaAsignarLider(false);
+            setShowConfirmSalirAsignacionLider(false);
+            toast.success("Operación cancelada con éxito. Has retornado al catálogo de proyectos.");
+          }}
+        />
 
       </ErrorBoundary>
     </DashboardLayout>

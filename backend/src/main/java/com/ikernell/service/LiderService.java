@@ -490,6 +490,88 @@ public class LiderService {
         return actividadRepository.save(actividad);
     }
 
+    @Transactional
+    public Actividad actualizarActividad(Long idActividad, Map<String, Object> payload) {
+        Actividad actividad = actividadRepository.findById(idActividad)
+                .orElseThrow(() -> new ResourceNotFoundException("Actividad no encontrada con ID: " + idActividad));
+
+        String nombreActividad = (String) payload.get("nombreActividad");
+        if (nombreActividad == null || nombreActividad.isBlank()) {
+            nombreActividad = (String) payload.get("descripcion");
+        }
+        if (nombreActividad != null && !nombreActividad.isBlank()) {
+            actividad.setDescripcion(nombreActividad.trim());
+        }
+
+        if (payload.containsKey("descripcionDetallada")) {
+            Object val = payload.get("descripcionDetallada");
+            if (val != null && !val.toString().isBlank()) {
+                actividad.setDescripcionDetallada(val.toString().trim());
+            }
+        }
+
+        if (payload.containsKey("cualidadTecnica")) {
+            Object val = payload.get("cualidadTecnica");
+            actividad.setCualidadTecnica(val != null ? val.toString().trim() : null);
+        }
+
+        if (payload.containsKey("cualidadNombre")) {
+            Object val = payload.get("cualidadNombre");
+            actividad.setCualidadNombre(val != null ? val.toString().trim() : null);
+        }
+
+        if (payload.containsKey("horasSemanales") && payload.get("horasSemanales") != null) {
+            try {
+                Integer hs = Integer.valueOf(payload.get("horasSemanales").toString());
+                actividad.setHorasSemanales(hs);
+            } catch (Exception e) {
+                // Parse error ignored
+            }
+        }
+
+        if (payload.containsKey("estado") && payload.get("estado") != null) {
+            String est = payload.get("estado").toString();
+            if (!est.isBlank()) {
+                actividad.setEstado(est);
+            }
+        }
+
+        if (payload.containsKey("idEtapa") && payload.get("idEtapa") != null) {
+            try {
+                Long newEtapaId = Long.valueOf(payload.get("idEtapa").toString());
+                if (actividad.getEtapa() == null || !actividad.getEtapa().getIdEtapa().equals(newEtapaId)) {
+                    Etapa nuevaEtapa = etapaRepository.findById(newEtapaId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Etapa no encontrada con ID: " + newEtapaId));
+                    actividad.setEtapa(nuevaEtapa);
+                }
+            } catch (Exception e) {
+                // Parse error ignored
+            }
+        }
+
+        if (payload.containsKey("idDesarrollador") && payload.get("idDesarrollador") != null) {
+            try {
+                Long newDevId = Long.valueOf(payload.get("idDesarrollador").toString());
+                if (actividad.getDesarrollador() == null || !actividad.getDesarrollador().getIdTrabajador().equals(newDevId)) {
+                    Trabajador nuevoDev = trabajadorRepository.findById(newDevId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + newDevId));
+                    actividad.setDesarrollador(nuevoDev);
+                }
+            } catch (Exception e) {
+                // Parse error ignored
+            }
+        }
+
+        return actividadRepository.save(actividad);
+    }
+
+    @Transactional
+    public void eliminarActividad(Long idActividad) {
+        if (actividadRepository.existsById(idActividad)) {
+            actividadRepository.deleteById(idActividad);
+        }
+    }
+
     // Reasigna la actividad a otro desarrollador registrando el motivo en la
     // descripción (HU-25)
     @Transactional
@@ -562,6 +644,9 @@ public class LiderService {
                     actInicial.setDesarrollador(prj.getLider());
                 }
                 actividadRepository.save(actInicial);
+                if (prj.getEtapas() == null) {
+                    prj.setEtapas(new java.util.ArrayList<>());
+                }
                 prj.getEtapas().add(guardada);
             }
         }
@@ -596,6 +681,9 @@ public class LiderService {
                     actInicial.setDesarrollador(prj.getLider());
                 }
                 actividadRepository.save(actInicial);
+                if (prj.getEtapas() == null) {
+                    prj.setEtapas(new java.util.ArrayList<>());
+                }
                 prj.getEtapas().add(guardada);
             }
         }

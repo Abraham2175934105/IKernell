@@ -246,6 +246,22 @@ public class LiderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaActividad);
     }
 
+    @PutMapping("/actividades/{idActividad}")
+    @Operation(summary = "Actualizar Actividad WBS", description = "Actualiza los datos técnicos o asignación de una actividad WBS")
+    public ResponseEntity<Actividad> actualizarActividad(
+            @PathVariable Long idActividad,
+            @RequestBody Map<String, Object> payload) {
+        Actividad actividadActualizada = liderService.actualizarActividad(idActividad, payload);
+        return ResponseEntity.ok(actividadActualizada);
+    }
+
+    @DeleteMapping("/actividades/{idActividad}")
+    @Operation(summary = "Eliminar Tarea WBS", description = "Elimina una tarea WBS asignada del desglose")
+    public ResponseEntity<Void> eliminarActividad(@PathVariable Long idActividad) {
+        liderService.eliminarActividad(idActividad);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/actividades/{idActividad}/reasignar")
     @Operation(summary = "Reasignar Actividad a otro Desarrollador", description = "Permite transferir la responsabilidad de una tarea a otro desarrollador registrando la justificación (RF-17)")
     public ResponseEntity<Actividad> reasignarActividad(
