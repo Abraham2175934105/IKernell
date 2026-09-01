@@ -237,7 +237,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       const existingId = String(t.identificacion || '').trim().toLowerCase();
       return existingId && existingId === cleanId.toLowerCase();
     });
-    if (isDup) return '❌ Esta cédula / identificación ya se encuentra registrada en PostgreSQL por otro trabajador.';
+    if (isDup) return '❌ No se puede: este número de cédula / identificación ya se encuentra registrado.';
     return null;
   };
 
@@ -250,7 +250,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       const existingEmail = String(t.email || '').trim().toLowerCase();
       return existingEmail && existingEmail === cleanEmail;
     });
-    if (isDup) return '❌ Este correo corporativo ya pertenece a otro colaborador registrado en PostgreSQL.';
+    if (isDup) return '❌ No se puede: este correo corporativo ya se encuentra registrado.';
     return null;
   };
 
@@ -263,7 +263,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       const existingPersonal = String(t.emailPersonal || t.correoPersonal || t.personalEmail || '').trim().toLowerCase();
       return existingPersonal && existingPersonal === cleanPersonal;
     });
-    if (isDup) return '❌ Este correo personal ya se encuentra registrado previamente por otro trabajador en PostgreSQL.';
+    if (isDup) return '❌ No se puede: este correo personal ya se encuentra registrado.';
     return null;
   };
 
