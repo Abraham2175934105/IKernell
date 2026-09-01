@@ -567,29 +567,30 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     }
   };
 
-  // VARIANTES DE ANIMACIÓN VERTICAL SINCRONIZADA
+  // VARIANTES DE ANIMACIÓN VERTICAL ULTRA RÁPIDA, FLUIDA Y NOTABLE
   const verticalSlideVariants = {
     enter: (direction) => ({
-      y: direction === 'next' ? 80 : -80,
+      y: direction === 'next' ? 45 : -45,
       opacity: 0,
-      scale: 0.97
+      scale: 0.985
     }),
     center: {
       y: 0,
       opacity: 1,
       scale: 1,
       transition: {
-        y: { type: 'spring', stiffness: 320, damping: 28 },
-        opacity: { duration: 0.25 }
+        y: { type: 'spring', stiffness: 520, damping: 34, mass: 0.6 },
+        opacity: { duration: 0.16, ease: 'easeOut' },
+        scale: { duration: 0.16, ease: 'easeOut' }
       }
     },
     exit: (direction) => ({
-      y: direction === 'next' ? -80 : 80,
+      y: direction === 'next' ? -45 : 45,
       opacity: 0,
-      scale: 0.97,
+      scale: 0.985,
       transition: {
-        y: { type: 'spring', stiffness: 320, damping: 28 },
-        opacity: { duration: 0.2 }
+        y: { duration: 0.12, ease: 'easeIn' },
+        opacity: { duration: 0.12, ease: 'easeIn' }
       }
     })
   };
@@ -994,10 +995,10 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
             </div>
           </div>
 
-          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL CON UNICIDAD DE 3 CAMPOS Y ALERTAS DE ERROR */}
+          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL CON ANIMACIÓN ULTRA RÁPIDA */}
           <div className="lg:col-span-8">
             <div className="min-h-[60vh] relative">
-              <AnimatePresence custom={slideDirection} mode="wait">
+              <AnimatePresence custom={slideDirection} mode="wait" initial={false}>
                 
                 {/* SLIDE PASO 1: CREDENCIALES */}
                 {activeStep === 1 && (
