@@ -404,7 +404,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     }
   };
 
-  // TOGGLE DE DOMINIO MANUALMENTE (PERMITE ELEGIR MÚLTIPLES DOMINIOS AL TIEMPO)
+  // TOGGLE DE DOMINIO MANUALMENTE CON ELIMINACIÓN BIDIRECCIONAL DE SUS TÉCNICAS
   const handleToggleDominio = (catKey) => {
     if (catKey === 'TODAS') {
       setActiveTabTecnicas('TODAS');
@@ -414,32 +414,57 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     setActiveTabTecnicas(catKey);
 
     if (selectedDominios.includes(catKey)) {
-      setSelectedDominios(selectedDominios.filter(d => d !== catKey));
+      // Al deseleccionar un dominio, eliminar también automáticamente todas sus tecnologías asociadas
+      const domainSkills = CATEGORIAS_HABILIDADES[catKey]?.skills || [];
+      setHabilidadesTecnicas(prev => prev.filter(s => !domainSkills.includes(s)));
+      setSelectedDominios(prev => prev.filter(d => d !== catKey));
     } else {
-      setSelectedDominios([...selectedDominios, catKey]);
+      setSelectedDominios(prev => [...prev, catKey]);
     }
   };
 
-  // TOGGLE DE TÉCNICA CON AUTO-VINCULACIÓN AL DOMINIO CORRESPONDIENTE
-  const handleToggleTecnica = (skill) => {
-    if (habilidadesTecnicas.includes(skill)) {
-      setHabilidadesTecnicas(habilidadesTecnicas.filter(s => s !== skill));
-    } else {
-      setHabilidadesTecnicas([...habilidadesTecnicas, skill]);
-      
-      // AUTO-VINCULAR AUTOMÁTICAMENTE EL DOMINIO PADRE AL SELECCIONAR CUALQUIER TÉCNICA
-      const parentCatKey = findCategoryKeyForSkill(skill);
-      if (parentCatKey && !selectedDominios.includes(parentCatKey)) {
-        setSelectedDominios(prev => [...prev, parentCatKey]);
-      }
+  // REMOVER DOMINIO DESDE LA INSIGNIA X (ELIMINA AUTOMÁTICAMENTE SUS TÉCNICAS VINCULADAS)
+  const handleRemoveDominioBadge = (catKey) => {
+    const domainSkills = CATEGORIAS_HABILIDADES[catKey]?.skills || [];
+    setHabilidadesTecnicas(prev => prev.filter(s => !domainSkills.includes(s)));
+    setSelectedDominios(prev => prev.filter(d => d !== catKey));
+  };
 
+  // TOGGLE DE TÉCNICA CON VINCULACIÓN Y DESVINCULACIÓN BIDIRECCIONAL DE DOMINIO
+  const handleToggleTecnica = (skill) => {
+    let nextSkills;
+    if (habilidadesTecnicas.includes(skill)) {
+      nextSkills = habilidadesTecnicas.filter(s => s !== skill);
+      setHabilidadesTecnicas(nextSkills);
+    } else {
+      nextSkills = [...habilidadesTecnicas, skill];
+      setHabilidadesTecnicas(nextSkills);
       if (fieldErrors.habilidades) setFieldErrors(prev => ({ ...prev, habilidades: null }));
+    }
+
+    // SINCRONIZACIÓN BIDIRECCIONAL: REVISAR SI EL DOMINIO PADRE DEBE AGREGARSE O ELIMINARSE
+    const parentCatKey = findCategoryKeyForSkill(skill);
+    if (parentCatKey) {
+      if (nextSkills.includes(skill)) {
+        // Al agregar técnica -> auto-agregar dominio si no estaba
+        if (!selectedDominios.includes(parentCatKey)) {
+          setSelectedDominios(prev => [...prev, parentCatKey]);
+        }
+      } else {
+        // Al quitar técnica -> si ya no queda NINGUNA técnica de este dominio, desvincular automáticamente el dominio
+        const remainingDomainSkills = CATEGORIAS_HABILIDADES[parentCatKey]?.skills || [];
+        const hasOtherSkillsInDomain = nextSkills.some(s => remainingDomainSkills.includes(s));
+        if (!hasOtherSkillsInDomain) {
+          setSelectedDominios(prev => prev.filter(d => d !== parentCatKey));
+        }
+      }
     }
   };
 
   const handleAddCustomTecnica = () => {
     if (customTecnicaInput.trim() && !habilidadesTecnicas.includes(customTecnicaInput.trim())) {
-      setHabilidadesTecnicas([...habilidadesTecnicas, customTecnicaInput.trim()]);
+      const nextSkills = [...habilidadesTecnicas, customTecnicaInput.trim()];
+      setHabilidadesTecnicas(nextSkills);
       setCustomTecnicaInput('');
 
       // Auto vincular a la pestaña activa si no es TODAS
@@ -653,7 +678,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
         })}
       </div>
 
-      {/* INSIGNIAS DE DOMINIOS SELECCIONADOS VINCULADOS */}
+      {/* INSIGNIAS DE DOMINIOS SELECCIONADOS VINCULADOS CON ELIMINACIÓN BIDIRECCIONAL */}
       {selectedDominios.length > 0 && (
         <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-700/80 flex items-center gap-2 flex-wrap">
           <span className="text-[0.65rem] uppercase font-extrabold text-zinc-500 flex items-center gap-1">
@@ -662,7 +687,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
           {selectedDominios.map(dKey => (
             <span key={dKey} className="px-2.5 py-0.5 rounded-lg bg-emerald-600 text-white font-black text-[0.68rem] flex items-center gap-1.5 shadow-xs">
               <span>{CATEGORIAS_HABILIDADES[dKey]?.label}</span>
-              <button type="button" onClick={() => setSelectedDominios(selectedDominios.filter(k => k !== dKey))} className="hover:text-red-200 font-bold">×</button>
+              <button type="button" onClick={() => handleRemoveDominioBadge(dKey)} className="hover:text-red-200 font-black cursor-pointer text-sm">×</button>
             </span>
           ))}
         </div>
