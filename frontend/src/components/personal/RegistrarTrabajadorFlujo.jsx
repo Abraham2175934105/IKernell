@@ -499,7 +499,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   };
 
   const handleSubmit = async (e) => {
-    e?.preventDefault();
+    if (e) e.preventDefault();
     setFormError(null);
 
     if (!validateStep1()) {
@@ -846,6 +846,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
                 <div className="flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={handleResetForm}
                     className="px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-extrabold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border border-white/30"
                   >
@@ -853,6 +854,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     <span>Registrar Otro Colaborador</span>
                   </button>
                   <button
+                    type="button"
                     onClick={onVolver}
                     className="px-6 py-2.5 rounded-2xl bg-white text-emerald-950 hover:bg-emerald-50 font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer shadow-lg"
                   >
@@ -1695,7 +1697,8 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           Cancelar
                         </button>
                         <motion.button
-                          type="submit"
+                          type="button"
+                          onClick={(e) => handleSubmit(e)}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           disabled={submitting}
