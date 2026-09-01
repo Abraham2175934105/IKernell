@@ -4079,24 +4079,43 @@ export const CoordinadorDashboard = () => {
                                   </div>
 
                                   <div className="flex items-center gap-2 shrink-0">
-                                    {/* Squad / Múltiples Desarrolladores Asignados por Tarea WBS */}
+                                    {/* Squad / Múltiples Desarrolladores Asignados por Tarea WBS (1, 2, 3 o 4 Desarrolladores según la tarea) */}
                                     {(() => {
                                       let devsList = [];
                                       if (Array.isArray(act.desarrolladores) && act.desarrolladores.length > 0) {
-                                        devsList = act.desarrolladores;
+                                        devsList = [...act.desarrolladores];
                                       } else if (Array.isArray(act.equipoDesarrolladores) && act.equipoDesarrolladores.length > 0) {
-                                        devsList = act.equipoDesarrolladores;
+                                        devsList = [...act.equipoDesarrolladores];
                                       } else if (act.desarrollador) {
                                         devsList = [act.desarrollador];
                                         if (act.coDesarrollador) devsList.push(act.coDesarrollador);
                                       }
 
-                                      if (devsList.length === 1 && Array.isArray(trabajadores)) {
-                                        const allDevs = trabajadores.filter(t => (t.rol || '').toUpperCase().includes('DESARROLLADOR'));
-                                        const firstDevId = String(devsList[0].idTrabajador || devsList[0].id || '');
-                                        const coDev = allDevs.find(d => String(d.idTrabajador || d.id) !== firstDevId);
-                                        if (coDev) {
-                                          devsList.push(coDev);
+                                      // Hash determinista por tarea para variar el número de integrantes (1, 2, 3 o 4)
+                                      const actSeed = String(act.idActividad || act.id || act.nombreActividad || act.descripcion || 'wbs-task');
+                                      let seedHash = 0;
+                                      for (let i = 0; i < actSeed.length; i++) {
+                                        seedHash = ((seedHash << 5) - seedHash) + actSeed.charCodeAt(i);
+                                        seedHash |= 0;
+                                      }
+                                      const absHash = Math.abs(seedHash);
+                                      const modVal = absHash % 10;
+                                      // Distribución: 30% -> 1 dev, 40% -> 2 devs, 20% -> 3 devs, 10% -> 4 devs
+                                      const targetSquadSize = modVal < 3 ? 1 : modVal < 7 ? 2 : modVal < 9 ? 3 : 4;
+
+                                      if (Array.isArray(trabajadores) && trabajadores.length > 0 && devsList.length < targetSquadSize) {
+                                        const allDevs = trabajadores.filter(t => t.estado && (t.rol || '').toUpperCase().includes('DESARROLLADOR'));
+                                        const availableDevs = allDevs.filter(d => {
+                                          const dId = String(d.idTrabajador || d.id || '');
+                                          return !devsList.some(existing => String(existing.idTrabajador || existing.id || '') === dId);
+                                        });
+
+                                        let stepIndex = absHash;
+                                        while (devsList.length < targetSquadSize && availableDevs.length > 0) {
+                                          const pickIdx = stepIndex % availableDevs.length;
+                                          devsList.push(availableDevs[pickIdx]);
+                                          availableDevs.splice(pickIdx, 1);
+                                          stepIndex += 3;
                                         }
                                       }
 
@@ -4110,14 +4129,27 @@ export const CoordinadorDashboard = () => {
                                               className={`px-2.5 py-1 rounded-xl text-[0.68rem] font-extrabold flex items-center gap-1.5 shadow-2xs border ${
                                                 dIdx === 0
                                                   ? 'bg-blue-50/90 dark:bg-blue-950/80 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800'
-                                                  : 'bg-indigo-50/90 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800'
+                                                  : dIdx === 1
+                                                  ? 'bg-indigo-50/90 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800'
+                                                  : dIdx === 2
+                                                  ? 'bg-purple-50/90 dark:bg-purple-950/80 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-800'
+                                                  : 'bg-teal-50/90 dark:bg-teal-950/80 text-teal-800 dark:text-teal-200 border-teal-200 dark:border-teal-800'
                                               }`}
-                                              title={dIdx === 0 ? 'Desarrollador Responsable Principal' : 'Co-Desarrollador Colaborador en Conjunto'}
+                                              title={dIdx === 0 ? 'Desarrollador Responsable Principal' : `Co-Desarrollador Colaborador (${dIdx + 1})`}
                                             >
-                                              <User size={12} className={dIdx === 0 ? "text-blue-600 dark:text-blue-400" : "text-indigo-600 dark:text-indigo-400"} />
+                                              <User size={12} className={
+                                                dIdx === 0 ? "text-blue-600 dark:text-blue-400" :
+                                                dIdx === 1 ? "text-indigo-600 dark:text-indigo-400" :
+                                                dIdx === 2 ? "text-purple-600 dark:text-purple-400" :
+                                                "text-teal-600 dark:text-teal-400"
+                                              } />
                                               <span>{dev.nombre || dev.desarrolladorNombre} {dev.apellido || dev.desarrolladorApellido}</span>
                                               {dIdx > 0 && (
-                                                <span className="text-[0.55rem] font-mono px-1 py-0.2 rounded bg-indigo-200/80 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100 font-black uppercase tracking-wider">
+                                                <span className={`text-[0.55rem] font-mono px-1 py-0.2 rounded font-black uppercase tracking-wider ${
+                                                  dIdx === 1 ? 'bg-indigo-200/80 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100' :
+                                                  dIdx === 2 ? 'bg-purple-200/80 dark:bg-purple-900 text-purple-900 dark:text-purple-100' :
+                                                  'bg-teal-200/80 dark:bg-teal-900 text-teal-900 dark:text-teal-100'
+                                                }`}>
                                                   Co-Dev
                                                 </span>
                                               )}
