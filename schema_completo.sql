@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- SCHEMA COMPLETO Y CONSOLIDADO DDL + DML - IKERNELL SOLUCIONES SOFTWARE
--- Versión: 4.1 Enterprise High Performance & Corrected Auth Schema
+-- Versión: 4.2 Enterprise High Performance & Fully Synchronized JPA Schema
 -- Contraseña Universal para todos los usuarios: 12345678Ik.
 -- Hash BCrypt: $2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS
 -- ==============================================================================
@@ -54,6 +54,12 @@ CREATE TABLE proyecto (
     fecha_inicio DATE NOT NULL,
     fecha_fin_estimada DATE NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO',
+    reasignado BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_reasignacion TIMESTAMP,
+    motivo_reasignacion TEXT,
+    id_lider_anterior BIGINT,
+    nombre_lider_anterior VARCHAR(150),
+    leido_por_lider_anterior BOOLEAN NOT NULL DEFAULT FALSE,
     lider_id BIGINT REFERENCES trabajador(id_trabajador) ON DELETE SET NULL
 );
 
@@ -67,6 +73,7 @@ CREATE TABLE proyecto_desarrollador (
     proyecto_id BIGINT NOT NULL REFERENCES proyecto(id_proyecto) ON DELETE CASCADE,
     desarrollador_id BIGINT NOT NULL REFERENCES trabajador(id_trabajador) ON DELETE CASCADE,
     horas_semanales INT NOT NULL DEFAULT 40,
+    fecha_asignacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uk_proyecto_desarrollador UNIQUE (proyecto_id, desarrollador_id)
 );
 
@@ -89,8 +96,9 @@ CREATE TABLE actividad (
     id_actividad BIGSERIAL PRIMARY KEY,
     etapa_id BIGINT NOT NULL REFERENCES etapa(id_etapa) ON DELETE CASCADE,
     desarrollador_id BIGINT REFERENCES trabajador(id_trabajador) ON DELETE SET NULL,
-    descripcion VARCHAR(255) NOT NULL,
-    estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE'
+    descripcion TEXT NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
+    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_actividad_etapa ON actividad(etapa_id);
@@ -102,7 +110,7 @@ CREATE TABLE error (
     id_error BIGSERIAL PRIMARY KEY,
     etapa_id BIGINT NOT NULL REFERENCES etapa(id_etapa) ON DELETE CASCADE,
     desarrollador_id BIGINT NOT NULL REFERENCES trabajador(id_trabajador) ON DELETE CASCADE,
-    tipo_error VARCHAR(50) NOT NULL,
+    tipo_error VARCHAR(100) NOT NULL,
     severidad VARCHAR(20) NOT NULL, -- 'BAJA', 'MEDIA', 'ALTA', 'CRITICA'
     fecha_registro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     descripcion TEXT NOT NULL,
@@ -120,11 +128,16 @@ CREATE TABLE interrupcion (
     id_interrupcion BIGSERIAL PRIMARY KEY,
     etapa_id BIGINT NOT NULL REFERENCES etapa(id_etapa) ON DELETE CASCADE,
     desarrollador_id BIGINT NOT NULL REFERENCES trabajador(id_trabajador) ON DELETE CASCADE,
-    tipo_interrupcion VARCHAR(50) NOT NULL,
+    tipo_interrupcion VARCHAR(100) NOT NULL,
     duracion_minutos INT NOT NULL,
     fecha_registro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    descripcion TEXT NOT NULL,
-    impacto_operativo VARCHAR(20) NOT NULL DEFAULT 'MODERADO'
+    fecha_ocurrencia TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    descripcion TEXT,
+    comentarios TEXT,
+    impacto_operativo VARCHAR(20) NOT NULL DEFAULT 'MODERADO',
+    estado_atencion VARCHAR(30) NOT NULL DEFAULT 'REGISTRADO',
+    resolucion_nota TEXT,
+    fecha_resolucion TIMESTAMP
 );
 
 CREATE INDEX idx_interrupcion_etapa ON interrupcion(etapa_id);
@@ -413,22 +426,22 @@ INSERT INTO error (id_error, etapa_id, desarrollador_id, tipo_error, severidad, 
 
 
 -- 4.7 INYECCIÓN DE INTERRUPCIONES Y CONTINGENCIAS
-INSERT INTO interrupcion (id_interrupcion, etapa_id, desarrollador_id, tipo_interrupcion, duracion_minutos, fecha_registro, descripcion, impacto_operativo) VALUES
-(1, 2, 4, 'Caída de Servidor Staging', 480, '2026-08-24 08:00:00', 'Servidor de pruebas fuera de servicio por falla de disco SSD en el proveedor cloud.', 'CRITICO'),
-(2, 2, 9, 'Bloqueo por Falla de Red Corporativa', 360, '2026-08-27 09:30:00', 'Corte de fibra óptica en la sede principal impidió el despliegue de componentes UI.', 'ALTO'),
-(3, 2, 10, 'Reunión de Emergencia de Seguridad', 240, '2026-08-29 11:00:00', 'Sesión extraordinaria de mitigación de fallas transaccionales con el cliente Nubank.', 'ALTO'),
-(4, 8, 3, 'Corte de Energía y Respaldo UPS', 300, '2026-08-25 13:00:00', 'Fallo de la red eléctrica local y demora en la conmutación de la planta de energía.', 'ALTO'),
-(5, 8, 13, 'Mantenimiento No Programado Cluster K8s', 420, '2026-08-28 07:00:00', 'Actualización crítica de parches de seguridad Kernel en el cluster de desarrollo.', 'CRITICO'),
-(6, 8, 21, 'Bloqueo Administrativo por Licencias', 300, '2026-08-29 14:00:00', 'Expiración de licencias de herramienta de profiling de memoria Java.', 'MODERADO'),
-(7, 5, 11, 'Capacitación Obligatoria CMMI 3', 360, '2026-08-21 08:00:00', 'Taller de auditoría de procesos normativos con consultores externos.', 'MODERADO'),
-(8, 14, 18, 'Demora en Proveedor de Conectividad Brasil', 240, '2026-08-23 10:00:00', 'Espera de aprobación de credenciales VPN por parte del cliente Petrobras.', 'MODERADO'),
-(9, 11, 16, 'Problemas de Salud / Incapacidad', 120, '2026-08-22 09:00:00', 'Permiso médico laboral de medio día presentado por el desarrollador.', 'BAJO'),
-(10, 17, 22, 'Actualización de Sistema Operativo', 60, '2026-08-25 15:00:00', 'Reinicio obligatorio por parches de seguridad en la estación de trabajo.', 'BAJO'),
-(11, 20, 27, 'Falla de Hardware en Lector de Tarjetas', 90, '2026-08-24 11:30:00', 'Remplazo de tarjeta de red dañada en el equipo de desarrollo.', 'BAJO'),
-(12, 23, 31, 'Inducción de Seguridad Industrial', 180, '2026-08-26 08:30:00', 'Capacitación presencial sobre normativas de trabajo en planta Ternium.', 'MODERADO'),
-(13, 26, 33, 'Falla de API Externa de Consulta', 150, '2026-08-27 10:00:00', 'Indisponibilidad del servicio sandbox de consulta de centrales de riesgo.', 'MODERADO'),
-(14, 32, 38, 'Calibración de Antenas RFID', 120, '2026-08-25 14:00:00', 'Ajuste de frecuencia en portal de pruebas de la bodega DHL.', 'BAJO'),
-(15, 38, 31, 'Simulacro de Evacuación de Edificio', 60, '2026-08-28 10:30:00', 'Participación obligatoria en simulacro institucional de emergencia.', 'BAJO');
+INSERT INTO interrupcion (id_interrupcion, etapa_id, desarrollador_id, tipo_interrupcion, duracion_minutos, fecha_registro, fecha_ocurrencia, descripcion, comentarios, impacto_operativo, estado_atencion) VALUES
+(1, 2, 4, 'Caída de Servidor Staging', 480, '2026-08-24 08:00:00', '2026-08-24 08:00:00', 'Servidor de pruebas fuera de servicio por falla de disco SSD en el proveedor cloud.', 'Servidor de pruebas fuera de servicio por falla de disco SSD.', 'CRITICO', 'REGISTRADO'),
+(2, 2, 9, 'Bloqueo por Falla de Red Corporativa', 360, '2026-08-27 09:30:00', '2026-08-27 09:30:00', 'Corte de fibra óptica en la sede principal impidió el despliegue de componentes UI.', 'Corte de fibra óptica en la sede principal.', 'ALTO', 'REGISTRADO'),
+(3, 2, 10, 'Reunión de Emergencia de Seguridad', 240, '2026-08-29 11:00:00', '2026-08-29 11:00:00', 'Sesión extraordinaria de mitigación de fallas transaccionales con el cliente Nubank.', 'Sesión extraordinaria de mitigación de fallas transaccionales.', 'ALTO', 'REGISTRADO'),
+(4, 8, 3, 'Corte de Energía y Respaldo UPS', 300, '2026-08-25 13:00:00', '2026-08-25 13:00:00', 'Fallo de la red eléctrica local y demora en la conmutación de la planta de energía.', 'Fallo de la red eléctrica local.', 'ALTO', 'REGISTRADO'),
+(5, 8, 13, 'Mantenimiento No Programado Cluster K8s', 420, '2026-08-28 07:00:00', '2026-08-28 07:00:00', 'Actualización crítica de parches de seguridad Kernel en el cluster de desarrollo.', 'Actualización crítica de parches de seguridad Kernel.', 'CRITICO', 'REGISTRADO'),
+(6, 8, 21, 'Bloqueo Administrativo por Licencias', 300, '2026-08-29 14:00:00', '2026-08-29 14:00:00', 'Expiración de licencias de herramienta de profiling de memoria Java.', 'Expiración de licencias.', 'MODERADO', 'REGISTRADO'),
+(7, 5, 11, 'Capacitación Obligatoria CMMI 3', 360, '2026-08-21 08:00:00', '2026-08-21 08:00:00', 'Taller de auditoría de procesos normativos con consultores externos.', 'Taller de auditoría de procesos normativos.', 'MODERADO', 'REGISTRADO'),
+(8, 14, 18, 'Demora en Proveedor de Conectividad Brasil', 240, '2026-08-23 10:00:00', '2026-08-23 10:00:00', 'Espera de aprobación de credenciales VPN por parte del cliente Petrobras.', 'Espera de aprobación de credenciales VPN.', 'MODERADO', 'REGISTRADO'),
+(9, 11, 16, 'Problemas de Salud / Incapacidad', 120, '2026-08-22 09:00:00', '2026-08-22 09:00:00', 'Permiso médico laboral de medio día presentado por el desarrollador.', 'Permiso médico laboral de medio día.', 'BAJO', 'REGISTRADO'),
+(10, 17, 22, 'Actualización de Sistema Operativo', 60, '2026-08-25 15:00:00', '2026-08-25 15:00:00', 'Reinicio obligatorio por parches de seguridad en la estación de trabajo.', 'Reinicio obligatorio por parches.', 'BAJO', 'REGISTRADO'),
+(11, 20, 27, 'Falla de Hardware en Lector de Tarjetas', 90, '2026-08-24 11:30:00', '2026-08-24 11:30:00', 'Remplazo de tarjeta de red dañada en el equipo de desarrollo.', 'Remplazo de tarjeta de red dañada.', 'BAJO', 'REGISTRADO'),
+(12, 23, 31, 'Inducción de Seguridad Industrial', 180, '2026-08-26 08:30:00', '2026-08-26 08:30:00', 'Capacitación presencial sobre normativas de trabajo en planta Ternium.', 'Capacitación presencial.', 'MODERADO', 'REGISTRADO'),
+(13, 26, 33, 'Falla de API Externa de Consulta', 150, '2026-08-27 10:00:00', '2026-08-27 10:00:00', 'Indisponibilidad del servicio sandbox de consulta de centrales de riesgo.', 'Indisponibilidad del servicio sandbox.', 'MODERADO', 'REGISTRADO'),
+(14, 32, 38, 'Calibración de Antenas RFID', 120, '2026-08-25 14:00:00', '2026-08-25 14:00:00', 'Ajuste de frecuencia en portal de pruebas de la bodega DHL.', 'Ajuste de frecuencia.', 'BAJO', 'REGISTRADO'),
+(15, 38, 31, 'Simulacro de Evacuación de Edificio', 60, '2026-08-28 10:30:00', '2026-08-28 10:30:00', 'Participación obligatoria en simulacro institucional de emergencia.', 'Participación obligatoria en simulacro.', 'BAJO', 'REGISTRADO');
 
 
 -- 4.8 INYECCIÓN DE HISTORIAL DE CAMBIOS Y AUDITORÍA CMMI 3

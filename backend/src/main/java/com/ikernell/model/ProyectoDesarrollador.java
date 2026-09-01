@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Table(
     name = "proyecto_desarrollador",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uq_proyecto_desarrollador", columnNames = {"id_proyecto", "id_desarrollador"})
+        @UniqueConstraint(name = "uq_proyecto_desarrollador", columnNames = {"proyecto_id", "desarrollador_id"})
     }
 )
 public class ProyectoDesarrollador {
