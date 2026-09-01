@@ -37,6 +37,12 @@ public class Trabajador {
     @Column(name = "especialidad", length = 255)
     private String especialidad;
 
+    @Column(name = "habilidades_directivas", columnDefinition = "TEXT")
+    private String habilidadesDirectivas;
+
+    @Column(name = "habilidades_tecnicas", columnDefinition = "TEXT")
+    private String habilidadesTecnicas;
+
     @Column(name = "foto_url", length = 255)
     private String fotoUrl;
 
@@ -163,6 +169,22 @@ public class Trabajador {
 
     public void setEspecialidad(String especialidad) {
         this.especialidad = especialidad;
+    }
+
+    public String getHabilidadesDirectivas() {
+        return habilidadesDirectivas;
+    }
+
+    public void setHabilidadesDirectivas(String habilidadesDirectivas) {
+        this.habilidadesDirectivas = habilidadesDirectivas;
+    }
+
+    public String getHabilidadesTecnicas() {
+        return habilidadesTecnicas;
+    }
+
+    public void setHabilidadesTecnicas(String habilidadesTecnicas) {
+        this.habilidadesTecnicas = habilidadesTecnicas;
     }
 
     public String getFotoUrl() {

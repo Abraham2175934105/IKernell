@@ -53,10 +53,9 @@ public class LiderService {
         if (trabajador.getRol() == null) {
             throw new IllegalArgumentException("El rol del trabajador es obligatorio.");
         }
-        String rolNorm = trabajador.getRol().name().toUpperCase();
-        if (!rolNorm.contains("LIDER") && !rolNorm.contains("DESARROLLADOR")) {
+        if (trabajador.getRol() != com.ikernell.model.Rol.DESARROLLADOR) {
             throw new IllegalArgumentException(
-                    "Los líderes solo tienen autorización para registrar colaboradores con rol Líder o Desarrollador.");
+                    "Un Líder de Proyecto solo está autorizado para registrar colaboradores con rol DESARROLLADOR.");
         }
 
         // 1. Validación de Unicidad de Cédula / Número de Identificación

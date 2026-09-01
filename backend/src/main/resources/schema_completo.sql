@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- SCHEMA COMPLETO Y CONSOLIDADO DDL + DML - IKERNELL SOLUCIONES SOFTWARE
--- Versión: 4.2 Enterprise High Performance & Fully Synchronized JPA Schema
+-- Versión: 4.3 Industrial Enterprise & Dual-Skill Leader Architecture
 -- Contraseña Universal para todos los usuarios: 12345678Ik.
 -- Hash BCrypt: $2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS
 -- ==============================================================================
@@ -20,7 +20,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- 3. DDL - TABLAS MAESTRAS DEL SISTEMA
 -- ==============================================================================
 
--- 3.1 TABLA TRABAJADOR
+-- 3.1 TABLA TRABAJADOR (Con soporte para Perfil Híbrido / Doble Habilidad de Líderes)
 CREATE TABLE trabajador (
     id_trabajador BIGSERIAL PRIMARY KEY,
     identificacion VARCHAR(20) UNIQUE NOT NULL,
@@ -30,6 +30,8 @@ CREATE TABLE trabajador (
     direccion VARCHAR(150),
     profesion VARCHAR(100),
     especialidad VARCHAR(100),
+    habilidades_directivas TEXT,
+    habilidades_tecnicas TEXT,
     tipo_trabajador VARCHAR(20) NOT NULL DEFAULT 'PLANTA',
     foto_url VARCHAR(500),
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -67,7 +69,7 @@ CREATE INDEX idx_proyecto_lider ON proyecto(lider_id);
 CREATE INDEX idx_proyecto_estado ON proyecto(estado);
 CREATE INDEX idx_proyecto_nombre_gin ON proyecto USING gin (nombre gin_trgm_ops);
 
--- 3.3 TABLA PROYECTO_DESARROLLADOR (Pivote N:M con regla de doble rol para líderes)
+-- 3.3 TABLA PROYECTO_DESARROLLADOR (Pivote N:M con regla de doble rol para líderes y control 48h)
 CREATE TABLE proyecto_desarrollador (
     id_asignacion BIGSERIAL PRIMARY KEY,
     proyecto_id BIGINT NOT NULL REFERENCES proyecto(id_proyecto) ON DELETE CASCADE,
@@ -105,13 +107,13 @@ CREATE INDEX idx_actividad_etapa ON actividad(etapa_id);
 CREATE INDEX idx_actividad_desarrollador ON actividad(desarrollador_id);
 CREATE INDEX idx_actividad_estado ON actividad(estado);
 
--- 3.6 TABLA ERROR (Incidencias y Bugs)
+-- 3.6 TABLA ERROR (Incidencias y Bugs - Semáforo de 3 Estados)
 CREATE TABLE error (
     id_error BIGSERIAL PRIMARY KEY,
     etapa_id BIGINT NOT NULL REFERENCES etapa(id_etapa) ON DELETE CASCADE,
     desarrollador_id BIGINT NOT NULL REFERENCES trabajador(id_trabajador) ON DELETE CASCADE,
     tipo_error VARCHAR(100) NOT NULL,
-    severidad VARCHAR(20) NOT NULL, -- 'BAJA', 'MEDIA', 'ALTA', 'CRITICA'
+    severidad VARCHAR(20) NOT NULL, -- 'BAJA', 'MEDIA', 'CRITICA' (Estricto 3 Estados)
     fecha_registro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     descripcion TEXT NOT NULL,
     estado_atencion VARCHAR(30) NOT NULL DEFAULT 'REGISTRADO',
@@ -176,56 +178,56 @@ CREATE TABLE consecutivo_proyectos (
 );
 
 -- ==============================================================================
--- 4. DML - SEEDER MASIVO CORPORATIVO
+-- 4. DML - SEEDER MASIVO CORPORATIVO DE ALTO RENDIMIENTO
 -- ==============================================================================
 
--- 4.1 INYECCIÓN DE PERSONAL (2 Coordinadores, 6 Líderes, 30 Desarrolladores)
--- Password para todos los usuarios: 12345678Ik.
--- BCrypt Hash: $2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS
-INSERT INTO trabajador (id_trabajador, identificacion, nombre, apellido, fecha_nacimiento, direccion, profesion, especialidad, tipo_trabajador, foto_url, email, email_personal, rol, password_hash, primer_login, estado) VALUES
+-- 4.1 INYECCIÓN DE PERSONAL (2 Coordinadores, 6 Líderes con Perfil Dual, 30 Desarrolladores)
+-- Contraseña Universal: 12345678Ik.
+-- Hash BCrypt: $2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS
+INSERT INTO trabajador (id_trabajador, identificacion, nombre, apellido, fecha_nacimiento, direccion, profesion, especialidad, habilidades_directivas, habilidades_tecnicas, tipo_trabajador, foto_url, email, email_personal, rol, password_hash, primer_login, estado) VALUES
 -- Coordinadores (2)
-(1, '1001001', 'Roberto', 'Gómez', '1980-03-10', 'Transversal 23 # 95-12', 'Director de Operaciones & Calidad', 'Gestión de Talento & Auditoría CMMI', 'PLANTA', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'roberto.coord@ikernell.org', 'roberto.gomez.personal@gmail.com', 'COORDINADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(2, '1001002', 'Carlos', 'Mendoza', '1985-04-12', 'Av. Empresarial 100', 'Ingeniero de Sistemas & MBA', 'Dirección de Operaciones & Gobierno TI', 'PLANTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'carlos.coord@ikernell.org', 'carlos.mendoza.personal@gmail.com', 'COORDINADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(1, '1001001', 'Roberto', 'Gómez', '1980-03-10', 'Transversal 23 # 95-12', 'Director de Operaciones & Calidad', 'Gestión de Talento & Auditoría CMMI', 'Gestión de Proyectos, Planificación WBS, Presupuestos & Costos, Auditoría CMMI, Gestión de Riesgos', 'PostgreSQL, Java 17, React.js, Docker, Kubernetes', 'PLANTA', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'roberto.coord@ikernell.org', 'roberto.gomez.personal@gmail.com', 'COORDINADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(2, '1001002', 'Carlos', 'Mendoza', '1985-04-12', 'Av. Empresarial 100', 'Ingeniero de Sistemas & MBA', 'Dirección de Operaciones & Gobierno TI', 'Liderazgo de Equipos, Scrum Master, Negociación con Clientes, Resolución de Conflictos', 'Spring Boot 3, Microservicios, PostgreSQL DBA, Python, AWS', 'PLANTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'carlos.coord@ikernell.org', 'carlos.mendoza.personal@gmail.com', 'COORDINADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
 
--- Líderes de Proyecto (6)
-(3, '1001003', 'Elena', 'Rostova', '1989-12-01', 'Calle 127 # 53-10', 'Líder de Proyecto & Cloud Architect', 'Gestión de Proyectos Cloud & Microservicios', 'PLANTA', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', 'elena.lider@ikernell.org', 'elena.rostova.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(4, '1001004', 'Alejandro', 'Silva', '1986-06-15', 'Calle 100 # 19-40', 'Tech Lead & Arquitecto de Software', 'Arquitectura Distribuida & Java 17', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'alejandro.lider@ikernell.org', 'alejandro.silva.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(5, '1001005', 'Mariana', 'Torres', '1988-08-23', 'Calle 45 # 12-30', 'Ingeniera de Software & Scrum Master', 'Liderazgo de Proyectos & Metodologías Ágiles', 'PLANTA', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', 'mariana.lider@ikernell.org', 'mariana.torres.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(6, '1001006', 'David', 'López', '1987-11-19', 'Av. Boyacá # 72-15', 'Líder de Infraestructura & Cloud', 'AWS, DevOps & Seguridad Cloud', 'PLANTA', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'david.lider@ikernell.org', 'david.lopez.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(7, '1001007', 'Sofía', 'Ramírez', '1990-05-14', 'Carrera 15 # 80-45', 'Líder de Innovación & Machine Learning', 'IA, Python & Data Science', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'sofia.lider@ikernell.org', 'sofia.ramirez.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(8, '1001008', 'Fernando', 'Castro', '1984-09-28', 'Av. Circunvalar 23-10', 'Líder de Sistemas de Información', 'ERP, SAP & Integraciones Enterprise', 'PLANTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'fernando.lider@ikernell.org', 'fernando.castro.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+-- Líderes de Proyecto (6) - CON PERFIL DUAL: HABILIDADES DIRECTIVAS + HABILIDADES TÉCNICAS
+(3, '1001003', 'Elena', 'Rostova', '1989-12-01', 'Calle 127 # 53-10', 'Líder de Proyecto & Cloud Architect', 'Gestión Cloud & Microservicios', 'Scrum Master, Planificación WBS, Gestión de Riesgos, Liderazgo de Equipos', 'Java 17, Spring Boot 3, Docker, Kubernetes, Microservicios', 'PLANTA', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', 'elena.lider@ikernell.org', 'elena.rostova.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(4, '1001004', 'Alejandro', 'Silva', '1986-06-15', 'Calle 100 # 19-40', 'Tech Lead & Arquitecto de Software', 'Arquitectura Distribuida & Java 17', 'Arquitectura de Software, Code Review, Estimación de Esfuerzo, Gestión de Equipos', 'Java 17, Spring Boot 3, PostgreSQL, Redis, JPA / Hibernate', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'alejandro.lider@ikernell.org', 'alejandro.silva.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(5, '1001005', 'Mariana', 'Torres', '1988-08-23', 'Calle 45 # 12-30', 'Ingeniera de Software & Scrum Master', 'Liderazgo Ágil & Frontend Moderno', 'Scrum Master, Jira / Confluence, Metodologías Ágiles, Resolución de Conflictos', 'React 18, TypeScript, Tailwind CSS, Next.js, Redux Toolkit', 'PLANTA', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', 'mariana.lider@ikernell.org', 'mariana.torres.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(6, '1001006', 'David', 'López', '1987-11-19', 'Av. Boyacá # 72-15', 'Líder de Infraestructura & Cloud', 'AWS, DevOps & Ciberseguridad', 'Gestión de Infraestructura Cloud, Auditoría de Seguridad, Costos Cloud', 'AWS Cloud, Terraform, Docker, Kubernetes, CI/CD Pipelines', 'PLANTA', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'david.lider@ikernell.org', 'david.lopez.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(7, '1001007', 'Sofía', 'Ramírez', '1990-05-14', 'Carrera 15 # 80-45', 'Líder de Innovación & Machine Learning', 'IA, Python & Data Science', 'Gestión de Proyectos IA, Innovación Tecnológica, Investigación & Desarrollo', 'Python, Pandas, FastAPI, Scikit-Learn, PostgreSQL DBA', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'sofia.lider@ikernell.org', 'sofia.ramirez.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(8, '1001008', 'Fernando', 'Castro', '1984-09-28', 'Av. Circunvalar 23-10', 'Líder de Sistemas de Información', 'ERP & Integraciones Enterprise', 'Gobierno TI, Gestión de Stakeholders, Control de Presupuestos', 'Java 17, Spring Boot, PostgreSQL, Kafka, REST APIs', 'PLANTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'fernando.lider@ikernell.org', 'fernando.castro.personal@gmail.com', 'LIDER', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
 
--- Desarrolladores (30)
-(9, '1001009', 'Mateo', 'Morales', '1994-02-18', 'Av. Suba # 116-40', 'Desarrollador Frontend Senior', 'React 18, TypeScript & Tailwind CSS', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'mateo.dev@ikernell.org', 'mateo.morales@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(10, '1001010', 'Camila', 'Vargas', '1993-09-20', 'Carrera 7 # 116-50', 'Desarrolladora Backend Java', 'Spring Boot 3, Java 17 & Microservicios', 'PLANTA', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'camila.dev@ikernell.org', 'camila.vargas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(11, '1001011', 'Lucas', 'Herrera', '1991-04-03', 'Diagonal 45 # 22-80', 'Administrador de Base de Datos', 'PostgreSQL DBA & SQL Tuning', 'PLANTA', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', 'lucas.dev@ikernell.org', 'lucas.herrera@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(12, '1001012', 'Isabella', 'Rojas', '1997-01-19', 'Calle 134 # 9-60', 'Ingeniera de Pruebas QA', 'QA Automation, JUnit & Mockito', 'PLANTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'isabella.dev@ikernell.org', 'isabella.rojas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(13, '1001013', 'Gabriel', 'Benítez', '1994-07-22', 'Calle 80 # 11-45', 'Ingeniero DevOps', 'Docker, Kubernetes & CI/CD Pipelines', 'PLANTA', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150', 'gabriel.dev@ikernell.org', 'gabriel.benitez@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(14, '1001014', 'Valentina', 'Ortiz', '1996-10-30', 'Carrera 68 # 45-20', 'Diseñadora UI/UX', 'Figma Prototyping & Design Systems', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'valentina.dev@ikernell.org', 'valentina.ortiz@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(15, '1001015', 'Mateo', 'Silva', '1995-12-08', 'Carrera 45 # 28-10', 'Desarrollador Frontend', 'React.js & Next.js', 'CONTRATISTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'mateos.dev@ikernell.org', 'mateo.silva@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(16, '1001016', 'Lucía', 'Navarro', '1992-11-05', 'Carrera 15 # 80-45', 'Desarrolladora Backend Java', 'Spring Boot 3 & JPA Hibernate', 'PLANTA', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', 'lucian.dev@ikernell.org', 'lucia.navarro@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(17, '1001017', 'Santiago', 'Flores', '1996-03-14', 'Calle 72 # 11-20', 'Desarrollador Full Stack', 'React.js & Spring Boot', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'santiago.dev@ikernell.org', 'santiago.flores@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(18, '1001018', 'Victoria', 'Rivas', '1995-04-18', 'Calle 100 # 23-10', 'Ingeniera de Datos', 'Python, ETL & PostgreSQL', 'PLANTA', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', 'victoria.dev@ikernell.org', 'victoria.rivas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(19, '1001019', 'Daniel', 'Castillo', '1993-02-11', 'Calle 116 # 15-30', 'Ingeniero QA Automation', 'Cypress, Jest & Selenium', 'CONTRATISTA', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'daniel.dev@ikernell.org', 'daniel.castillo@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(20, '1001020', 'Natalia', 'Domínguez', '1997-08-25', 'Carrera 19 # 104-15', 'Arquitecta Cloud Junior', 'AWS Cloud & Terraform', 'PLANTA', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'natalia.dev@ikernell.org', 'natalia.dominguez@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(21, '1001021', 'Andrés', 'Vega', '1991-10-12', 'Calle 45 # 18-90', 'Desarrollador Backend Java', 'Spring Boot 3 & Redis Cache', 'PLANTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'andres.dev@ikernell.org', 'andres.vega@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(22, '1001022', 'Paola', 'Reyes', '1995-06-30', 'Carrera 9 # 120-40', 'Desarrolladora Frontend', 'React.js, Redux & Tailwind', 'PLANTA', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', 'paola.dev@ikernell.org', 'paola.reyes@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(23, '1001023', 'Esteban', 'Medina', '1990-01-15', 'Av. 68 # 80-10', 'Administrador de Base de Datos', 'PostgreSQL Tuning & Query Optimization', 'PLANTA', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'esteban.dev@ikernell.org', 'esteban.medina@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(24, '1001024', 'Daniela', 'Paredes', '1996-09-14', 'Calle 100 # 55-20', 'Ingeniera QA de Seguridad', 'OWASP Testing & Pentesting Web', 'CONTRATISTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'daniela.dev@ikernell.org', 'daniela.paredes@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(25, '1001025', 'Felipe', 'Salazar', '1992-05-20', 'Transversal 15 # 40-10', 'Ingeniero DevOps CI/CD', 'GitHub Actions & Docker Containerization', 'PLANTA', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150', 'felipe.dev@ikernell.org', 'felipe.salazar@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(26, '1001026', 'Andrea', 'Cárdenas', '1994-12-05', 'Calle 127 # 20-30', 'Diseñadora de Producto UI/UX', 'System Design & Wireframing Figma', 'PLANTA', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', 'andrea.dev@ikernell.org', 'andrea.cardenas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(27, '1001027', 'Javier', 'Peralta', '1993-04-18', 'Carrera 50 # 100-15', 'Desarrollador Full Stack', 'React.js & Spring Boot 3', 'PLANTA', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', 'javierp.dev@ikernell.org', 'javier.peralta@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(28, '1001028', 'Monica', 'Ibáñez', '1995-11-28', 'Calle 85 # 12-40', 'Desarrolladora Backend Microservicios', 'Java 17, Spring Boot & Kafka', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'monica.dev@ikernell.org', 'monica.ibanez@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(29, '1001029', 'Rodrigo', 'Delgado', '1989-08-04', 'Av. El Dorado # 68-90', 'Administrador de Base de Datos', 'PostgreSQL Migration & Backup Strategies', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'rodrigo.dev@ikernell.org', 'rodrigo.delgado@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(30, '1001030', 'Claudia', 'Bravo', '1996-01-23', 'Carrera 11 # 93-20', 'Ingeniera QA Lead', 'Test Strategy & Automated Regression', 'PLANTA', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', 'claudia.dev@ikernell.org', 'claudia.bravo@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(31, '1001031', 'Bruno', 'Miranda', '1992-03-30', 'Calle 140 # 11-15', 'Ingeniero DevOps Lead', 'Kubernetes Helm & Cloud Native Security', 'PLANTA', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'bruno.dev@ikernell.org', 'bruno.miranda@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(32, '1001032', 'Valeria', 'Fuentes', '1997-07-11', 'Carrera 7 # 45-60', 'Desarrolladora Frontend Mobile', 'React Native & React.js', 'CONTRATISTA', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'valeria.dev@ikernell.org', 'valeria.fuentes@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(33, '1001033', 'Ignacio', 'Rosas', '1994-05-09', 'Calle 72 # 20-50', 'Desarrollador Backend Senior', 'Go, Java 17 & Microservicios', 'PLANTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'ignacio.dev@ikernell.org', 'ignacio.rosas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(34, '1001034', 'Gabriel', 'Villalobos', '1993-10-15', 'Av. 19 # 100-25', 'Desarrollador Full Stack', 'React.js, Python & FastAPI', 'PLANTA', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150', 'gabrielv.dev@ikernell.org', 'gabriel.villalobos@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(35, '1001035', 'Diana', 'Solís', '1996-06-18', 'Carrera 15 # 116-30', 'Ingeniera QA Manual & Usabilidad', 'Software QA & User Acceptance Testing', 'PLANTA', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', 'diana.dev@ikernell.org', 'diana.solis@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(36, '1001036', 'Hugo', 'Campos', '1991-09-02', 'Calle 100 # 18-50', 'Especialista en Ciberseguridad & DevOps', 'Cyber Security, Docker & Network Audit', 'PLANTA', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'hugo.dev@ikernell.org', 'hugo.campos@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(37, '1001037', 'Beatriz', 'Peña', '1995-02-24', 'Carrera 9 # 100-10', 'Diseñadora UI/UX Lead', 'UI Prototyping & Design Systems', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'beatriz.dev@ikernell.org', 'beatriz.pena@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
-(38, '1001038', 'Tomás', 'Guajardo', '1994-08-11', 'Calle 127 # 45-80', 'Desarrollador Backend', 'Node.js, Express & PostgreSQL', 'CONTRATISTA', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', 'tomas.dev@ikernell.org', 'tomas.guajardo@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true);
+-- Desarrolladores (30) Categorizados por Especialidades Técnicas
+(9, '1001009', 'Mateo', 'Morales', '1994-02-18', 'Av. Suba # 116-40', 'Desarrollador Frontend Senior', 'Frontend React 18', NULL, 'React 18, TypeScript, Tailwind CSS, Vite, Redux Toolkit', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'mateo.dev@ikernell.org', 'mateo.morales@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(10, '1001010', 'Camila', 'Vargas', '1993-09-20', 'Carrera 7 # 116-50', 'Desarrolladora Backend Java', 'Backend Java & Spring Boot', NULL, 'Java 17, Spring Boot 3, Microservicios, JPA / Hibernate, REST APIs', 'PLANTA', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'camila.dev@ikernell.org', 'camila.vargas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(11, '1001011', 'Lucas', 'Herrera', '1991-04-03', 'Diagonal 45 # 22-80', 'Administrador de Base de Datos', 'Base de Datos PostgreSQL', NULL, 'PostgreSQL DBA, Consultas Optimizadas, Índices B-Tree, SQL Tuning, Redis', 'PLANTA', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', 'lucas.dev@ikernell.org', 'lucas.herrera@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(12, '1001012', 'Isabella', 'Rojas', '1997-01-19', 'Calle 134 # 9-60', 'Ingeniera de Pruebas QA', 'QA & Testing Automatizado', NULL, 'QA Automation, JUnit, Mockito, Cypress, Postman API Testing', 'PLANTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'isabella.dev@ikernell.org', 'isabella.rojas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(13, '1001013', 'Gabriel', 'Benítez', '1994-07-22', 'Calle 80 # 11-45', 'Ingeniero DevOps', 'DevOps & Infraestructura Cloud', NULL, 'Docker, Kubernetes, GitHub Actions, CI/CD Pipelines, Linux SysAdmin', 'PLANTA', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150', 'gabriel.dev@ikernell.org', 'gabriel.benitez@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(14, '1001014', 'Valentina', 'Ortiz', '1996-10-30', 'Carrera 68 # 45-20', 'Diseñadora UI/UX', 'Diseño Figma & Experiencia UI/UX', NULL, 'Figma Prototyping, UI/UX Design, Design Systems, Wireframing, User Research', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'valentina.dev@ikernell.org', 'valentina.ortiz@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(15, '1001015', 'Mateo', 'Silva', '1995-12-08', 'Carrera 45 # 28-10', 'Desarrollador Frontend', 'Frontend React & Next.js', NULL, 'React.js, Next.js, TypeScript, Tailwind CSS, Framer Motion', 'CONTRATISTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'mateos.dev@ikernell.org', 'mateo.silva@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(16, '1001016', 'Lucía', 'Navarro', '1992-11-05', 'Carrera 15 # 80-45', 'Desarrolladora Backend Java', 'Backend Java & Spring Boot', NULL, 'Java 17, Spring Boot 3, Spring Security, JPA Hibernate, PostgreSQL', 'PLANTA', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', 'lucian.dev@ikernell.org', 'lucia.navarro@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(17, '1001017', 'Santiago', 'Flores', '1996-03-14', 'Calle 72 # 11-20', 'Desarrollador Full Stack', 'Full Stack React & Java', NULL, 'React.js, Spring Boot 3, Java 17, PostgreSQL, REST APIs', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'santiago.dev@ikernell.org', 'santiago.flores@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(18, '1001018', 'Victoria', 'Rivas', '1995-04-18', 'Calle 100 # 23-10', 'Ingeniera de Datos', 'Base de Datos & Pipelines ETL', NULL, 'Python, Pipelines ETL, PostgreSQL, Pandas, Airflow', 'PLANTA', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', 'victoria.dev@ikernell.org', 'victoria.rivas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(19, '1001019', 'Daniel', 'Castillo', '1993-02-11', 'Calle 116 # 15-30', 'Ingeniero QA Automation', 'QA & Pruebas Automatizadas', NULL, 'Cypress, Jest, Selenium, Postman API Testing, Java 17', 'CONTRATISTA', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'daniel.dev@ikernell.org', 'daniel.castillo@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(20, '1001020', 'Natalia', 'Domínguez', '1997-08-25', 'Carrera 19 # 104-15', 'Arquitecta Cloud Junior', 'DevOps & Infraestructura Cloud', NULL, 'AWS Cloud, Terraform, Docker, Kubernetes, Nginx', 'PLANTA', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'natalia.dev@ikernell.org', 'natalia.dominguez@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(21, '1001021', 'Andrés', 'Vega', '1991-10-12', 'Calle 45 # 18-90', 'Desarrollador Backend Java', 'Backend Java & Caché', NULL, 'Spring Boot 3, Java 17, Redis Cache, PostgreSQL, Microservicios', 'PLANTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'andres.dev@ikernell.org', 'andres.vega@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(22, '1001022', 'Paola', 'Reyes', '1995-06-30', 'Carrera 9 # 120-40', 'Desarrolladora Frontend', 'Frontend React & Redux', NULL, 'React.js, Redux Toolkit, Tailwind CSS, TypeScript, Vite', 'PLANTA', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', 'paola.dev@ikernell.org', 'paola.reyes@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(23, '1001023', 'Esteban', 'Medina', '1990-01-15', 'Av. 68 # 80-10', 'Administrador de Base de Datos', 'Base de Datos PostgreSQL', NULL, 'PostgreSQL DBA, Query Optimization, Consultas Optimizadas, Redis', 'PLANTA', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'esteban.dev@ikernell.org', 'esteban.medina@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(24, '1001024', 'Daniela', 'Paredes', '1996-09-14', 'Calle 100 # 55-20', 'Ingeniera QA de Seguridad', 'QA & Ciberseguridad', NULL, 'OWASP Testing, Pentesting Web, Postman API Testing, Cypress, Security Auditing', 'CONTRATISTA', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'daniela.dev@ikernell.org', 'daniela.paredes@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(25, '1001025', 'Felipe', 'Salazar', '1992-05-20', 'Transversal 15 # 40-10', 'Ingeniero DevOps CI/CD', 'DevOps & CI/CD', NULL, 'GitHub Actions, Docker Containerization, Kubernetes, Linux, Terraform', 'PLANTA', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150', 'felipe.dev@ikernell.org', 'felipe.salazar@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(26, '1001026', 'Andrea', 'Cárdenas', '1994-12-05', 'Calle 127 # 20-30', 'Diseñadora de Producto UI/UX', 'Diseño Figma & UI/UX', NULL, 'System Design, Wireframing Figma, Figma Prototyping, Design Systems', 'PLANTA', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', 'andrea.dev@ikernell.org', 'andrea.cardenas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(27, '1001027', 'Javier', 'Peralta', '1993-04-18', 'Carrera 50 # 100-15', 'Desarrollador Full Stack', 'Full Stack React & Java', NULL, 'React.js, Spring Boot 3, Java 17, PostgreSQL, REST APIs', 'PLANTA', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', 'javierp.dev@ikernell.org', 'javier.peralta@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(28, '1001028', 'Monica', 'Ibáñez', '1995-11-28', 'Calle 85 # 12-40', 'Desarrolladora Backend Microservicios', 'Backend Java & Kafka', NULL, 'Java 17, Spring Boot, Kafka Events, Microservicios, PostgreSQL', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'monica.dev@ikernell.org', 'monica.ibanez@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(29, '1001029', 'Rodrigo', 'Delgado', '1989-08-04', 'Av. El Dorado # 68-90', 'Administrador de Base de Datos', 'Base de Datos PostgreSQL', NULL, 'PostgreSQL Migration, Backup Strategies, SQL Tuning, Consultas Optimizadas', 'PLANTA', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'rodrigo.dev@ikernell.org', 'rodrigo.delgado@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(30, '1001030', 'Claudia', 'Bravo', '1996-01-23', 'Carrera 11 # 93-20', 'Ingeniera QA Lead', 'QA & Testing Automatizado', NULL, 'Test Strategy, Automated Regression, JUnit, Postman API Testing', 'PLANTA', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', 'claudia.dev@ikernell.org', 'claudia.bravo@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(31, '1001031', 'Bruno', 'Miranda', '1992-03-30', 'Calle 140 # 11-15', 'Ingeniero DevOps Lead', 'DevOps & Kubernetes', NULL, 'Kubernetes Helm, Cloud Native Security, Docker, CI/CD Pipelines', 'PLANTA', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'bruno.dev@ikernell.org', 'bruno.miranda@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(32, '1001032', 'Valeria', 'Fuentes', '1997-07-11', 'Carrera 7 # 45-60', 'Desarrolladora Frontend Mobile', 'Frontend React & Mobile', NULL, 'React Native, React.js, TypeScript, Tailwind CSS', 'CONTRATISTA', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'valeria.dev@ikernell.org', 'valeria.fuentes@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(33, '1001033', 'Ignacio', 'Rosas', '1994-05-09', 'Calle 72 # 20-50', 'Desarrollador Backend Senior', 'Backend Go & Java', NULL, 'Go, Java 17, Microservicios, Spring Boot 3, PostgreSQL', 'PLANTA', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'ignacio.dev@ikernell.org', 'ignacio.rosas@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(34, '1001034', 'Gabriel', 'Villalobos', '1993-10-15', 'Av. 19 # 100-25', 'Desarrollador Full Stack', 'Full Stack Python & React', NULL, 'React.js, Python, FastAPI, PostgreSQL, Tailwind CSS', 'PLANTA', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150', 'gabrielv.dev@ikernell.org', 'gabriel.villalobos@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(35, '1001035', 'Diana', 'Solís', '1996-06-18', 'Carrera 15 # 116-30', 'Ingeniera QA Manual & Usabilidad', 'QA & Pruebas Manuales', NULL, 'Software QA, User Acceptance Testing, Postman API Testing, Test Case Design', 'PLANTA', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', 'diana.dev@ikernell.org', 'diana.solis@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(36, '1001036', 'Hugo', 'Campos', '1991-09-02', 'Calle 100 # 18-50', 'Especialista en Ciberseguridad & DevOps', 'DevOps & Ciberseguridad', NULL, 'Cyber Security, Docker, Network Audit, OWASP Testing, Linux', 'PLANTA', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'hugo.dev@ikernell.org', 'hugo.campos@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(37, '1001037', 'Beatriz', 'Peña', '1995-02-24', 'Carrera 9 # 100-10', 'Diseñadora UI/UX Lead', 'Diseño Figma & Wireframing', NULL, 'UI Prototyping, Design Systems, Figma Prototyping, User Research', 'PLANTA', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150', 'beatriz.dev@ikernell.org', 'beatriz.pena@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true),
+(38, '1001038', 'Tomás', 'Guajardo', '1994-08-11', 'Calle 127 # 45-80', 'Desarrollador Backend', 'Backend Node.js & PostgreSQL', NULL, 'Node.js, Express, PostgreSQL, REST APIs, Docker', 'CONTRATISTA', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', 'tomas.dev@ikernell.org', 'tomas.guajardo@gmail.com', 'DESARROLLADOR', '$2a$10$xYfn0wCKex2JIrdm1.YaPu2oNDTHaaN9Oj7PXsU1HWqwhIlGTOPrS', false, true);
 
 
 -- 4.2 INYECCIÓN DE PROYECTOS (15 Proyectos asignados equitativamente entre los 6 Líderes)
@@ -247,16 +249,19 @@ INSERT INTO proyecto (id_proyecto, nombre, cliente, descripcion, presupuesto, fe
 (15, 'Portal de Gestión de Flotas GPS', 'RentiCargo Logistics', 'Sistema de rastreo satelital en vivo con telemetría de consumo de combustible y mantenimiento preventivo.', 175000.00, '2026-02-01', '2026-09-30', 'ACTIVO', 5);
 
 
--- 4.3 INYECCIÓN DE PIVOTE PROYECTO_DESARROLLADOR
+-- 4.3 INYECCIÓN DE PIVOTE PROYECTO_DESARROLLADOR (PREVENCIÓN DE CONFLICTO DE INTERÉS & CONTROL 48H)
+-- Regla: Elena Rostova (Líder ID 3) es Dev en Proyecto 3 (Líder Alejandro Silva)
+-- Regla: Alejandro Silva (Líder ID 4) es Dev en Proyecto 1 (Líder Elena Rostova)
+-- Regla: Mariana Torres (Líder ID 5) es Dev en Proyecto 8 (Líder David López)
 INSERT INTO proyecto_desarrollador (proyecto_id, desarrollador_id, horas_semanales) VALUES
-(1, 4, 15),
+(1, 4, 15), -- Alejandro Silva (Líder ID 4) ayuda en Proyecto 1 de Elena
 (1, 9, 40),
 (1, 10, 40),
 (1, 14, 20),
 (2, 9, 20),
 (2, 11, 40),
 (2, 12, 40),
-(3, 3, 20),
+(3, 3, 20), -- Elena Rostova (Líder ID 3) ayuda en Proyecto 3 de Alejandro
 (3, 10, 20),
 (3, 13, 40),
 (3, 21, 40),
@@ -272,6 +277,7 @@ INSERT INTO proyecto_desarrollador (proyecto_id, desarrollador_id, horas_semanal
 (7, 25, 40),
 (7, 27, 40),
 (7, 28, 40),
+(8, 5, 20), -- Mariana Torres (Líder ID 5) ayuda en Proyecto 8 de David
 (8, 29, 40),
 (8, 30, 40),
 (8, 31, 40),
@@ -298,7 +304,7 @@ INSERT INTO proyecto_desarrollador (proyecto_id, desarrollador_id, horas_semanal
 (15, 34, 20);
 
 
--- 4.4 INYECCIÓN DE ETAPAS WBS
+-- 4.4 INYECCIÓN DE ETAPAS WBS (3 Fases por Proyecto)
 INSERT INTO etapa (id_etapa, proyecto_id, nombre_etapa, estado) VALUES
 (1, 1, 'Fase 1: Especificación y Arquitectura N-Capas', 'FINALIZADA'),
 (2, 1, 'Fase 2: Desarrollo y Construcción de Componentes UI/API', 'EN_PROCESO'),
@@ -347,14 +353,14 @@ INSERT INTO etapa (id_etapa, proyecto_id, nombre_etapa, estado) VALUES
 (45, 15, 'Fase 3: Pruebas de Campo en Ruta Nacional', 'PENDIENTE');
 
 
--- 4.5 INYECCIÓN DE ACTIVIDADES WBS
+-- 4.5 INYECCIÓN DE ACTIVIDADES WBS (Match Inteligente con Habilidades)
 INSERT INTO actividad (id_actividad, etapa_id, desarrollador_id, descripcion, estado) VALUES
-(1, 1, 9, 'Diseñar prototipos interactivos en Figma para la Billetera Digital', 'COMPLETADO'),
-(2, 1, 10, 'Modelar diagrama ER en PostgreSQL para transacciones QR', 'COMPLETADO'),
+(1, 1, 14, 'Diseñar prototipos interactivos en Figma para la Billetera Digital', 'COMPLETADO'),
+(2, 1, 11, 'Modelar diagrama ER en PostgreSQL para transacciones QR', 'COMPLETADO'),
 (3, 2, 4, 'Implementar módulo de autenticación biométrica en Spring Boot', 'EN_PROCESO'),
 (4, 2, 9, 'Desarrollar componentes UI React 18 para transferencia inmediata', 'EN_PROCESO'),
 (5, 2, 10, 'Crear controladores REST OpenAPI 3.0 para pasarela Nubank', 'EN_PROCESO'),
-(6, 3, 14, 'Ejecutar suite de pruebas de usabilidad móvil UI/UX', 'PENDIENTE'),
+(6, 3, 12, 'Ejecutar suite de pruebas de usabilidad móvil UI/UX', 'PENDIENTE'),
 (7, 4, 11, 'Configurar esquema PostgreSQL e índices GIN para visor A4', 'COMPLETADO'),
 (8, 5, 12, 'Desarrollar componente React de vista previa A4 imprimible', 'EN_PROCESO'),
 (9, 5, 9, 'Integrar librería jsPDF con soporte nativo de firmas digitales', 'EN_PROCESO'),
@@ -401,23 +407,23 @@ INSERT INTO actividad (id_actividad, etapa_id, desarrollador_id, descripcion, es
 (50, 44, 34, 'Desarrollar dashboard web React con mapa en tiempo real Leaflet', 'EN_PROCESO');
 
 
--- 4.6 INYECCIÓN DE ERRORES E INCIDENCIAS
+-- 4.6 INYECCIÓN DE ERRORES E INCIDENCIAS (Semáforo Estricto de 3 Estados: BAJA, MEDIA, CRITICA)
 INSERT INTO error (id_error, etapa_id, desarrollador_id, tipo_error, severidad, fecha_registro, descripcion, estado_atencion, resolucion_nota, fecha_resolucion) VALUES
 (1, 2, 4, 'Fallo de Memoria / OutOfMemory', 'CRITICA', '2026-08-25 10:30:00', 'Excepción OutOfMemoryError al procesar lote masivo de firmas biométricas en Spring Boot.', 'EN_REVISION', NULL, NULL),
-(2, 2, 9, 'Incompatibilidad React 18 Concurrent', 'ALTA', '2026-08-26 14:15:00', 'Bloqueo de renderizado en componente QR dinámico al recibir eventos de WebSocket.', 'REGISTRADO', NULL, NULL),
+(2, 2, 9, 'Incompatibilidad React 18 Concurrent', 'MEDIA', '2026-08-26 14:15:00', 'Bloqueo de renderizado en componente QR dinámico al recibir eventos de WebSocket.', 'REGISTRADO', NULL, NULL),
 (3, 2, 10, 'Fallo en Transacción PostgreSQL', 'CRITICA', '2026-08-28 09:00:00', 'Deadlock detectado en la tabla movimiento_financiero durante transferencia masiva.', 'REGISTRADO', NULL, NULL),
-(4, 2, 4, 'Timeout en Pasarela Nubank', 'ALTA', '2026-08-29 16:45:00', 'Peticiones HTTP exceden los 10s de espera sin recibir respuesta del gateway.', 'REGISTRADO', NULL, NULL),
+(4, 2, 4, 'Timeout en Pasarela Nubank', 'MEDIA', '2026-08-29 16:45:00', 'Peticiones HTTP exceden los 10s de espera sin recibir respuesta del gateway.', 'REGISTRADO', NULL, NULL),
 (5, 5, 12, 'Desbordamiento Visual en Visor A4', 'MEDIA', '2026-08-20 11:20:00', 'El texto de la normativa desborda las márgenes de la página A4 en pantallas de 13 pulgadas.', 'SOLUCIONADO', 'Ajustado CSS container query y padding de hoja A4.', '2026-08-22 15:00:00'),
 (6, 5, 9, 'Error en Generación de PDF jsPDF', 'BAJA', '2026-08-24 16:10:00', 'Los acentos especiales se representan como caracteres inválidos en la exportación nativa.', 'SOLUCIONADO', 'Cargada fuente personalizada UTF-8 en formato TTF Base64.', '2026-08-25 10:00:00'),
 (7, 8, 3, 'Excepción NullPointer en Microservicio Core', 'CRITICA', '2026-08-27 08:30:00', 'Instancia de cuenta bancaria nula al calcular saldos consolidados.', 'EN_REVISION', NULL, NULL),
-(8, 8, 21, 'Fallo de Conexión Redis Cache', 'ALTA', '2026-08-28 11:00:00', 'Caída de conexión hacia cluster Redis provocando fallback directo a base de datos.', 'REGISTRADO', NULL, NULL),
+(8, 8, 21, 'Fallo de Conexión Redis Cache', 'MEDIA', '2026-08-28 11:00:00', 'Caída de conexión hacia cluster Redis provocando fallback directo a base de datos.', 'REGISTRADO', NULL, NULL),
 (9, 8, 10, 'Corrupción de Payload JSON OpenAPI', 'CRITICA', '2026-08-29 13:20:00', 'El serializador Jackson omite el campo id_transaccion en respuestas HTTP 200.', 'REGISTRADO', NULL, NULL),
 (10, 14, 17, 'Error de Formato Timestamp ISO 8601', 'MEDIA', '2026-08-22 09:15:00', 'El offset UTC no incluye los segundos en la exportación ETL hacia Brasil.', 'SOLUCIONADO', 'Ajustado DateTimeFormatter en script Python.', '2026-08-23 11:30:00'),
-(11, 20, 27, 'Excepción de Llave Criptográfica XAdES', 'ALTA', '2026-08-26 15:40:00', 'La firma digital es rechazada por el validador DIAN por certificado expirado.', 'EN_REVISION', NULL, NULL),
+(11, 20, 27, 'Excepción de Llave Criptográfica XAdES', 'MEDIA', '2026-08-26 15:40:00', 'La firma digital es rechazada por el validador DIAN por certificado expirado.', 'EN_REVISION', NULL, NULL),
 (12, 26, 34, 'Overfitting en Modelo Machine Learning', 'MEDIA', '2026-08-25 17:00:00', 'El algoritmo asigna score de riesgo 0 a usuarios con historial crediticio nulo.', 'SOLUCIONADO', 'Reentrenado dataset con técnicas de regularización L2.', '2026-08-27 12:00:00'),
 (13, 8, 13, 'Fallo de Configuración Helm Chart', 'BAJA', '2026-08-21 10:00:00', 'Variable de entorno DB_MAX_POOL desconfigurada en pod staging.', 'SOLUCIONADO', 'Corregido archivo values.yaml.', '2026-08-21 14:00:00'),
 (14, 11, 16, 'Retraso de Audio en WebRTC Telemedicina', 'MEDIA', '2026-08-24 18:30:00', 'Latencia de audio supera los 800ms en conexiones de baja velocidad 3G.', 'EN_REVISION', NULL, NULL),
-(15, 17, 24, 'Vulnerabilidad CSRF en Formulario Checkout', 'ALTA', '2026-08-28 10:15:00', 'Falta token de validación CSRF en la petición POST de pago.', 'EN_REVISION', NULL, NULL),
+(15, 17, 24, 'Vulnerabilidad CSRF en Formulario Checkout', 'MEDIA', '2026-08-28 10:15:00', 'Falta token de validación CSRF en la petición POST de pago.', 'EN_REVISION', NULL, NULL),
 (16, 23, 30, 'Falsa Alarma de Sobretemperatura IoT', 'BAJA', '2026-08-23 14:20:00', 'Sensor envía lectura de 999 grados por falla de calibración de hardware.', 'SOLUCIONADO', 'Filtro de mediana aplicado en el ingestion worker.', '2026-08-24 09:00:00'),
 (17, 29, 36, 'Respuesta Lenta Asistente IA E-Learning', 'MEDIA', '2026-08-27 16:50:00', 'Tiempo de primera respuesta del chatbot supera los 5 segundos.', 'EN_REVISION', NULL, NULL),
 (18, 32, 38, 'Pérdida de Paquetes RFID Bodega', 'MEDIA', '2026-08-26 12:10:00', 'Las lecturas consecutivas de stock omiten los tag con señal débil.', 'SOLUCIONADO', 'Aumentada la ganancia de la antena lectora en backend.', '2026-08-27 16:00:00'),

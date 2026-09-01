@@ -320,17 +320,35 @@ public class CoordinadorService {
         return proyectoRepository.save(proyecto);
     }
 
-    // Asigna un desarrollador al equipo general de un proyecto
+    // Asigna un desarrollador al equipo general de un proyecto con validación de conflicto de interés y 48h
     public ProyectoDesarrollador asignarProyectoADesarrollador(Long idProyecto, Long idDesarrollador) {
-        // Validaciones
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new ResourceNotFoundException("Proyecto no encontrado con ID: " + idProyecto));
         Trabajador desarrollador = obtenerPorId(idDesarrollador);
 
-        // Persistencia
-        ProyectoDesarrollador asignacion = new ProyectoDesarrollador();
+        // Regla de Negocio Crítica: Bloqueo de Conflicto de Interés (Líder no puede ser dev en su propio proyecto)
+        if (proyecto.getLider() != null && proyecto.getLider().getIdTrabajador().equals(idDesarrollador)) {
+            throw new IllegalArgumentException("Violación de Segregación de Funciones: El colaborador "
+                    + desarrollador.getNombre() + " " + desarrollador.getApellido()
+                    + " es el Líder responsable de este proyecto. Un Líder solo puede ser asignado como desarrollador en OTROS proyectos.");
+        }
+
+        // Regla de Negocio Crítica: Control de Jornada Laboral (Máximo 48 horas semanales acumuladas)
+        int horasOtrasAsignaciones = proyectoDesarrolladorRepository
+                .calcularHorasAsignadasExcluyendoProyecto(desarrollador, idProyecto);
+        if (horasOtrasAsignaciones + 40 > 48) {
+            throw new IllegalArgumentException("Sobreasignación de capacidad: El colaborador "
+                    + desarrollador.getNombre() + " " + desarrollador.getApellido()
+                    + " ya tiene " + horasOtrasAsignaciones + "h asignadas. Asignar 40h superaría el límite máximo de 48 horas semanales.");
+        }
+
+        ProyectoDesarrollador asignacion = proyectoDesarrolladorRepository
+                .findByProyectoAndDesarrollador(proyecto, desarrollador)
+                .orElse(new ProyectoDesarrollador());
+
         asignacion.setProyecto(proyecto);
         asignacion.setDesarrollador(desarrollador);
+        asignacion.setHorasSemanales(40);
 
         return proyectoDesarrolladorRepository.save(asignacion);
     }
