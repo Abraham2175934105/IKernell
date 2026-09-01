@@ -9,14 +9,13 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
- * Normaliza el estado a la convención homologada de 4 niveles
+ * Normaliza el estado a la convención de 3 niveles del Semáforo Inteligente (ROJO, NARANJA, VERDE)
  */
 const normalizarNivelSemaforo = (nivel) => {
   if (!nivel) return 'VERDE';
   const n = nivel.toUpperCase().trim();
   if (n === 'ROJO' || n.includes('CRITIC') || n.includes('BURNOUT')) return 'ROJO';
-  if (n === 'NARANJA' || n.includes('ALT') || n.includes('SOBRECARGA')) return 'NARANJA';
-  if (n === 'AMARILLO' || n.includes('MED') || n.includes('ALERTA')) return 'AMARILLO';
+  if (n === 'NARANJA' || n.includes('ALT') || n.includes('SOBRECARGA') || n.includes('MED') || n.includes('AMARILLO') || n.includes('ALERTA')) return 'NARANJA';
   return 'VERDE';
 };
 
@@ -131,7 +130,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onNavigateIn
   const totalErrores = metrics?.totalErrores ?? (erroresCriticosAltos + erroresMedios + erroresBajos);
   const totalInterrupciones = metrics?.totalInterrupciones ?? 0;
 
-  // Configuración de estilos, puntos de estado CSS animados y badges ejecutivos (100% Cero Emojis)
+  // Configuración de estilos y badges ejecutivos para los 3 colores del Semáforo (ROJO, NARANJA, VERDE)
   const nivelConfig = {
     ROJO: {
       dotColor: 'bg-red-500 animate-pulse',
@@ -144,14 +143,7 @@ const SemaforoInteligenteComponent = ({ idProyecto, proyectoNombre, onNavigateIn
       dotColor: 'bg-amber-500 animate-pulse',
       badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
       iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-200 dark:border-amber-900',
-      label: 'Riesgo Alto (Alerta Preventiva)',
-      Icon: AlertTriangle
-    },
-    AMARILLO: {
-      dotColor: 'bg-amber-400',
-      badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-      iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-200 dark:border-amber-900',
-      label: 'Riesgo Moderado (En Supervisión)',
+      label: 'Riesgo Moderado (Atención Requerida)',
       Icon: AlertTriangle
     },
     VERDE: {
