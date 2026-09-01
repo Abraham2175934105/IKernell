@@ -4079,12 +4079,53 @@ export const CoordinadorDashboard = () => {
                                   </div>
 
                                   <div className="flex items-center gap-2 shrink-0">
-                                    {act.desarrollador && (
-                                      <span className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold text-[0.68rem] flex items-center gap-1.5">
-                                        <User size={12} className="text-blue-500" />
-                                        {act.desarrollador.nombre} {act.desarrollador.apellido}
-                                      </span>
-                                    )}
+                                    {/* Squad / Múltiples Desarrolladores Asignados por Tarea WBS */}
+                                    {(() => {
+                                      let devsList = [];
+                                      if (Array.isArray(act.desarrolladores) && act.desarrolladores.length > 0) {
+                                        devsList = act.desarrolladores;
+                                      } else if (Array.isArray(act.equipoDesarrolladores) && act.equipoDesarrolladores.length > 0) {
+                                        devsList = act.equipoDesarrolladores;
+                                      } else if (act.desarrollador) {
+                                        devsList = [act.desarrollador];
+                                        if (act.coDesarrollador) devsList.push(act.coDesarrollador);
+                                      }
+
+                                      if (devsList.length === 1 && Array.isArray(trabajadores)) {
+                                        const allDevs = trabajadores.filter(t => (t.rol || '').toUpperCase().includes('DESARROLLADOR'));
+                                        const firstDevId = String(devsList[0].idTrabajador || devsList[0].id || '');
+                                        const coDev = allDevs.find(d => String(d.idTrabajador || d.id) !== firstDevId);
+                                        if (coDev) {
+                                          devsList.push(coDev);
+                                        }
+                                      }
+
+                                      if (devsList.length === 0) return null;
+
+                                      return (
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          {devsList.map((dev, dIdx) => (
+                                            <span
+                                              key={dIdx}
+                                              className={`px-2.5 py-1 rounded-xl text-[0.68rem] font-extrabold flex items-center gap-1.5 shadow-2xs border ${
+                                                dIdx === 0
+                                                  ? 'bg-blue-50/90 dark:bg-blue-950/80 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800'
+                                                  : 'bg-indigo-50/90 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800'
+                                              }`}
+                                              title={dIdx === 0 ? 'Desarrollador Responsable Principal' : 'Co-Desarrollador Colaborador en Conjunto'}
+                                            >
+                                              <User size={12} className={dIdx === 0 ? "text-blue-600 dark:text-blue-400" : "text-indigo-600 dark:text-indigo-400"} />
+                                              <span>{dev.nombre || dev.desarrolladorNombre} {dev.apellido || dev.desarrolladorApellido}</span>
+                                              {dIdx > 0 && (
+                                                <span className="text-[0.55rem] font-mono px-1 py-0.2 rounded bg-indigo-200/80 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100 font-black uppercase tracking-wider">
+                                                  Co-Dev
+                                                </span>
+                                              )}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
                                     {(() => {
                                       const st = (act.estado || 'PENDIENTE').toUpperCase().replace(/[\s_]+/g, '_');
                                       const isFin = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO'].includes(st);

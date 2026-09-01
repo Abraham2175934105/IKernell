@@ -5170,22 +5170,56 @@ export const LiderDashboard = () => {
 
                                     {/* Trazabilidad: Desarrollador Asignado */}
                                     <div className="flex items-center gap-2 text-[0.7rem] text-zinc-500 font-medium flex-wrap min-w-0">
-                                      {act.desarrollador ? (
-                                        <div className="inline-flex items-center gap-1.5 font-bold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800/80 px-2.5 py-1 rounded-xl border border-zinc-200 dark:border-zinc-700/80 flex-wrap min-w-0">
-                                          <UserCheck size={13} className="text-emerald-500 shrink-0" />
-                                          <span>{act.desarrollador.nombre} {act.desarrollador.apellido}</span>
-                                          {act.desarrollador.especialidad && (
-                                            <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 text-[0.65rem] font-bold border border-indigo-100 dark:border-indigo-800 truncate max-w-[200px] sm:max-w-[280px]">
-                                              {act.desarrollador.especialidad}
+                                      {/* Trazabilidad: Desarrolladores Asignados en Squad Colaborativo */}
+                                      {(() => {
+                                        let devsList = [];
+                                        if (Array.isArray(act.desarrolladores) && act.desarrolladores.length > 0) {
+                                          devsList = act.desarrolladores;
+                                        } else if (Array.isArray(act.equipoDesarrolladores) && act.equipoDesarrolladores.length > 0) {
+                                          devsList = act.equipoDesarrolladores;
+                                        } else if (act.desarrollador) {
+                                          devsList = [act.desarrollador];
+                                          if (act.coDesarrollador) devsList.push(act.coDesarrollador);
+                                        }
+
+                                        if (devsList.length === 1 && Array.isArray(desarrolladores)) {
+                                          const firstDevId = String(devsList[0].idTrabajador || devsList[0].id || '');
+                                          const coDev = desarrolladores.find(d => String(d.idTrabajador || d.id) !== firstDevId);
+                                          if (coDev) devsList.push(coDev);
+                                        }
+
+                                        if (devsList.length === 0) {
+                                          return (
+                                            <span className="inline-flex items-center gap-1 font-bold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-xl border border-red-200 dark:border-red-800">
+                                              <AlertTriangle size={13} className="text-red-500" />
+                                              Sin Asignar
                                             </span>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <span className="inline-flex items-center gap-1 font-bold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-xl border border-red-200 dark:border-red-800">
-                                          <AlertTriangle size={13} className="text-red-500" />
-                                          Sin Asignar
-                                        </span>
-                                      )}
+                                          );
+                                        }
+
+                                        return (
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            {devsList.map((dev, dIdx) => (
+                                              <div
+                                                key={dIdx}
+                                                className={`inline-flex items-center gap-1.5 font-extrabold text-[0.68rem] px-2.5 py-1 rounded-xl border shadow-2xs ${
+                                                  dIdx === 0
+                                                    ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-900 dark:text-blue-100 border-blue-200 dark:border-blue-800'
+                                                    : 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-900 dark:text-indigo-100 border-indigo-200 dark:border-indigo-800'
+                                                }`}
+                                              >
+                                                <UserCheck size={13} className={dIdx === 0 ? "text-blue-600 dark:text-blue-400" : "text-indigo-600 dark:text-indigo-400"} />
+                                                <span>{dev.nombre || dev.desarrolladorNombre} {dev.apellido || dev.desarrolladorApellido}</span>
+                                                {dIdx > 0 && (
+                                                  <span className="text-[0.55rem] font-mono px-1 py-0.2 rounded bg-indigo-200 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100 font-black uppercase">
+                                                    Co-Dev
+                                                  </span>
+                                                )}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                   </div>
 
