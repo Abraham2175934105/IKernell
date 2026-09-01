@@ -106,6 +106,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   const [completedSteps, setCompletedSteps] = useState({ 1: false, 2: false, 3: false });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [userCreatedSuccessData, setUserCreatedSuccessData] = useState(null);
 
   // Form State
@@ -140,26 +141,28 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   // Validations
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // VALIDACIONES ESTRUCTURADAS Y OBLIGATORIAS POR PASO
+  // VALIDACIONES ESTRUCTURADAS CON ERRORES POR CAMPO
   const validateStep1 = () => {
+    const errors = {};
     if (!formData.nombre.trim() || formData.nombre.trim().length < 2) {
-      setFormError('🔒 Campo Obligatorio: Ingrese nombres válidos del colaborador.');
-      return false;
+      errors.nombre = 'Ingrese los nombres del colaborador.';
     }
     if (!formData.apellido.trim() || formData.apellido.trim().length < 2) {
-      setFormError('🔒 Campo Obligatorio: Ingrese apellidos válidos del colaborador.');
-      return false;
+      errors.apellido = 'Ingrese los apellidos del colaborador.';
     }
     if (!formData.identificacion.trim() || formData.identificacion.trim().length < 4) {
-      setFormError('🔒 Campo Obligatorio: Ingrese un número de cédula o identificación válido (mínimo 4 dígitos).');
-      return false;
+      errors.identificacion = 'Ingrese la cédula o número de documento de identidad.';
     }
     if (!formData.email.trim() || !isValidEmail(formData.email)) {
-      setFormError('🔒 Campo Obligatorio: Ingrese un correo electrónico corporativo válido con formato usuario@domain.');
-      return false;
+      errors.email = 'Ingrese un correo corporativo válido (@ikernell.org).';
     }
     if (!formData.emailPersonal.trim() || !isValidEmail(formData.emailPersonal)) {
-      setFormError('🔒 Campo Obligatorio: Ingrese un correo personal o alternativo válido para notificaciones.');
+      errors.emailPersonal = 'Ingrese un correo personal o alternativo válido.';
+    }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setFormError('🔒 Faltan campos obligatorios. Revise los elementos marcados en rojo.');
       return false;
     }
     setFormError(null);
@@ -167,12 +170,17 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   };
 
   const validateStep2 = () => {
+    const errors = {};
     if (!formData.profesion) {
-      setFormError('🔒 Campo Obligatorio: Seleccione la profesión o titulación académica del colaborador.');
-      return false;
+      errors.profesion = 'Seleccione la titulación académica o profesión.';
     }
     if (!formData.especialidad) {
-      setFormError('🔒 Campo Obligatorio: Seleccione la especialidad técnica principal.');
+      errors.especialidad = 'Seleccione la especialidad técnica principal.';
+    }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setFormError('🔒 Faltan campos obligatorios en el Perfil Profesional.');
       return false;
     }
     setFormError(null);
@@ -180,8 +188,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   };
 
   const validateStep3 = () => {
+    const errors = {};
     if (habilidadesTecnicas.length === 0 && habilidadesDirectivas.length === 0) {
-      setFormError('🔒 Campo Obligatorio: Debe seleccionar al menos una tecnología o habilidad en el Stack WBS.');
+      errors.habilidades = 'Debe seleccionar al menos 1 habilidad o tecnología en el Stack WBS.';
+    }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setFormError('🔒 Seleccione al menos una tecnología o competencia técnica para finalizar.');
       return false;
     }
     setFormError(null);
@@ -233,6 +247,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
   const handlePrevStep = (prevStep) => {
     setFormError(null);
+    setFieldErrors({});
     setSlideDirection('prev');
     setActiveStep(prevStep);
   };
@@ -242,6 +257,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       setHabilidadesDirectivas(habilidadesDirectivas.filter(s => s !== skill));
     } else {
       setHabilidadesDirectivas([...habilidadesDirectivas, skill]);
+      if (fieldErrors.habilidades) setFieldErrors(prev => ({ ...prev, habilidades: null }));
     }
   };
 
@@ -249,6 +265,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     if (customDirectivaInput.trim() && !habilidadesDirectivas.includes(customDirectivaInput.trim())) {
       setHabilidadesDirectivas([...habilidadesDirectivas, customDirectivaInput.trim()]);
       setCustomDirectivaInput('');
+      if (fieldErrors.habilidades) setFieldErrors(prev => ({ ...prev, habilidades: null }));
     }
   };
 
@@ -257,6 +274,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       setHabilidadesTecnicas(habilidadesTecnicas.filter(s => s !== skill));
     } else {
       setHabilidadesTecnicas([...habilidadesTecnicas, skill]);
+      if (fieldErrors.habilidades) setFieldErrors(prev => ({ ...prev, habilidades: null }));
     }
   };
 
@@ -264,6 +282,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     if (customTecnicaInput.trim() && !habilidadesTecnicas.includes(customTecnicaInput.trim())) {
       setHabilidadesTecnicas([...habilidadesTecnicas, customTecnicaInput.trim()]);
       setCustomTecnicaInput('');
+      if (fieldErrors.habilidades) setFieldErrors(prev => ({ ...prev, habilidades: null }));
     }
   };
 
@@ -285,6 +304,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     setActiveStep(1);
     setUserCreatedSuccessData(null);
     setFormError(null);
+    setFieldErrors({});
   };
 
   const handleSubmit = async (e) => {
@@ -542,14 +562,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
         {/* LAYOUT DE 2 COLUMNAS EXPANDIDO CON ESPACIADO GENEROSO */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           
-          {/* COLUMNA IZQUIERDA: LÍNEA DE TIEMPO LATERAL ANIMADA (STICKY) */}
+          {/* COLUMNA IZQUIERDA: LÍNEA DE TIEMPO LATERAL FUTURISTA Y LIMPIA (STICKY) */}
           <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
-            <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800/90 shadow-lg space-y-6">
+            <div className="p-6 rounded-3xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200/90 dark:border-zinc-800/90 shadow-xl space-y-6">
               
               {/* ENCABEZADO DEL TIMELINE CON PROGRESO */}
-              <div className="flex justify-between items-center pb-3 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex justify-between items-center pb-4 border-b border-zinc-100 dark:border-zinc-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-emerald-600 text-white flex items-center justify-center shadow-md">
                     <Compass size={22} />
                   </div>
                   <div>
@@ -559,7 +579,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     <p className="text-xs text-zinc-500 font-bold">Validación Paso a Paso</p>
                   </div>
                 </div>
-                <span className="text-xs font-black font-mono px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                <span className="text-xs font-black font-mono px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-xs">
                   {progressPercentage}%
                 </span>
               </div>
@@ -576,7 +596,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                 </div>
               </div>
 
-              {/* LÍNEA DE TIEMPO CONECTADA */}
+              {/* LÍNEA DE TIEMPO CONECTADA FUTURISTA */}
               <div className="relative pl-3 space-y-6 before:absolute before:left-6 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-blue-500 before:via-indigo-500 before:to-emerald-500">
                 {[
                   { 
@@ -612,22 +632,22 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       whileHover={{ scale: 1.02, x: 4 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleJumpToStep(st.num)}
-                      className={`relative flex items-start gap-3 text-left w-full p-3.5 rounded-2xl transition-all cursor-pointer ${
+                      className={`relative flex items-start gap-3.5 text-left w-full p-4 rounded-2xl transition-all cursor-pointer ${
                         isActive 
-                          ? 'bg-blue-50/90 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-800 shadow-md ring-2 ring-blue-500/20' 
+                          ? 'bg-blue-50/90 dark:bg-blue-950/70 border-2 border-blue-500/80 shadow-md ring-2 ring-blue-500/20' 
                           : isCompleted 
-                            ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40'
+                            ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40'
                             : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/40 border border-transparent'
                       }`}
                     >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono text-xs font-black z-10 shrink-0 shadow-sm transition-all ${
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-mono text-xs font-black z-10 shrink-0 shadow-sm transition-all ${
                         isActive 
                           ? `bg-gradient-to-br ${st.colorGradient} text-white ring-4 ring-blue-500/30 scale-110` 
                           : isCompleted 
                             ? 'bg-emerald-600 text-white' 
                             : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700'
                       }`}>
-                        {isCompleted ? '✓' : <IconComp size={16} />}
+                        {isCompleted ? '✓' : <IconComp size={18} />}
                       </div>
 
                       <div className="space-y-0.5 flex-1 min-w-0">
@@ -640,7 +660,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           {st.sub}
                         </p>
                         {isActive && (
-                          <div className="pt-1 flex items-center gap-1.5">
+                          <div className="pt-1.5 flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
                             <span className="text-[0.62rem] font-black text-blue-700 dark:text-blue-300 uppercase tracking-wider">
                               Enfoque Activo
@@ -653,56 +673,10 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                 })}
               </div>
 
-              {/* BOTÓN LATERAL REESTRUCTURADO */}
-              <div className="pt-2">
-                {activeStep === 1 && (
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleNextStep(2)}
-                    className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xl transition-all"
-                  >
-                    <span>Continuar al Paso 2</span>
-                    <ArrowRight size={18} />
-                  </motion.button>
-                )}
-
-                {activeStep === 2 && (
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleNextStep(3)}
-                    className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xl transition-all"
-                  >
-                    <span>Continuar al Paso 3</span>
-                    <ArrowRight size={18} />
-                  </motion.button>
-                )}
-
-                {activeStep === 3 && (
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xl disabled:opacity-50 transition-all"
-                  >
-                    {submitting ? (
-                      <><Loader2 size={18} className="animate-spin" /> Guardando en PostgreSQL...</>
-                    ) : (
-                      <><CheckCircle2 size={18} /> Crear Trabajador</>
-                    )}
-                  </motion.button>
-                )}
-              </div>
-
             </div>
           </div>
 
-          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL CON ESPACIADO SEPARADO */}
+          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL CON ESPACIADO SEPARADO Y RESALTADO DE ERRORES POR CAMPO */}
           <div className="lg:col-span-8">
             <div className="min-h-[60vh] relative">
               <AnimatePresence custom={slideDirection} mode="wait">
@@ -739,6 +713,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                      {/* NOMBRES */}
                       <div>
                         <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Nombres *</label>
                         <input
@@ -749,12 +724,23 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                             const val = e.target.value;
                             const auto = autoGenerarEmail(val, formData.apellido);
                             setFormData(prev => ({ ...prev, nombre: val, email: auto || prev.email }));
+                            if (fieldErrors.nombre) setFieldErrors(prev => ({ ...prev, nombre: null }));
                           }}
                           placeholder="Ej. Roberto"
-                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-semibold focus:outline-none ${
+                            fieldErrors.nombre 
+                              ? 'border-red-500 ring-2 ring-red-500/30 bg-red-50/20 dark:border-red-500 dark:bg-red-950/20' 
+                              : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                          }`}
                         />
+                        {fieldErrors.nombre && (
+                          <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
+                            <AlertTriangle size={13} /> {fieldErrors.nombre}
+                          </p>
+                        )}
                       </div>
 
+                      {/* APELLIDOS */}
                       <div>
                         <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Apellidos *</label>
                         <input
@@ -765,12 +751,23 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                             const val = e.target.value;
                             const auto = autoGenerarEmail(formData.nombre, val);
                             setFormData(prev => ({ ...prev, apellido: val, email: auto || prev.email }));
+                            if (fieldErrors.apellido) setFieldErrors(prev => ({ ...prev, apellido: null }));
                           }}
                           placeholder="Ej. Gómez"
-                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-semibold focus:outline-none ${
+                            fieldErrors.apellido 
+                              ? 'border-red-500 ring-2 ring-red-500/30 bg-red-50/20 dark:border-red-500 dark:bg-red-950/20' 
+                              : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                          }`}
                         />
+                        {fieldErrors.apellido && (
+                          <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
+                            <AlertTriangle size={13} /> {fieldErrors.apellido}
+                          </p>
+                        )}
                       </div>
 
+                      {/* ROL CORPORATIVO */}
                       <div>
                         <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Rol Corporativo *</label>
                         {lockRoleToDesarrollador ? (
@@ -806,20 +803,34 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         </select>
                       </div>
 
+                      {/* IDENTIFICACIÓN / CÉDULA */}
                       <div className="sm:col-span-2">
                         <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Número de Identificación / Cédula *</label>
                         <input
                           type="text"
                           required
                           value={formData.identificacion}
-                          onChange={(e) => setFormData({ ...formData, identificacion: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, identificacion: e.target.value });
+                            if (fieldErrors.identificacion) setFieldErrors(prev => ({ ...prev, identificacion: null }));
+                          }}
                           placeholder={PAISES_IDENTIFICACION.find(p => p.code === formData.paisCodigo)?.placeholder || 'Número de cédula'}
-                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-mono font-bold focus:outline-none ${
+                            fieldErrors.identificacion 
+                              ? 'border-red-500 ring-2 ring-red-500/30 bg-red-50/20 dark:border-red-500 dark:bg-red-950/20' 
+                              : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                          }`}
                         />
+                        {fieldErrors.identificacion && (
+                          <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
+                            <AlertTriangle size={13} /> {fieldErrors.identificacion}
+                          </p>
+                        )}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      {/* CORREO CORPORATIVO */}
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Correo Corporativo Único *</label>
@@ -831,22 +842,47 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           type="email"
                           required
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, email: e.target.value });
+                            if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: null }));
+                          }}
                           placeholder="nombre.apellido@ikernell.org"
-                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-blue-500 transition-all"
+                          className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-mono font-bold focus:outline-none ${
+                            fieldErrors.email 
+                              ? 'border-red-500 ring-2 ring-red-500/30 bg-red-50/20 dark:border-red-500 dark:bg-red-950/20' 
+                              : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                          }`}
                         />
+                        {fieldErrors.email && (
+                          <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
+                            <AlertTriangle size={13} /> {fieldErrors.email}
+                          </p>
+                        )}
                       </div>
 
+                      {/* CORREO PERSONAL */}
                       <div>
                         <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Correo Personal / Alternativo *</label>
                         <input
                           type="email"
                           required
                           value={formData.emailPersonal}
-                          onChange={(e) => setFormData({ ...formData, emailPersonal: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, emailPersonal: e.target.value });
+                            if (fieldErrors.emailPersonal) setFieldErrors(prev => ({ ...prev, emailPersonal: null }));
+                          }}
                           placeholder="correo.personal@gmail.com"
-                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-blue-500 transition-all"
+                          className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-semibold focus:outline-none ${
+                            fieldErrors.emailPersonal 
+                              ? 'border-red-500 ring-2 ring-red-500/30 bg-red-50/20 dark:border-red-500 dark:bg-red-950/20' 
+                              : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                          }`}
                         />
+                        {fieldErrors.emailPersonal && (
+                          <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
+                            <AlertTriangle size={13} /> {fieldErrors.emailPersonal}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -898,28 +934,49 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                      {/* PROFESIÓN */}
                       <div>
                         <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Profesión / Titulación Académica *</label>
                         <select
                           required
                           value={formData.profesion}
-                          onChange={(e) => setFormData({ ...formData, profesion: e.target.value })}
-                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-semibold focus:outline-none focus:border-indigo-500 cursor-pointer"
+                          onChange={(e) => {
+                            setFormData({ ...formData, profesion: e.target.value });
+                            if (fieldErrors.profesion) setFieldErrors(prev => ({ ...prev, profesion: null }));
+                          }}
+                          className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-semibold focus:outline-none cursor-pointer ${
+                            fieldErrors.profesion 
+                              ? 'border-red-500 ring-2 ring-red-500/30 bg-red-50/20 dark:border-red-500 dark:bg-red-950/20' 
+                              : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-indigo-500'
+                          }`}
                         >
                           <option value="">-- Seleccionar Titulación --</option>
                           {TITULACIONES_PROFESIONALES.map((tit) => (
                             <option key={tit} value={tit}>{tit}</option>
                           ))}
                         </select>
+                        {fieldErrors.profesion && (
+                          <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
+                            <AlertTriangle size={13} /> {fieldErrors.profesion}
+                          </p>
+                        )}
                       </div>
 
+                      {/* ESPECIALIDAD */}
                       <div>
                         <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200 mb-2">Especialidad Técnica Principal *</label>
                         <select
                           required
                           value={formData.especialidad}
-                          onChange={(e) => setFormData({ ...formData, especialidad: e.target.value })}
-                          className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-bold focus:outline-none focus:border-indigo-500 cursor-pointer"
+                          onChange={(e) => {
+                            setFormData({ ...formData, especialidad: e.target.value });
+                            if (fieldErrors.especialidad) setFieldErrors(prev => ({ ...prev, especialidad: null }));
+                          }}
+                          className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-bold focus:outline-none cursor-pointer ${
+                            fieldErrors.especialidad 
+                              ? 'border-red-500 ring-2 ring-red-500/30 bg-red-50/20 dark:border-red-500 dark:bg-red-950/20' 
+                              : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 focus:border-indigo-500'
+                          }`}
                         >
                           <option value="Backend Java & Spring Boot">Backend Java & Spring Boot</option>
                           <option value="Frontend React & TypeScript">Frontend React & TypeScript</option>
@@ -929,6 +986,11 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           <option value="DevOps & Infraestructura Cloud">DevOps & Infraestructura Cloud</option>
                           <option value="Gestión de Proyectos & Scrum Master">Gestión de Proyectos & Scrum Master</option>
                         </select>
+                        {fieldErrors.especialidad && (
+                          <p className="text-xs text-red-600 dark:text-red-400 font-extrabold flex items-center gap-1 mt-1.5 animate-bounce">
+                            <AlertTriangle size={13} /> {fieldErrors.especialidad}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -987,6 +1049,13 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         <Edit3 size={14} className="animate-pulse" /> Editando Habilidades
                       </span>
                     </div>
+
+                    {/* ALERTA DE ERROR SI NO SELECCIONÓ NINGUNA HABILIDAD */}
+                    {fieldErrors.habilidades && (
+                      <p className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 text-xs sm:text-sm text-red-700 dark:text-red-300 font-extrabold flex items-center gap-2 animate-bounce">
+                        <AlertTriangle size={16} /> {fieldErrors.habilidades}
+                      </p>
+                    )}
 
                     {/* SI ES LÍDER -> 2 CAMPOS DE HABILIDADES */}
                     {formData.rol === 'LIDER' ? (
