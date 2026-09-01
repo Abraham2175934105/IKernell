@@ -1,11 +1,12 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   UserPlus, Shield, GraduationCap, Code2, Briefcase, ChevronRight, 
   CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Plus, X, Sparkles, 
   Check, Laptop, Database, Cpu, Wrench, FileCode, Edit3, Compass,
-  ArrowRight, ArrowUp, Lock, CheckCircle
+  ArrowRight, ArrowUp, Lock, CheckCircle, RefreshCw, KeyRound, Copy, Mail
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 
 // Categorías masivas de habilidades para filtrado rápido y sugerencias dinámicas
@@ -105,6 +106,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   const [completedSteps, setCompletedSteps] = useState({ 1: false, 2: false, 3: false });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [userCreatedSuccessData, setUserCreatedSuccessData] = useState(null); // Almacena usuario creado para alerta interactiva
 
   // Form State
   const [formData, setFormData] = useState({
@@ -205,7 +207,6 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   const handleJumpToStep = (targetStep) => {
     if (targetStep === activeStep) return;
 
-    // Si intenta avanzar a un paso superior, se deben validar los pasos previos obligatoriamente
     if (targetStep > activeStep) {
       if (activeStep === 1 && !validateStep1()) return;
       if (activeStep === 2 && !validateStep2()) return;
@@ -266,6 +267,26 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     }
   };
 
+  const handleResetForm = () => {
+    setFormData({
+      nombre: '',
+      apellido: '',
+      rol: lockRoleToDesarrollador ? 'DESARROLLADOR' : 'DESARROLLADOR',
+      paisCodigo: 'CO',
+      identificacion: '',
+      email: '',
+      emailPersonal: '',
+      profesion: '',
+      especialidad: 'Backend Java & Spring Boot'
+    });
+    setHabilidadesDirectivas([]);
+    setHabilidadesTecnicas([]);
+    setCompletedSteps({ 1: false, 2: false, 3: false });
+    setActiveStep(1);
+    setUserCreatedSuccessData(null);
+    setFormError(null);
+  };
+
   const handleSubmit = async (e) => {
     e?.preventDefault();
     setFormError(null);
@@ -299,20 +320,41 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       };
 
       const endpoint = lockRoleToDesarrollador ? '/lider/trabajadores' : '/coordinador/trabajadores';
-      await api.post(endpoint, payload);
+      const res = await api.post(endpoint, payload);
 
       setCompletedSteps({ 1: true, 2: true, 3: true });
+      
+      const createdUser = {
+        nombreCompleto: `${formData.nombre.trim()} ${formData.apellido.trim()}`,
+        email: formData.email.trim(),
+        emailPersonal: formData.emailPersonal.trim(),
+        rol: formData.rol,
+        identificacion: formData.identificacion.trim()
+      };
+
+      setUserCreatedSuccessData(createdUser);
+      toast.success(`Usuario ${createdUser.nombreCompleto} creado con éxito`, {
+        duration: 5000,
+        style: {
+          background: '#065f46',
+          color: '#ffffff',
+          fontWeight: 'bold',
+          borderRadius: '16px'
+        }
+      });
+
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error("Error registrando trabajador:", err);
       const msg = err.response?.data?.message || err.message || 'Error al conectar con PostgreSQL.';
       setFormError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
-  // VARIANTES DE ANIMACIÓN VERTICAL SINCRONIZADA (SUBE Y DESAPARECE ARRIBA, SALE DE ABAJO)
+  // VARIANTES DE ANIMACIÓN VERTICAL SINCRONIZADA
   const verticalSlideVariants = {
     enter: (direction) => ({
       y: direction === 'next' ? 80 : -80,
@@ -375,7 +417,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
             </div>
           </div>
 
-          {/* STEPPER SUPERIOR CON BOTONES INTERACTIVOS Y VALIDACIÓN DE BLOQUEO */}
+          {/* STEPPER SUPERIOR CON BOTONES INTERACTIVOS */}
           <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs self-stretch md:self-auto justify-around">
             {[
               { num: 1, label: 'Credenciales' },
@@ -414,8 +456,77 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       {/* 2. CONTENIDO CENTRADO Y AMPLIADO */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
         
+        {/* MODAL O BANNER INTERACTIVO DE ÉXITO TRAS CREAR TRABAJADOR */}
+        <AnimatePresence>
+          {userCreatedSuccessData && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 text-white shadow-2xl space-y-6 border border-emerald-400/40 relative overflow-hidden"
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-emerald-400/30">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-2xl shadow-inner shrink-0">
+                    🎉
+                  </div>
+                  <div>
+                    <span className="px-3 py-0.5 rounded-full text-[0.65rem] font-black uppercase tracking-widest bg-white/20 backdrop-blur-md text-emerald-100 border border-white/30">
+                      Alta Exitosa PostgreSQL
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1">
+                      Usuario {userCreatedSuccessData.nombreCompleto} creado con éxito
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleResetForm}
+                    className="px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-extrabold text-xs flex items-center gap-2 transition-all cursor-pointer border border-white/30"
+                  >
+                    <RefreshCw size={15} />
+                    <span>Registrar Otro Colaborador</span>
+                  </button>
+                  <button
+                    onClick={onVolver}
+                    className="px-5 py-2.5 rounded-2xl bg-white text-emerald-950 hover:bg-emerald-50 font-black text-xs flex items-center gap-2 transition-all cursor-pointer shadow-lg"
+                  >
+                    <CheckCircle2 size={16} />
+                    <span>Ir a Consola de Personal</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* CARD RESUMEN DE CREDENCIALES GENERADAS */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-black/20 backdrop-blur-md border border-white/10 text-xs">
+                <div className="space-y-1">
+                  <span className="text-[0.68rem] uppercase font-bold text-emerald-200 block flex items-center gap-1.5">
+                    <Shield size={14} /> Correo Corporativo Único
+                  </span>
+                  <span className="font-mono font-black text-sm text-white block">{userCreatedSuccessData.email}</span>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[0.68rem] uppercase font-bold text-emerald-200 block flex items-center gap-1.5">
+                    <Mail size={14} /> Correo Personal Notificado
+                  </span>
+                  <span className="font-semibold text-white block">{userCreatedSuccessData.emailPersonal}</span>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[0.68rem] uppercase font-bold text-emerald-200 block flex items-center gap-1.5">
+                    <KeyRound size={14} /> Contraseña Inicial Temporizada
+                  </span>
+                  <span className="font-mono font-extrabold text-white block">Cifrada BCrypt • Enviada a Personal</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* MENSAJE DE ERROR O ADVERTENCIA DE VALIDACIÓN OBLIGATORIA */}
-        {formError && (
+        {formError && !userCreatedSuccessData && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-4 sm:p-5 rounded-2xl bg-red-50 dark:bg-red-950/70 border-2 border-red-300 dark:border-red-800 text-red-800 dark:text-red-200 text-xs sm:text-sm font-extrabold flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-red-600 text-white flex items-center justify-center shrink-0 shadow-sm">
@@ -429,10 +540,10 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
           </motion.div>
         )}
 
-        {/* LAYOUT DE 2 COLUMNAS CENTRADO: BARRA DE TIEMPO LATERAL + FORMULARIO SLIDE */}
+        {/* LAYOUT DE 2 COLUMNAS CENTRADO */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* COLUMNA IZQUIERDA: LÍNEA DE TIEMPO LATERAL ANIMADA (STICKY) */}
+          {/* COLUMNA IZQUIERDA: LÍNEA DE TIEMPO LATERAL ANIMADA */}
           <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
             <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800/90 shadow-lg space-y-6">
               
@@ -543,28 +654,56 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                 })}
               </div>
 
-              {/* BOTÓN FINAL DE GUARDAR */}
+              {/* BOTÓN LATERAL REESTRUCTURADO: EN PASOS 1 Y 2 NAVEGA, SOLO EN PASO 3 PERMITE "CREAR TRABAJADOR" */}
               <div className="pt-2">
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xl disabled:opacity-50 transition-all"
-                >
-                  {submitting ? (
-                    <><Loader2 size={18} className="animate-spin" /> Guardando en PostgreSQL...</>
-                  ) : (
-                    <><CheckCircle2 size={18} /> Finalizar & Enrolar Colaborador</>
-                  )}
-                </motion.button>
+                {activeStep === 1 && (
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleNextStep(2)}
+                    className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xl transition-all"
+                  >
+                    <span>Continuar al Paso 2</span>
+                    <ArrowRight size={18} />
+                  </motion.button>
+                )}
+
+                {activeStep === 2 && (
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleNextStep(3)}
+                    className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xl transition-all"
+                  >
+                    <span>Continuar al Paso 3</span>
+                    <ArrowRight size={18} />
+                  </motion.button>
+                )}
+
+                {activeStep === 3 && (
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-xl disabled:opacity-50 transition-all"
+                  >
+                    {submitting ? (
+                      <><Loader2 size={18} className="animate-spin" /> Guardando en PostgreSQL...</>
+                    ) : (
+                      <><CheckCircle2 size={18} /> Crear Trabajador</>
+                    )}
+                  </motion.button>
+                )}
               </div>
 
             </div>
           </div>
 
-          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL (SUBE Y DESAPARECE ARRIBA / ENTRA DE ABAJO) */}
+          {/* COLUMNA DERECHA: DIAPOSITIVA SLIDE VERTICAL */}
           <div className="lg:col-span-8">
             <div className="min-h-[60vh] relative">
               <AnimatePresence custom={slideDirection} mode="wait">
@@ -712,7 +851,6 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </div>
                     </div>
 
-                    {/* BOTÓN SIGUIENTE PASO */}
                     <div className="flex justify-end pt-5 border-t border-zinc-100 dark:border-zinc-800">
                       <motion.button
                         type="button"
@@ -794,7 +932,6 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </div>
                     </div>
 
-                    {/* NAVEGACIÓN Y BOTÓN VOLVER AL ANTERIOR */}
                     <div className="flex justify-between items-center pt-5 border-t border-zinc-100 dark:border-zinc-800">
                       <button
                         type="button"
@@ -819,7 +956,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                   </motion.div>
                 )}
 
-                {/* SLIDE PASO 3: HABILIDADES WBS (0 PRESELECCIONADAS DE DEFECTO) */}
+                {/* SLIDE PASO 3: HABILIDADES WBS (0 PRESELECCIONADAS DE DEFECTO Y BOTÓN CREAR TRABAJADOR) */}
                 {activeStep === 3 && (
                   <motion.div
                     key="step3"
@@ -898,7 +1035,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
                           <div className="space-y-2">
                             <span className="text-xs font-extrabold text-amber-900 dark:text-amber-200 uppercase block">
-                              Sugerencias Rápidas de Gestión (Clic para Activar/Desactivar):
+                              Sugerencias Rápidas de Gestión:
                             </span>
                             <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto pr-1">
                               {CATEGORIAS_HABILIDADES.GESTION.skills.map(skill => {
@@ -995,7 +1132,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
                       </div>
                     ) : (
-                      /* MÓDULO ÚNICO PARA DESARROLLADOR CON SELECCIÓN DE CATEGORÍAS */
+                      /* MÓDULO ÚNICO PARA DESARROLLADOR */
                       <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-300 dark:border-emerald-900/60 space-y-5">
                         
                         <div className="flex flex-wrap gap-2 pb-2 border-b border-emerald-200 dark:border-emerald-800/60">
@@ -1089,7 +1226,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </div>
                     )}
 
-                    {/* BOTONES DE NAVEGACIÓN PASO 3 */}
+                    {/* BOTONES DE NAVEGACIÓN Y CREACIÓN DE TRABAJADOR */}
                     <div className="flex justify-between items-center pt-5 border-t border-zinc-100 dark:border-zinc-800">
                       <button
                         type="button"
@@ -1118,7 +1255,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           {submitting ? (
                             <><Loader2 size={18} className="animate-spin" /> Guardando en PostgreSQL...</>
                           ) : (
-                            <><CheckCircle2 size={18} /> Finalizar & Enrolar Colaborador</>
+                            <><CheckCircle2 size={18} /> Crear Trabajador</>
                           )}
                         </motion.button>
                       </div>
