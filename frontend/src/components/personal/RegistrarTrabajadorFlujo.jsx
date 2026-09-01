@@ -471,6 +471,55 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     })
   };
 
+  // Componente de barra de filtros por categoría directamente integrado en la tarjeta del Stack Técnico
+  const CategoryFilterBar = () => (
+    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 space-y-3 shadow-inner">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <Filter size={15} className="text-emerald-600 dark:text-emerald-400" />
+          <span>FILTRAR SUGERENCIAS POR DOMINIO TÉCNICO / CATEGORÍA:</span>
+        </span>
+        <span className="text-[0.68rem] font-black text-emerald-700 dark:text-emerald-300 uppercase bg-emerald-100 dark:bg-emerald-950 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-800">
+          {activeTabTecnicas === 'TODAS' ? 'TODAS LAS CATEGORÍAS' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTabTecnicas('TODAS')}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            activeTabTecnicas === 'TODAS' 
+              ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/40 scale-105' 
+              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+          }`}
+        >
+          🌐 Todas las Categorías
+        </button>
+
+        {Object.entries(CATEGORIAS_HABILIDADES).map(([key, cat]) => {
+          const IconComp = cat.icon;
+          const isActive = activeTabTecnicas === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTabTecnicas(key)}
+              className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer ${
+                isActive 
+                  ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/40 scale-105' 
+                  : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+              }`}
+            >
+              <IconComp size={15} />
+              <span>{cat.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-16 relative">
 
@@ -1147,7 +1196,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                   </motion.div>
                 )}
 
-                {/* SLIDE PASO 3: HABILIDADES WBS CON FILTRADO COMPLETO POR CATEGORÍAS */}
+                {/* SLIDE PASO 3: HABILIDADES WBS CON FILTRADO COMPLETO INTEGRADAS DENTRO DE CADA MÓDULO TÉCNICO */}
                 {activeStep === 3 && (
                   <motion.div
                     key="step3"
@@ -1184,53 +1233,6 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         <AlertTriangle size={16} /> {fieldErrors.habilidades}
                       </p>
                     )}
-
-                    {/* PESTAÑAS DE FILTRADO POR CATEGORÍA TÉCNICA PRINCIPAL (BACKEND, FRONTEND, FIGMA, DB, QA, DEVOPS) */}
-                    <div className="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
-                          <Filter size={15} className="text-emerald-600" />
-                          <span>Filtrar Sugerencias por Dominio Técnico / Categoría:</span>
-                        </span>
-                        <span className="text-[0.68rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full">
-                          {activeTabTecnicas === 'TODAS' ? 'Todas las Categorías' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setActiveTabTecnicas('TODAS')}
-                          className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                            activeTabTecnicas === 'TODAS' 
-                              ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30 scale-105' 
-                              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
-                          }`}
-                        >
-                          🌐 Todas las Categorías
-                        </button>
-
-                        {Object.entries(CATEGORIAS_HABILIDADES).map(([key, cat]) => {
-                          const IconComp = cat.icon;
-                          const isActive = activeTabTecnicas === key;
-                          return (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => setActiveTabTecnicas(key)}
-                              className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer ${
-                                isActive 
-                                  ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30 scale-105' 
-                                  : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
-                              }`}
-                            >
-                              <IconComp size={15} />
-                              <span>{cat.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
 
                     {/* SI ES LÍDER -> 2 CAMPOS DE HABILIDADES */}
                     {formData.rol === 'LIDER' ? (
@@ -1304,7 +1306,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           </div>
                         </div>
 
-                        {/* 3B: TÉCNICAS BLUE FILTRADAS POR CATEGORÍA */}
+                        {/* 3B: TÉCNICAS BLUE CON BARRA DE FILTROS INTEGRADA DIRECTAMENTE ADENTRO */}
                         <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-blue-500/10 to-indigo-500/5 border border-blue-300 dark:border-blue-900/60 space-y-5">
                           <div className="flex justify-between items-center pb-2 border-b border-blue-200 dark:border-blue-800/60">
                             <span className="font-black text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2.5">
@@ -1346,10 +1348,13 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                             )}
                           </div>
 
+                          {/* BARRA DE FILTRADO POR CATEGORÍA DIRECTAMENTE DENTRO DEL 3B */}
+                          <CategoryFilterBar />
+
                           <div className="space-y-2">
                             <div className="flex justify-between items-center">
                               <span className="text-xs font-extrabold text-blue-900 dark:text-blue-200 uppercase block">
-                                Sugerencias Técnicas ({activeTabTecnicas === 'TODAS' ? 'Todas las Categorías' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label}):
+                                SUGERENCIAS TÉCNICAS ({activeTabTecnicas === 'TODAS' ? 'TODAS LAS CATEGORÍAS' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label.toUpperCase()}):
                               </span>
                               <span className="text-xs font-bold text-blue-600">
                                 Clic para Activar / Desactivar
@@ -1383,7 +1388,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
                       </div>
                     ) : (
-                      /* MÓDULO ÚNICO PARA DESARROLLADOR CON FILTRADO POR CATEGORÍAS */
+                      /* MÓDULO ÚNICO PARA DESARROLLADOR CON BARRA DE FILTROS INTEGRADA DIRECTAMENTE ADENTRO */
                       <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-300 dark:border-emerald-900/60 space-y-5">
                         
                         <div className="flex gap-2">
@@ -1417,10 +1422,13 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           )}
                         </div>
 
+                        {/* BARRA DE FILTRADO POR CATEGORÍA DIRECTAMENTE DENTRO DEL MÓDULO DE DESARROLLADOR */}
+                        <CategoryFilterBar />
+
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-xs sm:text-sm font-extrabold text-emerald-900 dark:text-emerald-200 uppercase tracking-wider">
-                              Sugerencias Rápidas ({activeTabTecnicas === 'TODAS' ? 'Todas las Categorías' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label}):
+                              SUGERENCIAS TÉCNICAS ({activeTabTecnicas === 'TODAS' ? 'TODAS LAS CATEGORÍAS' : CATEGORIAS_HABILIDADES[activeTabTecnicas]?.label.toUpperCase()}):
                             </span>
                             <span className="text-xs font-bold text-zinc-500">
                               {habilidadesTecnicas.length} seleccionadas
