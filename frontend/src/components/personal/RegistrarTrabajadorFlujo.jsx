@@ -180,34 +180,94 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     especialidad: 'Backend Java & Spring Boot'
   });
 
-  // Dual Skill states - INICIALIZADAS TOTALMENTE VACÍAS (0 HABILIDADES PRESELECCIONADAS)
+  // Dual Skill states
   const [habilidadesDirectivas, setHabilidadesDirectivas] = useState([]);
   const [habilidadesTecnicas, setHabilidadesTecnicas] = useState([]);
-
-  // MULTI-DOMINIO TÉCNICO VINCULADO DINÁMICAMENTE
-  const [selectedDominios, setSelectedDominios] = useState([]);
 
   const [customDirectivaInput, setCustomDirectivaInput] = useState('');
   const [customTecnicaInput, setCustomTecnicaInput] = useState('');
   const [activeTabTecnicas, setActiveTabTecnicas] = useState('TODAS');
 
-  // Precargar colaboradores para validación de unicidad en tiempo real
+  // DOMINIOS SELECCIONADOS 100% CALCULADOS DINÁMICAMENTE SEGÚN LAS TÉCNICAS ELEGIDAS
+  const selectedDominios = useMemo(() => {
+    return Object.keys(CATEGORIAS_HABILIDADES).filter(catKey => {
+      const catSkills = CATEGORIAS_HABILIDADES[catKey].skills;
+      return catSkills.some(skill => habilidadesTecnicas.includes(skill));
+    });
+  }, [habilidadesTecnicas]);
+
+  // PRECARGAR COLABORADORES PARA UNICIDAD REAL EN TIEMPO REAL DESDE POSTGRESQL
   useEffect(() => {
     const fetchTrabajadores = async () => {
       try {
-        const endpoint = lockRoleToDesarrollador ? '/lider/trabajadores' : '/coordinador/trabajadores';
-        const res = await api.get(endpoint);
-        if (Array.isArray(res.data)) {
-          setExistingTrabajadores(res.data);
-        }
+        const [coordRes, liderRes] = await Promise.all([
+          api.get('/coordinador/trabajadores').catch(() => []),
+          api.get('/lider/trabajadores').catch(() => [])
+        ]);
+
+        const listCoord = Array.isArray(coordRes) ? coordRes : (coordRes?.data || []);
+        const listLider = Array.isArray(liderRes) ? liderRes : (liderRes?.data || []);
+
+        const combined = [...listCoord, ...listLider];
+        const uniqueMap = new Map();
+        combined.forEach(t => {
+          if (t && (t.identificacion || t.email || t.idTrabajador || t.id)) {
+            const key = String(t.identificacion || t.email || t.idTrabajador || t.id);
+            uniqueMap.set(key, t);
+          }
+        });
+        setExistingTrabajadores(Array.from(uniqueMap.values()));
       } catch (e) {
         console.warn("No se pudieron precargar los trabajadores para unicidad local:", e);
       }
     };
     fetchTrabajadores();
-  }, []);
+  }, [api]);
 
-  // AUTO-GENERADOR DE CORREO CORPORATIVO CON GARANTÍA DE UNICIDAD INMEDIATA (JAMÁS SE REPITE)
+  // VALIDADORES DE UNICIDAD INDIVIDUAL EN TIEMPO REAL EN TIEMPO DE ESCRITURA
+  const validateIdentificacionLive = (val, paisCode) => {
+    const cleanId = (val || '').trim();
+    const currentPais = PAISES_IDENTIFICACION.find(p => p.code === (paisCode || formData.paisCodigo)) || PAISES_IDENTIFICACION[0];
+    
+    if (!cleanId) return 'Ingrese el número de cédula o identificación.';
+    if (cleanId.length < currentPais.minLength || cleanId.length > currentPais.maxLength) return currentPais.errText;
+    if (currentPais.numericOnly && !/^\d+$/.test(cleanId)) return currentPais.errText;
+    
+    const isDup = existingTrabajadores.some(t => {
+      const existingId = String(t.identificacion || '').trim().toLowerCase();
+      return existingId && existingId === cleanId.toLowerCase();
+    });
+    if (isDup) return '❌ Esta cédula / identificación ya se encuentra registrada en PostgreSQL por otro trabajador.';
+    return null;
+  };
+
+  const validateEmailCorpLive = (val) => {
+    const cleanEmail = (val || '').trim().toLowerCase();
+    if (!cleanEmail) return 'Ingrese un correo corporativo.';
+    if (!isValidEmail(cleanEmail)) return 'Formato de correo corporativo inválido usuario@ikernell.org.';
+    
+    const isDup = existingTrabajadores.some(t => {
+      const existingEmail = String(t.email || '').trim().toLowerCase();
+      return existingEmail && existingEmail === cleanEmail;
+    });
+    if (isDup) return '❌ Este correo corporativo ya pertenece a otro colaborador registrado en PostgreSQL.';
+    return null;
+  };
+
+  const validateEmailPersonalLive = (val) => {
+    const cleanPersonal = (val || '').trim().toLowerCase();
+    if (!cleanPersonal) return 'Ingrese un correo personal o alternativo.';
+    if (!isValidEmail(cleanPersonal)) return 'Formato de correo personal inválido.';
+    
+    const isDup = existingTrabajadores.some(t => {
+      const existingPersonal = String(t.emailPersonal || t.correoPersonal || t.personalEmail || '').trim().toLowerCase();
+      return existingPersonal && existingPersonal === cleanPersonal;
+    });
+    if (isDup) return '❌ Este correo personal ya se encuentra registrado previamente por otro trabajador en PostgreSQL.';
+    return null;
+  };
+
+  // AUTO-GENERADOR DE CORREO CORPORATIVO CON GARANTÍA DE UNICIDAD INMEDIATA
   const autoGenerarEmail = (nom, ape) => {
     if (!nom || !ape) return '';
     const cleanNom = nom.trim().toLowerCase().split(' ')[0].replace(/[^a-z]/g, '');
@@ -217,24 +277,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     let baseEmail = `${cleanNom}.${cleanApe}@ikernell.org`;
 
     // Si ya existe un colaborador en PostgreSQL con ese correo, le añade sufijo numérico único
-    if (existingTrabajadores.some(t => t.email?.trim().toLowerCase() === baseEmail.toLowerCase())) {
+    if (existingTrabajadores.some(t => String(t.email || '').trim().toLowerCase() === baseEmail.toLowerCase())) {
       let counter = 2;
-      while (existingTrabajadores.some(t => t.email?.trim().toLowerCase() === `${cleanNom}.${cleanApe}${counter}@ikernell.org`.toLowerCase())) {
+      while (existingTrabajadores.some(t => String(t.email || '').trim().toLowerCase() === `${cleanNom}.${cleanApe}${counter}@ikernell.org`.toLowerCase())) {
         counter++;
       }
       baseEmail = `${cleanNom}.${cleanApe}${counter}@ikernell.org`;
     }
     return baseEmail;
-  };
-
-  // Helper para buscar a qué categoría pertenece una técnica
-  const findCategoryKeyForSkill = (skillName) => {
-    for (const [catKey, catObj] of Object.entries(CATEGORIAS_HABILIDADES)) {
-      if (catObj.skills.includes(skillName)) {
-        return catKey;
-      }
-    }
-    return null;
   };
 
   // Validations
@@ -249,38 +299,19 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     if (!formData.apellido.trim() || formData.apellido.trim().length < 2) {
       errors.apellido = 'Ingrese los apellidos del colaborador.';
     }
-    
-    // UNICIDAD Y VALIDACIÓN DE CÉDULA/IDENTIFICACIÓN POR PAÍS
-    const cleanId = formData.identificacion.trim();
-    const currentPais = PAISES_IDENTIFICACION.find(p => p.code === formData.paisCodigo) || PAISES_IDENTIFICACION[0];
 
-    if (!cleanId || cleanId.length < currentPais.minLength || cleanId.length > currentPais.maxLength) {
-      errors.identificacion = currentPais.errText;
-    } else if (currentPais.numericOnly && !/^\d+$/.test(cleanId)) {
-      errors.identificacion = currentPais.errText;
-    } else if (existingTrabajadores.some(t => t.identificacion?.trim().toLowerCase() === cleanId.toLowerCase())) {
-      errors.identificacion = '❌ Esta cédula / identificación ya se encuentra registrada en PostgreSQL por otro colaborador.';
-    }
+    const idErr = validateIdentificacionLive(formData.identificacion, formData.paisCodigo);
+    if (idErr) errors.identificacion = idErr;
 
-    // UNICIDAD 2: CORREO CORPORATIVO ÚNICO (@ikernell.org)
-    const cleanEmail = formData.email.trim();
-    if (!cleanEmail || !isValidEmail(cleanEmail)) {
-      errors.email = 'Ingrese un correo corporativo válido con formato usuario@ikernell.org.';
-    } else if (existingTrabajadores.some(t => t.email?.trim().toLowerCase() === cleanEmail.toLowerCase())) {
-      errors.email = '❌ Este correo corporativo ya pertenece a otro colaborador registrado en el sistema. Modifique el nombre/apellido o agregue un sufijo.';
-    }
+    const emailCorpErr = validateEmailCorpLive(formData.email);
+    if (emailCorpErr) errors.email = emailCorpErr;
 
-    // UNICIDAD 3: CORREO PERSONAL / ALTERNATIVO (NUNCA PUEDE EXISTIR PREVIAMENTE EN LA BASE DE DATOS)
-    const cleanPersonal = formData.emailPersonal.trim();
-    if (!cleanPersonal || !isValidEmail(cleanPersonal)) {
-      errors.emailPersonal = 'Ingrese un correo personal o alternativo válido para notificaciones.';
-    } else if (existingTrabajadores.some(t => t.emailPersonal?.trim().toLowerCase() === cleanPersonal.toLowerCase())) {
-      errors.emailPersonal = '❌ Este correo personal ya se encuentra registrado previamente por otro trabajador en el sistema. Utilice un correo personal único.';
-    }
+    const emailPersErr = validateEmailPersonalLive(formData.emailPersonal);
+    if (emailPersErr) errors.emailPersonal = emailPersErr;
 
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
-      setFormError('🔒 Existen errores de formato, unicidad o datos incompletos. Revise los campos marcados en rojo.');
+      setFormError('🔒 Existen errores de unicidad o datos duplicados en el Paso 1. Corrija los campos en rojo para poder continuar.');
       return false;
     }
     setFormError(null);
@@ -340,7 +371,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
   // Porcentaje dinámico de avance
   const progressPercentage = useMemo(() => {
     let score = 0;
-    if (formData.nombre.trim() && formData.apellido.trim() && formData.identificacion.trim() && isValidEmail(formData.email) && isValidEmail(formData.emailPersonal)) {
+    if (formData.nombre.trim() && formData.apellido.trim() && formData.identificacion.trim() && isValidEmail(formData.email) && isValidEmail(formData.emailPersonal) && !fieldErrors.identificacion && !fieldErrors.email && !fieldErrors.emailPersonal) {
       score += 35;
     }
     if (formData.profesion && formData.especialidad) {
@@ -350,7 +381,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       score += 35;
     }
     return score;
-  }, [formData, habilidadesDirectivas, habilidadesTecnicas]);
+  }, [formData, habilidadesDirectivas, habilidadesTecnicas, fieldErrors]);
 
   // NAVEGACIÓN Y SALTO CON VALIDACIÓN OBLIGATORIA
   const handleJumpToStep = (targetStep) => {
@@ -404,74 +435,31 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     }
   };
 
-  // TOGGLE DE DOMINIO MANUALMENTE CON ELIMINACIÓN BIDIRECCIONAL DE SUS TÉCNICAS
+  // CAMBIAR ENFOQUE DE FILTRO DE DOMINIO (NO AÑADE AL DOMINIO HASTA QUE HAYA TÉCNICA ELEGIDA)
   const handleToggleDominio = (catKey) => {
-    if (catKey === 'TODAS') {
-      setActiveTabTecnicas('TODAS');
-      return;
-    }
-
     setActiveTabTecnicas(catKey);
-
-    if (selectedDominios.includes(catKey)) {
-      // Al deseleccionar un dominio, eliminar también automáticamente todas sus tecnologías asociadas
-      const domainSkills = CATEGORIAS_HABILIDADES[catKey]?.skills || [];
-      setHabilidadesTecnicas(prev => prev.filter(s => !domainSkills.includes(s)));
-      setSelectedDominios(prev => prev.filter(d => d !== catKey));
-    } else {
-      setSelectedDominios(prev => [...prev, catKey]);
-    }
   };
 
-  // REMOVER DOMINIO DESDE LA INSIGNIA X (ELIMINA AUTOMÁTICAMENTE SUS TÉCNICAS VINCULADAS)
+  // DESMARCAR TODAS LAS TÉCNICAS DE UN DOMINIO DESDE LA INSIGNIA X
   const handleRemoveDominioBadge = (catKey) => {
     const domainSkills = CATEGORIAS_HABILIDADES[catKey]?.skills || [];
     setHabilidadesTecnicas(prev => prev.filter(s => !domainSkills.includes(s)));
-    setSelectedDominios(prev => prev.filter(d => d !== catKey));
   };
 
-  // TOGGLE DE TÉCNICA CON VINCULACIÓN Y DESVINCULACIÓN BIDIRECCIONAL DE DOMINIO
+  // TOGGLE DE TÉCNICA (EL DOMINIO SE CALCULA 100% DINÁMICAMENTE)
   const handleToggleTecnica = (skill) => {
-    let nextSkills;
     if (habilidadesTecnicas.includes(skill)) {
-      nextSkills = habilidadesTecnicas.filter(s => s !== skill);
-      setHabilidadesTecnicas(nextSkills);
+      setHabilidadesTecnicas(prev => prev.filter(s => s !== skill));
     } else {
-      nextSkills = [...habilidadesTecnicas, skill];
-      setHabilidadesTecnicas(nextSkills);
+      setHabilidadesTecnicas(prev => [...prev, skill]);
       if (fieldErrors.habilidades) setFieldErrors(prev => ({ ...prev, habilidades: null }));
-    }
-
-    // SINCRONIZACIÓN BIDIRECCIONAL: REVISAR SI EL DOMINIO PADRE DEBE AGREGARSE O ELIMINARSE
-    const parentCatKey = findCategoryKeyForSkill(skill);
-    if (parentCatKey) {
-      if (nextSkills.includes(skill)) {
-        // Al agregar técnica -> auto-agregar dominio si no estaba
-        if (!selectedDominios.includes(parentCatKey)) {
-          setSelectedDominios(prev => [...prev, parentCatKey]);
-        }
-      } else {
-        // Al quitar técnica -> si ya no queda NINGUNA técnica de este dominio, desvincular automáticamente el dominio
-        const remainingDomainSkills = CATEGORIAS_HABILIDADES[parentCatKey]?.skills || [];
-        const hasOtherSkillsInDomain = nextSkills.some(s => remainingDomainSkills.includes(s));
-        if (!hasOtherSkillsInDomain) {
-          setSelectedDominios(prev => prev.filter(d => d !== parentCatKey));
-        }
-      }
     }
   };
 
   const handleAddCustomTecnica = () => {
     if (customTecnicaInput.trim() && !habilidadesTecnicas.includes(customTecnicaInput.trim())) {
-      const nextSkills = [...habilidadesTecnicas, customTecnicaInput.trim()];
-      setHabilidadesTecnicas(nextSkills);
+      setHabilidadesTecnicas(prev => [...prev, customTecnicaInput.trim()]);
       setCustomTecnicaInput('');
-
-      // Auto vincular a la pestaña activa si no es TODAS
-      if (activeTabTecnicas !== 'TODAS' && !selectedDominios.includes(activeTabTecnicas)) {
-        setSelectedDominios(prev => [...prev, activeTabTecnicas]);
-      }
-
       if (fieldErrors.habilidades) setFieldErrors(prev => ({ ...prev, habilidades: null }));
     }
   };
@@ -490,7 +478,6 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
     });
     setHabilidadesDirectivas([]);
     setHabilidadesTecnicas([]);
-    setSelectedDominios([]);
     setCompletedSteps({ 1: false, 2: false, 3: false });
     setActiveStep(1);
     setUserCreatedSuccessData(null);
@@ -684,7 +671,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
         })}
       </div>
 
-      {/* INSIGNIAS DE DOMINIOS SELECCIONADOS VINCULADOS CON ELIMINACIÓN BIDIRECCIONAL */}
+      {/* INSIGNIAS DE DOMINIOS SELECCIONADOS (SOLO APARECEN SI HAY AL MENOS 1 TÉCNICA ELEGIDA DE ESE DOMINIO) */}
       {selectedDominios.length > 0 && (
         <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-700/80 flex items-center gap-2 flex-wrap">
           <span className="text-[0.65rem] uppercase font-extrabold text-zinc-500 flex items-center gap-1">
@@ -1156,8 +1143,9 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                             if (currentId.length > newPaisConfig.maxLength) {
                               currentId = currentId.slice(0, newPaisConfig.maxLength);
                             }
-                            setFormData({ ...formData, paisCodigo: newPais, identificacion: currentId });
-                            if (fieldErrors.identificacion) setFieldErrors(prev => ({ ...prev, identificacion: null }));
+                            setFormData(prev => ({ ...prev, paisCodigo: newPais, identificacion: currentId }));
+                            const liveErr = validateIdentificacionLive(currentId, newPais);
+                            setFieldErrors(prev => ({ ...prev, identificacion: liveErr }));
                           }}
                           className="w-full px-4 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 text-xs sm:text-sm font-bold focus:outline-none focus:border-blue-500 cursor-pointer"
                         >
@@ -1167,7 +1155,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         </select>
                       </div>
 
-                      {/* UNICIDAD 1: IDENTIFICACIÓN / CÉDULA CON RESTRICCIÓN ESTRICTA DE DÍGITOS Y FORMATO */}
+                      {/* UNICIDAD 1: IDENTIFICACIÓN CON VALIDACIÓN EN TIEMPO REAL AL ESCRIBIR */}
                       <div className="sm:col-span-2">
                         <div className="flex justify-between items-center mb-2">
                           <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">
@@ -1185,13 +1173,14 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           onChange={(e) => {
                             let rawVal = e.target.value;
                             if (currentPaisConfig.numericOnly) {
-                              rawVal = rawVal.replace(/\D/g, ''); // Filtrar inmediatamente cualquier letra o símbolo no numérico
+                              rawVal = rawVal.replace(/\D/g, ''); // Filtrar inmediatamente letras/símbolos
                             }
                             if (rawVal.length > currentPaisConfig.maxLength) {
                               rawVal = rawVal.slice(0, currentPaisConfig.maxLength);
                             }
-                            setFormData({ ...formData, identificacion: rawVal });
-                            if (fieldErrors.identificacion) setFieldErrors(prev => ({ ...prev, identificacion: null }));
+                            setFormData(prev => ({ ...prev, identificacion: rawVal }));
+                            const liveErr = validateIdentificacionLive(rawVal, formData.paisCodigo);
+                            setFieldErrors(prev => ({ ...prev, identificacion: liveErr }));
                           }}
                           placeholder={currentPaisConfig.placeholder}
                           className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-mono font-bold focus:outline-none ${
@@ -1213,7 +1202,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      {/* UNICIDAD 2: CORREO CORPORATIVO AUTO-GENERADO CON BANNER EXPLICATIVO */}
+                      {/* UNICIDAD 2: CORREO CORPORATIVO CON VALIDACIÓN EN TIEMPO REAL */}
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Correo Corporativo Único *</label>
@@ -1226,8 +1215,10 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           required
                           value={formData.email}
                           onChange={(e) => {
-                            setFormData({ ...formData, email: e.target.value });
-                            if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: null }));
+                            const val = e.target.value;
+                            setFormData(prev => ({ ...prev, email: val }));
+                            const liveErr = validateEmailCorpLive(val);
+                            setFieldErrors(prev => ({ ...prev, email: liveErr }));
                           }}
                           placeholder="nombre.apellido@ikernell.org"
                           className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-mono font-bold focus:outline-none ${
@@ -1248,7 +1239,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                         )}
                       </div>
 
-                      {/* UNICIDAD 3: CORREO PERSONAL CON NOTIFICACIÓN DE CONTRASEÑA ALEATORIA */}
+                      {/* UNICIDAD 3: CORREO PERSONAL CON VALIDACIÓN EN TIEMPO REAL */}
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <label className="block text-xs sm:text-sm font-extrabold text-zinc-800 dark:text-zinc-200">Correo Personal / Alternativo *</label>
@@ -1261,8 +1252,10 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                           required
                           value={formData.emailPersonal}
                           onChange={(e) => {
-                            setFormData({ ...formData, emailPersonal: e.target.value });
-                            if (fieldErrors.emailPersonal) setFieldErrors(prev => ({ ...prev, emailPersonal: null }));
+                            const val = e.target.value;
+                            setFormData(prev => ({ ...prev, emailPersonal: val }));
+                            const liveErr = validateEmailPersonalLive(val);
+                            setFieldErrors(prev => ({ ...prev, emailPersonal: liveErr }));
                           }}
                           placeholder="correo.personal@gmail.com"
                           className={`w-full px-4 py-3.5 rounded-xl border transition-all text-xs sm:text-sm font-semibold focus:outline-none ${
@@ -1284,7 +1277,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
                       </div>
                     </div>
 
-                    {/* BOTÓN SIGUIENTE PASO */}
+                    {/* BOTÓN SIGUIENTE PASO CON BLOQUEO POR ERRORES DE UNICIDAD */}
                     <div className="flex justify-end pt-6 border-t border-zinc-100 dark:border-zinc-800">
                       <motion.button
                         type="button"
