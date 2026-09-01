@@ -10412,43 +10412,64 @@ export const LiderDashboard = () => {
                       const CATEGORIAS_SPECS = {
                         BACKEND: {
                           label: 'Backend & APIs',
-                          badge: 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-800',
+                          subtitle: 'Arquitectura de servidores, APIs RESTful, microservicios y lógica de negocio',
+                          badge: 'border-emerald-200 dark:border-emerald-900/60 bg-gradient-to-br from-emerald-50/60 via-zinc-50/50 to-emerald-100/30 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-emerald-900/20',
+                          headerBadge: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800',
+                          dotColor: 'bg-emerald-500',
                           icon: '⚡',
                           keywords: ['java 17', 'spring boot 3', 'microservicios', 'spring security', 'jpa / hibernate', 'rest apis', 'graphql', 'go', 'node.js', 'express', 'kafka events', 'redis cache', 'java', 'spring boot', 'backend', 'arquitectura distribuida', 'rest']
                         },
                         FRONTEND: {
                           label: 'Frontend & Mobile',
-                          badge: 'bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800',
+                          subtitle: 'Interfaces reactivas, componentes UI modernos, gestión de estado y apps móviles',
+                          badge: 'border-blue-200 dark:border-blue-900/60 bg-gradient-to-br from-blue-50/60 via-zinc-50/50 to-blue-100/30 dark:from-blue-950/40 dark:via-zinc-900 dark:to-blue-900/20',
+                          headerBadge: 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-800',
+                          dotColor: 'bg-blue-500',
                           icon: '💻',
                           keywords: ['react 18', 'typescript', 'tailwind css', 'next.js', 'redux toolkit', 'vite', 'react native', 'vue.js', 'framer motion', 'websockets', 'react', 'frontend', 'css', 'javascript', 'html', 'mobile']
                         },
                         DESIGN: {
                           label: 'Figma & UI/UX',
-                          badge: 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950 dark:text-purple-200 dark:border-purple-800',
+                          subtitle: 'Prototipado interactivo, sistemas de diseño, arquitectura de información y UX',
+                          badge: 'border-purple-200 dark:border-purple-900/60 bg-gradient-to-br from-purple-50/60 via-zinc-50/50 to-purple-100/30 dark:from-purple-950/40 dark:via-zinc-900 dark:to-purple-900/20',
+                          headerBadge: 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-200 border-purple-300 dark:border-purple-800',
+                          dotColor: 'bg-purple-500',
                           icon: '🎨',
                           keywords: ['figma prototyping', 'design systems', 'wireframing figma', 'ui/ux design', 'system design', 'user research', 'usabilidad', 'prototipado interactivo', 'figma', 'ui/ux', 'diseño', 'prototipado']
                         },
                         DATABASE: {
                           label: 'Base de Datos & SQL',
-                          badge: 'bg-indigo-100 text-indigo-900 border-indigo-300 dark:bg-indigo-950 dark:text-indigo-200 dark:border-indigo-800',
+                          subtitle: 'Modelado relacional/NoSQL, optimización de consultas, tuning de índices y ETL',
+                          badge: 'border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-50/60 via-zinc-50/50 to-indigo-100/30 dark:from-indigo-950/40 dark:via-zinc-900 dark:to-indigo-900/20',
+                          headerBadge: 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-200 border-indigo-300 dark:border-indigo-800',
+                          dotColor: 'bg-indigo-500',
                           icon: '🗄️',
                           keywords: ['postgresql dba', 'sql tuning', 'consultas optimizadas', 'índices b-tree', 'pipelines etl', 'airflow', 'database migration', 'modelado er', 'postgresql', 'sql', 'mysql', 'mongodb', 'base de datos']
                         },
                         QA: {
                           label: 'QA & Testing',
-                          badge: 'bg-teal-100 text-teal-900 border-teal-300 dark:bg-teal-950 dark:text-teal-200 dark:border-teal-800',
+                          subtitle: 'Pruebas automatizadas, pruebas de integración, cobertura de código y calidad OWASP',
+                          badge: 'border-teal-200 dark:border-teal-900/60 bg-gradient-to-br from-teal-50/60 via-zinc-50/50 to-teal-100/30 dark:from-teal-950/40 dark:via-zinc-900 dark:to-teal-900/20',
+                          headerBadge: 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 border-teal-300 dark:border-teal-800',
+                          dotColor: 'bg-teal-500',
                           icon: '🧪',
                           keywords: ['qa automation', 'junit', 'mockito', 'cypress', 'postman api testing', 'owasp testing', 'selenium', 'test case design', 'pruebas de carga', 'qa', 'testing', 'pruebas', 'junit']
                         },
                         DEVOPS: {
                           label: 'DevOps & Cloud',
-                          badge: 'bg-cyan-100 text-cyan-900 border-cyan-300 dark:bg-cyan-950 dark:text-cyan-200 dark:border-cyan-800',
+                          subtitle: 'Contenedores, orquestación, integración continua CI/CD e infraestructura cloud',
+                          badge: 'border-cyan-200 dark:border-cyan-900/60 bg-gradient-to-br from-cyan-50/60 via-zinc-50/50 to-cyan-100/30 dark:from-cyan-950/40 dark:via-zinc-900 dark:to-cyan-900/20',
+                          headerBadge: 'bg-cyan-100 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-200 border-cyan-300 dark:border-cyan-800',
+                          dotColor: 'bg-cyan-500',
                           icon: '☁️',
                           keywords: ['docker', 'kubernetes', 'github actions', 'ci/cd pipelines', 'aws cloud', 'terraform', 'linux sysadmin', 'nginx', 'helm charts', 'devops', 'aws', 'cloud', 'linux', 'ci/cd']
                         },
                         GESTION: {
                           label: 'Gestión & Agilidad',
-                          badge: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800',
+                          subtitle: 'Liderazgo técnico, estimación de esfuerzo, metodologías Scrum y gestión de riesgos WBS',
+                          badge: 'border-amber-200 dark:border-amber-900/60 bg-gradient-to-br from-amber-50/60 via-zinc-50/50 to-amber-100/30 dark:from-amber-950/40 dark:via-zinc-900 dark:to-amber-900/20',
+                          headerBadge: 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-800',
+                          dotColor: 'bg-amber-500',
                           icon: '💼',
                           keywords: ['gestión de proyectos', 'scrum master', 'metodologías ágiles', 'planificación wbs', 'liderazgo de equipos', 'gestión de riesgos', 'estimación de esfuerzo', 'arquitectura de software', 'code review', 'jira / confluence', 'auditoría cmmi', 'líder', 'gestión', 'agilidad', 'scrum']
                         }
@@ -10464,10 +10485,12 @@ export const LiderDashboard = () => {
                       }
 
                       const cleanTecStr = rawTec.replace(/\[Dominio:\s*[^\]]+\]/gi, '');
-                      const allSkills = Array.from(new Set([
-                        ...cleanTecStr.split(/[,•]/).map(s => s.trim()),
-                        ...rawDir.split(/[,•]/).map(s => s.trim())
-                      ])).filter(s => s.length > 0 && !s.startsWith('[Dominio:'));
+                      const allSkills = Array.from(new Set(
+                        cleanTecStr.split(/[,•+/|]|(?:\s+&\s+)|(?:\s+y\s+)/i)
+                          .map(s => s.trim())
+                          .filter(s => s.length > 0 && !s.toLowerCase().startsWith('[dominio:'))
+                          .concat(rawDir.split(/[,•+/|]|(?:\s+&\s+)|(?:\s+y\s+)/i).map(s => s.trim()).filter(Boolean))
+                      ));
 
                       const categoryMap = {};
                       const uncatList = [];
@@ -10564,8 +10587,8 @@ export const LiderDashboard = () => {
                               )}
                             </div>
 
-                            {/* DESGLOSE DE STACK TÉCNICO Y HABILIDADES POR DOMINIO */}
-                            <div className="space-y-3">
+                            {/* DESGLOSE EN DETALLE DE CADA DOMINIO CON SUBTÍTULO Y TÉCNICAS */}
+                            <div className="space-y-3.5">
                               {Object.keys(categoryMap).length === 0 && uncatList.length === 0 ? (
                                 <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-zinc-400 italic text-xs">
                                   Sin tecnologías registradas.
@@ -10575,40 +10598,67 @@ export const LiderDashboard = () => {
                                   {Object.entries(categoryMap).map(([catKey, skills]) => {
                                     const spec = CATEGORIAS_SPECS[catKey];
                                     return (
-                                      <div key={catKey} className={`p-4 rounded-2xl border space-y-2 shadow-2xs ${spec.badge}`}>
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-[0.68rem] font-black uppercase tracking-wider flex items-center gap-1.5">
-                                            <span>{spec.icon}</span>
-                                            <span>{spec.label}</span>
-                                          </span>
-                                          <span className="text-[0.62rem] font-bold px-2 py-0.5 rounded-full bg-white/60 dark:bg-black/40">
-                                            {skills.length} habilidades
-                                          </span>
+                                      <div key={catKey} className={`p-4 sm:p-5 rounded-3xl border-2 space-y-3.5 shadow-sm hover:shadow-md transition-all ${spec.badge}`}>
+                                        {/* Cabecera del Dominio */}
+                                        <div className="flex items-start justify-between gap-3 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-3">
+                                          <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-bold flex items-center justify-center shadow-md text-lg shrink-0 border border-zinc-200 dark:border-zinc-700">
+                                              {spec.icon}
+                                            </div>
+                                            <div>
+                                              <div className="flex items-center gap-2 flex-wrap">
+                                                <h5 className="text-xs font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">
+                                                  {spec.label}
+                                                </h5>
+                                                <span className={`px-2.5 py-0.5 rounded-full text-[0.62rem] font-extrabold uppercase border font-mono ${spec.headerBadge}`}>
+                                                  {skills.length} {skills.length === 1 ? 'tecnología' : 'tecnologías'}
+                                                </span>
+                                              </div>
+                                              <p className="text-[0.68rem] text-zinc-500 font-medium leading-tight mt-0.5">
+                                                {spec.subtitle}
+                                              </p>
+                                            </div>
+                                          </div>
                                         </div>
-                                        <div className="flex flex-wrap gap-1.5">
-                                          {skills.map((sk, sIdx) => (
-                                            <motion.span
-                                              key={sIdx}
-                                              whileHover={{ scale: 1.05, y: -1 }}
-                                              className="px-3 py-1 rounded-xl text-[0.68rem] font-extrabold bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 shadow-2xs cursor-default"
-                                            >
-                                              {sk}
-                                            </motion.span>
-                                          ))}
+
+                                        {/* Subtítulo & Lista de Técnicas Asignadas */}
+                                        <div className="space-y-2 pt-0.5">
+                                          <span className="text-[0.62rem] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block font-mono">
+                                            Técnicas, Frameworks & Herramientas Evaluadas:
+                                          </span>
+                                          <div className="flex flex-wrap gap-2">
+                                            {skills.map((sk, sIdx) => (
+                                              <motion.div
+                                                key={sIdx}
+                                                whileHover={{ scale: 1.04, y: -1 }}
+                                                className="px-3 py-1.5 rounded-2xl text-[0.72rem] font-extrabold bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 shadow-2xs flex items-center gap-2"
+                                              >
+                                                <span className={`w-2 h-2 rounded-full ${spec.dotColor} shrink-0`} />
+                                                <span>{sk}</span>
+                                                <span className="text-[0.58rem] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/80 px-1.5 py-0.2 rounded-md font-mono">
+                                                  ✓ Evaluado
+                                                </span>
+                                              </motion.div>
+                                            ))}
+                                          </div>
                                         </div>
                                       </div>
                                     );
                                   })}
 
                                   {uncatList.length > 0 && (
-                                    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-2 shadow-2xs">
-                                      <span className="text-[0.65rem] font-black text-blue-800 dark:text-blue-200 uppercase flex items-center gap-1.5">
-                                        <Sparkles size={14} className="text-blue-600 shrink-0" /> Otras Competencias & Stack WBS ({uncatList.length}):
-                                      </span>
-                                      <div className="flex flex-wrap gap-1.5">
+                                    <div className="p-4 rounded-3xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2.5 shadow-2xs">
+                                      <div className="border-b border-zinc-200 dark:border-zinc-700 pb-2">
+                                        <span className="text-[0.68rem] font-black text-blue-800 dark:text-blue-200 uppercase flex items-center gap-1.5">
+                                          <Sparkles size={14} className="text-blue-600 shrink-0" /> Otras Competencias & Stack WBS ({uncatList.length}):
+                                        </span>
+                                        <p className="text-[0.68rem] text-zinc-500 font-medium">Habilidades técnicas adicionales detectadas en la ficha del perfil</p>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
                                         {uncatList.map((sk, sIdx) => (
-                                          <span key={sIdx} className="px-3 py-1.5 rounded-xl text-[0.68rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs">
-                                            {sk}
+                                          <span key={sIdx} className="px-3 py-1.5 rounded-2xl text-[0.72rem] font-extrabold bg-white dark:bg-zinc-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                            <span>{sk}</span>
                                           </span>
                                         ))}
                                       </div>
