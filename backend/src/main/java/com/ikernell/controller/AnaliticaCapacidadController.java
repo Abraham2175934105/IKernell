@@ -28,7 +28,7 @@ public class AnaliticaCapacidadController {
         this.analiticaCapacidadService = analiticaCapacidadService;
     }
 
-    @GetMapping("/burnout")
+    @GetMapping({"/burnout", "/burnout/matriz-historica"})
     @Operation(summary = "Matriz histórica de Burnout y Carga Cognitiva", description = "Calcula la tendencia temporal de 21 días (S1, S2, S3) de todos los desarrolladores activos (RF-35)")
     public ResponseEntity<List<BurnoutMetricsDto>> obtenerMatrizBurnout() {
         return ResponseEntity.ok(analiticaCapacidadService.calcularMatrizBurnoutDesarrolladores());
