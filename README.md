@@ -169,3 +169,13 @@ Todos los usuarios cuentan con la clave provisional estandar: `Admin123!` o `Dev
 * CMMI Nivel 2 y 3: Implementacion de areas de proceso clave (PP, PMC, PPQA, REQM, RSKM, CM).
 * Criptografia y Seguridad: Algoritmos de cifrado unidireccional con sal aleatoria de 12 iteraciones para contraseñas, tokens JWT stateless de 24h y sello de integridad SHA-256 para transferencias internacionales.
 * Accesibilidad: Cumplimiento de ratios de contraste tipografico 4.5:1 bajo pautas WCAG.
+
+---
+
+## 8. Innovaciones y Modulos de Gestion del Conocimiento
+
+1. **Biblioteca Digital con Visor Dual A4 (RF-33):**
+   Modulo de gestion documental que ofrece conmutacion en tiempo real entre vista en formato de hoja formal A4 y consola de codigo tecnico. Incluye motor de renderizado estructurado y exportacion directa a documentos PDF mediante jsPDF con firmas de auditoria CMMI Nivel 3.
+
+2. **Motor Snippet.inject con Coincidencia Trigram (RF-36):**
+   Motor acelerado de autocompletado y busqueda difusa para fragmentos de codigo reutilizable y micro-soluciones tecnicas. Utiliza indices de trigramas (`pg_trgm`) sobre PostgreSQL 14+ para consultas de baja latencia (<15ms) sobre repositorios de conocimiento tecnico empresarial.
