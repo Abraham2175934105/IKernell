@@ -2443,6 +2443,24 @@ export const LiderDashboard = () => {
     return counts;
   }, [proyectos, filtroPropiedadLider, user, getHoursSinceReassignment]);
 
+  // Conteo dinámico de proyectos por propiedad del líder (Mis Proyectos, Otros Proyectos, Todos)
+  const countsPropiedadLider = useMemo(() => {
+    if (!proyectos || !Array.isArray(proyectos)) return { mis: 0, otros: 0, todos: 0 };
+    const userDevId = user?.idTrabajador || user?.id;
+    const userEmail = (user?.email || '').toLowerCase();
+
+    let mis = 0;
+    let otros = 0;
+    proyectos.forEach(p => {
+      const pLiderId = p.lider?.idTrabajador || p.lider?.id;
+      const pLiderEmail = (p.lider?.email || '').toLowerCase();
+      const isMine = (userDevId && String(pLiderId) === String(userDevId)) || (userEmail && pLiderEmail && userEmail === pLiderEmail);
+      if (isMine) mis++;
+      else otros++;
+    });
+    return { mis, otros, todos: proyectos.length };
+  }, [proyectos, user]);
+
   // Filtrado reactivo para la grilla del catálogo de proyectos con segregación por propiedad de Líder y Estado
   const proyectosCatalogoFiltrados = useMemo(() => {
     if (!proyectos || !Array.isArray(proyectos)) return [];
@@ -4908,7 +4926,7 @@ export const LiderDashboard = () => {
                           }`}
                       >
                         <Briefcase size={14} />
-                        <span>Mis Proyectos</span>
+                        <span>Mis Proyectos ({countsPropiedadLider.mis})</span>
                       </button>
 
                       <button
@@ -4920,8 +4938,8 @@ export const LiderDashboard = () => {
                           }`}
                       >
                         <Globe size={14} />
-                        <span className="hidden sm:inline">Otros Proyectos</span>
-                        <span className="sm:hidden">Otros</span>
+                        <span className="hidden sm:inline">Otros Proyectos ({countsPropiedadLider.otros})</span>
+                        <span className="sm:hidden">Otros ({countsPropiedadLider.otros})</span>
                       </button>
 
                       <button
@@ -4932,7 +4950,7 @@ export const LiderDashboard = () => {
                             : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700/80'
                           }`}
                       >
-                        <span>Todos</span>
+                        <span>Todos ({countsPropiedadLider.todos})</span>
                       </button>
                     </div>
 
