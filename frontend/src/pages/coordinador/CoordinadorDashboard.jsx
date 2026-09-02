@@ -1827,13 +1827,13 @@ export const CoordinadorDashboard = () => {
         api.get('/coordinador/proyectos').catch(err => { console.error('Error proyectos:', err); return null; })
       ]);
 
-      if (Array.isArray(trabajadoresRes) && trabajadoresRes.length > 0) {
+      if (Array.isArray(trabajadoresRes)) {
         setTrabajadores(trabajadoresRes.map(enrichTrabajador));
       }
       if (Array.isArray(solicitudesRes)) {
         setSolicitudes(solicitudesRes);
       }
-      if (Array.isArray(proyectosRes) && proyectosRes.length > 0) {
+      if (Array.isArray(proyectosRes)) {
         setProyectos(proyectosRes);
       }
     } catch (err) {
