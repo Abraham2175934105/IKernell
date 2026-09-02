@@ -213,7 +213,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
         >
           <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           <Sparkles size={16} className="text-amber-300 animate-pulse shrink-0" />
-          <span className="tracking-wide">⚡ Auto-Calcular por WBS (Máx. 30h Dev)</span>
+          <span className="tracking-wide">Auto-Calcular por WBS (Máx. 30h Dev)</span>
         </motion.button>
       </div>
 
@@ -401,11 +401,11 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
                     </span>
                     {isFin ? (
                       <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.62rem] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
-                        <CheckCircle2 size={11} /> FINALIZADA (🔒 Cumplida)
+                        <CheckCircle2 size={11} /> FINALIZADA (Cumplida)
                       </span>
                     ) : isProc ? (
                       <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.62rem] bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 flex items-center gap-1">
-                        <Activity size={11} /> EN PROGRESO (🔒 En Ejecución)
+                        <Activity size={11} /> EN PROGRESO (En Ejecución)
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.62rem] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
@@ -434,7 +434,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
               title="Ver o contraer el porcentaje exacto que representa cada tarea WBS en la jornada de 48h"
             >
               <PieChart size={13} className="text-purple-600 dark:text-purple-400" />
-              <span>{showTaskPercentages ? 'Ocultar Desglose % WBS' : '📊 Ver Porcentajes WBS por Tarea'}</span>
+              <span>{showTaskPercentages ? 'Ocultar Desglose % WBS' : 'Ver Porcentajes WBS por Tarea'}</span>
             </button>
           </div>
 
@@ -470,9 +470,9 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
           <div
             style={{ width: `${(horasLider / 48) * 100}%` }}
             className="bg-sky-500 h-full transition-all duration-300 flex items-center justify-center text-[0.68rem] font-black text-white px-2 shadow-xs shrink-0"
-            title={`👑 Dirección Líder: ${horasLider}h (${Math.round((horasLider/48)*100)}% de la jornada)`}
+            title={`Dirección Líder: ${horasLider}h (${Math.round((horasLider/48)*100)}% de la jornada)`}
           >
-            {horasLider >= 8 && `👑 ${horasLider}h Líder`}
+            {horasLider >= 8 && `${horasLider}h Líder`}
           </div>
 
           {/* Segmento 2: Dev Activo por Ejecutar (Violeta Púrpura Intenso: bg-purple-600) */}
@@ -480,9 +480,9 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
             <div
               style={{ width: `${(desgloseDividendoDev.activas / 48) * 100}%` }}
               className="bg-purple-600 h-full transition-all duration-300 flex items-center justify-center text-[0.68rem] font-black text-white px-2 shadow-xs shrink-0"
-              title={`💻 Dev Restante por Ejecutar: ${desgloseDividendoDev.activas}h (${Math.round((desgloseDividendoDev.activas/48)*100)}% de la jornada)`}
+              title={`Dev Restante por Ejecutar: ${desgloseDividendoDev.activas}h (${Math.round((desgloseDividendoDev.activas/48)*100)}% de la jornada)`}
             >
-              {desgloseDividendoDev.activas >= 6 && `💻 ${desgloseDividendoDev.activas}h Dev Activo`}
+              {desgloseDividendoDev.activas >= 6 && `${desgloseDividendoDev.activas}h Dev Activo`}
             </div>
           )}
 

@@ -100,57 +100,57 @@ const PAISES_IDENTIFICACION = [
     minLength: 6, 
     maxLength: 10, 
     numericOnly: true, 
-    errText: '❌ La Cédula de Ciudadanía (Colombia) debe tener entre 6 y 10 dígitos numéricos.' 
+    errText: 'La Cédula de Ciudadanía (Colombia) debe tener entre 6 y 10 dígitos numéricos.' 
   },
   { 
     code: 'MX', 
-    flag: '🇲🇽', 
+    flag: '', 
     docTipo: 'CURP / INE', 
-    placeholder: 'Ej. GOMA800310HDFR12', 
+    placeholder: 'Ingrese el número de CURP o INE', 
     minLength: 10, 
     maxLength: 18, 
     numericOnly: false, 
-    errText: '❌ El CURP/INE (México) debe tener entre 10 y 18 caracteres alfanuméricos.' 
+    errText: 'El CURP/INE (México) debe tener entre 10 y 18 caracteres alfanuméricos.' 
   },
   { 
     code: 'PE', 
-    flag: '🇵🇪', 
+    flag: '', 
     docTipo: 'DNI Perú', 
-    placeholder: 'Ej. 45892014 (8 dígitos)', 
+    placeholder: 'Ingrese los 8 dígitos del DNI', 
     minLength: 8, 
     maxLength: 8, 
     numericOnly: true, 
-    errText: '❌ El DNI de Perú debe tener exactamente 8 dígitos numéricos.' 
+    errText: 'El DNI de Perú debe tener exactamente 8 dígitos numéricos.' 
   },
   { 
     code: 'CL', 
-    flag: '🇨🇱', 
+    flag: '', 
     docTipo: 'RUT Chile', 
-    placeholder: 'Ej. 18459203K', 
+    placeholder: 'Ingrese el número de RUT', 
     minLength: 8, 
     maxLength: 10, 
     numericOnly: false, 
-    errText: '❌ El RUT chileno debe tener entre 8 y 10 caracteres.' 
+    errText: 'El RUT chileno debe tener entre 8 y 10 caracteres.' 
   },
   { 
     code: 'AR', 
-    flag: '🇦🇷', 
+    flag: '', 
     docTipo: 'DNI Argentina', 
-    placeholder: 'Ej. 35892014 (7 a 8 dígitos)', 
+    placeholder: 'Ingrese el número de DNI', 
     minLength: 7, 
     maxLength: 8, 
     numericOnly: true, 
-    errText: '❌ El DNI argentino debe tener entre 7 y 8 dígitos numéricos.' 
+    errText: 'El DNI argentino debe tener entre 7 y 8 dígitos numéricos.' 
   },
   { 
     code: 'EC', 
-    flag: '🇪🇨', 
+    flag: '', 
     docTipo: 'Cédula Ecuador', 
-    placeholder: 'Ej. 1718459203 (10 dígitos)', 
+    placeholder: 'Ingrese los 10 dígitos de la Cédula', 
     minLength: 10, 
     maxLength: 10, 
     numericOnly: true, 
-    errText: '❌ La Cédula ecuatoriana debe tener exactamente 10 dígitos numéricos.' 
+    errText: 'La Cédula ecuatoriana debe tener exactamente 10 dígitos numéricos.' 
   }
 ];
 
@@ -237,7 +237,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       const existingId = String(t.identificacion || '').trim().toLowerCase();
       return existingId && existingId === cleanId.toLowerCase();
     });
-    if (isDup) return '❌ No se puede: este número de cédula / identificación ya se encuentra registrado.';
+    if (isDup) return 'No se puede: este número de cédula / identificación ya se encuentra registrado.';
     return null;
   };
 
@@ -250,7 +250,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       const existingEmail = String(t.email || '').trim().toLowerCase();
       return existingEmail && existingEmail === cleanEmail;
     });
-    if (isDup) return '❌ No se puede: este correo corporativo ya se encuentra registrado.';
+    if (isDup) return 'No se puede: este correo corporativo ya se encuentra registrado.';
     return null;
   };
 
@@ -263,7 +263,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
       const existingPersonal = String(t.emailPersonal || t.correoPersonal || t.personalEmail || '').trim().toLowerCase();
       return existingPersonal && existingPersonal === cleanPersonal;
     });
-    if (isDup) return '❌ No se puede: este correo personal ya se encuentra registrado.';
+    if (isDup) return 'No se puede: este correo personal ya se encuentra registrado.';
     return null;
   };
 
@@ -311,7 +311,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
-      setFormError('🔒 Existen errores de unicidad o datos duplicados en el Paso 1. Corrija los campos en rojo para poder continuar.');
+      setFormError('Existen errores de unicidad o datos duplicados en el Paso 1. Corrija los campos en rojo para poder continuar.');
       return false;
     }
     setFormError(null);
@@ -329,7 +329,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
-      setFormError('🔒 Faltan campos obligatorios en el Perfil Profesional.');
+      setFormError('Faltan campos obligatorios en el Perfil Profesional.');
       return false;
     }
     setFormError(null);
@@ -344,7 +344,7 @@ export function RegistrarTrabajadorFlujo({ onVolver, onSuccess, lockRoleToDesarr
 
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
-      setFormError('🔒 Seleccione al menos una tecnología o competencia técnica para finalizar.');
+      setFormError('Seleccione al menos una tecnología o competencia técnica para finalizar.');
       return false;
     }
     setFormError(null);

@@ -2850,13 +2850,6 @@ const [actividades, setActividades] = useState([]);
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setKpiModalStatus(null)}
-                  className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
               </div>
 
               {/* Lista de Actividades en Scrollable Container */}
