@@ -203,6 +203,17 @@ CREATE TABLE solicitud_contacto (
     coordinador_id BIGINT REFERENCES trabajador(id_trabajador) ON DELETE SET NULL
 );
 
+-- 3.12 TABLA DISTRIBUCION_HORARIA_LIDER (Control Dual 48h)
+CREATE TABLE distribucion_horaria_lider (
+    id_distribucion BIGSERIAL PRIMARY KEY,
+    id_trabajador BIGINT NOT NULL REFERENCES trabajador(id_trabajador) ON DELETE CASCADE,
+    semana_codigo VARCHAR(20) NOT NULL,
+    horas_lider_asignadas INT NOT NULL DEFAULT 24,
+    horas_desarrollador_asignadas INT NOT NULL DEFAULT 24,
+    modo_distribucion VARCHAR(30) DEFAULT 'AUTOMATICO_INTELIGENTE',
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ==============================================================================
 -- 4. DML - SEEDER MASIVO CORPORATIVO DE ALTO RENDIMIENTO
 -- ==============================================================================

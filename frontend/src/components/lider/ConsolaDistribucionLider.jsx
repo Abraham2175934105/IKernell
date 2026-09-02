@@ -3,9 +3,11 @@ import { Clock, ShieldCheck, Sparkles, Sliders, CheckCircle2, AlertCircle, Refre
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import { useApi } from '../../hooks/useApi';
 
 export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
+  const api = useApi();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -19,57 +21,44 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
   const [horasDevReales, setHorasDevReales] = useState(devAssignedHours);
   const [actividadesDevList, setActividadesDevList] = useState([]);
 
+  const userId = user?.idTrabajador || user?.id || user?.trabajador?.idTrabajador;
+
   // Cargar tareas de desarrollo asignadas en otros proyectos desde backend
   useEffect(() => {
-    if (!token) return;
+    if (!userId) return;
     const fetchTareasReales = async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/desarrollador/mis-actividades', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (res.ok) {
-          const actividades = await res.json();
-          const list = Array.isArray(actividades) ? actividades : [];
-          setActividadesDevList(list);
+        const actividades = await api.get('/desarrollador/mis-actividades');
+        const list = Array.isArray(actividades) ? actividades : [];
+        setActividadesDevList(list);
 
-          const sumaHoras = list
-            .filter(a => {
-              const st = (a.estado || '').toUpperCase();
-              return st !== 'COMPLETADA' && st !== 'FINALIZADA';
-            })
-            .reduce((acc, a) => {
-              const match = (a.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
-              const val = match ? parseInt(match[1]) : (parseInt(a.horasEstimadas || a.horas) || 6);
-              return acc + val;
-            }, 0);
-          if (sumaHoras > 0) setHorasDevReales(sumaHoras);
-        }
+        const sumaHoras = list
+          .filter(a => {
+            const st = (a.estado || '').toUpperCase();
+            return st !== 'COMPLETADA' && st !== 'FINALIZADA';
+          })
+          .reduce((acc, a) => {
+            const match = (a.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+            const val = match ? parseInt(match[1]) : (parseInt(a.horasEstimadas || a.horas) || 6);
+            return acc + val;
+          }, 0);
+        if (sumaHoras > 0) setHorasDevReales(sumaHoras);
       } catch (err) {
         console.warn('No se pudieron consultar actividades reales de desarrollo:', err);
       }
     };
     fetchTareasReales();
-  }, [token]);
+  }, [userId, api]);
 
   // Cargar distribución desde backend
   useEffect(() => {
-    if (!user?.id && !user?.idTrabajador) return;
-    const userId = user.idTrabajador || user.id;
+    if (!userId) return;
 
     const fetchDistribucion = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:8080/api/lider/distribucion-horaria/${userId}?semanaCodigo=${semanaCodigo}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (res.ok) {
-          const data = await res.json();
+        const data = await api.get(`/lider/distribucion-horaria/${userId}?semanaCodigo=${semanaCodigo}`);
+        if (data) {
           setHorasLider(data.horasLiderAsignadas || 24);
           setHorasDev(data.horasDesarrolladorAsignadas || 24);
           setModo(data.modoDistribucion || 'AUTOMATICO_INTELIGENTE');
@@ -82,7 +71,7 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
     };
 
     fetchDistribucion();
-  }, [user, token, semanaCodigo]);
+  }, [userId, semanaCodigo, api]);
 
   // Desglose de horas por estado WBS (Dividendo: Ejecutadas vs Activas Pendientes)
   const desgloseDividendoDev = useMemo(() => {
@@ -152,32 +141,26 @@ export const ConsolaDistribucionLider = ({ devAssignedHours = 0 }) => {
 
   // Guardar en backend
   const guardarEnBackend = async (hl = horasLider, hd = horasDev, m = modo) => {
-    if (!user?.id && !user?.idTrabajador) return;
-    const userId = user.idTrabajador || user.id;
+    if (!userId) {
+      toast.error('No se pudo identificar la sesión de usuario activa.');
+      return;
+    }
     setSaving(true);
 
     try {
-      const res = await fetch(`http://localhost:8080/api/lider/distribucion-horaria/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          semanaCodigo,
-          horasLider: hl,
-          horasDev: hd,
-          modoDistribucion: m
-        })
+      const data = await api.post(`/lider/distribucion-horaria/${userId}`, {
+        semanaCodigo,
+        horasLider: hl,
+        horasDev: hd,
+        modoDistribucion: m
       });
 
-      if (res.ok) {
+      if (data) {
         toast.success(`Jornada Dual de 48h guardada: ${hl}h Líder / ${hd}h Desarrollador`);
-      } else {
-        toast.error('Ocurrió un error al guardar la distribución horaria');
       }
     } catch (err) {
-      toast.error('Error de conexión con la API de Distribución');
+      console.error('Error guardando distribución horaria:', err);
+      toast.error(err.message || 'Ocurrió un error al guardar la distribución horaria');
     } finally {
       setSaving(false);
     }

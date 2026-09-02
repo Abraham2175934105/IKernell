@@ -249,11 +249,40 @@ const [actividades, setActividades] = useState([]);
 
   // Estados para Filtros, Buscador y Ordenamiento en Cliente (HU-16 / RF-21)
   const [proyectoSeleccionadoDev, setProyectoSeleccionadoDev] = useState(null);
+  const [equipoProyectoSeleccionado, setEquipoProyectoSeleccionado] = useState([]);
+  const [loadingEquipo, setLoadingEquipo] = useState(false);
   const [searchProjectQuery, setSearchProjectQuery] = useState('');
   const [searchTaskQuery, setSearchTaskQuery] = useState('');
   const [proyectoFilter, setProyectoFilter] = useState('TODOS');
   const [estadoFilter, setEstadoFilter] = useState('TODAS');
   const [ordenarPor, setOrdenarPor] = useState('RECIENTES');
+
+  // Carga reactiva del equipo del proyecto seleccionado (Líderes + Desarrolladores)
+  useEffect(() => {
+    if (!proyectoSeleccionadoDev?.idProyecto) {
+      setEquipoProyectoSeleccionado([]);
+      return;
+    }
+    const prjId = proyectoSeleccionadoDev.idProyecto;
+    let isMounted = true;
+    setLoadingEquipo(true);
+
+    api.get(`/lider/proyectos/${prjId}/desarrolladores`)
+      .then(res => {
+        if (!isMounted) return;
+        const list = Array.isArray(res) ? res : [];
+        setEquipoProyectoSeleccionado(list);
+      })
+      .catch(err => {
+        console.warn('No se pudo obtener el equipo del proyecto:', err);
+        if (isMounted) setEquipoProyectoSeleccionado([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingEquipo(false);
+      });
+
+    return () => { isMounted = false; };
+  }, [proyectoSeleccionadoDev, api]);
 
   // Estados para Filtros y Conmutador de Vistas del Historial (HU-17 / RF-22 a RF-24)
   const [searchReportQuery, setSearchReportQuery] = useState('');
@@ -755,6 +784,44 @@ const [actividades, setActividades] = useState([]);
       return String(pId) === String(proyectoSeleccionadoDev.idProyecto);
     });
   }, [actividades, proyectoSeleccionadoDev]);
+
+  // Clasificador inteligente de dominio técnico por especialidad/actividad WBS
+  const obtenerDominioTecnico = useCallback((act) => {
+    const txt = ((act?.descripcion || '') + ' ' + (act?.etapa?.nombreEtapa || '') + ' ' + (act?.etapa?.nombre || '')).toLowerCase();
+    if (txt.includes('java') || txt.includes('microservicio') || txt.includes('backend') || txt.includes('spring') || txt.includes('api')) {
+      return { label: 'Backend Java 17 & Spring Boot 3', color: 'bg-orange-50 text-orange-800 border-orange-200 dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-800' };
+    }
+    if (txt.includes('react') || txt.includes('frontend') || txt.includes('ui') || txt.includes('componente') || txt.includes('vista') || txt.includes('figma')) {
+      return { label: 'Frontend React 18 & UI/UX', color: 'bg-cyan-50 text-cyan-800 border-cyan-200 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800' };
+    }
+    if (txt.includes('sql') || txt.includes('postgres') || txt.includes('base de datos') || txt.includes('dba') || txt.includes('tabla')) {
+      return { label: 'Base de Datos PostgreSQL DBA', color: 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800' };
+    }
+    if (txt.includes('docker') || txt.includes('kubernetes') || txt.includes('aws') || txt.includes('devops') || txt.includes('cloud') || txt.includes('ci/cd')) {
+      return { label: 'DevOps & Cloud Architecture', color: 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800' };
+    }
+    if (txt.includes('qa') || txt.includes('testing') || txt.includes('prueba') || txt.includes('cypress') || txt.includes('junit')) {
+      return { label: 'QA & Testing Automatizado', color: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800' };
+    }
+    return { label: 'Desarrollo de Software WBS', color: 'bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700' };
+  }, []);
+
+  // Cálculo preciso de tiempo restante para la ventana de atención de la alerta de 24h
+  const obtenerTiempoRestanteAlerta24h = useCallback((fechaStr) => {
+    if (!fechaStr) return 'Quedan ~18h 30m para atención preferente (Ventana 24h)';
+    try {
+      const fAccion = new Date(fechaStr);
+      if (isNaN(fAccion.getTime())) return 'Quedan ~18h 30m para atención preferente (Ventana 24h)';
+      const diffMs = (fAccion.getTime() + 24 * 60 * 60 * 1000) - Date.now();
+      if (diffMs <= 0) return 'Ventana 24h expirada • Seguimiento regular WBS';
+      const totalMins = Math.floor(diffMs / (1000 * 60));
+      const hrs = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+      return `Quedan ${hrs}h ${mins}m de tiempo disponible (Ventana 24h)`;
+    } catch {
+      return 'Quedan ~18h 30m para atención preferente (Ventana 24h)';
+    }
+  }, []);
 
   // Lista de actividades filtradas y ordenadas del proyecto seleccionado
   const actividadesFiltradasYOrdenadas = useMemo(() => {
@@ -1481,21 +1548,27 @@ const [actividades, setActividades] = useState([]);
           {!proyectoSeleccionadoDev && (
             <div className="space-y-6">
               
-              {/* Notificación Destacada de Nuevas Asignaciones (< 24h) */}
+              {/* Notificación Destacada de Nuevas Asignaciones (< 24h) con Conteo de Tiempo Restante */}
               {totalNuevasGlobales > 0 && (
-                <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 flex items-center justify-between gap-3 shadow-2xs">
-                  <div className="flex items-center gap-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                    <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <div className="p-4 rounded-3xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 dark:from-emerald-950/60 dark:via-teal-950/40 dark:to-emerald-950/60 border-2 border-emerald-400 dark:border-emerald-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md shadow-emerald-500/10">
+                  <div className="flex items-start sm:items-center gap-3 text-xs font-bold text-emerald-900 dark:text-emerald-100">
+                    <span className="relative flex h-3 w-3 shrink-0 mt-0.5 sm:mt-0">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <Sparkles size={14} className="text-emerald-600 dark:text-emerald-400" />
-                      Tiene <strong className="font-extrabold underline">{totalNuevasGlobales} nueva(s) tarea(s)</strong> asignada(s) en las últimas 24 horas.
-                    </span>
+                    <div className="space-y-0.5">
+                      <span className="flex items-center gap-2 font-black text-sm text-emerald-950 dark:text-emerald-50">
+                        <Sparkles size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        Tiene <u className="underline decoration-emerald-500 font-extrabold">{totalNuevasGlobales} nueva(s) tarea(s)</u> asignada(s) en las últimas 24 horas
+                      </span>
+                      <div className="flex items-center gap-2 text-[0.72rem] text-emerald-800 dark:text-emerald-300 font-medium">
+                        <Clock size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>{obtenerTiempoRestanteAlerta24h(actividades.find(a => evaluarSiEsNuevaAsignacion24h(a))?.fechaCreacion || actividades.find(a => evaluarSiEsNuevaAsignacion24h(a))?.createdAt)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-mono text-[0.62rem] font-black tracking-wider uppercase shadow-2xs">
-                    Notificación Reciente
+                  <span className="px-3 py-1 rounded-full bg-emerald-600 text-white font-mono text-[0.65rem] font-black tracking-wider uppercase shadow-sm self-end sm:self-auto shrink-0">
+                    Notificación Reciente 24h
                   </span>
                 </div>
               )}
@@ -1772,6 +1845,86 @@ const [actividades, setActividades] = useState([]);
                 </div>
               </div>
 
+              {/* Tarjeta del Equipo Asignado al Proyecto (Líderes + Desarrolladores) */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-3xl shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="text-blue-600 dark:text-blue-400" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
+                      Equipo de Trabajo Asignado ({equipoProyectoSeleccionado.length > 0 ? equipoProyectoSeleccionado.length : (proyectoSeleccionadoDev.lider ? 1 : 0)} Integrantes)
+                    </h4>
+                  </div>
+                  <span className="text-[0.68rem] text-zinc-500 font-medium hidden sm:inline">
+                    Integración Dual • Líderes & Desarrolladores
+                  </span>
+                </div>
+
+                {loadingEquipo ? (
+                  <div className="text-xs text-zinc-400 font-medium animate-pulse p-2">Cargando datos del equipo del proyecto...</div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {/* Líder Principal del Proyecto */}
+                    {proyectoSeleccionadoDev.lider && (
+                      <div className="p-3 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center gap-3 shadow-2xs">
+                        <img
+                          src={proyectoSeleccionadoDev.lider.fotoUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'}
+                          alt="Líder Principal"
+                          className="w-10 h-10 rounded-xl object-cover ring-2 ring-blue-500 shrink-0"
+                        />
+                        <div className="space-y-0.5 overflow-hidden">
+                          <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate block">
+                            {proyectoSeleccionadoDev.lider.nombre} {proyectoSeleccionadoDev.lider.apellido}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white font-mono text-[0.58rem] font-black uppercase inline-block">
+                            Líder Principal
+                          </span>
+                          <p className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 truncate">
+                            {proyectoSeleccionadoDev.lider.profesion || proyectoSeleccionadoDev.lider.especialidad || 'Líder de Proyecto'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Desarrolladores y Líderes en Perfil Dual */}
+                    {equipoProyectoSeleccionado.map((item, idx) => {
+                      const d = item.desarrollador || item;
+                      const esLiderRol = (d.rol || '').toUpperCase() === 'LIDER';
+                      return (
+                        <div key={d.idTrabajador || idx} className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center gap-3 shadow-2xs">
+                          <img
+                            src={d.fotoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+                            alt="Integrante"
+                            className="w-9 h-9 rounded-xl object-cover ring-2 ring-zinc-300 dark:ring-zinc-700 shrink-0"
+                          />
+                          <div className="space-y-0.5 overflow-hidden">
+                            <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate block">
+                              {d.nombre} {d.apellido}
+                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className={`px-2 py-0.5 rounded-md font-mono text-[0.58rem] font-black uppercase inline-block ${
+                                esLiderRol
+                                  ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800'
+                                  : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                              }`}>
+                                {esLiderRol ? 'Líder (Perfil Dual)' : 'Desarrollador'}
+                              </span>
+                              {item.horasSemanales && (
+                                <span className="text-[0.62rem] font-mono text-zinc-500 font-bold">
+                                  {item.horasSemanales}h/sem
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[0.65rem] text-zinc-500 dark:text-zinc-400 truncate">
+                              {d.especialidad || d.profesion || 'Desarrollador de Software'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-3xl shadow-sm space-y-4">
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                   <div className="relative flex-1">
@@ -1863,6 +2016,8 @@ const [actividades, setActividades] = useState([]);
                     const { isReassigned, motivo, cleanDescripcion } = parseReasignacion(act.descripcion);
                     const isNuevaAsignacion = evaluarSiEsNuevaAsignacion24h(act);
                     const isProyectoPausado = act.etapa?.proyecto?.estado === 'EN_PAUSA' || act.etapa?.proyecto?.estado === 'PAUSADO' || act.proyectoObj?.estado === 'EN_PAUSA' || act.proyectoObj?.estado === 'PAUSADO' || act.proyectoEstado === 'EN_PAUSA' || act.proyectoEstado === 'PAUSADO';
+                    const dominioObj = obtenerDominioTecnico(act);
+                    const fechaAsigStr = act.fechaCreacion || act.createdAt || '2026-09-01';
 
                     return (
                       <div 
@@ -1903,6 +2058,14 @@ const [actividades, setActividades] = useState([]);
                             <EstadoBadge estado={act.estado} />
                           </div>
 
+                          {/* Badge de Dominio Técnico / Especialidad */}
+                          <div className="mb-2">
+                            <span className={`px-2.5 py-1 rounded-xl text-[0.65rem] font-black border inline-flex items-center gap-1.5 shadow-2xs ${dominioObj.color}`}>
+                              <Code2 size={12} />
+                              <span>{dominioObj.label}</span>
+                            </span>
+                          </div>
+
                           {isProyectoPausado && (
                             <div className="p-3 rounded-2xl bg-amber-50/90 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700/80 mb-3 text-xs space-y-1 font-medium text-amber-900 dark:text-amber-200 shadow-2xs">
                               <div className="flex items-center gap-1.5 font-extrabold text-amber-800 dark:text-amber-300">
@@ -1932,16 +2095,27 @@ const [actividades, setActividades] = useState([]);
                             {cleanDescripcion}
                           </h3>
 
-                          {/* Indicador de Dedicación Horaria Semanal Asignada para esta Tarea */}
-                          <div className="mt-2 flex items-center justify-between text-[0.7rem] bg-zinc-50 dark:bg-zinc-800/60 p-2 rounded-xl border border-zinc-200/80 dark:border-zinc-700/60 font-mono font-bold">
-                            <span className="text-zinc-500 dark:text-zinc-400 font-sans font-medium">Dedicación Tarea:</span>
-                            <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1 font-black">
-                              <Clock size={12} />
-                              {(() => {
-                                const m = (act.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
-                                return m ? `${m[1]}h / semana` : (act.horasEstimadas ? `${act.horasEstimadas}h / semana` : '8h / semana');
-                              })()}
-                            </span>
+                          {/* Fecha de Asignación y Tiempo Restante */}
+                          <div className="mt-3 space-y-1.5 p-2.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-[0.68rem]">
+                            <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                              <span className="flex items-center gap-1 font-medium">
+                                <Calendar size={12} className="text-blue-500" /> Fecha Asignación:
+                              </span>
+                              <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                                {fechaAsigStr.split('T')[0]}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-blue-700 dark:text-blue-300 font-bold border-t border-zinc-200/60 dark:border-zinc-700/50 pt-1.5">
+                              <span className="flex items-center gap-1">
+                                <Clock size={12} className="text-blue-600" /> Dedicación Tarea:
+                              </span>
+                              <span className="font-mono font-black">
+                                {(() => {
+                                  const m = (act.descripcion || '').match(/\b(\d+)\s*h(?:\/sem)?\b/i);
+                                  return m ? `${m[1]}h / semana` : (act.horasEstimadas ? `${act.horasEstimadas}h / semana` : '8h / semana');
+                                })()}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
