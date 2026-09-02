@@ -99,6 +99,10 @@ CREATE TABLE actividad (
     etapa_id BIGINT NOT NULL REFERENCES etapa(id_etapa) ON DELETE CASCADE,
     desarrollador_id BIGINT REFERENCES trabajador(id_trabajador) ON DELETE SET NULL,
     descripcion TEXT NOT NULL,
+    descripcion_detallada TEXT,
+    cualidad_nombre VARCHAR(255),
+    cualidad_tecnica VARCHAR(255),
+    horas_semanales INT,
     estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
     fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -175,6 +179,28 @@ CREATE INDEX idx_solicitud_trabajador ON solicitud_soporte(trabajador_id);
 CREATE TABLE consecutivo_proyectos (
     id BIGSERIAL PRIMARY KEY,
     ultimo_numero INT NOT NULL DEFAULT 0
+);
+
+-- 3.11 TABLA SOLICITUD_CONTACTO (Bandeja de Leads y Contacto Web)
+CREATE TABLE solicitud_contacto (
+    id_solicitud BIGSERIAL PRIMARY KEY,
+    nombre_remitente VARCHAR(150) NOT NULL,
+    email_remitente VARCHAR(150) NOT NULL,
+    telefono VARCHAR(50),
+    asunto VARCHAR(200) NOT NULL,
+    mensaje TEXT NOT NULL,
+    fecha_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    atendido BOOLEAN DEFAULT FALSE NOT NULL,
+    estado VARCHAR(30) DEFAULT 'PENDIENTE',
+    id_coordinador_atencion BIGINT,
+    nombre_coordinador_atencion VARCHAR(150),
+    fecha_atencion TIMESTAMP,
+    notas_atencion TEXT,
+    motivo_reapertura TEXT,
+    fecha_reapertura TIMESTAMP,
+    contador_reaperturas INT DEFAULT 0,
+    historial_atencion TEXT,
+    coordinador_id BIGINT REFERENCES trabajador(id_trabajador) ON DELETE SET NULL
 );
 
 -- ==============================================================================

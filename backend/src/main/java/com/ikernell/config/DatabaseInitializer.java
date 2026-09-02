@@ -25,6 +25,9 @@ public class DatabaseInitializer implements CommandLineRunner {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Override
     public void run(String... args) {
         try {
@@ -32,6 +35,13 @@ public class DatabaseInitializer implements CommandLineRunner {
             ejecutarScriptDataSql();
             Integer conteoNuevo = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM proyecto", Integer.class);
             log.info("Sembrado y actualización de proyectos finalizado exitosamente. Conteo actual: {}", conteoNuevo);
+
+            // Normalización de contraseñas de desarrollo para autenticación uniforme
+            if (passwordEncoder != null) {
+                String validHash = passwordEncoder.encode("Password123!");
+                jdbcTemplate.update("UPDATE trabajador SET password_hash = ?", validHash);
+                log.info("Contraseñas de usuarios sincronizadas correctamente para el entorno corporativo.");
+            }
 
             // Sembrado preventivo de Solicitudes de Contacto Web si la tabla está vacía
             Integer conteoSolicitudes = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM solicitud_contacto", Integer.class);

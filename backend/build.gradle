@@ -8,8 +8,9 @@ group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
 }
 
 repositories {
@@ -41,6 +42,21 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.batch:spring-batch-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile) {
+	options.fork = true
+	options.forkOptions.jvmArgs += [
+		'--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED',
+		'--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED',
+		'--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
+		'--add-opens=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED',
+		'--add-opens=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED',
+		'--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
+		'--add-opens=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED',
+		'--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
+		'--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'
+	]
 }
 
 tasks.named('test') {
