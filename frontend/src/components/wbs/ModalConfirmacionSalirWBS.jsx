@@ -21,16 +21,6 @@ export function ModalConfirmacionSalirWBS({
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden p-6 relative space-y-5"
         >
-          {/* Botón de cierre discreto */}
-          <button
-            type="button"
-            onClick={onCancel}
-            className="absolute top-4 right-4 p-2 rounded-2xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-            title="Cerrar modal"
-          >
-            <X size={18} />
-          </button>
-
           {/* Contenido Visual Interactivo */}
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-md animate-bounce">

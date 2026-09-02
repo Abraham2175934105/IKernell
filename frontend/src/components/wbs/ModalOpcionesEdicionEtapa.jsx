@@ -68,15 +68,6 @@ export function ModalOpcionesEdicionEtapa({
         >
           {/* Cabecera del Modal */}
           <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-blue-950 text-white p-6 sm:p-7 space-y-2 relative">
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-5 right-5 p-2 rounded-2xl bg-white/10 hover:bg-white/25 text-white transition-all cursor-pointer shadow-sm border border-white/10"
-              title="Cerrar ventana"
-            >
-              <X size={18} />
-            </button>
-
             <div className="flex items-center gap-2 flex-wrap">
               <span className="px-3 py-0.5 rounded-full bg-blue-500/30 border border-blue-400/40 text-blue-200 font-mono text-[0.68rem] font-black uppercase tracking-wider">
                 GESTIÓN WBS

@@ -789,7 +789,20 @@ public class LiderService {
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Desarrollador no encontrado con ID: " + idDesarrollador));
 
+        // 1. Eliminar la asignación formal del proyecto
         proyectoDesarrolladorRepository.deleteByProyectoAndDesarrollador(proyecto, dev);
+
+        // 2. Liberar automáticamente todas las tareas WBS asignadas a este desarrollador en las etapas del proyecto
+        List<Etapa> etapas = etapaRepository.findByProyecto(proyecto);
+        for (Etapa etapa : etapas) {
+            List<Actividad> actividades = actividadRepository.findByEtapa(etapa);
+            for (Actividad act : actividades) {
+                if (act.getDesarrollador() != null && act.getDesarrollador().getIdTrabajador().equals(idDesarrollador)) {
+                    act.setDesarrollador(null);
+                    actividadRepository.save(act);
+                }
+            }
+        }
     }
 
     // Consulta errores técnicos reportados en las fases del proyecto en 1 sola

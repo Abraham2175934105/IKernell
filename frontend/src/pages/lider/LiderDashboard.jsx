@@ -8887,7 +8887,7 @@ export const LiderDashboard = () => {
                               setJustificacionCancelacion(e.target.value);
                               if (cancelacionError) setCancelacionError('');
                             }}
-                            placeholder="Ej: El proyecto se cierra prematuramente debido a reestructuración de prioridades comerciales por parte de la gerencia del cliente..."
+                            placeholder="Ingrese el motivo o justificación técnica detallada para el cierre del proyecto"
                             className="w-full p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed font-medium"
                           />
                           {cancelacionError && (
@@ -9567,7 +9567,7 @@ export const LiderDashboard = () => {
                       value={editingEtapaForm.nombreEtapa}
                       onChange={(e) => setEditingEtapaForm({ ...editingEtapaForm, nombreEtapa: e.target.value })}
                       className="input-field w-full py-2.5 text-xs font-semibold"
-                      placeholder="Ej. Fase 1: Especificación y Arquitectura N-Capas"
+                      placeholder="Ingrese el título o descripción de la fase WBS"
                     />
                   </div>
 
@@ -9771,7 +9771,7 @@ export const LiderDashboard = () => {
                         value={editingProyectoForm.cliente}
                         onChange={(e) => setEditingProyectoForm({ ...editingProyectoForm, cliente: e.target.value })}
                         className="input-field w-full py-2 text-xs font-semibold"
-                        placeholder="Ej. Itaú Unibanco Holding"
+                        placeholder="Ingrese la razón social o nombre del cliente"
                       />
                     </div>
                   </div>

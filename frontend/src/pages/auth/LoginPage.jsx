@@ -319,7 +319,7 @@ export const LoginPage = () => {
                         setEmail(e.target.value);
                         if (error) setError('');
                       }}
-                      placeholder="nombre@ikernell.com"
+                      placeholder="Ingrese su correo electrónico corporativo"
                       className="input-field pl-11 py-3 text-xs sm:text-sm"
                       autoComplete="email"
                     />
@@ -349,7 +349,7 @@ export const LoginPage = () => {
                         setPassword(e.target.value);
                         if (error) setError('');
                       }}
-                      placeholder="••••••••••••"
+                      placeholder="Ingrese su contraseña de acceso"
                       className="input-field pl-11 pr-11 py-3 text-xs sm:text-sm"
                       autoComplete="current-password"
                     />

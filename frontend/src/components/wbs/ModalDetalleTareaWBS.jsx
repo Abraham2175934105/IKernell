@@ -141,15 +141,6 @@ export function ModalDetalleTareaWBS({
         >
           {/* Cabecera del Modal con Gradiente Directivo */}
           <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-blue-950 text-white p-6 sm:p-8 space-y-4 relative">
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-5 right-5 p-2.5 rounded-2xl bg-white/10 hover:bg-white/25 text-white transition-all cursor-pointer shadow-sm border border-white/10"
-              title="Cerrar modal de inspección"
-            >
-              <X size={20} />
-            </button>
-
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="px-3 py-1 rounded-full bg-blue-500/30 border border-blue-400/40 text-blue-200 font-mono text-[0.68rem] font-black uppercase tracking-wider flex items-center gap-1.5">
                 <Zap size={12} className="text-amber-400" />

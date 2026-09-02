@@ -5644,7 +5644,7 @@ export const CoordinadorDashboard = () => {
                       required
                       value={solicitudActionForm.motivoReapertura}
                       onChange={(e) => setSolicitudActionForm(prev => ({ ...prev, motivoReapertura: e.target.value }))}
-                      placeholder="Explica la razón por la cual se reabre el caso (ej. Cliente solicitó cotización adicional, nuevo requerimiento de alcance, reconsideración de propuesta)..."
+                      placeholder="Ingrese el motivo o justificación técnica detallada para la reapertura del caso"
                       className="input-field py-2.5 leading-relaxed text-xs w-full bg-white dark:bg-zinc-900 border-purple-300 dark:border-purple-700 focus:ring-purple-500/30"
                     />
                     <p className="text-[0.65rem] text-purple-700 dark:text-purple-300 font-medium flex items-center gap-1">
@@ -6894,7 +6894,7 @@ export const CoordinadorDashboard = () => {
                     required
                     value={nuevaEtapaCoord.nombreEtapa}
                     onChange={(e) => setNuevaEtapaCoord({ ...nuevaEtapaCoord, nombreEtapa: e.target.value })}
-                    placeholder="Ej. Fase 1: Especificación y Arquitectura N-Capas"
+                    placeholder="Ingrese el título o descripción de la fase WBS"
                     className="input-field py-2.5 font-bold"
                   />
                 </div>
@@ -6956,7 +6956,7 @@ export const CoordinadorDashboard = () => {
                     required
                     value={nuevaActividadCoord.nombreActividad}
                     onChange={(e) => setNuevaActividadCoord({ ...nuevaActividadCoord, nombreActividad: e.target.value })}
-                    placeholder="Ej. Documentar contratos OpenAPI 3.0 para la API pública"
+                    placeholder="Ingrese la descripción de la tarea WBS a realizar"
                     className="input-field py-3 text-xs font-semibold w-full"
                   />
                   {/* Sugerencias Rápidas de Tarea */}
@@ -7986,7 +7986,7 @@ export const CoordinadorDashboard = () => {
                             setJustificacionCancelacionCoord(e.target.value);
                             if (cancelacionErrorCoord) setCancelacionErrorCoord('');
                           }}
-                          placeholder="Ej: El proyecto se cierra prematuramente por decisión estratégica de la dirección comercial..."
+                          placeholder="Ingrese la justificación estratégica o técnica para el cierre del proyecto"
                           className="w-full p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed font-medium"
                         />
                         {cancelacionErrorCoord && (
