@@ -2193,11 +2193,16 @@ export const LiderDashboard = () => {
       setLoadingProyectos(true);
       const data = await api.get('/lider/proyectos');
       const list = Array.isArray(data) ? data : [];
-      setProyectos(list);
+      if (list.length > 0) {
+        setProyectos(list);
+      } else {
+        setProyectos(prev => (prev && prev.length > 0 ? prev : list));
+      }
 
       setProyectoSeleccionado(prev => {
+        const currentList = list.length > 0 ? list : (proyectos || []);
         const targetPrj = (prev && prev.idProyecto !== 'GLOBAL')
-          ? list.find(p => p.idProyecto === prev.idProyecto)
+          ? currentList.find(p => p?.idProyecto === prev.idProyecto)
           : null;
 
         if (targetPrj) {
@@ -2217,7 +2222,7 @@ export const LiderDashboard = () => {
     } finally {
       setLoadingProyectos(false);
     }
-  }, [api, seleccionarProyecto]);
+  }, [api, seleccionarProyecto, proyectos]);
 
   // Manejador para refrescar manualmente con animación en el botón
   const handleManualRefresh = async () => {
@@ -7317,7 +7322,7 @@ export const LiderDashboard = () => {
                           </p>
                         </div>
                       ) : (
-                        desarrolladoresAsignadosProyecto.map(item => {
+                        (desarrolladoresAsignadosProyecto || []).map(item => {
                           const dev = item.desarrollador || {};
                           const horasPrj = item.horasSemanales || 0;
                           const cargaGlobal = getDevCargaInfo(dev.idTrabajador);

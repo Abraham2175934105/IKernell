@@ -126,3 +126,4 @@ Thumbs.db
 *.bak
 *.tmp
 *.temp
+.aider*
