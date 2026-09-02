@@ -272,7 +272,12 @@ INSERT INTO proyecto (id_proyecto, nombre, cliente, descripcion, presupuesto, fe
 (12, 'Orquestador de Identidad Digital & Biometría', 'Registraduría Nacional', 'Gateway de autenticación ciudadana segura con verificación de huella facial y firmas electrónicas avanzadas.', 380000.00, '2026-01-05', '2026-12-05', 'ACTIVO', 8),
 (13, 'Consola de Ciberseguridad & SIEM', 'Seguros Bolívar', 'Dashboard de monitoreo de amanezas en tiempo real con detección de anomalías y respuesta automatizada a incidentes.', 320000.00, '2026-03-01', '2026-11-30', 'ACTIVO', 3),
 (14, 'Plataforma de Reserva de Vuelos & Hoteles', 'Avianca Group', 'Motor de reservas internacional con integración a GDS Amadeus y pasarela de fidelización de viajeros.', 260000.00, '2026-04-15', '2026-12-15', 'ACTIVO', 4),
-(15, 'Portal de Gestión de Flotas GPS', 'RentiCargo Logistics', 'Sistema de rastreo satelital en vivo con telemetría de consumo de combustible y mantenimiento preventivo.', 175000.00, '2026-02-01', '2026-09-30', 'ACTIVO', 5);
+(15, 'Portal de Gestión de Flotas GPS', 'RentiCargo Logistics', 'Sistema de rastreo satelital en vivo con telemetría de consumo de combustible y mantenimiento preventivo.', 175000.00, '2026-02-01', '2026-09-30', 'ACTIVO', 5),
+(16, 'Migración Legacy Mainframe a Cloud Microservicios', 'Bancolombia S.A.', 'Modernización de arquitectura financiera monolítica hacia microservicios desacoplados en AWS EKS.', 420000.00, '2025-01-10', '2025-12-15', 'COMPLETADO', 3),
+(17, 'Portal de Autogestión de Clientes & CRM', 'Claro Telecomunicaciones', 'Plataforma web omnicanal para gestión de solicitudes, consultas de saldo y atención al cliente 24/7.', 165000.00, '2025-03-01', '2025-11-30', 'COMPLETADO', 4),
+(18, 'Firma Electrónica Autenticada & Blockchain', 'Cámara de Comercio', 'Sistema de certificación y estampado cronológico de contratos comerciales con tokenización de seguridad.', 280000.00, '2025-02-15', '2025-10-31', 'FINALIZADO', 5),
+(19, 'Motor de Conciliación Bancaria Automática', 'Fintech Pagos YA', 'Procesamiento nocturno de extractos y conciliación masiva de transacciones con IA de cotejo.', 195000.00, '2026-01-15', '2026-08-15', 'PAUSADO', 6),
+(20, 'Sistema de Monitoreo de Emisiones Carbono', 'EcoEnergy Latam', 'Panel de auditoría ambiental y cálculo de huella de carbono con sensores IoT industriales.', 220000.00, '2026-02-10', '2026-09-20', 'EN_PAUSA', 7);
 
 
 -- 4.3 INYECCIÓN DE PIVOTE PROYECTO_DESARROLLADOR (PREVENCIÓN DE CONFLICTO DE INTERÉS & CONTROL 48H)
