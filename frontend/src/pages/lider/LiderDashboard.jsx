@@ -1041,7 +1041,7 @@ const DeveloperCombobox = ({
       >
         <div className="flex items-center gap-2.5 text-zinc-400 font-medium text-xs">
           <Lock size={18} className="text-amber-500 shrink-0" />
-          <span className="font-bold text-zinc-500 dark:text-zinc-400">🔒 Selección Bloqueada: Elija una Cualidad Técnica en el Paso 2 primero</span>
+          <span className="font-bold text-zinc-500 dark:text-zinc-400">Selección Bloqueada: Elija una Cualidad Técnica en el Paso 2 primero</span>
         </div>
         <ChevronRight size={16} className="text-zinc-400 shrink-0" />
       </button>
@@ -2989,8 +2989,9 @@ export const LiderDashboard = () => {
   // Atención y resolución de incidencias del equipo (RF-24)
   const handleAbrirAtenderIncidencia = (item) => {
     if (!item) return;
-    if (item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO') {
-      toast.info('Esta incidencia ya se encuentra resuelta y archivada para auditoría.');
+    const isSolucionado = ['SOLUCIONADO', 'RESUELTO'].includes((item?.estadoAtencion || item?.estado || '').toUpperCase());
+    if (isSolucionado) {
+      toast.info('Las incidencias solucionadas no pueden ser modificadas por políticas de auditoría.');
       return;
     }
     setIncidenciaAAtender(item);
@@ -6277,19 +6278,20 @@ export const LiderDashboard = () => {
 
                           {/* Acción */}
                           <td className="py-3 px-3 text-right whitespace-nowrap sticky right-0 bg-white/95 dark:bg-zinc-900/95 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] md:shadow-none md:static">
-                            {item.estadoAtencion === 'SOLUCIONADO' || item.estadoAtencion === 'RESUELTO' ? (
+                            {['SOLUCIONADO', 'RESUELTO'].includes((item?.estadoAtencion || item?.estado || '').toUpperCase()) ? (
                               <span
-                                className="inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
-                                title="Incidencia resuelta y congelada para auditoría"
+                                className="inline-flex items-center gap-1 text-[0.62rem] font-extrabold uppercase px-2.5 py-1 rounded-lg bg-zinc-100 text-zinc-400 border border-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-500 dark:border-zinc-700/80 cursor-not-allowed select-none"
+                                title="Las incidencias solucionadas no pueden ser modificadas por políticas de auditoría"
                               >
-                                <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                <span>Resuelto</span>
+                                <Lock size={11} className="text-zinc-400 dark:text-zinc-500 shrink-0" />
+                                <span>Solucionado (Bloqueado)</span>
                               </span>
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => handleAbrirAtenderIncidencia(item)}
-                                className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors"
+                                disabled={['SOLUCIONADO', 'RESUELTO'].includes((item?.estadoAtencion || item?.estado || '').toUpperCase())}
+                                className="outline-button text-[0.7rem] py-1 px-2.5 font-bold inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Gestionar estado, registrar acción correctiva y asignar resolución técnica"
                               >
                                 <Edit3 size={11} />
@@ -6682,7 +6684,7 @@ export const LiderDashboard = () => {
 
                     {selectedDevIdsLider.length > 0 && (
                       <p className="text-[0.68rem] font-bold text-blue-600 dark:text-blue-400 mt-1">
-                        ✓ {selectedDevIdsLider.length} desarrollador(es) seleccionado(s) para esta tarea.
+                        {selectedDevIdsLider.length} desarrollador(es) seleccionado(s) para esta tarea.
                       </p>
                     )}
                     {formErrors.idDesarrollador && <p className="text-[0.65rem] text-red-500 font-bold mt-1">{formErrors.idDesarrollador}</p>}
@@ -7538,11 +7540,11 @@ export const LiderDashboard = () => {
                                             </span>
                                             {isFin ? (
                                               <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.6rem] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1" title="Tarea ejecutada y entregada. Horas inamovibles.">
-                                                <CheckCircle2 size={11} /> FINALIZADA (🔒 Cumplida)
+                                                <CheckCircle2 size={11} /> FINALIZADA (Cumplida)
                                               </span>
                                             ) : isProc ? (
                                               <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.6rem] bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 flex items-center gap-1" title="Tarea en ejecución activa por el desarrollador. Horas congeladas durante la ejecución.">
-                                                <Activity size={11} /> EN PROGRESO (🔒 En Ejecución)
+                                                <Activity size={11} /> EN PROGRESO (En Ejecución)
                                               </span>
                                             ) : (
                                               <span className="px-2 py-0.5 rounded-md font-extrabold text-[0.6rem] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1" title="Tarea pendiente por iniciar.">
