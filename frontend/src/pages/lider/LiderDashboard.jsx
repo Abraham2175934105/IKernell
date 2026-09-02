@@ -2195,24 +2195,22 @@ export const LiderDashboard = () => {
       const list = Array.isArray(data) ? data : [];
       if (list.length > 0) {
         setProyectos(list);
-      } else {
-        setProyectos(prev => (prev && prev.length > 0 ? prev : list));
       }
 
       setProyectoSeleccionado(prev => {
-        const currentList = list.length > 0 ? list : (proyectos || []);
         const targetPrj = (prev && prev.idProyecto !== 'GLOBAL')
-          ? currentList.find(p => p?.idProyecto === prev.idProyecto)
+          ? list.find(p => p?.idProyecto === prev.idProyecto)
           : null;
 
         if (targetPrj) {
           seleccionarProyecto(targetPrj);
           return targetPrj;
-        } else {
+        } else if (!prev) {
           const globalPrj = { idProyecto: 'GLOBAL', nombre: 'Todos los Proyectos (Vista Global Corporativa)' };
           seleccionarProyecto(globalPrj);
           return globalPrj;
         }
+        return prev;
       });
       return true;
     } catch (err) {
@@ -2222,7 +2220,7 @@ export const LiderDashboard = () => {
     } finally {
       setLoadingProyectos(false);
     }
-  }, [api, seleccionarProyecto, proyectos]);
+  }, [api, seleccionarProyecto]);
 
   // Manejador para refrescar manualmente con animación en el botón
   const handleManualRefresh = async () => {
@@ -5379,6 +5377,8 @@ export const LiderDashboard = () => {
                                 const st = (act.estado || 'PENDIENTE').toUpperCase().replace(/[\s_]+/g, '_');
                                 const isFin = ['FINALIZADA', 'FINALIZADO', 'COMPLETADA', 'COMPLETADO'].includes(st);
                                 const isProg = ['EN_PROGRESO', 'EN_PROCESO', 'EN_CURSO', 'ACTIVO'].includes(st);
+                                const actIdNum = Number(act.idActividad) || aIdx;
+                                const absHash = Math.abs(actIdNum);
                                 const horasTask = Number(act.horasSemanales) || (8 + (absHash % 4) * 8);
 
                                 return (
