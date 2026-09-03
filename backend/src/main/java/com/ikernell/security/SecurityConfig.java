@@ -87,9 +87,19 @@ public class SecurityConfig {
                 .requestMatchers("/api/coordinador/**").hasRole("COORDINADOR")
                 .requestMatchers("/api/lider/**").hasAnyRole("COORDINADOR", "LIDER")
                 .requestMatchers("/api/desarrollador/**").hasAnyRole("COORDINADOR", "LIDER", "DESARROLLADOR")
+                .requestMatchers("/api/biblioteca/**").hasAnyRole("COORDINADOR", "LIDER", "DESARROLLADOR")
                 .requestMatchers("/api/snippets/**").hasAnyRole("COORDINADOR", "LIDER", "DESARROLLADOR")
                 .requestMatchers("/api/analitica/**").hasAnyRole("COORDINADOR", "LIDER", "DESARROLLADOR")
                 .anyRequest().authenticated()
+            )
+
+            // Manejo de excepciones de autenticación: retornar HTTP 401 Unauthorized en lugar de 403 por defecto
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Token JWT no proporcionado o expirado. Por favor inicie sesión de nuevo.\"}");
+                })
             );
 
         http.authenticationProvider(authenticationProvider());

@@ -512,6 +512,30 @@ INSERT INTO solicitud_soporte (id_solicitud, trabajador_id, tipo_solicitud, asun
 -- 4.10 INICIALIZACIÓN DE CONSECUTIVO
 INSERT INTO consecutivo_proyectos (id, ultimo_numero) VALUES (1, 15);
 
+-- 4.11 TABLA Y SEED DE BIBLIOTECA DIGITAL DE DOCUMENTOS TÉCNICOS (RF-33)
+CREATE TABLE IF NOT EXISTS documento_biblioteca (
+    id_documento BIGSERIAL PRIMARY KEY,
+    titulo VARCHAR(200) NOT NULL,
+    categoria VARCHAR(100) NOT NULL,
+    archivo_url VARCHAR(500),
+    descripcion TEXT,
+    version VARCHAR(20) DEFAULT 'v1.0',
+    formato VARCHAR(50) DEFAULT 'PDF',
+    contenido_texto TEXT,
+    fecha_subida TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    subido_por_id BIGINT,
+    CONSTRAINT fk_doc_subido_por FOREIGN KEY (subido_por_id) REFERENCES trabajador(id_trabajador) ON DELETE SET NULL
+);
+
+INSERT INTO documento_biblioteca (id_documento, titulo, categoria, descripcion, contenido_texto, archivo_url, version, formato, fecha_subida, subido_por_id)
+VALUES
+(1, 'Guía Maestra de Arquitectura de Software N-Capas', 'Arquitectura', 'Lineamientos oficiales para desacoplamiento SPA en React y microservicios Spring Boot.', 'Documento formal que describe la separación de capas de presentación, lógica de negocio, persistencia relacional y seguridad RBAC con JWT para la plataforma IKernell.', '/docs/arquitectura_maestra_2026.pdf', 'v2.4', 'PDF', NOW() - INTERVAL '30 days', 1),
+(2, 'Manual de Seguridad Perimetral y Criptografía JWT', 'Seguridad', 'Estándares de tokens JWT, sal de iteraciones en BCrypt y sellado SHA-256.', 'Especificación de cifrado para protección de contraseñas, políticas de expiración, revocación mediante blacklist y autorización por roles en Spring Security.', '/docs/manual_seguridad_jwt_sha256.pdf', 'v2.1', 'PDF', NOW() - INTERVAL '25 days', 1),
+(3, 'Diccionario Oficial de Datos y Diccionario Relacional', 'Base de Datos', 'Definición de tablas maestras, claves foráneas e índices GIN con trigramas.', 'Estructura exhaustiva de las entidades relacionales en PostgreSQL, tipos de datos, constraints e índices optimizados pg_trgm.', '/docs/diccionario_datos_ikernell.pdf', 'v3.0', 'PDF', NOW() - INTERVAL '20 days', 1),
+(4, 'Directrices de Calidad CMMI y Gestión de Incidentes WBS', 'Calidad WBS', 'Metodología de registro de causa raíz, resolución y medición de indicadores MTTR.', 'Procedimiento estándar para la clasificación de defectos técnicos, vinculación obligatoria a la WBS y reportes de auditoría directiva CMMI Nivel 3.', '/docs/guia_calidad_cmmi_ikernell.pdf', 'v1.8', 'PDF', NOW() - INTERVAL '15 days', 1),
+(5, 'Especificación Técnica de Microservicios & REST OpenAPI 3.0', 'Arquitectura', 'Estándares de diseño de endpoints RESTful, compresión HTTP y manejo global de excepciones.', 'Guía de integración para controladores Spring MVC, anotaciones Swagger OpenAPI 3.0, códigos de estado HTTP y manejo centralizado de errores.', '/docs/especificacion_rest_openapi.pdf', 'v1.5', 'PDF', NOW() - INTERVAL '10 days', 2)
+ON CONFLICT (id_documento) DO NOTHING;
+
 -- Ajustar secuencias PostgreSQL para garantizar IDs autoincrementales limpios
 SELECT setval('trabajador_id_trabajador_seq', (SELECT MAX(id_trabajador) FROM trabajador));
 SELECT setval('proyecto_id_proyecto_seq', (SELECT MAX(id_proyecto) FROM proyecto));
@@ -522,5 +546,6 @@ SELECT setval('error_id_error_seq', (SELECT MAX(id_error) FROM error));
 SELECT setval('interrupcion_id_interrupcion_seq', (SELECT MAX(id_interrupcion) FROM interrupcion));
 SELECT setval('historial_cambios_id_cambio_seq', (SELECT MAX(id_cambio) FROM historial_cambios));
 SELECT setval('solicitud_soporte_id_solicitud_seq', (SELECT MAX(id_solicitud) FROM solicitud_soporte));
+SELECT setval('documento_biblioteca_id_documento_seq', (SELECT MAX(id_documento) FROM documento_biblioteca));
 
 -- Fin del script SQL consolidado

@@ -62,7 +62,7 @@ public class Proyecto {
     private Trabajador lider;
 
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"proyecto", "hibernateLazyInitializer", "handler"})
     @OneToMany(mappedBy = "proyecto", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Etapa> etapas = new ArrayList<>();
 
