@@ -131,16 +131,27 @@ export function ModalDetalleTareaWBS({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xs overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/80 backdrop-blur-xs overflow-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.94, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 15 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-5xl w-full shadow-2xl overflow-hidden my-4 relative"
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative"
         >
-          {/* Cabecera del Modal con Gradiente Directivo */}
-          <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-blue-950 text-white p-6 sm:p-8 space-y-4 relative">
+          {/* Cabecera del Modal con Gradiente Directivo (Fija arriba) */}
+          <div className="shrink-0 bg-gradient-to-r from-slate-950 via-indigo-950 to-blue-950 text-white p-5 sm:p-7 pr-16 sm:pr-20 space-y-3.5 relative">
+            {/* Botón de Cierre 'X' prominente en la esquina superior derecha */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white/90 hover:text-white transition-all cursor-pointer shadow-lg backdrop-blur-md border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50 group z-10"
+              title="Cerrar ventana (Esc)"
+              aria-label="Cerrar modal"
+            >
+              <X size={20} className="group-hover:rotate-90 transition-transform duration-200" />
+            </button>
+
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="px-3 py-1 rounded-full bg-blue-500/30 border border-blue-400/40 text-blue-200 font-mono text-[0.68rem] font-black uppercase tracking-wider flex items-center gap-1.5">
                 <Zap size={12} className="text-amber-400" />
@@ -180,8 +191,8 @@ export function ModalDetalleTareaWBS({
             </div>
           </div>
 
-          {/* Cuerpo Principal del Modal en Ancho Ampliado max-w-5xl */}
-          <div className="p-6 sm:p-8 space-y-7 max-h-[75vh] overflow-y-auto custom-scrollbar text-xs">
+          {/* Cuerpo Principal del Modal con Scroll Interno dinámico */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-7 space-y-6 text-xs">
             {/* SECCIÓN 1: Dominios Técnicos Requeridos */}
             <div className="space-y-3.5">
               <div className="flex items-center justify-between">
@@ -342,8 +353,8 @@ export function ModalDetalleTareaWBS({
             </div>
           </div>
 
-          {/* Pie del Modal: Matriz de Cobertura Sin Botón Inferior */}
-          <div className="p-5 sm:p-6 bg-gradient-to-r from-zinc-100 via-zinc-50 to-zinc-100 dark:from-zinc-800/80 dark:via-zinc-800/40 dark:to-zinc-800/80 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between flex-wrap gap-4 text-xs font-mono">
+          {/* Pie del Modal: Matriz de Cobertura (Fijo abajo) */}
+          <div className="shrink-0 p-4 sm:p-5 bg-gradient-to-r from-zinc-100 via-zinc-50 to-zinc-100 dark:from-zinc-800/80 dark:via-zinc-800/40 dark:to-zinc-800/80 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between flex-wrap gap-3 text-xs font-mono">
             <div className="flex items-center gap-3">
               <span className="font-extrabold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
                 <CheckSquare size={16} className="text-purple-600 dark:text-purple-400" />
@@ -354,10 +365,16 @@ export function ModalDetalleTareaWBS({
               </span>
             </div>
 
-            <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 font-bold text-[0.68rem]">
+            <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 font-bold text-[0.68rem] flex-wrap">
               <span>Squad Total: <strong className="text-purple-600 dark:text-purple-400">{horasTotalesSquad}h/semana</strong></span>
-              <span>•</span>
-              <span className="text-zinc-400">Presione 'X' arriba para salir</span>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-100 font-sans font-bold text-xs transition-colors cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <X size={14} />
+                <span>Cerrar Ventana</span>
+              </button>
             </div>
           </div>
         </motion.div>

@@ -4804,8 +4804,11 @@ export const CoordinadorDashboard = () => {
                               </div>
                             </div>
 
-                            <span className="text-[0.62rem] font-mono text-zinc-400 shrink-0 font-bold">
-                              {prj.lider?.profesion ? prj.lider.profesion.split(' ')[0] : 'Dirección'}
+                            <span 
+                              className="text-[0.65rem] font-mono text-zinc-500 dark:text-zinc-400 font-bold shrink-0 max-w-[130px] truncate text-right"
+                              title={prj.lider?.especialidad || prj.lider?.profesion || 'Líder de Proyecto'}
+                            >
+                              {prj.lider?.especialidad || prj.lider?.profesion || 'Líder de Proyecto'}
                             </span>
                           </div>
 
@@ -5537,6 +5540,15 @@ export const CoordinadorDashboard = () => {
                     </p>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedSolicitudModal(null)}
+                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer shrink-0"
+                  title="Cerrar modal"
+                >
+                  <X size={18} />
+                </button>
               </div>
 
               {/* Consulta Original del Lead */}
@@ -5744,6 +5756,15 @@ export const CoordinadorDashboard = () => {
                     </p>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => { setShowReasignarLiderModal(false); setLiderAInhabilitar(null); }}
+                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer shrink-0"
+                  title="Cerrar modal"
+                >
+                  <X size={20} />
+                </button>
               </div>
 
               {/* Contenido Dinámico según Paso (FORMULARIO / CONFIRMACION) */}
@@ -6028,18 +6049,29 @@ export const CoordinadorDashboard = () => {
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 w-full max-w-xl shadow-2xl space-y-6"
             >
-              <div className="flex items-center gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                <div className="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-200 dark:border-purple-800 shadow-xs">
-                  <RotateCcw size={20} />
+              <div className="flex items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-200 dark:border-purple-800 shadow-xs">
+                    <RotateCcw size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                      Reasignar Dirección de Proyecto
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Asigna un nuevo Líder responsable con registro de auditoría en la plataforma
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
-                    Reasignar Dirección de Proyecto
-                  </h3>
-                  <p className="text-xs text-zinc-500 font-medium">
-                    Asigna un nuevo Líder responsable con registro de auditoría en la plataforma
-                  </p>
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowReasignarLiderModalPrj(false)}
+                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer shrink-0"
+                  title="Cerrar modal"
+                >
+                  <X size={18} />
+                </button>
               </div>
 
               {/* Ficha Resumen del Proyecto Afectado */}
